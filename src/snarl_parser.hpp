@@ -30,13 +30,13 @@ public:
     void pushMatrix(const std::string& decomposedSnarl, std::unordered_map<std::string, size_t>& rowHeaderDict, size_t indexColumn);
     void fill_matrix();
     std::vector<std::string> parseHeader();
-    void binary_table(const std::unordered_map<std::string, std::vector<std::string> >& snarls,
-                        const std::unordered_map<std::string, bool>& binary_groups,
-                        const std::string& output = "output/binary_output.tsv");
-    void quantitative_table(const std::unordered_map<std::string, std::vector<std::string> >& snarls,
-                                const std::unordered_map<std::string, float>& quantitative,
-                                const std::string& output = "output/quantitative_output.tsv");
+    void create_bim_bed(const std::unordered_map<std::string, std::vector<std::string>>& snarls,
+                                  const std::string& output_bim, const std::string& output_bed);
+    std::vector<std::vector<int>> create_table(const std::vector<std::string>& list_path_snarl);
+    std::vector<int> SnarlParser::create_table_short_path(const std::string& list_path_snarl);
 };
+
+void create_fam(const std::unordered_map<std::string, int>& sex, const std::unordered_map<std::string, int>& pheno, const std::string& output_path);
 
 // Retrieve the index of `key` if it exists in `ordered_map`. Otherwise, add it and return the new index.
 unsigned long long int getOrAddIndex(std::unordered_map<std::string, unsigned long long int>& orderedMap, const std::string& key, unsigned long long int lengthOrderedMap);

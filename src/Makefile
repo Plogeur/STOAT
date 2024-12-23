@@ -2,9 +2,9 @@ CXX = g++
 CXXFLAGS = -std=c++17 -Wall -Wextra -O2  # Use C++17, enable warnings, optimize
 
 # Source files
-SRCS = matrix.cpp arg_parser.cpp snarl_parser.cpp binary_analysis.cpp main.cpp quantitative_analysis.cpp 
+SRCS = matrix.cpp arg_parser.cpp snarl_parser.cpp main.cpp
 # Output executable name
-TARGET = snarl_project
+TARGET = slink
 
 # Default rule
 all: $(TARGET)

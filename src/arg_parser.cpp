@@ -2,79 +2,49 @@
 
 namespace fs = std::filesystem;
 
-// Function to parse the binary phenotype file
-std::unordered_map<std::string, bool> parse_binary_pheno(const std::string& group_file) {
-    std::unordered_map<std::string, bool> group;
+// Function to parse phenotype file
+void parse_pheno(const std::string &pheno_path, std::unordered_map<std::string, int> &pheno) {
+    std::ifstream file(pheno_path);
 
-    std::ifstream file(group_file);
     if (!file.is_open()) {
-        std::cerr << "Error: Could not open file " << group_file << std::endl;
+        std::cerr << "Error: Could not open file " << pheno_path << std::endl;
+        return;
     }
 
     std::string line;
-    std::getline(file, line);  // Skip header line
+    bool is_header = true;
 
     while (std::getline(file, line)) {
-        std::istringstream iss(line);
-        std::string sample;
-        int group_line;
 
-        std::getline(iss, sample, '\t');
-        iss >> group_line;
-
-        if (group_line == 0) {
-            group[sample] = 0;
-        } else if (group_line == 1) {
-            group[sample] = 1;
+        if (is_header) {
+            is_header = false;
+            continue;
         }
-    }
-
-    file.close();
-    return group;
-}
-
-// Function to parse the phenotype file
-std::unordered_map<std::string, float> parse_quantitative_pheno(const std::string& file_path) {
-    std::unordered_map<std::string, float> parsed_pheno;
-
-    std::ifstream file(file_path);
-    if (!file.is_open()) {
-        std::cerr << "Error: Could not open file " << file_path << std::endl;
-        return parsed_pheno;  // Return empty map if file can't be opened
-    }
-
-    std::string line;
-    std::getline(file, line);  // Skip header line
-
-    while (std::getline(file, line)) {
+        
         std::istringstream iss(line);
-        std::string col1, iid;
-        float pheno;
+        std::string fid, iid;
+        int phenotype;
 
-        // Read the first column, IID (second column), and PHENO (third column)
-        std::getline(iss, col1, '\t');  // Skip the first column
-        std::getline(iss, iid, '\t');   // Get the IID
-        iss >> pheno;                   // Read the PHENO as a float
+        // Assuming the phenotype file format: FID IID Pheno (space or tab-separated)
+        if (!(iss >> fid >> iid >> phenotype)) {
+            std::cerr << "Warning: Skipping malformed line: " << line << std::endl;
+            continue;
+        }
 
-        parsed_pheno[iid] = pheno;  // Add to map
+        // Insert into the map
+        pheno[iid] = phenotype;
     }
 
     file.close();
-    return parsed_pheno;
 }
 
-template <typename T>
-void check_match_samples(const std::unordered_map<std::string, T>& map, const std::vector<std::string>& keys) {
+void check_match_samples(const std::unordered_map<std::string, int>& map, const std::vector<std::string>& keys) {
     for (const auto& key : keys) {
         if (map.find(key) == map.end()) {
             throw std::runtime_error("Error: Key '" + key + "' not found in the phenotype file");
         }
     }
 }
-
-// Explicit instantiation for specific types
-template void check_match_samples<bool>(const std::unordered_map<std::string, bool>&, const std::vector<std::string>&);
-template void check_match_samples<float>(const std::unordered_map<std::string, float>&, const std::vector<std::string>&);
 
 // Function to parse the snarl path file
 std::unordered_map<std::string, std::vector<std::string>> parse_snarl_path(const std::string& path_file) {
@@ -173,7 +143,7 @@ void check_format_paths_snarl(const std::string& file_path) {
     }
 }
 
-void check_format_quantitative_phenotype(const std::string& file_path) {
+void check_format_phenotype(const std::string& file_path) {
     // Check if the file exists
     if (!fs::is_regular_file(file_path)) {
         throw std::invalid_argument("The file " + file_path + " does not exist.");
@@ -201,38 +171,30 @@ void check_format_quantitative_phenotype(const std::string& file_path) {
 
     std::vector<std::string> expected_header = {"FID", "IID", "PHENO"};
     if (header != expected_header) {
-        throw std::invalid_argument("The file must contain the following headers: FID, IID, PHENO and be split by tabulation.");
+        throw std::invalid_argument("The file must contain the following headers: FID IID PHENO and be split by tabulation.");
     }
 }
 
-void check_format_binary_phenotype(const std::string& file_path) {
-    // Check if the file exists
-    if (!fs::is_regular_file(file_path)) {
-        throw std::invalid_argument("The file " + file_path + " does not exist.");
+void parse_sex(const std::string& path, std::unordered_map<std::string, int>& sex_map) {
+    std::ifstream infile(path);
+    if (!infile.is_open()) {
+        throw std::runtime_error("Unable to open sex file: " + path);
     }
 
-    // Open the file and check the header
-    std::ifstream file(file_path);
-    if (!file.is_open()) {
-        throw std::invalid_argument("Unable to open the file " + file_path);
-    }
+    std::string line;
+    while (std::getline(infile, line)) {
+        std::istringstream iss(line);
+        std::string fid, sample_id;
+        int sex_code;
 
-    std::string first_line;
-    std::getline(file, first_line);
-    file.close();
+        if (!(iss >> fid >> sample_id >> sex_code)) { // FID is optional for mapping
+            throw std::runtime_error("Invalid format in sex file: " + line);
+        }
 
-    std::vector<std::string> header;
-    size_t start = 0;
-    size_t end = first_line.find('\t');
-    while (end != std::string::npos) {
-        header.push_back(first_line.substr(start, end - start));
-        start = end + 1;
-        end = first_line.find('\t', start);
-    }
-    header.push_back(first_line.substr(start));
+        if (sex_code < 0 || sex_code > 2) { // Validating PLINK sex codes
+            throw std::invalid_argument("Invalid sex code for sample: " + sample_id);
+        }
 
-    std::vector<std::string> expected_header = {"SAMPLE", "GROUP"};
-    if (header != expected_header) {
-        throw std::invalid_argument("The file must contain the following headers: SAMPLE, GROUP and be split by tabulation.");
+        sex_map[sample_id] = sex_code;
     }
 }

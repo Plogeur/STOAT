@@ -1,10 +1,115 @@
 #include "snarl_parser.hpp"
 #include "matrix.hpp"
-#include "binary_analysis.hpp"
-#include "quantitative_analysis.hpp"
 
 SnarlParser::SnarlParser(const std::string& vcf_path) : filename(vcf_path), file(vcf_path), matrix(1000000, parseHeader().size() * 2) {
     sampleNames = parseHeader();
+}
+
+std::vector<std::vector<int>> SnarlParser::create_table(
+    const std::vector<std::string>& list_path_snarl)
+{
+    std::vector<std::vector<int>> small_grm;
+    std::unordered_map<std::string, size_t> row_headers_dict = matrix.get_row_header();
+
+    // Iterate over each path_snarl in column_headers
+    for (size_t idx_g = 0; idx_g < list_path_snarl.size(); ++idx_g) {
+        const std::string& path_snarl = list_path_snarl[idx_g];
+        const size_t number_sample = sampleNames.size();
+        std::vector<std::string> decomposed_snarl = decompose_string(path_snarl);
+        std::vector<int> alleles = identify_correct_path(decomposed_snarl, row_headers_dict, matrix, number_sample*2);
+        small_grm.push_back(alleles);
+    }
+    return small_grm;
+}
+
+std::vector<int> SnarlParser::create_table_short_path(
+    const std::string& list_path_snarl)
+{
+    std::vector<int> small_grm;
+    std::unordered_map<std::string, size_t> row_headers_dict = matrix.get_row_header();
+
+    // Iterate over each path_snarl in column_headers
+    const std::string& path_snarl = list_path_snarl;
+    const size_t number_sample = sampleNames.size();
+    std::vector<std::string> decomposed_snarl = decompose_string(path_snarl);
+    return identify_correct_path(decomposed_snarl, row_headers_dict, matrix, number_sample*2);
+}
+
+void SnarlParser::create_bim_bed(const std::unordered_map<std::string, std::vector<std::string>>& snarls,
+                                  const std::string& output_bim, const std::string& output_bed) {
+    std::ofstream outbim(output_bim);
+    std::ofstream outbed(output_bed, std::ios::binary);  // Open BED file as binary
+    
+    const size_t allele_number = sampleNames.size();  // Number of individuals
+
+    if (!outbim.is_open() || !outbed.is_open()) {
+        std::cerr << "Error opening output files!" << std::endl;
+        return;
+    }
+
+    // Write the 3-byte 'BED' header for the BED file
+    char bed_magic[] = {0x6C, 0x1B, 0x01};  // PLINK header: 0x6C ('l'), 0x1B, 0x01 (snp-major mode)
+    outbed.write(bed_magic, 3);
+    
+    int position = 0;
+
+    // Iterate over each snarl
+    for (const auto& [snarl, list_snarl] : snarls) {
+
+        if (list_snarl.size() > 2) {continue;} // avoid multiallelic var
+
+        // Generate a genotype table for this snarl
+        std::vector<int> table = create_table_short_path(list_snarl[0]);  // 2D vector, each row = SNP, each col = sample alleles
+
+        int chromosome = 1;  // Placeholder for chromosome number
+        position += 1;  // Increment position for each SNP
+
+        std::string allele1 = "A";  // Placeholder for allele 1
+        std::string allele2 = "T";  // Placeholder for allele 2
+
+        // Write the BIM file line for the SNP
+        outbim << chromosome << "\t" << snarl << "\t0\t" << position
+                << "\t" << allele1 << "\t" << allele2 << "\n";
+        
+        // Write the genotypes for this SNP to the BED file
+        unsigned char packed_byte = 0;  // A byte to store genotypes of 4 individuals
+        int bit_pos = 0;
+
+        // Loop through each sample (pair of alleles per individual)
+        for (size_t snarl_list_idx = 0; snarl_list_idx < allele_number; ++snarl_list_idx) {
+            int allele1 = table[2 * snarl_list_idx];      // First allele for the individual for the first paths
+            int allele2 = table[2 * snarl_list_idx + 1];  // Second allele for the individual at SNP
+
+            // Encode the genotype as a 2-bit value based on the alleles
+            unsigned char encoded_genotype = 0;
+
+            if (allele1 == allele2) {
+                // Homozygous genotype (AA or aa)
+                encoded_genotype = (allele1 == 0) ? 0b00 : 0b11;  // Example: 0 = AA, 1 = aa
+            } else {
+                // Heterozygous genotype (Aa)
+                encoded_genotype = 0b01;
+            }
+
+            // Shift the encoded genotype into the correct position in the byte
+            packed_byte |= (encoded_genotype << (bit_pos * 2));
+            bit_pos++;
+
+            // After 4 individuals, write the byte and reset the byte and bit position
+            if (bit_pos == 4) {
+                outbed.write(reinterpret_cast<char*>(&packed_byte), sizeof(unsigned char));
+                packed_byte = 0;  // Reset the byte
+                bit_pos = 0;      // Reset the bit position
+            }
+        }
+
+        // If there are fewer than 4 individuals, write the remaining packed byte
+        if (bit_pos > 0) {
+            outbed.write(reinterpret_cast<char*>(&packed_byte), sizeof(unsigned char));
+        }
+    }
+    outbim.close();
+    outbed.close();
 }
 
 std::vector<std::string> SnarlParser::parseHeader() {
@@ -164,7 +269,7 @@ std::vector<int> identify_correct_path(
         if (it != row_headers_dict.end()) {
             rows_to_check.push_back(it->second);
         } else {
-            return {}; // Return an empty vector if snarl is not in row_headers_dict
+            return std::vector<int>(num_cols, 0);
         }
     }
 
@@ -180,73 +285,16 @@ std::vector<int> identify_correct_path(
         }
     }
 
-    // Populate idx_srr_save with indices of columns where all elements are 1
-    std::vector<int> idx_srr_save;
+    // Populate allele_vector with indices of columns where all elements are 1
+    std::vector<int> allele_vector;
     for (size_t col = 0; col < num_cols; ++col) {
         if (columns_all_ones[col]) {
-            idx_srr_save.push_back(col);
+            allele_vector.push_back(1);
+        } else {
+            allele_vector.push_back(0);
         }
     }
-    return idx_srr_save;
-}
-
-
-// Binary Table Generation
-void SnarlParser::binary_table(const std::unordered_map<std::string, std::vector<std::string>>& snarls,
-                                  const std::unordered_map<std::string, bool>& binary_groups,
-                                  const std::string& output) 
-{
-    std::ofstream outf(output, std::ios::binary);
-
-    // Write headers
-    std::string headers = "CHR\tPOS\tSNARL\tTYPE\tREF\tALT\tP_Fisher\tP_Chi2\tGROUP_1_PATH_1\tGROUP_1_PATH_2\tGROUP_2_PATH_1\tGROUP_2_PATH_2\n";
-    outf.write(headers.c_str(), headers.size());
-
-    // Iterate over each snarl
-    for (const auto& [snarl, list_snarl] : snarls) {
-
-        std::vector<std::vector<int>> df = create_binary_table(binary_groups, list_snarl, sampleNames, matrix);
-        std::vector<std::string> stats = binary_stat_test(df);
-
-        std::string chrom = "NA", pos = "NA", type_var = "NA", ref = "NA", alt = "NA";
-        // Stats is a vector containing the values in the order: 
-        // fisher_p_value, chi2_p_value, GIPI, GIPII, GIIPI, GIIPII
-        std::stringstream data;
-        data << chrom << "\t" << pos << "\t" << snarl << "\t" << type_var << "\t" << ref << "\t" << alt
-             << "\t" << stats[0] << "\t" << stats[1] << "\t" << stats[2] << "\t" << stats[3]
-             << "\t" << stats[4] << "\t" << stats[5] << "\n";
-        
-        outf.write(data.str().c_str(), data.str().size());
-    }
-}
-
-// Quantitative Table Generation
-void SnarlParser::quantitative_table(const std::unordered_map<std::string, std::vector<std::string>>& snarls,
-                                        const std::unordered_map<std::string, float>& quantitative_phenotype,
-                                        const std::string& output) 
-{
-    std::ofstream outf(output, std::ios::binary);
-    
-    // Write headers
-    std::string headers = "CHR\tPOS\tSNARL\tTYPE\tREF\tALT\tSE\tBETA\tP\n";
-    outf.write(headers.c_str(), headers.size());
-
-    // Iterate over each snarl
-    for (const auto& [snarl, list_snarl] : snarls) {
-
-        std::unordered_map<std::string, std::vector<int>> df = create_quantitative_table(list_snarl, sampleNames, matrix);
-
-        // std::make_tuple(se, beta, p_value)
-        std::tuple<double, double, double> tuple_info = linear_regression(df, quantitative_phenotype);
-
-        std::string chrom = "NA", pos = "NA", type_var = "NA", ref = "NA", alt = "NA";
-        std::stringstream data;
-        data << chrom << "\t" << pos << "\t" << snarl << "\t" << type_var << "\t" << ref << "\t" << alt
-            << "\t" << std::get<0>(tuple_info) << "\t" << std::get<1>(tuple_info) 
-            << "\t" << std::get<2>(tuple_info) << "\n";
-
-        outf.write(data.str().c_str(), data.str().size());
-    }
+    return allele_vector;
 }
 
 // Parses a variant line from the VCF file and extracts genotype and AT field
@@ -316,3 +364,28 @@ std::vector<std::string> split(const std::string& s, char delimiter) {
     }
     return tokens;
 }
+
+void create_fam(const std::unordered_map<std::string, int>& sex, 
+                const std::unordered_map<std::string, int>& pheno, 
+                const std::string& output_path)
+
+{
+    std::ofstream outfile(output_path);
+    if (!outfile.is_open()) {
+        throw std::runtime_error("Unable to open output file: " + output_path);
+    }
+
+    for (const auto& [sample, sex_code] : sex) {
+        int phenotype = pheno.at(sample); // Assume pheno contains all samples.
+
+        outfile << sample << " "       // FID (default to sample ID)
+                << sample << " "       // IID (sample ID)
+                << "0 0 "              // PID and MID (unknown)
+                << sex_code << " "     // SEX (0 = unknown, 1 = male, 2 = female)
+                << phenotype << "\n";  // PHENOTYPE (-9 = missing)
+    }
+
+    outfile.close();
+}
+
+

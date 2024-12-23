@@ -1,0 +1,12 @@
+PLINK v1.90b7.2 64-bit (11 Dec 2023)
+Options in effect:
+  --bfile ../output/genotype_simulation_1000
+  --pheno /home/mbagarre/Bureau/snarl_data/simulation_1000vars_100samps/p
+
+Hostname: irsd0440
+Working directory: /home/mbagarre/Bureau/snarl_project_cxx/src
+Start time: Mon Dec  2 13:46:47 2024
+
+Warning: No output requested.  (Did you forget --make-bed?)  Exiting.
+
+End time: Mon Dec  2 13:46:47 2024

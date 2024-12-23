@@ -1,0 +1,20 @@
+PLINK v1.90b7.2 64-bit (11 Dec 2023)
+Options in effect:
+  --allow-extra-chr
+  --allow-no-sex
+  --bfile output/genotype_simulation_1000
+  --chr-set 9
+  --linear
+  --out output
+  --pheno /home/mbagarre/Bureau/snarl_data/simulation_1000vars_100samps/phenotype_simulation_1000.plink_format.tsv
+  --pheno-name PHENO
+
+Hostname: irsd0440
+Working directory: /home/mbagarre/Bureau/snarl_project_cxx/src
+Start time: Mon Dec  2 13:45:18 2024
+
+Random number seed: 1733143518
+15769 MB RAM detected; reserving 7884 MB for main workspace.
+Error: Failed to open output/genotype_simulation_1000.bed.
+
+End time: Mon Dec  2 13:45:18 2024
