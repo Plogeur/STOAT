@@ -19,7 +19,7 @@ void print_help() {
 
 int main(int argc, char* argv[]) {
     // Declare variables to hold argument values
-    std::string vcf_path, snarl_path, binary_path, quantitative_path, output_name;
+    std::string vcf_path, snarl_path, binary_path, quantitative_path, output_path;
     bool show_help = false;
 
     // Parse arguments manually
@@ -34,7 +34,7 @@ int main(int argc, char* argv[]) {
         } else if ((arg == "-q" || arg == "--quantitative") && i + 1 < argc) {
             quantitative_path = argv[++i];
         } else if ((arg == "-o" || arg == "--output") && i + 1 < argc) {
-            output_name = argv[++i];
+            output_path = argv[++i];
         } else if (arg == "-h" || arg == "--help") {
             show_help = true;
         }
@@ -42,7 +42,7 @@ int main(int argc, char* argv[]) {
 
     std::filesystem::path output_dir = "output";
     std::filesystem::create_directory(output_dir);
-    output_name = (output_dir / output_name).string();
+    output_path = (output_dir / output_path).string();
 
     if (show_help || vcf_path.empty() || snarl_path.empty() || 
         binary_path.empty() == quantitative_path.empty()) {
@@ -92,11 +92,12 @@ int main(int argc, char* argv[]) {
 
     // Process quantitative phenotype file if provided
     if (!quantitative_path.empty()) {
-        if (!output_path.empty()) {
-            vcf_object.quantitative_table(snarl, quantitative, output_path);
-        } else {
-            vcf_object.quantitative_table(snarl, quantitative);
-        }
+        std::cout << "quantitative analysis not available for now (working progess)" << std::endl;
+        // if (!output_path.empty()) {
+        //     vcf_object.quantitative_table(snarl, quantitative, output_path);
+        // } else {
+        //     vcf_object.quantitative_table(snarl, quantitative);
+        // }
     }
 
     end_1 = std::chrono::high_resolution_clock::now();
@@ -105,4 +106,4 @@ int main(int argc, char* argv[]) {
     return EXIT_SUCCESS;
 }
 
-// ./snarl_project --vcf_path ../test/small_vcf.vcf --snarl ../test/list_snarl_short.txt -b ../test/group.txt -o snarl_project
+// ./stoat_cxx --vcf_path ../examples/small_vcf.vcf --snarl ../examples/list_snarl_short.txt -b ../examples/group.txt -o snarl_project

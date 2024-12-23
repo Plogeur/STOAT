@@ -190,7 +190,6 @@ std::vector<int> identify_correct_path(
     return idx_srr_save;
 }
 
-
 // Binary Table Generation
 void SnarlParser::binary_table(const std::unordered_map<std::string, std::vector<std::string>>& snarls,
                                   const std::unordered_map<std::string, bool>& binary_groups,
@@ -199,7 +198,7 @@ void SnarlParser::binary_table(const std::unordered_map<std::string, std::vector
     std::ofstream outf(output, std::ios::binary);
 
     // Write headers
-    std::string headers = "CHR\tPOS\tSNARL\tTYPE\tREF\tALT\tP_Fisher\tP_Chi2\tGROUP_1_PATH_1\tGROUP_1_PATH_2\tGROUP_2_PATH_1\tGROUP_2_PATH_2\n";
+    std::string headers = "CHR\tPOS\tSNARL\tTYPE\tREF\tALT\tP_FISHER\tP_CHI2\n";
     outf.write(headers.c_str(), headers.size());
 
     // Iterate over each snarl
@@ -210,11 +209,11 @@ void SnarlParser::binary_table(const std::unordered_map<std::string, std::vector
 
         std::string chrom = "NA", pos = "NA", type_var = "NA", ref = "NA", alt = "NA";
         // Stats is a vector containing the values in the order: 
-        // fisher_p_value, chi2_p_value, GIPI, GIPII, GIIPI, GIIPII
+        // fisher_p_value, chi2_p_value 
+        // TODO : add other metrics 
         std::stringstream data;
         data << chrom << "\t" << pos << "\t" << snarl << "\t" << type_var << "\t" << ref << "\t" << alt
-             << "\t" << stats[0] << "\t" << stats[1] << "\t" << stats[2] << "\t" << stats[3]
-             << "\t" << stats[4] << "\t" << stats[5] << "\n";
+             << "\t" << stats[0] << "\t" << stats[1] << "\n";
         
         outf.write(data.str().c_str(), data.str().size());
     }

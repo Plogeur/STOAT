@@ -95,7 +95,7 @@ long double logHypergeometricProb(long double* logFacs , int a, int b, int c, in
 long double fastFishersExactTest(const std::vector<std::vector<int>>& table) {
     // Ensure the table is 2x2
     if (table.size() != 2 || table[0].size() != 2 || table[1].size() != 2) {
-        throw std::invalid_argument("Input table must be 2x2.");
+        return -1;
     }
 
     // Extract values from the table
@@ -132,23 +132,16 @@ std::vector<std::string> binary_stat_test(const std::vector<std::vector<int>>& d
     long double fastfisher_p_value = fastFishersExactTest(df);
 
     std::string chi2_p_value = chi2Test(df);
-    int group_I_path_I = df[0][0];
-    int group_I_path_II = df[0][1];
-    int group_II_path_I = df[1][0];
-    int group_II_path_II = df[1][1];
 
     // Pvalue Precision of 6 number after 0.
     std::stringstream ss;
     ss << std::scientific << std::setprecision(4) << fastfisher_p_value;
     std::string stringFastfisher_p_value = ss.str();
+    if (stringFastfisher_p_value == "-1.0000e+00") {stringFastfisher_p_value = "NA";}
 
     std::vector<std::string> result = {
         stringFastfisher_p_value,
-        chi2_p_value,
-        std::to_string(group_I_path_I),
-        std::to_string(group_I_path_II),
-        std::to_string(group_II_path_I),
-        std::to_string(group_II_path_II)
+        chi2_p_value
     };
     return result;
 }

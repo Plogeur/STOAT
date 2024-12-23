@@ -52,18 +52,19 @@ std::tuple<double, double, double> linear_regression(
         }
     }
     
-    // Print X
-    std::cout << "X: ";
-    for (const double& value : X) {
-        std::cout << value << " ";
-    }
-    std::cout << std::endl;
+    // // Print X
+    // std::cout << "X: ";
+    // for (const double& value : X) {
+    //     std::cout << value << " ";
+    // }
+    // std::cout << std::endl;
 
-    // Print Y
-    std::cout << "Y: ";
-    for (const double& value : Y) {
-        std::cout << value << " ";
-    }
+    // // Print Y
+    // std::cout << "Y: ";
+    // for (const double& value : Y) {
+    //     std::cout << value << " ";
+    // }
+    
     std::cout << std::endl;
     if (X.size() < 2 || Y.size() < 2 || X.size() != Y.size()) {
         throw std::invalid_argument("Data mismatch or insufficient data for linear regression.");
