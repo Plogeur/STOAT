@@ -129,21 +129,23 @@ long double fastFishersExactTest(const std::vector<std::vector<int>>& table) {
 // ------------------------ Binary table & stats ------------------------
 
 std::vector<std::string> binary_stat_test(const std::vector<std::vector<int>>& df) {
+    // Compute Fisher's exact test p-value
     long double fastfisher_p_value = fastFishersExactTest(df);
 
+    // Compute Chi-squared test p-value
     std::string chi2_p_value = chi2Test(df);
 
-    // Pvalue Precision of 6 number after 0.
-    std::stringstream ss;
-    ss << std::scientific << std::setprecision(4) << fastfisher_p_value;
-    std::string stringFastfisher_p_value = ss.str();
-    if (stringFastfisher_p_value == "-1.0000e+00") {stringFastfisher_p_value = "NA";}
+    // Prepare Fisher's p-value string with 4 decimal places precision
+    std::string stringFastfisher_p_value;
+    if (fastfisher_p_value != -1.0L) { // Check if Fisher's test is computable
+        std::ostringstream ss;
+        ss << std::scientific << std::setprecision(4) << fastfisher_p_value;
+        stringFastfisher_p_value = ss.str();
+    } else {
+        stringFastfisher_p_value = "NA";
+    }
 
-    std::vector<std::string> result = {
-        stringFastfisher_p_value,
-        chi2_p_value
-    };
-    return result;
+    return {stringFastfisher_p_value, chi2_p_value};
 }
 
 std::vector<std::vector<int>> create_binary_table(
