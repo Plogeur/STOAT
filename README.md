@@ -1,4 +1,4 @@
-# stoat_cxx
+# Stoat_cxx
 
 Stoat_cxx is a C++ implementation of the Stoat tool, designed specifically for advanced Genome-Wide Association Studies (GWAS) that focus on snarl structures within pangenome graphs. This C++ version brings significant performance benefits—such as faster execution and lower memory usage—compared to its Python counterpart, making it an efficient tool for handling large-scale pangenome data.
 
