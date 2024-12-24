@@ -2,35 +2,27 @@
 
 namespace fs = std::filesystem;
 
-// Function to parse the binary phenotype file
-std::unordered_map<std::string, bool> parse_binary_pheno(const std::string& group_file) {
-    std::unordered_map<std::string, bool> group;
-
-    std::ifstream file(group_file);
-    if (!file.is_open()) {
-        std::cerr << "Error: Could not open file " << group_file << std::endl;
-    }
+std::unordered_map<std::string, bool> parse_binary_pheno(const std::string& file_path) {
+    
+    std::unordered_map<std::string, bool> parsed_pheno;
+    std::ifstream file(file_path);
 
     std::string line;
-    std::getline(file, line);  // Skip header line
+    std::getline(file, line);
 
     while (std::getline(file, line)) {
         std::istringstream iss(line);
-        std::string sample;
-        int group_line;
+        std::string fid, iid, phenoStr;
 
-        std::getline(iss, sample, '\t');
-        iss >> group_line;
-
-        if (group_line == 0) {
-            group[sample] = 0;
-        } else if (group_line == 1) {
-            group[sample] = 1;
+        if (!(iss >> fid >> iid >> phenoStr)) {
+            throw std::runtime_error("Malformed line: " + line);
         }
+        int pheno = std::stoi(phenoStr);
+        parsed_pheno[iid] = static_cast<bool>(pheno);
     }
 
     file.close();
-    return group;
+    return parsed_pheno;
 }
 
 // Function to parse the phenotype file
@@ -38,11 +30,6 @@ std::unordered_map<std::string, float> parse_quantitative_pheno(const std::strin
     std::unordered_map<std::string, float> parsed_pheno;
 
     std::ifstream file(file_path);
-    if (!file.is_open()) {
-        std::cerr << "Error: Could not open file " << file_path << std::endl;
-        return parsed_pheno;  // Return empty map if file can't be opened
-    }
-
     std::string line;
     std::getline(file, line);  // Skip header line
 
@@ -77,17 +64,15 @@ template void check_match_samples<bool>(const std::unordered_map<std::string, bo
 template void check_match_samples<float>(const std::unordered_map<std::string, float>&, const std::vector<std::string>&);
 
 // Function to parse the snarl path file
-std::unordered_map<std::string, std::vector<std::string>> parse_snarl_path(const std::string& path_file) {
-    std::unordered_map<std::string, std::vector<std::string>> snarl_paths;
-    std::ifstream file(path_file);
+std::unordered_map<std::string, std::vector<std::string>> parse_snarl_path(const std::string& file_path) {
 
-    if (!file.is_open()) {
-        std::cerr << "Could not open the file: " << path_file << std::endl;
-        return snarl_paths;
-    }
+    // Check file
+    check_file(file_path);
 
     std::string line, snarl, path_list;
-    
+    std::unordered_map<std::string, std::vector<std::string>> snarl_paths;
+    std::ifstream file(file_path);
+
     // Read header
     std::getline(file, line);
 
@@ -111,10 +96,9 @@ std::unordered_map<std::string, std::vector<std::string>> parse_snarl_path(const
 }
 
 void check_format_vcf_file(const std::string& file_path) {
-    // Check if the file exists
-    if (!fs::is_regular_file(file_path)) {
-        throw std::invalid_argument("The file " + file_path + " does not exist.");
-    }
+    
+    // Check file
+    check_file(file_path);
 
     // Check if the file ends with .vcf
     if (file_path.size() < 4 || 
@@ -161,10 +145,8 @@ std::vector<std::string> parseHeader(const std::string& file_path) {
 }
 
 void check_format_paths_snarl(const std::string& file_path) {
-    // Check if the file exists
-    if (!fs::is_regular_file(file_path)) {
-        throw std::invalid_argument("The file " + file_path + " does not exist.");
-    }
+
+    check_file(file_path);
 
     // Check if the file ends with .txt or .tsv
     if (file_path.size() < 4 || 
@@ -174,17 +156,11 @@ void check_format_paths_snarl(const std::string& file_path) {
 }
 
 void check_format_quantitative_phenotype(const std::string& file_path) {
-    // Check if the file exists
-    if (!fs::is_regular_file(file_path)) {
-        throw std::invalid_argument("The file " + file_path + " does not exist.");
-    }
+    
+    // Check file
+    check_file(file_path);
 
-    // Open the file and check the header
     std::ifstream file(file_path);
-    if (!file.is_open()) {
-        throw std::invalid_argument("Unable to open the file " + file_path);
-    }
-
     std::string first_line;
     std::getline(file, first_line);
     file.close();
@@ -205,34 +181,76 @@ void check_format_quantitative_phenotype(const std::string& file_path) {
     }
 }
 
-void check_format_binary_phenotype(const std::string& file_path) {
-    // Check if the file exists
+bool is_valid_iid(const std::string& iid) {
+    // Check if IID is valid (e.g., not empty, no special characters)
+    return !iid.empty();
+}
+
+bool is_valid_group(bool group) {
+    // Check if group is either 0 or 1 (valid boolean)
+    return group == 0 || group == 1;
+}
+
+void check_file(const std::string& file_path) {
+    
     if (!fs::is_regular_file(file_path)) {
         throw std::invalid_argument("The file " + file_path + " does not exist.");
     }
 
-    // Open the file and check the header
     std::ifstream file(file_path);
     if (!file.is_open()) {
         throw std::invalid_argument("Unable to open the file " + file_path);
     }
 
-    std::string first_line;
-    std::getline(file, first_line);
     file.close();
+}
 
-    std::vector<std::string> header;
-    size_t start = 0;
-    size_t end = first_line.find('\t');
-    while (end != std::string::npos) {
-        header.push_back(first_line.substr(start, end - start));
-        start = end + 1;
-        end = first_line.find('\t', start);
-    }
-    header.push_back(first_line.substr(start));
+void check_format_binary_phenotype(const std::string& file_path) {
 
-    std::vector<std::string> expected_header = {"SAMPLE", "GROUP"};
-    if (header != expected_header) {
-        throw std::invalid_argument("The file must contain the following headers: SAMPLE, GROUP and be split by tabulation.");
+    // Check file
+    check_file(file_path);
+
+    std::ifstream file(file_path);
+
+    // Check if the file is open
+    if (!file.is_open()) {
+        throw std::runtime_error("Error opening file: " + file_path);
     }
+
+    std::string line;
+    bool firstLine = true;
+
+    while (std::getline(file, line)) {
+
+        if (line.empty()) {
+            continue;
+        }
+
+        std::stringstream ss(line);
+        std::string fid, iid, pheno;
+
+        // Parse FID, IID, and PHENO from the line
+        if (!std::getline(ss, fid, '\t') || 
+            !std::getline(ss, iid, '\t') || 
+            !std::getline(ss, pheno, '\t')) {
+            throw std::invalid_argument("Invalid line format: " + line);
+        }
+
+        if (firstLine) {
+            firstLine = false;
+            // Check that the header contains FID, IID, and PHENO
+            if (fid != "FID" || iid != "IID" || pheno != "PHENO") {
+                throw std::invalid_argument("Invalid header: " + line);
+            }
+            continue;
+        }
+
+        // Check if PHENO is 0 or 1
+        if (pheno != "0" && pheno != "1") {
+            throw std::invalid_argument("Invalid PHENO value: " + pheno + " in line: " + line);
+        }
+    }
+
+    // If no errors occurred, the file is valid
+    file.close();
 }

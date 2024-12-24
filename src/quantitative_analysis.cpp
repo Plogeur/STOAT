@@ -18,6 +18,9 @@ double variance(const std::vector<double>& v) {
 
 // Helper function to calculate the covariance between two vectors
 double covariance(const std::vector<double>& x, const std::vector<double>& y) {
+    if (x.size() != y.size()) {
+        throw std::invalid_argument("Vectors x and y must have the same length.");
+    }
     double mean_x = mean(x);
     double mean_y = mean(y);
     double cov = 0.0;
@@ -52,19 +55,6 @@ std::tuple<double, double, double> linear_regression(
         }
     }
     
-    // // Print X
-    // std::cout << "X: ";
-    // for (const double& value : X) {
-    //     std::cout << value << " ";
-    // }
-    // std::cout << std::endl;
-
-    // // Print Y
-    // std::cout << "Y: ";
-    // for (const double& value : Y) {
-    //     std::cout << value << " ";
-    // }
-    
     std::cout << std::endl;
     if (X.size() < 2 || Y.size() < 2 || X.size() != Y.size()) {
         throw std::invalid_argument("Data mismatch or insufficient data for linear regression.");
@@ -90,6 +80,19 @@ std::tuple<double, double, double> linear_regression(
     // Calculate t-statistic for beta and the two-tailed p-value using normal approximation
     double t_stat = beta / se;
     double p_value = 2 * (1.0 - std::erf(std::abs(t_stat) / std::sqrt(2)));  // Using the error function approximation
+
+    // // Print X
+    // std::cout << "X: ";
+    // for (const double& value : X) {
+    //     std::cout << value << " ";
+    // }
+    // std::cout << std::endl;
+
+    // // Print Y
+    // std::cout << "Y: ";
+    // for (const double& value : Y) {
+    //     std::cout << value << " ";
+    // }
 
     return std::make_tuple(se, beta, p_value);
 }

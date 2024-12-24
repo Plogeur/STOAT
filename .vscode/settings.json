@@ -125,6 +125,14 @@
     "unordered_set": "cpp",
     "variant": "cpp",
     "vector": "cpp",
-    "algorithm": "cpp"
+    "algorithm": "cpp",
+    "cfenv": "cpp",
+    "charconv": "cpp",
+    "list": "cpp",
+    "random": "cpp",
+    "set": "cpp",
+    "strstream": "cpp",
+    "typeindex": "cpp",
+    "valarray": "cpp"
   }
 }

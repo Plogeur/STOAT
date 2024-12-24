@@ -30,6 +30,7 @@ void check_format_paths_snarl(const std::string& file_path);
 void check_format_quantitative_phenotype(const std::string& file_path);
 void check_format_binary_phenotype(const std::string& file_path);
 void check_format_vcf_file(const std::string& file_path);
+void check_file(const std::string& file_path);
 
 std::vector<std::string> parseHeader(const std::string& file_path);
 
