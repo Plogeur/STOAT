@@ -5,6 +5,7 @@ import matplotlib.pyplot as plt
 import seaborn as sns
 import plotly.express as px
 import re
+from cyvcf2 import VCF # type: ignore
 
 # Function to process the frequency file and get result list with differences
 def process_file(freq_file, threshold=0.2):
@@ -90,18 +91,28 @@ def match_snarl(path_list, true_labels, p_value_file, paths_file, type_):
     # print("total row : ", len(path_list))
     return predicted_labels_10_2, predicted_labels_10_5, predicted_labels_10_8, cleaned_true_labels, pvalue, num_sample
 
+def vcf_snarl_list(vcf_file):
+    vcf = VCF(vcf_file)
+    vcf_snarl_list = []
 
-def match_snarl_plink(path_list, true_labels, plink_file):
+    for variant in vcf:
+        snarl_list = variant.INFO.get('AT', '').split(',')
+        vcf_snarl_list.append(snarl_list)
+
+    return vcf_snarl_list
+
+def match_snarl_plink(path_list:list, true_labels:list, plink_file:str, snarl_list:list):
 
     plink_df = pd.read_csv(plink_file, sep='\t')
     snarl_splited = plink_df['SNP'].apply(split_snarl)
+
+    assert len(plink_df) == len(snarl_list)
 
     # To store predicted labels
     predicted_labels_10_2 = []
     predicted_labels_10_5 = []
     predicted_labels_10_8 = []
     cleaned_true_labels = []
-    pvalue = []
 
     for idx, snarl_id in enumerate(path_list):
 
@@ -113,15 +124,17 @@ def match_snarl_plink(path_list, true_labels, plink_file):
 
         # Case where the snarl is found 
         if not matched_row.empty:
-            for _, match in matched_row.iterrows():  # Unpack index and row (Series)
-                p_value = match.get("P")  # Access the 'P' value from the Series
-                if str(p_value) == "nan":
-                    continue
-
-                predicted_labels_10_2.append(0 if p_value < 0.01 else 1)
-                predicted_labels_10_5.append(0 if p_value < 0.00001 else 1)
-                predicted_labels_10_8.append(0 if p_value < 0.00000001 else 1)
-                cleaned_true_labels.append(true_labels[idx])
+            for idx, match in matched_row.iterrows():  # Unpack index and row (Series)
+                for path in snarl_list[int(idx)] :
+                    decomposed_path = [int(num) for num in re.findall(r'\d+', path)]
+                    if start_node in decomposed_path and next_node in decomposed_path:
+                        p_value = match.get("P")  # Access the 'P' value from the Series
+                        if str(p_value) == "nan":
+                            continue
+                        predicted_labels_10_2.append(0 if p_value < 0.01 else 1)
+                        predicted_labels_10_5.append(0 if p_value < 0.00001 else 1)
+                        predicted_labels_10_8.append(0 if p_value < 0.00000001 else 1)
+                        cleaned_true_labels.append(true_labels[idx])
 
     # print("total row : ", len(path_list))
     return predicted_labels_10_2, predicted_labels_10_5, predicted_labels_10_8, cleaned_true_labels
@@ -322,7 +335,7 @@ if __name__ == "__main__":
     group = parser.add_mutually_exclusive_group(required=True)
     group.add_argument("-b", "--binary", action='store_true', help="binary test")
     group.add_argument("-q", "--quantitative", action='store_true', help="quantitative test")
-    group.add_argument("-p", "--plink", action='store_true', help="plink test")
+    group.add_argument("-p", "--plink", type=str, help="path to the vcf / plink test")
 
     args = parser.parse_args()
 
@@ -348,7 +361,8 @@ if __name__ == "__main__":
     test_path_list, test_true_labels, list_diff = process_file(args.freq, THRESHOLD_FREQ)
 
     if args.plink:
-        test_predicted_labels_10_2, test_predicted_labels_10_5, test_predicted_labels_10_8, cleaned_true_labels = match_snarl_plink(test_path_list, test_true_labels, args.p_value)
+        snarl_list = vcf_snarl_list(args.plink)
+        test_predicted_labels_10_2, test_predicted_labels_10_5, test_predicted_labels_10_8, cleaned_true_labels = match_snarl_plink(test_path_list, test_true_labels, args.p_value, snarl_list)
     else :
         test_predicted_labels_10_2, test_predicted_labels_10_5, test_predicted_labels_10_8, cleaned_true_labels, _, _ = match_snarl(test_path_list, test_true_labels, args.p_value, args.paths, type_)
     
@@ -374,5 +388,5 @@ if __name__ == "__main__":
     tests/binary_tests_output/binary_test.assoc.tsv tests/simulation/binary_data/snarl_paths.tsv -b
 
     python3 tests/verify_truth.py tests/simulation/binary_data/pg.snarls.freq.tsv \
-    tests/binary_tests_output/plink.assoc.tsv tests/simulation/binary_data/snarl_paths.tsv -p
+    tests/binary_tests_output/plink.assoc tests/simulation/binary_data/snarl_paths.tsv -p tests/simulation/binary_data/merged_output.vcf
     """
