@@ -201,8 +201,8 @@ def fill_pretty_paths(stree, pg, finished_paths) :
             if stree.is_node(net) :
                 ppath.addNodeHandle(net, stree)
                 length_net.append(str(stree.node_length(net)))
-                node_handle_t = stree.get_handle(net)
-                chromosome, position = find_node_position_and_chromosome(pg, node_handle_t)
+                #node_handle_t = stree.get_handle(net)
+                #chromosome, position = find_node_position_and_chromosome(pg, node_handle_t)
 
             # case trivial_chain : get the first node length
             elif stree.is_trivial_chain(net) :
@@ -229,7 +229,7 @@ def fill_pretty_paths(stree, pg, finished_paths) :
 
     type_variants = calcul_type_variant(length_net_paths)
     assert len(type_variants) == len(pretty_paths)
-    return pretty_paths, type_variants, chromosome, position
+    return pretty_paths, type_variants # , chromosome, position
 
 def write_header_output(output_file) :
     with open(output_file, 'w') as outf:
@@ -290,7 +290,7 @@ def loop_over_snarls_write(stree, snarls, pg, output_file, output_snarl_not_anal
 
         if not_break :
             # prepare path list to output and write each path directly to the file
-            pretty_paths, type_variants, chromosome, position = fill_pretty_paths(stree, pg, finished_paths)
+            pretty_paths, type_variants = fill_pretty_paths(stree, pg, finished_paths)
             write_output(output_file, snarl_id, pretty_paths, type_variants)
 
             if bool_return :
