@@ -124,8 +124,8 @@ def match_snarl_plink(path_list:list, true_labels:list, plink_file:str, snarl_li
 
         # Case where the snarl is found 
         if not matched_row.empty:
-            for idx, match in matched_row.iterrows():  # Unpack index and row (Series)
-                for path in snarl_list[int(idx)] :
+            for idx_m, match in matched_row.iterrows():  # Unpack index and row (Series)
+                for path in snarl_list[int(idx_m)] :
                     decomposed_path = [int(num) for num in re.findall(r'\d+', path)]
                     if start_node in decomposed_path and next_node in decomposed_path:
                         p_value = match.get("P")  # Access the 'P' value from the Series
