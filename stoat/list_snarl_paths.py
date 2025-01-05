@@ -171,23 +171,24 @@ def parse_graph_tree(pg_file, dist_file) :
 def find_node_position_and_chromosome(pg, pp_overlay, reference, handle_t):
     positions = ["-1"]
     chromosomes = ["-1"]
-    
+
     def step_callback(step_handle):
         path_handle = pg.get_path_handle_of_step(step_handle)
         path_name = pg.get_path_name(path_handle)
-        print("path_name : ", path_name)
 
-        while path_name not in reference :
-            node_handle_t = pg.get_handle_of_step(step_handle)
-            pg.for_each_step_on_handle(node_handle_t, step_callback)
+        if path_name not in reference:
+            pg.for_each_step_on_handle(pg.get_handle_of_step(step_handle), step_callback)
         
-        chromosomes.append(path_name)
-        position = pp_overlay.get_position_of_step(step_handle)
-        positions.append(position)
-        return True
-    
+        chromosomes[0] = path_name
+        # Retrieve position using the position overlay (if available)
+        if pp_overlay:
+            positions[0] = str(pp_overlay.get_step_position(step_handle))
+        return (True)
+
+    # Start recursion by invoking the callback on all steps of the given node handle
     pg.for_each_step_on_handle(handle_t, step_callback)
-    return chromosomes[-1], positions[-1]
+
+    return chromosomes[0], positions[0]
    
 def fill_pretty_paths(stree, pg, pp_overlay, reference, finished_paths) :
     pretty_paths = []
