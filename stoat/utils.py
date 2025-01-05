@@ -18,6 +18,13 @@ def parse_covariate_file(filepath:str) -> dict:
     covariates = pd.read_csv(filepath)
     return covariates.set_index("ID").to_dict(orient="index")
 
+def parse_chr_reference(filepath : str) -> dict:
+
+    with open(filepath, 'r') as file:
+        lines = [line.strip() for line in file]
+    chromosome_dict = {line: idx for idx, line in enumerate(lines)}
+    return chromosome_dict
+
 def parse_pheno_binary_file(group_file:str) -> dict:
 
     df = pd.read_csv(group_file, sep='\t')
