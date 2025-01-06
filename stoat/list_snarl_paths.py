@@ -138,18 +138,31 @@ def follow_edges(stree, finished_paths, path, paths, pg) :
     # from the last thing in the path
     stree.follow_net_edges(path[-1], pg, False, add_to_path)
 
-def save_snarls(stree, root) :
+def save_snarls(stree, root, pg, reference, pp_overlay):
 
-    # list storing the snarl objects
     snarls = []
+    chr_pos = []
 
     def save_snarl_tree_node(net):
+
         if stree.is_snarl(net):
-            snarls.append(net)
+            snarls.append({net : chr_pos[-1]})
+    
+        def step_callback(step_handle):
+            path_handle = pg.get_path_handle_of_step(step_handle)
+            path_name = pg.get_path_name(path_handle)
+            if path_name in reference :
+                position = pp_overlay.get_position_of_step(step_handle)
+                chr_pos.append((path_name, position))
+            return True
+        
+        if stree.is_node(net):
+            handle_t = stree.get_handle(net, pg)
+            pg.for_each_step_on_handle(handle_t, step_callback)
 
         if not stree.is_node(net) and not stree.is_sentinel(net):
             stree.for_each_child(net, save_snarl_tree_node)
-        return (True)
+        return True 
     
     stree.for_each_child(root, save_snarl_tree_node)
     return snarls
@@ -161,28 +174,13 @@ def parse_graph_tree(pg_file, dist_file) :
     pg.deserialize(pg_file)
     stree = bdsg.bdsg.SnarlDistanceIndex()
     stree.deserialize(dist_file)
+    pp_overlay = bdsg.bdsg.PackedPositionOverlay(pg)
 
     # list all snarls in pangenome
     # init with the child (only one ideally) of the root
     root = stree.get_root()
-    return stree, pg, root
-
-def find_node_position_and_chromosome(pg, handle_t):
-    positions = []
-    chromosomes = []
-    
-    def step_callback(step_handle):
-        path_handle = pg.get_path_handle_of_step(step_handle)
-        path_name = pg.get_path_name(path_handle)
-        if path_name not in chromosomes:
-            chromosomes.append(path_name)
-        position = pg.get_position_of_step(step_handle)
-        positions.append(position)
-        return True
-    
-    pg.for_each_step_on_handle(handle_t, step_callback)
-    return chromosomes[-1], positions[-1]
-
+    return stree, pg, root, pp_overlay
+   
 def fill_pretty_paths(stree, pg, finished_paths) :
     pretty_paths = []
     length_net_paths = []
@@ -191,8 +189,6 @@ def fill_pretty_paths(stree, pg, finished_paths) :
         ppath = Path()
         length_net = []
 
-        # stree : bdsg.bdsg.SnarlDistanceIndex
-        # net : bdsg.handlegraph.net_handle_t
         for net in path :
             if stree.is_sentinel(net) :
                 net = stree.get_node_from_sentinel(net)
@@ -201,8 +197,6 @@ def fill_pretty_paths(stree, pg, finished_paths) :
             if stree.is_node(net) :
                 ppath.addNodeHandle(net, stree)
                 length_net.append(str(stree.node_length(net)))
-                #node_handle_t = stree.get_handle(net)
-                #chromosome, position = find_node_position_and_chromosome(pg, node_handle_t)
 
             # case trivial_chain : get the first node length
             elif stree.is_trivial_chain(net) :
@@ -229,15 +223,15 @@ def fill_pretty_paths(stree, pg, finished_paths) :
 
     type_variants = calcul_type_variant(length_net_paths)
     assert len(type_variants) == len(pretty_paths)
-    return pretty_paths, type_variants # , chromosome, position
+    return pretty_paths, type_variants
 
 def write_header_output(output_file) :
     with open(output_file, 'w') as outf:
-        outf.write('snarl\tpaths\ttype\n')
+        outf.write('snarl\tpaths\ttype\tchr\tpos\n')
 
-def write_output(output_file, snarl_id, pretty_paths, type_variants) :
+def write_output(output_file, snarl_id, pretty_paths, type_variants, chr, pos) :
     with open(output_file, 'a') as outf:
-        outf.write('{}\t{}\t{}\n'.format(snarl_id, ','.join(pretty_paths), ','.join(type_variants)))
+        outf.write('{}\t{}\t{}\t{}\t{}\n'.format(snarl_id, ','.join(pretty_paths), ','.join(type_variants), chr, pos))
 
 def write_header_output_not_analyse(output_file) :
     with open(output_file, 'w') as outf:
@@ -262,8 +256,10 @@ def loop_over_snarls_write(stree, snarls, pg, output_file, output_snarl_not_anal
         return (True)
 
     # for each snarl, lists paths through the netgraph and write to output TSV
-    for snarl in snarls:
+    for dict_snarl in snarls:
     
+        snarl = list(dict_snarl.keys())[0]
+        chr, pos = dict_snarl[snarl]
         snarl_time = time.time()
         snarl_id = find_snarl_id(stree, snarl)
         not_break = True
@@ -289,9 +285,10 @@ def loop_over_snarls_write(stree, snarls, pg, output_file, output_snarl_not_anal
             follow_edges(stree, finished_paths, path, paths, pg)
 
         if not_break :
+
             # prepare path list to output and write each path directly to the file
             pretty_paths, type_variants = fill_pretty_paths(stree, pg, finished_paths)
-            write_output(output_file, snarl_id, pretty_paths, type_variants)
+            write_output(output_file, snarl_id, pretty_paths, type_variants, chr, pos)
 
             if bool_return :
                 snarl_paths[snarl_id].extend(pretty_paths)
@@ -305,17 +302,19 @@ if __name__ == "__main__" :
     parser = argparse.ArgumentParser('List path through the netgraph of each snarl in a pangenome')
     parser.add_argument('-p', type=utils.check_file, help='The input pangenome .pg file', required=True)
     parser.add_argument('-d', type=utils.check_file, help='The input distance index .dist file', required=True)
+    parser.add_argument('-c', "--chr", type=utils.check_file, help='The input reference chr file', required=True)
     parser.add_argument("-t", type=check_threshold, help='Children threshold', required=False)
     parser.add_argument('-o', help='output file', type=str, required=False)
     args = parser.parse_args()
 
+    reference = utils.parse_chr_reference(args.chr)
     output_dir = args.o or "output"    
     os.makedirs(output_dir, exist_ok=True)
     output = os.path.join(output_dir, "list_snarl_paths.tsv")
     output_snarl_not_analyse = os.path.join(output_dir, "snarl_not_analyse.tsv")
 
-    stree, pg, root = parse_graph_tree(args.p, args.d)
-    snarls = save_snarls(stree, root)
+    stree, pg, root, pp_overlay = parse_graph_tree(args.p, args.d)
+    snarls = save_snarls(stree, root, pg, reference, pp_overlay)
     print(f"Total of snarls found : {len(snarls)}")
     print("Saving snarl path decomposition...")
 
@@ -323,6 +322,7 @@ if __name__ == "__main__" :
     _, paths_number_analysis = loop_over_snarls_write(stree, snarls, pg, output, output_snarl_not_analyse, threshold, False)
     print(f"Total of paths analyse : {paths_number_analysis}")
 
-    # python3 src/list_snarl_paths.py -p /home/mbagarre/Bureau/droso_data/fly/fly.pg -d /home/mbagarre/Bureau/droso_data/fly/fly.dist -o output/test/test_list_snarl.tsv
+    # python3 stoat/list_snarl_paths.py -p /home/mbagarre/Bureau/droso_data/fly/fly.pg -d /home/mbagarre/Bureau/droso_data/fly/fly.dist -o output/test/test_list_snarl.tsv
     # vg find -x ../snarl_data/fly.gbz -r 5176878:5176884 -c 10 | vg view -dp - | dot -Tsvg -o ../snarl_data/subgraph.svg
 
+    # python3 stoat/list_snarl_paths.py -p tests/simulation/binary_data/pg.full.pg -d tests/simulation/binary_data/pg.dist -c tests/simulation/binary_data/pg.chromosome -o output/test/test_list_snarl.tsv
