@@ -160,10 +160,13 @@ if __name__ == "__main__":
 
 """
 Usage example:
-    python3 src/stoat.py -p ../droso_data/fly/fly.pg -d ../droso_data/fly/fly.dist -v ../droso_data/pangenome.dm6.vcf \
+    stoat -p ../droso_data/fly/fly.pg -d ../droso_data/fly/fly.dist -v ../droso_data/pangenome.dm6.vcf \
     -r ../droso_data/fly/fly.deconstruct.vcf -q ../droso_data/pangenome_phenotype.tsv -o output
 
 Usage test:
-    python3 src/stoat.py -p tests/simulation/binary_data/pg.full.pg -d tests/simulation/binary_data/pg.dist -v tests/simulation/binary_data/merged_output.vcf \
-    -b tests/simulation/binary_data/phenotype.tsv -o output
+    stoat -p tests/simulation/binary_data/pg.full.pg -d tests/simulation/binary_data/pg.dist -v tests/simulation/binary_data/merged_output.vcf \
+    -b tests/simulation/binary_data/phenotype.tsv --gaf -o output
+
+    stoat -p tests/simulation/quantitative_data/pg.full.pg -d tests/simulation/quantitative_data/pg.dist -v tests/simulation/quantitative_data/merged_output.vcf \
+    -q tests/simulation/quantitative_data/phenotype.tsv -o output
 """

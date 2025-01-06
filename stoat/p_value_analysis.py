@@ -50,9 +50,8 @@ def qq_plot_quantitatif(file_path, output_qqplot="qq_plot.png") :
 
 def plot_manhattan_quantitatif(file_path, output_manhattan="output_manhattan_plot.png") :
     
-    data = pd.read_csv(file_path, sep="\t")
+    data = pd.read_csv(file_path, delimiter="\t")
 
-    # Clean data
     cleaned_data = data.dropna(subset=['CHR', 'P', 'POS']).copy()  # Use .copy() to avoid potential slice issues
     cleaned_data.loc[:, 'POS'] = cleaned_data['POS'].apply(lambda x: int(str(x).split(',')[0]) if ',' in str(x) else int(x))
     cleaned_data.loc[:, 'P'] = cleaned_data['P'].apply(lambda x: max(x, 1e-300))  # Avoid log10(0)
@@ -116,10 +115,11 @@ def plot_manhattan_binary(file_path, output_manhattan="output_manhattan_plot.png
 
 if __name__ == "__main__" :
 
-    file_path = 'tests/simulation/binary_data/run_binary/binary_analysis.tsv'
-    output_snarl = "tests/simulation/binary_data/run_binary/binary_analysis_top_significativity.tsv"
+    file_path = 'output/run_20250106_112751/quantitative_analysis.tsv'
+    #output_snarl = "output/run_20250106_112751/test"
+    
     #significative_snarl_binary(file_path, output_snarl)
     #qq_plot_binary(file_path)
-    plot_manhattan_binary(file_path)
+    plot_manhattan_quantitatif(file_path, "output/run_20250106_112751/output_manhattan_plot.png")
 
-    #python3 src/p_value_analysis.py 
+    # python3 stoat/p_value_analysis.py 
