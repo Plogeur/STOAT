@@ -45,12 +45,12 @@ pip install .
 Required files :
 - pg : Pangenome graph file, formats accepted: .pg or .xg.
 - dist : Distance file generated with vg dist, format: .dist.
-- ref : VCF referenting chromosomes and positions in the pangenome graph generated with vg deconstruct, formats: .vcf (only).
 - vcf : Merged VCF file, created using bcftools merge, formats: .vcf or .vcf.gz. (ex : `bcftools merge -m none -Oz -o test`)
 - phenotype : phenotype file organise in three-column with FID (family/sample name), IID (sample name), and PHENO (integer/float). Format: .txt or .tsv (tab-separated).
 
 Optional file : 
 - paths : Two-column file containing snarl names and the list of paths through the snarl's netgraph, separated by tabs. Format: .txt or .tsv.
+- ref : VCF referenting chromosomes and positions in the pangenome graph generated with vg deconstruct, formats: .vcf (only).
 
 ## Usage
 
