@@ -263,10 +263,14 @@ class SnarlProcessor:
         x_with_const = sm.add_constant(x)
         result = sm.OLS(y, x_with_const).fit()
 
-        rsquared = f"{result.rsquared:.4e}"
-        beta_mean = f"{result.params.mean():.4e}"  # Mean of beta coefficients
-        se_mean = f"{result.bse.mean():.4e}"       # Mean of standard errors
-        formatted_p_value = f"{result.f_pvalue:.4e}"
+        rsquared = f"{result.rsquared:.4e}" if result.rsquared < 0.0001 else str(result.rsquared)
+
+        # Mean of beta coefficients
+        beta_mean = f"{result.params.mean():.4e}" if result.params.mean() < 0.0001 else str(result.params.mean())
+
+        # Mean of standard errors
+        se_mean = f"{result.bse.mean():.4e}" if result.bse.mean() < 0.0001 else str(result.bse.mean())
+        formatted_p_value = f"{result.f_pvalue:.4e}" if result.f_pvalue < 0.0001 else str(result.f_pvalue)
 
         return rsquared, beta_mean, se_mean, formatted_p_value
 
@@ -304,7 +308,7 @@ class SnarlProcessor:
         if df.shape[1] >= 2 and np.all(df.sum(axis=0)) and np.all(df.sum(axis=1)):
             # Perform Chi-Square test
             p_value = chi2_contingency(df)[1] # from scipy.stats import chi2_contingency
-            p_value = f"{p_value:.4e}"
+            p_value = f"{p_value:.4e}" if p_value < 0.0001 else str(p_value)
 
         else:
             p_value = "NA"
@@ -316,7 +320,7 @@ class SnarlProcessor:
 
         try:
             p_value = fisher_exact(df)[1] # from scipy.stats import fisher_exact
-            p_value = f"{p_value:.4e}"
+            p_value = f"{p_value:.4e}" if p_value < 0.0001 else str(p_value)
 
         except ValueError as e:
             p_value = 'NA'
