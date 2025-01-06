@@ -59,10 +59,10 @@ Use `stoat tool` if you want to launch the full tool at once, starting from snar
 - Run full tool :
 ```bash
 # binary trait
-stoat -p <pg.pg> -d <dist.dist> -v <vcf.vcf.gz> -r <ref.vcf> -b <phenotype.txt> -o output
+stoat -p <pg.pg> -d <dist.dist> -v <vcf.vcf.gz> -b <phenotype.txt> -o output
 
 # quantative trait
-stoat -p <pg.pg> -d <dist.dist> -v <vcf.vcf.gz> -r <ref.vcf> -q <phenotype.txt> -o output
+stoat -p <pg.pg> -d <dist.dist> -v <vcf.vcf.gz> -q <phenotype.txt> -o output
 ```
 
 Explanation of all options:
