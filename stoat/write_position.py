@@ -128,7 +128,7 @@ def parse_vcf_to_dict(vcf_file):
     return vcf_dict
 
 if __name__ == "__main__" :
-    reference = "../droso_data/pangenome.dm6.vcf"
+    reference = "/home/mbagarre/Bureau/droso_data/fly/fly.deconstruct.normalized.vcf"
     output_file = "output/run_20250102_134046/quantitative_analysis.tsv"
     write_pos_snarl(reference, output_file, "quantitatif")
 
