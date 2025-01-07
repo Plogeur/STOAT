@@ -187,7 +187,6 @@ python3 stoat/gaf_creator.py -s <binary_gwas_stoat_output.tsv> -l <paths.tsv> -p
 Description : Color represente the different paths group (red : group 1 & blue : group 0) and opacity represente the number of samples in that paths (number of samples passing trought each paths % 60).
 
 ### TODO 
-- [ ] Modify `list_paths.py` to determine reference chromosome and position of each snarl.
 
 - [ ] Implement LMM (Linear Mixed Models).
 

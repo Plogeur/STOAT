@@ -62,7 +62,6 @@ def main() :
     # Log the exact command used to launch the script
     command_line = " ".join(sys.argv)
     logger.info(f"Command: {command_line}")
-
     start_time = time.time()
 
     # Check vcf samples matching other files (pheno, covar)
@@ -119,7 +118,6 @@ def main() :
     vcf_object = snarl_analyser.SnarlProcessor(args.vcf, list_samples)
     logger.info("Starting fill matrix...")
     vcf_object.fill_matrix()
-
     reference_vcf = args.reference if args.reference else args.vcf
 
     # Step 3: P-value Analysis (Binary or Quantitative)

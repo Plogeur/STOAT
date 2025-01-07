@@ -404,7 +404,6 @@ if __name__ == "__main__" :
         binary_group = utils.parse_pheno_binary_file(args.binary)
         vcf_object.binary_table(snarl, binary_group, covar, output=output)
 
-    # python3 stoat/snarl_analyser.py tests/other_files/big_vcf.vcf tests/other_files/list_snarl_short.txt -b tests/other_files/group.txt
     # python3 stoat/snarl_analyser.py ../snarl_data/fly.merged.vcf output/test_list_snarl.tsv -b ../snarl_data/group.txt
     # python3 stoat/snarl_analyser.py tests/simulation/binary_data/merged_output.vcf tests/simulation/binary_data/snarl_paths.tsv -q tests/simulation/binary_data/phenotype.tsv -o tests/binary_tests_output/binary_output.tsv
 
@@ -412,7 +411,6 @@ if __name__ == "__main__" :
         quantitative_dict = utils.parse_pheno_quantitatif_file(args.quantitative)
         vcf_object.quantitative_table(snarl, quantitative_dict, covar, output=output)
 
-    # python3 stoat/snarl_analyser.py tests/other_files/big_vcf.vcf tests/other_files/list_snarl_short.txt -q tests/other_files/pheno.txt
     # python3 stoat/snarl_analyser.py tests/simulation/quantitative_data/merged_output.vcf tests/simulation/quantitative_data/snarl_paths.tsv -q tests/simulation/quantitative_data/phenotype.tsv -o tests/quantitative_tests_output/quantitative_output.tsv
 
     print(f"Time P-value : {time.time() - start} s")

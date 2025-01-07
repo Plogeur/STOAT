@@ -2,7 +2,6 @@ from cyvcf2 import VCF # type: ignore
 import argparse
 import numpy as np # type: ignore
 import pandas as pd # type: ignore
-from collections import defaultdict
 import os
 
 # ----------------- Parse functions -----------------
