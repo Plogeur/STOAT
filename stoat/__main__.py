@@ -91,13 +91,13 @@ def main() :
     if not args.listpath :
         
         if args.name :
-            reference = utils.parse_chr_reference(args.chr)
+            reference_chr = utils.parse_chr_reference(args.chr)
         else :
-            reference = {"ref":0}
+            reference_chr = {"ref":0}
             
         logger.info("Starting snarl path decomposition...")
         stree, pg, root, pp_overlay = list_snarl_paths.parse_graph_tree(args.pg, args.dist)
-        snarls = list_snarl_paths.save_snarls(stree, root, pg, reference, pp_overlay)
+        snarls = list_snarl_paths.save_snarls(stree, root, pg, reference_chr, pp_overlay)
         logger.info(f"Total of snarls found : {len(snarls)}")
         logger.info("Saving snarl path decomposition...")
 
@@ -130,7 +130,7 @@ def main() :
         logger.info("Binary table creation...")
         vcf_object.binary_table(snarl_paths, pheno, kinship_matrix, covar, gaf, output_snarl)
         logger.info("Writing position...")
-        write_position.write_pos_snarl(reference_vcf, output_snarl, "binary")
+        # write_position.write_pos_snarl(reference_vcf, output_snarl, "binary")
 
         output_manh = os.path.join(output_dir, "manhattan_plot_binary.png")
         output_qq = os.path.join(output_dir, "qq_plot_binary.png")
@@ -141,6 +141,7 @@ def main() :
         p_value_analysis.plot_manhattan_binary(output_snarl, output_manh)
         if gaf :
             output_gaf = os.path.join(output_dir, "group_paths.gaf")
+            logger.info("GAF creation...")
             gaf_creator.parse_input_file(output_snarl, snarl_paths, pg, output_gaf)
  
     # Handle Quantitative Analysis
@@ -149,7 +150,7 @@ def main() :
         logger.info("Quantitative table creation...")
         vcf_object.quantitative_table(snarl_paths, pheno, kinship_matrix, covar, output_file)
         logger.info("Writing position...")
-        write_position.write_pos_snarl(reference_vcf, output_file, "quantitatif")
+        # write_position.write_pos_snarl(reference_vcf, output_file, "quantitatif")
 
         output_manh = os.path.join(output_dir, "manhattan_plot_quantitative.png")
         output_qq = os.path.join(output_dir, "qq_plot_quantitative.png")

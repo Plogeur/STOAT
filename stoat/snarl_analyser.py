@@ -151,15 +151,16 @@ class SnarlProcessor:
         with open(output, 'wb') as outf:
             outf.write(headers.encode('utf-8'))
                 
-            for snarl, list_snarl in snarls.items():
+            for snarl, snarl_info in snarls.items():
+                list_snarl, type_var, chromosome, position = snarl_info
                 # Create the binary table, considering covariates if provided
                 df = self.create_binary_table(binary_groups, list_snarl)
 
                 # Perform statistical tests and compute descriptive statistics
                 fisher_p_value, chi2_p_value, allele_number, min_sample, numb_colum, inter_group, average, group_paths = self.binary_stat_test(df, gaf)
-                chrom = pos = type_var = ref = alt = "NA"
+                ref = alt = "NA"
                 common_data = (
-                f"{chrom}\t{pos}\t{snarl}\t{type_var}\t{ref}\t{alt}\t"
+                f"{chromosome}\t{position}\t{snarl}\t{type_var}\t{ref}\t{alt}\t"
                 f"{fisher_p_value}\t{chi2_p_value}\t{allele_number}\t{min_sample}\t"
                 f"{numb_colum}\t{inter_group}\t{average}")
                 data = f"{common_data}\t{group_paths}\n" if gaf else f"{common_data}\n"
@@ -171,11 +172,12 @@ class SnarlProcessor:
         with open(output, 'wb') as outf:
             headers = 'CHR\tPOS\tSNARL\tTYPE\tREF\tALT\tRSQUARED\tBETA\tSE\tP\tALLELE_NUM\n'
             outf.write(headers.encode('utf-8'))
-            for snarl, list_snarl in snarls.items() :
+            for snarl, snarl_info in snarls.items():
+                list_snarl, type_var, chromosome, position = snarl_info
                 df, allele_number = self.create_quantitative_table(list_snarl)
                 rsquared, beta, se, pvalue = self.linear_regression(df, quantitative_dict)
-                chrom = pos = type_var = ref = alt = "NA"
-                data = '{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\n'.format(chrom, pos, snarl, type_var, ref, alt, rsquared, beta, se, pvalue, allele_number)
+                ref = alt = "NA"
+                data = '{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\n'.format(chromosome, position, snarl, type_var, ref, alt, rsquared, beta, se, pvalue, allele_number)
                 outf.write(data.encode('utf-8'))
 
     def identify_correct_path(self, decomposed_snarl:list, idx_srr_save:list) -> list:

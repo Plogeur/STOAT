@@ -2,7 +2,6 @@ import bdsg # type: ignore
 import argparse
 from stoat import utils
 import re
-from collections import defaultdict
 import time 
 import os 
 
@@ -246,7 +245,7 @@ def loop_over_snarls_write(stree, snarls, pg, output_file, output_snarl_not_anal
     write_header_output(output_file)
     write_header_output_not_analyse(output_snarl_not_analyse)
 
-    snarl_paths = defaultdict(list)
+    snarl_paths = {}
     paths_number_analysis = 0
     time_threshold = 2 # 2s max per snarl analysis
 
@@ -291,7 +290,7 @@ def loop_over_snarls_write(stree, snarls, pg, output_file, output_snarl_not_anal
             write_output(output_file, snarl_id, pretty_paths, type_variants, chr, pos)
 
             if bool_return :
-                snarl_paths[snarl_id].extend(pretty_paths)
+                snarl_paths[snarl_id] = (pretty_paths, ','.join(type_variants), chr, pos)
             
             paths_number_analysis += len(pretty_paths)
 
