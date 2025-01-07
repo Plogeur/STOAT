@@ -41,7 +41,7 @@ jobs:
       run: |
         sudo apt-get install -y --no-install-recommends libjansson-dev doxygen
         git clone --recursive https://github.com/vgteam/libbdsg.git
-        pip3 install .
+        pip install .
 
     - name: Run pytest tests
       run: python3 -m pytest
