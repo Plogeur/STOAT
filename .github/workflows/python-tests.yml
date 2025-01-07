@@ -39,7 +39,6 @@ jobs:
 
     - name: Install libbdsg
       run: |
-        sudo apt-get install -y --no-install-recommends libjansson-dev doxygen
         git clone --recursive https://github.com/vgteam/libbdsg.git
         pip install .
 
