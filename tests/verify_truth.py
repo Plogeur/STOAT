@@ -28,7 +28,7 @@ def process_file(freq_file, threshold=0.2):
 
         path_list.append(f"{int(row_1['start_node'])}_{int(row_1['next_node'])}")
         list_diff.append(float(diff))
-    
+
     return path_list, true_labels, list_diff
 
 def split_snarl(input_str):
@@ -63,14 +63,11 @@ def match_snarl(path_list, true_labels, list_diff, p_value_file, paths_file, typ
         if not matched_row.empty:
             indices = matched_row.index
             split_paths = [paths_df[idx] for idx in indices]
-            # print("split_paths : ", split_paths)
+
             # Check if at least one path in the snarl contains the start node followed by the next node
             for idx_paths, list_path in enumerate(split_paths):
-                # print("list_path : ", list_path)
                 for path in list_path.split(',') :
-                    # print("path : ", path)
                     decomposed_path = [int(num) for num in re.findall(r'\d+', path)]
-                    # print("decomposed_path : ", decomposed_path)
                     if start_node in decomposed_path and next_node in decomposed_path:
                         matched_p_value = matched_row.loc[indices[idx_paths]]
                         if type_ == 'binary':  
@@ -79,7 +76,6 @@ def match_snarl(path_list, true_labels, list_diff, p_value_file, paths_file, typ
                             p_value = matched_p_value['P']
                         else :
                             raise ValueError("type_ must be binary or quantitative")
-                        # print("p_value : ", p_value)
 
                         predicted_labels_10_2.append(0 if p_value < 0.01 else 1)
                         predicted_labels_10_5.append(0 if p_value < 0.00001 else 1)

@@ -87,7 +87,7 @@ def calcul_type_variant(list_list_length_paths) :
 
         # Case simple path len 3
         elif len(path_lengths) == 3 :
-            list_type_variant.append("SNP" if path_lengths[1] == 1 else "INS")
+            list_type_variant.append("SNP" if path_lengths[1] == "1" else "INS")
 
         # length < 3 / Deletion
         else :
@@ -141,7 +141,7 @@ def follow_edges(stree, finished_paths, path, paths, pg) :
 def save_snarls(stree, root, pg, reference, pp_overlay):
 
     snarls = []
-    chr_pos = []
+    chr_pos = [("NA","NA")]
 
     def save_snarl_tree_node(net):
 

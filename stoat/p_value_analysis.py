@@ -96,7 +96,7 @@ def plot_manhattan_binary(file_path, output_manhattan="output_manhattan_plot.png
     # Clean data
     cleaned_data = data.dropna(subset=['CHR', 'P_FISHER', 'POS']).copy()
     cleaned_data.loc[:, 'POS'] = cleaned_data['POS'].apply(lambda x: int(str(x).split(',')[0]) if ',' in str(x) else int(x))
-    cleaned_data[:, 'P_FISHER'] = cleaned_data['P_FISHER'].apply(lambda x: max(x, 1e-300))  # Avoid log10(0)
+    cleaned_data.loc[:, 'P_FISHER'] = cleaned_data['P_FISHER'].apply(lambda x: max(x, 1e-300))  # Avoid log10(0)
     plot_data = cleaned_data[['CHR', 'POS', 'P_FISHER']].sort_values(by=['CHR', 'POS'])
 
     _, ax = plt.subplots(figsize=(12, 4), facecolor='w', edgecolor='k')

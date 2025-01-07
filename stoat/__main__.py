@@ -15,8 +15,9 @@ def main() :
 
     # Argument Parsing
     parser = argparse.ArgumentParser(description="Run the Stoat GWAS analysis pipeline")
-    parser.add_argument('-p', "--pg",type=utils.check_file, help='The input pangenome .pg file', required=False)
-    parser.add_argument('-d', "--dist",type=utils.check_file, help='The input distance index .dist file', required=False)
+    parser.add_argument("-p", "--pg",type=utils.check_file, help='The input pangenome .pg file', required=False)
+    parser.add_argument("-d", "--dist",type=utils.check_file, help='The input distance index .dist file', required=False)
+    parser.add_argument("-n", "--name",type=utils.check_file, help='The input chromosome prefix reference file', required=False)
     parser.add_argument("-t", "--threshold",type=list_snarl_paths.check_threshold, help='Children threshold', required=False)
     parser.add_argument("-v", "--vcf",type=utils.check_format_vcf_file, help="Path to the merged VCF file (.vcf or .vcf.gz)", required=True)
     parser.add_argument("-r", "--reference", type=utils.check_format_vcf_file, help="Path to the VCF file referencing all snarl positions (only .vcf)", required=False)
@@ -87,10 +88,16 @@ def main() :
     
     utils.check_matching(pheno, list_samples, args.quantitative)
 
-    if not args.listpath : 
+    if not args.listpath :
+        
+        if args.name :
+            reference = utils.parse_chr_reference(args.chr)
+        else :
+            reference = {"ref":0}
+            
         logger.info("Starting snarl path decomposition...")
-        stree, pg, root = list_snarl_paths.parse_graph_tree(args.pg, args.dist)
-        snarls = list_snarl_paths.save_snarls(stree, root)
+        stree, pg, root, pp_overlay = list_snarl_paths.parse_graph_tree(args.pg, args.dist)
+        snarls = list_snarl_paths.save_snarls(stree, root, pg, reference, pp_overlay)
         logger.info(f"Total of snarls found : {len(snarls)}")
         logger.info("Saving snarl path decomposition...")
 
