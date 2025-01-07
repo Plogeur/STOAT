@@ -37,7 +37,6 @@ jobs:
         doxygen \
         pkg-config \
         libjansson-dev \
-        sudo rm -rf /var/lib/apt/lists/*
 
     - name: Install requirements dependencies
       run: |
