@@ -140,13 +140,10 @@ def follow_edges(stree, finished_paths, path, paths, pg) :
 def save_snarls(stree, root, pg, reference, pp_overlay):
 
     snarls = []
-    chr_pos = [("NA","NA")]
+    chr_pos = []
 
     def save_snarl_tree_node(net):
 
-        if stree.is_snarl(net):
-            snarls.append({net : chr_pos[-1]})
-    
         def step_callback(step_handle):
             path_handle = pg.get_path_handle_of_step(step_handle)
             path_name = pg.get_path_name(path_handle)
@@ -154,7 +151,10 @@ def save_snarls(stree, root, pg, reference, pp_overlay):
                 position = pp_overlay.get_position_of_step(step_handle)
                 chr_pos.append((path_name, position))
             return True
-        
+
+        if stree.is_snarl(net):
+            snarls.append([net, chr_pos[-1][0], chr_pos[-1][1]])
+
         if stree.is_node(net):
             handle_t = stree.get_handle(net, pg)
             pg.for_each_step_on_handle(handle_t, step_callback)
@@ -162,7 +162,7 @@ def save_snarls(stree, root, pg, reference, pp_overlay):
         if not stree.is_node(net) and not stree.is_sentinel(net):
             stree.for_each_child(net, save_snarl_tree_node)
         return True 
-    
+
     stree.for_each_child(root, save_snarl_tree_node)
     return snarls
 
@@ -255,10 +255,8 @@ def loop_over_snarls_write(stree, snarls, pg, output_file, output_snarl_not_anal
         return (True)
 
     # for each snarl, lists paths through the netgraph and write to output TSV
-    for dict_snarl in snarls:
-    
-        snarl = list(dict_snarl.keys())[0]
-        chr, pos = dict_snarl[snarl]
+    for snarl, chr, pos in snarls:
+
         snarl_time = time.time()
         snarl_id = find_snarl_id(stree, snarl)
         not_break = True

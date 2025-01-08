@@ -240,18 +240,6 @@ def p_value_distribution_plink(test_predicted_labels, cleaned_true_labels, clean
     # Optionally, save the plot as an HTML file
     fig.write_html(f'{output}_pvalue_interactive.html')
 
-    # Extract the corresponding differences for false negatives
-    true_negative_diffs = [cleaned_list_diff[i]*100 for i in false_positive_indices]
-
-    # Plot the distribution of differences for false negatives
-    plt.figure(figsize=(10, 6))
-    sns.histplot(true_negative_diffs, bins=20, kde=True, color='blue')
-    plt.title("Distribution of Differences for False Positives", fontsize=16)
-    plt.xlabel("Difference (%)", fontsize=14)
-    plt.ylabel("Frequency", fontsize=14)
-    plt.grid(False)
-    plt.savefig(f'{output}_distribution_false_pos.png', format='png', dpi=300)
-
 def p_value_distribution(test_predicted_labels, cleaned_true_labels, list_diff, p_value, num_sample, output):
     
     false_positive_indices = [
@@ -319,18 +307,6 @@ def p_value_distribution(test_predicted_labels, cleaned_true_labels, list_diff, 
 
     # Optionally, save the plot as an HTML file
     fig.write_html(f'{output}_pvalue_interactive.html')
-
-    # Extract the corresponding differences for false negatives
-    true_negative_diffs = [list_diff[i]*100 for i in false_positive_indices]
-
-    # Plot the distribution of differences for false negatives
-    plt.figure(figsize=(10, 6))
-    sns.histplot(true_negative_diffs, bins=20, kde=True, color='blue')
-    plt.title("Distribution of Differences for False Positives", fontsize=16)
-    plt.xlabel("Difference (%)", fontsize=14)
-    plt.ylabel("Frequency", fontsize=14)
-    plt.grid(False)
-    plt.savefig(f'{output}_distribution_false_pos.png', format='png', dpi=300)
 
 def plot_diff_distribution(test_predicted_labels:list, cleaned_true_labels:list, clean_list_diff:list, output:str, pvalue:list):
 
