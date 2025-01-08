@@ -51,7 +51,7 @@ def write_pos_snarl(vcf_file, output_file, type):
         if type == "quantitatif" :
             out_f.write("CHR\tPOS\tSNARL\tTYPE\tREF\tALT\tRSQUARED\tBETA\tSE\tP\tALLELE_NUM\n")
         elif type == "binary" :
-            out_f.write("CHR\tPOS\tSNARL\tTYPE\tREF\tALT\tP_FISHER\tP_CHI2\tTOTAL_SUM\tMIN_ROW_INDEX\tNUM_COLUM\tINTER_GROUP\tAVERAGE\tGROUP_PATHS\n")
+            out_f.write("CHR\tPOS\tSNARL\tTYPE\tREF\tALT\tP_FISHER\tP_CHI2\tALLELE_NUM\tMIN_ROW_INDEX\tNUM_COLUM\tINTER_GROUP\tAVERAGE\tGROUP_PATHS\n")
         next(in_f)
         for line in in_f:
             columns = line.strip().split('\t')
@@ -74,8 +74,6 @@ def write_pos_snarl(vcf_file, output_file, type):
             columns[3] = ",".join(map(str, list_type_var))
             columns[4] = ",".join(map(str, ref_list))
             columns[5] = ":".join([",".join(map(str, sublist)) for sublist in list_list_alt])
-            # I got a list of list of str i want that columns[5] get 
-            # a list of str with "," separator of each element in the sublist and ":" separator of each sublist
 
             # Write the modified line to the temp file
             out_f.write('\t'.join(columns) + '\n')
@@ -88,7 +86,7 @@ def write_dic(vcf_dict, fields):
     chr, pos, snarl_raw, ref, alt = fields[0], fields[1], fields[2], fields[3], fields[4]
 
     # Process snarl, ref, and alt
-    snarl = modify_snarl(snarl_raw)  # Pre-defined function
+    snarl = modify_snarl(snarl_raw)
     alt = alt.split(",") if "," in alt else [alt]
 
     # Determine variant type

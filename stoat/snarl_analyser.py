@@ -151,15 +151,16 @@ class SnarlProcessor:
         with open(output, 'wb') as outf:
             outf.write(headers.encode('utf-8'))
                 
-            for snarl, list_snarl in snarls.items():
+            for snarl, snarl_info in snarls.items():
+                list_snarl, type_var, chromosome, position = snarl_info
                 # Create the binary table, considering covariates if provided
                 df = self.create_binary_table(binary_groups, list_snarl)
 
                 # Perform statistical tests and compute descriptive statistics
                 fisher_p_value, chi2_p_value, allele_number, min_sample, numb_colum, inter_group, average, group_paths = self.binary_stat_test(df, gaf)
-                chrom = pos = type_var = ref = alt = "NA"
+                ref = alt = "NA"
                 common_data = (
-                f"{chrom}\t{pos}\t{snarl}\t{type_var}\t{ref}\t{alt}\t"
+                f"{chromosome}\t{position}\t{snarl}\t{type_var}\t{ref}\t{alt}\t"
                 f"{fisher_p_value}\t{chi2_p_value}\t{allele_number}\t{min_sample}\t"
                 f"{numb_colum}\t{inter_group}\t{average}")
                 data = f"{common_data}\t{group_paths}\n" if gaf else f"{common_data}\n"
@@ -171,11 +172,12 @@ class SnarlProcessor:
         with open(output, 'wb') as outf:
             headers = 'CHR\tPOS\tSNARL\tTYPE\tREF\tALT\tRSQUARED\tBETA\tSE\tP\tALLELE_NUM\n'
             outf.write(headers.encode('utf-8'))
-            for snarl, list_snarl in snarls.items() :
+            for snarl, snarl_info in snarls.items():
+                list_snarl, type_var, chromosome, position = snarl_info
                 df, allele_number = self.create_quantitative_table(list_snarl)
                 rsquared, beta, se, pvalue = self.linear_regression(df, quantitative_dict)
-                chrom = pos = type_var = ref = alt = "NA"
-                data = '{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\n'.format(chrom, pos, snarl, type_var, ref, alt, rsquared, beta, se, pvalue, allele_number)
+                ref = alt = "NA"
+                data = '{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\n'.format(chromosome, position, snarl, type_var, ref, alt, rsquared, beta, se, pvalue, allele_number)
                 outf.write(data.encode('utf-8'))
 
     def identify_correct_path(self, decomposed_snarl:list, idx_srr_save:list) -> list:
@@ -263,10 +265,14 @@ class SnarlProcessor:
         x_with_const = sm.add_constant(x)
         result = sm.OLS(y, x_with_const).fit()
 
-        rsquared = f"{result.rsquared:.4e}"
-        beta_mean = f"{result.params.mean():.4e}"  # Mean of beta coefficients
-        se_mean = f"{result.bse.mean():.4e}"       # Mean of standard errors
-        formatted_p_value = f"{result.f_pvalue:.4e}"
+        rsquared = f"{result.rsquared:.4e}" if result.rsquared < 0.0001 else f"{result.rsquared:.4f}"
+
+        # Mean of beta coefficients
+        beta_mean = f"{result.params.mean():.4e}" if result.params.mean() < 0.0001 else f"{result.params.mean():.4f}"
+
+        # Mean of standard errors
+        se_mean = f"{result.bse.mean():.4e}" if result.bse.mean() < 0.0001 else f"{result.bse.mean():.4f}"
+        formatted_p_value = f"{result.f_pvalue:.4e}" if result.f_pvalue < 0.0001 else f"{result.f_pvalue:.4f}"
 
         return rsquared, beta_mean, se_mean, formatted_p_value
 
@@ -304,7 +310,7 @@ class SnarlProcessor:
         if df.shape[1] >= 2 and np.all(df.sum(axis=0)) and np.all(df.sum(axis=1)):
             # Perform Chi-Square test
             p_value = chi2_contingency(df)[1] # from scipy.stats import chi2_contingency
-            p_value = f"{p_value:.4e}"
+            p_value = f"{p_value:.4e}" if p_value < 0.0001 else f"{p_value:.4f}"
 
         else:
             p_value = "NA"
@@ -316,7 +322,7 @@ class SnarlProcessor:
 
         try:
             p_value = fisher_exact(df)[1] # from scipy.stats import fisher_exact
-            p_value = f"{p_value:.4e}"
+            p_value = f"{p_value:.4e}" if p_value < 0.0001 else f"{p_value:.4f}"
 
         except ValueError as e:
             p_value = 'NA'
@@ -398,7 +404,6 @@ if __name__ == "__main__" :
         binary_group = utils.parse_pheno_binary_file(args.binary)
         vcf_object.binary_table(snarl, binary_group, covar, output=output)
 
-    # python3 stoat/snarl_analyser.py tests/other_files/big_vcf.vcf tests/other_files/list_snarl_short.txt -b tests/other_files/group.txt
     # python3 stoat/snarl_analyser.py ../snarl_data/fly.merged.vcf output/test_list_snarl.tsv -b ../snarl_data/group.txt
     # python3 stoat/snarl_analyser.py tests/simulation/binary_data/merged_output.vcf tests/simulation/binary_data/snarl_paths.tsv -q tests/simulation/binary_data/phenotype.tsv -o tests/binary_tests_output/binary_output.tsv
 
@@ -406,7 +411,6 @@ if __name__ == "__main__" :
         quantitative_dict = utils.parse_pheno_quantitatif_file(args.quantitative)
         vcf_object.quantitative_table(snarl, quantitative_dict, covar, output=output)
 
-    # python3 stoat/snarl_analyser.py tests/other_files/big_vcf.vcf tests/other_files/list_snarl_short.txt -q tests/other_files/pheno.txt
     # python3 stoat/snarl_analyser.py tests/simulation/quantitative_data/merged_output.vcf tests/simulation/quantitative_data/snarl_paths.tsv -q tests/simulation/quantitative_data/phenotype.tsv -o tests/quantitative_tests_output/quantitative_output.tsv
 
     print(f"Time P-value : {time.time() - start} s")

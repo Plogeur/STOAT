@@ -83,7 +83,7 @@ def parse_input_file(input_file, snarl_dic, pg, output_file):
             decomposed_group_paths = group_paths.split(',')
 
             try :
-                list_path = snarl_dic[snarl]
+                list_path = snarl_dic[snarl][0]
             except :
                 raise ValueError(f"{snarl} not found in path list file")
 

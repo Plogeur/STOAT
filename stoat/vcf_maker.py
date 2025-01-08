@@ -64,11 +64,6 @@ def create_vcf_from_gwas(gwas_file, input_vcf, output_vcf):
                 for idx, pos in enumerate(list_pos) :
                     dict_pos[pos] = [list_list_ref[idx], list_list_alt[idx]]
 
-                if snarl_id == "5262717_5262719" :
-                    print("list_pos : ", list_pos)
-                    print("list_ref : ", list_ref)
-                    print("list_list_alt : ", list_list_alt)
-
                 for pos, [list_ref, list_alt] in dict_pos.items() :
                     for ref, alt in zip(list_ref, list_alt) :
                         # Create and write the VCF line

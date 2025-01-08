@@ -8,3 +8,5 @@ tests/.DS_Store
 stoat/.DS_Store
 STOAT.egg-info
 .DS_Store
+htmlcov
+.coverage

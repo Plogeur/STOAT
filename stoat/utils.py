@@ -2,7 +2,6 @@ from cyvcf2 import VCF # type: ignore
 import argparse
 import numpy as np # type: ignore
 import pandas as pd # type: ignore
-from collections import defaultdict
 import os
 
 # ----------------- Parse functions -----------------
@@ -54,7 +53,7 @@ def parse_pheno_quantitatif_file(file_path:str) -> dict:
 def parse_snarl_path_file(path_file:str) -> tuple[dict, int]:
     
     # Initialize an empty dictionary for the snarl paths
-    snarl_paths = defaultdict(list)
+    snarl_paths = {}
     snarl_number_analysis = 0
 
     # Read the file into a pandas DataFrame
@@ -62,8 +61,8 @@ def parse_snarl_path_file(path_file:str) -> tuple[dict, int]:
     df['paths'] = df['paths'].str.split(',')
 
     # Create the dictionary with snarl as key and paths as values
-    for snarl, paths in zip(df['snarl'], df['paths']):
-        snarl_paths[snarl].extend(paths)
+    for snarl, paths, type, chr, pos in zip(df['snarl'], df['paths'], df['type'], df['chr'], df['pos']):
+        snarl_paths[snarl] = (paths, type, chr, pos)
         snarl_number_analysis += 1
 
     return snarl_paths, snarl_number_analysis
@@ -134,7 +133,7 @@ def check_format_list_path(file_path:str) -> str:
     with open(file_path, 'r') as file:
         # Read and validate the header
         first_line = file.readline().strip()
-        expected_header = 'snarl\tpaths\ttype'
+        expected_header = 'snarl\tpaths\ttype\tchr\tpos'
         if first_line != expected_header:
             raise argparse.ArgumentTypeError(
                 f"The file must start with the following header: '{expected_header}' and be split by tabulation"
@@ -143,9 +142,9 @@ def check_format_list_path(file_path:str) -> str:
         # Validate all other lines
         for line_number, line in enumerate(file, start=2):  # Start at 2 for line number after header
             columns = line.strip().split('\t')
-            if len(columns) != 3:
+            if len(columns) != 5:
                 raise argparse.ArgumentTypeError(
-                    f"Line {line_number} must contain exactly 3 columns, but {len(columns)} columns were found."
+                    f"Line {line_number} must contain exactly 5 columns, but {len(columns)} columns were found."
                 )
             if not all(isinstance(col, str) and col.strip() for col in columns):
                 raise argparse.ArgumentTypeError(
