@@ -50,22 +50,32 @@ def parse_pheno_quantitatif_file(file_path:str) -> dict:
     quantitative_pheno = dict(zip(df['IID'], df['PHENO']))
     return quantitative_pheno
 
-def parse_snarl_path_file(path_file:str) -> tuple[dict, int]:
+def parse_snarl_path_file(path_file:str) -> tuple[list, int]:
     
-    # Initialize an empty dictionary for the snarl paths
-    snarl_paths = {}
+    # Initialize an empty list for the snarl paths
+    snarl_paths = []
     snarl_number_analysis = 0
 
     # Read the file into a pandas DataFrame
     df = pd.read_csv(path_file, sep='\t', dtype=str)
     df['paths'] = df['paths'].str.split(',')
 
-    # Create the dictionary with snarl as key and paths as values
     for snarl, paths, type, chr, pos in zip(df['snarl'], df['paths'], df['type'], df['chr'], df['pos']):
-        snarl_paths[snarl] = (paths, type, chr, pos)
+        snarl_paths.append((snarl, paths, type, chr, pos))
         snarl_number_analysis += 1
 
     return snarl_paths, snarl_number_analysis
+
+def parse_snarl_path_file_dict(path_file:str) -> tuple[dict, int]:
+    
+    snarl_paths = {}
+    df = pd.read_csv(path_file, sep='\t', dtype=str)
+    df['paths'] = df['paths'].str.split(',')
+    for snarl, paths, type, chr, pos in zip(df['snarl'], df['paths'], df['type'], df['chr'], df['pos']):
+        snarl_paths[snarl] = (paths, type, chr, pos)
+
+    return snarl_paths
+
 
 def parse_plink_grm(prefix: str) -> pd.DataFrame:
     """ Parse PLINK GRM binary files and return the kinship matrix as a pandas DataFrame. """

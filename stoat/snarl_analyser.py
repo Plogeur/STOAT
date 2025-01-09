@@ -142,7 +142,7 @@ class SnarlProcessor:
 
         self.matrix.set_row_header(row_header_dict)
 
-    def binary_table(self, snarls:dict, binary_groups:tuple[dict, dict], kinship_matrix:pd.DataFrame=None, covar:Optional[dict]=None, gaf:bool=False, output:str="output/binary_output.tsv"):
+    def binary_table(self, snarls:list, binary_groups:tuple[dict, dict], kinship_matrix:pd.DataFrame=None, covar:Optional[dict]=None, gaf:bool=False, output:str="output/binary_output.tsv"):
         """
         Generate a binary table with statistical results and write to a file.
         """
@@ -155,8 +155,8 @@ class SnarlProcessor:
         with open(output, 'wb') as outf:
             outf.write(headers.encode('utf-8'))
                 
-            for snarl, snarl_info in snarls.items():
-                list_snarl, type_var, chromosome, position = snarl_info
+            for snarl_info in snarls:
+                snarl, list_snarl, type_var, chromosome, position = snarl_info
                 # Create the binary table, considering covariates if provided
                 df = self.create_binary_table(binary_groups, list_snarl)
 
@@ -171,13 +171,13 @@ class SnarlProcessor:
             
                 outf.write(data.encode('utf-8'))
 
-    def quantitative_table(self, snarls:dict, quantitative_dict:dict, kinship_matrix:pd.DataFrame=None, covar:Optional[dict]=None, output:str="output/quantitative_output.tsv") :
+    def quantitative_table(self, snarls:list, quantitative_dict:dict, kinship_matrix:pd.DataFrame=None, covar:Optional[dict]=None, output:str="output/quantitative_output.tsv") :
 
         with open(output, 'wb') as outf:
             headers = 'CHR\tPOS\tSNARL\tTYPE\tREF\tALT\tRSQUARED\tBETA\tSE\tP\tALLELE_NUM\n'
             outf.write(headers.encode('utf-8'))
-            for snarl, snarl_info in snarls.items():
-                list_snarl, type_var, chromosome, position = snarl_info
+            for snarl_info in snarls:
+                snarl, list_snarl, type_var, chromosome, position = snarl_info
                 df, allele_number = self.create_quantitative_table(list_snarl)
                 rsquared, beta, se, pvalue = self.linear_regression(df, quantitative_dict)
                 ref = alt = "NA"

@@ -128,7 +128,7 @@ def follow_edges(stree, finished_paths, path, paths, pg) :
         return True
 
     # from the last thing in the path
-    stree.follow_net_edges(path[-1], pg, False, add_to_path)
+    stree.follow_net_edges(path[-1], pg, False, lambda n: add_to_path(n))
 
 def save_snarls(stree, root, pg, reference, pp_overlay):
 
@@ -191,7 +191,7 @@ def fill_pretty_paths(stree, pg, finished_paths) :
                 length_net.append(str(stree.node_length(net)))
 
             # case trivial_chain : get the first node length
-            elif stree.is_trivial_chain(net) :
+            if stree.is_trivial_chain(net) :
                 ppath.addNodeHandle(net, stree)
                 stn_start = stree.get_bound(net, False, True)
                 node_start_id = stree.node_id(stn_start)
@@ -270,7 +270,7 @@ def loop_over_snarls_write(stree, snarls, pg, output_file, output_snarl_not_anal
                 out_snarl.write('{}\t{}\t{}\t{}\t{}\n'.format(snarl_id, ','.join(pretty_paths), ','.join(type_variants), chr, pos))
 
                 if bool_return :
-                    snarl_paths.append(snarl_id, pretty_paths, ','.join(type_variants), chr, pos)
+                    snarl_paths.append((snarl_id, pretty_paths, ','.join(type_variants), chr, pos))
                 
                 paths_number_analysis += len(pretty_paths)
 
@@ -283,11 +283,11 @@ if __name__ == "__main__" :
     parser.add_argument('-d', type=utils.check_file, help='The input distance index .dist file', required=True)
     parser.add_argument('-c', "--chr", type=utils.check_file, help='The input reference chr file', required=True)
     parser.add_argument("-t", type=check_threshold, help='Children threshold', required=False)
-    parser.add_argument('-o', help='output file', type=str, required=False)
+    parser.add_argument('-o', help='output dir', type=str, required=False)
     args = parser.parse_args()
 
     reference = utils.parse_chr_reference(args.chr)
-    output_dir = args.o or "output"    
+    output_dir = args.o or "output"
     os.makedirs(output_dir, exist_ok=True)
     output = os.path.join(output_dir, "list_snarl_paths.tsv")
     output_snarl_not_analyse = os.path.join(output_dir, "snarl_not_analyse.tsv")

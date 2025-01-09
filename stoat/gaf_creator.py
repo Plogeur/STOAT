@@ -66,7 +66,7 @@ def write_gaf_lines(sequence_name : str, path : str, length : int, proportion : 
     gaf_line = f"{sequence_name}\t{length}\t0\t{length}\t+\t{path}\t{length}\t0\t{length}\t{length}\t{length}\t{proportion}\tcs:Z::{length}\n"
     outfile.write(gaf_line)
 
-def parse_input_file(input_file, snarl_dic, pg, output_file):
+def parse_input_file(input_file, snarl_list, pg, output_file):
     output_file_1 = add_suffix_to_filename(output_file, "_0") # group 1
     output_file_2 = add_suffix_to_filename(output_file, "_1") # group 2
 
@@ -83,7 +83,7 @@ def parse_input_file(input_file, snarl_dic, pg, output_file):
             decomposed_group_paths = group_paths.split(',')
 
             try :
-                list_path = snarl_dic[snarl][0]
+                list_path = [sublist[1] for sublist in snarl_list if sublist[0] == snarl][0] # TODO optimize
             except :
                 raise ValueError(f"{snarl} not found in path list file")
 
@@ -164,7 +164,7 @@ if __name__ == "__main__":
     output = os.path.join(output_dir, "output.gaf")
 
     pg = parse_graph_tree(args.pg)
-    snarl_dic = utils.parse_snarl_path_file(args.pathlist)[0]
-    parse_input_file(args.gwas, snarl_dic, pg, output)
+    snarl_list = utils.parse_snarl_path_file(args.pathlist)
+    parse_input_file(args.gwas, snarl_list, pg, output)
 
 # python3 src/gaf_creator.py -g tests/simulation/expected_binary/binary_analysis_pos.assoc.tsv -l tests/simulation/binary_data/snarl_paths.tsv -p tests/simulation/binary_data/pg.full.pg 

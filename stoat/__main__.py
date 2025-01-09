@@ -140,7 +140,7 @@ def main() :
         if gaf :
             output_gaf = os.path.join(output_dir, "group_paths.gaf")
             logger.info("GAF creation...")
-            gaf_creator.parse_input_file(output_snarl, snarl_paths, pg, output_gaf)
+            gaf_creator.parse_input_file(output_significative, snarl_paths, pg, output_gaf)
  
     # Handle Quantitative Analysis
     elif args.quantitative:
@@ -170,9 +170,9 @@ Usage example:
     -r ../droso_data/fly/fly.deconstruct.vcf -q ../droso_data/pangenome_phenotype.tsv -o output
 
 Usage test:
-    stoat -p tests/simulation/binary_data/pg.full.pg -d tests/simulation/binary_data/pg.dist -v tests/simulation/binary_data/binary.decomposed.vcf \
+    stoat -p tests/simulation/binary_data/pg.pg -d tests/simulation/binary_data/pg.dist -v tests/simulation/binary_data/binary.decomposed.vcf \
     -b tests/simulation/binary_data/phenotype.tsv --gaf -o output
 
-    stoat -p tests/simulation/quantitative_data/pg.full.pg -d tests/simulation/quantitative_data/pg.dist -v tests/simulation/quantitative_data/quantitative.decomposed.vcf \
+    stoat -p tests/simulation/quantitative_data/pg.pg -d tests/simulation/quantitative_data/pg.dist -v tests/simulation/quantitative_data/quantitative.decomposed.vcf \
     -q tests/simulation/quantitative_data/phenotype.tsv -o output
 """
