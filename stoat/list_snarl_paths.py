@@ -67,12 +67,6 @@ class Path:
         # counts how many nodes are traversed in reverse
         return (sum(['<' == orient for orient in self.orients]))
 
-def split_paths(path) :
-    return re.findall(r'\d+', path)
-
-def length_node(pg, node_id) :
-    return pg.get_length(node_id)
-
 def calcul_type_variant(list_list_length_paths) :
     """ 
     Calcul type variant of a tested snarl
@@ -127,7 +121,6 @@ def follow_edges(stree, finished_paths, path, paths, pg) :
                 # Case where we find a loop 
                 if stree.net_handle_as_string(i) == stree.net_handle_as_string(next_child) :
                     return False
-                
             paths.append([])
             for net in path:
                 paths[-1].append(net)
@@ -191,7 +184,7 @@ def fill_pretty_paths(stree, pg, finished_paths) :
         for net in path :
             if stree.is_sentinel(net) :
                 net = stree.get_node_from_sentinel(net)
- 
+
             # case node : get the node length
             if stree.is_node(net) :
                 ppath.addNodeHandle(net, stree)
@@ -224,73 +217,62 @@ def fill_pretty_paths(stree, pg, finished_paths) :
     assert len(type_variants) == len(pretty_paths)
     return pretty_paths, type_variants
 
-def write_header_output(output_file) :
-    with open(output_file, 'w') as outf:
-        outf.write('snarl\tpaths\ttype\tchr\tpos\n')
-
-def write_output(output_file, snarl_id, pretty_paths, type_variants, chr, pos) :
-    with open(output_file, 'a') as outf:
-        outf.write('{}\t{}\t{}\t{}\t{}\n'.format(snarl_id, ','.join(pretty_paths), ','.join(type_variants), chr, pos))
-
-def write_header_output_not_analyse(output_file) :
-    with open(output_file, 'w') as outf:
-        outf.write('snarl\treason\n')
-
 def write_output_not_analyse(output_file, snarl_id, reason) :
     with open(output_file, 'a') as outf:
         outf.write('{}\t{}\n'.format(snarl_id, reason))
 
 def loop_over_snarls_write(stree, snarls, pg, output_file, output_snarl_not_analyse, children_treshold=50, bool_return=True) :
 
-    write_header_output(output_file)
-    write_header_output_not_analyse(output_snarl_not_analyse)
+    with open(output_file, 'w') as out_snarl, open(output_snarl_not_analyse, 'w') as out_fail:
+        out_snarl.write('snarl\tpaths\ttype\tchr\tpos\n')
+        out_fail.write('snarl\treason\n')
 
-    snarl_paths = {}
-    paths_number_analysis = 0
-    time_threshold = 2 # 2s max per snarl analysis
+        snarl_paths = []
+        paths_number_analysis = 0
+        time_threshold = 2 # 2s max per snarl analysis
 
-    children = [0]
-    def count_children(net):
-        children[0] += 1
-        return (True)
-
-    # for each snarl, lists paths through the netgraph and write to output TSV
-    for snarl, chr, pos in snarls:
-
-        snarl_time = time.time()
-        snarl_id = find_snarl_id(stree, snarl)
-        not_break = True
         children = [0]
+        def count_children(net):
+            children[0] += 1
+            return (True)
 
-        stree.for_each_child(snarl, count_children)
-        if children[0] > children_treshold :
-            write_output_not_analyse(output_snarl_not_analyse, snarl_id, "too_many_children")
-            continue
+        # for each snarl, lists paths through the netgraph and write to output TSV
+        for snarl, chr, pos in snarls:
 
-        # we'll traverse the netgraph starting at the left boundary
-        # init unfinished paths to the first boundary node
-        paths = [[stree.get_bound(snarl, False, True)]]
-        finished_paths = []
-        while len(paths) > 0 :
-            path = paths.pop()
-    
-            if time.time() - snarl_time > time_threshold :
-                write_output_not_analyse(output_snarl_not_analyse, snarl_id, "time_calculation_out")
-                not_break = False
-                break
+            snarl_time = time.time()
+            snarl_id = find_snarl_id(stree, snarl)
+            not_break = True
+            children = [0]
 
-            follow_edges(stree, finished_paths, path, paths, pg)
+            stree.for_each_child(snarl, count_children)
+            if children[0] > children_treshold :
+                out_fail.write('{}\t{}\n'.format(snarl_id, "too_many_children"))
+                continue
 
-        if not_break :
+            # we'll traverse the netgraph starting at the left boundary
+            # init unfinished paths to the first boundary node
+            paths = [[stree.get_bound(snarl, False, True)]]
+            finished_paths = []
+            while len(paths) > 0 :
+                path = paths.pop()
+        
+                if time.time() - snarl_time > time_threshold :
+                    out_fail.write('{}\t{}\n'.format(snarl_id, "time_calculation_out"))
+                    not_break = False
+                    break
 
-            # prepare path list to output and write each path directly to the file
-            pretty_paths, type_variants = fill_pretty_paths(stree, pg, finished_paths)
-            write_output(output_file, snarl_id, pretty_paths, type_variants, chr, pos)
+                follow_edges(stree, finished_paths, path, paths, pg)
 
-            if bool_return :
-                snarl_paths[snarl_id] = (pretty_paths, ','.join(type_variants), chr, pos)
-            
-            paths_number_analysis += len(pretty_paths)
+            if not_break :
+
+                # prepare path list to output and write each path directly to the file
+                pretty_paths, type_variants = fill_pretty_paths(stree, pg, finished_paths)
+                out_snarl.write('{}\t{}\t{}\t{}\t{}\n'.format(snarl_id, ','.join(pretty_paths), ','.join(type_variants), chr, pos))
+
+                if bool_return :
+                    snarl_paths.append(snarl_id, pretty_paths, ','.join(type_variants), chr, pos)
+                
+                paths_number_analysis += len(pretty_paths)
 
     return snarl_paths, paths_number_analysis
 
