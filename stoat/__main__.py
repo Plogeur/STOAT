@@ -3,7 +3,7 @@ from stoat import list_snarl_paths
 from stoat import snarl_analyser
 from stoat import utils
 from stoat import p_value_analysis
-from stoat import write_position
+#from stoat import write_position
 from stoat import gaf_creator
 import time
 import logging
@@ -20,7 +20,7 @@ def main() :
     parser.add_argument("-n", "--name",type=utils.check_file, help='The input chromosome prefix reference file', required=False)
     parser.add_argument("-t", "--threshold",type=list_snarl_paths.check_threshold, help='Children threshold', required=False)
     parser.add_argument("-v", "--vcf",type=utils.check_format_vcf_file, help="Path to the merged VCF file (.vcf or .vcf.gz)", required=True)
-    parser.add_argument("-r", "--reference", type=utils.check_format_vcf_file, help="Path to the VCF file referencing all snarl positions (only .vcf)", required=False)
+    # parser.add_argument("-r", "--reference", type=utils.check_format_vcf_file, help="Path to the VCF file referencing all snarl positions (only .vcf)", required=False)
     parser.add_argument("-l", "--listpath", type=utils.check_format_list_path, help="Path to the list paths", required=False)
 
     group = parser.add_mutually_exclusive_group(required=True)
@@ -118,7 +118,7 @@ def main() :
     vcf_object = snarl_analyser.SnarlProcessor(args.vcf, list_samples)
     logger.info("Starting fill matrix...")
     vcf_object.fill_matrix()
-    reference_vcf = args.reference if args.reference else args.vcf
+    # reference_vcf = args.reference if args.reference else args.vcf
 
     # Step 3: P-value Analysis (Binary or Quantitative)
     # Handle Binary Analysis
@@ -127,7 +127,7 @@ def main() :
         output_snarl = os.path.join(output_dir, "binary_analysis.tsv")
         logger.info("Binary table creation...")
         vcf_object.binary_table(snarl_paths, pheno, kinship_matrix, covar, gaf, output_snarl)
-        logger.info("Writing position...")
+        # logger.info("Writing position...")
         # write_position.write_pos_snarl(reference_vcf, output_snarl, "binary")
 
         output_manh = os.path.join(output_dir, "manhattan_plot_binary.png")
@@ -147,7 +147,7 @@ def main() :
         output_file = os.path.join(output_dir, "quantitative_analysis.tsv")
         logger.info("Quantitative table creation...")
         vcf_object.quantitative_table(snarl_paths, pheno, kinship_matrix, covar, output_file)
-        logger.info("Writing position...")
+        # logger.info("Writing position...")
         # write_position.write_pos_snarl(reference_vcf, output_file, "quantitatif")
 
         output_manh = os.path.join(output_dir, "manhattan_plot_quantitative.png")

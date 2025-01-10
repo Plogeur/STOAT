@@ -453,8 +453,8 @@ if __name__ == "__main__":
     tests/binary_tests_output/binary_test.assoc.tsv tests/simulation/binary_data/snarl_paths.tsv -b
 
     python3 tests/verify_truth.py tests/simulation/quantitative_data/pg.snarls.freq.tsv \
-    tests/quantitative_tests_output/plink.assoc.linear tests/simulation/quantitative_data/snarl_paths.tsv -p tests/simulation/quantitative_data/merged_output.vcf
+    tests/plink_tests_output/plink_quantitative.tsv tests/simulation/quantitative_data/snarl_paths.tsv -p tests/plink_tests_output/test_vcf_quantitative.vcf
 
     python3 tests/verify_truth.py tests/simulation/binary_data/pg.snarls.freq.tsv \
-    tests/binary_tests_output/plink.assoc.logistic tests/simulation/binary_data/snarl_paths.tsv -p tests/simulation/binary_data/merged_output.vcf
+    tests/plink_tests_output/plink_binary.tsv tests/simulation/binary_data/snarl_paths.tsv -p tests/plink_tests_output/test_vcf_binary.vcf
     """
