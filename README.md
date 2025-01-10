@@ -191,5 +191,3 @@ Description : Color represente the different paths group (red : group 1 & blue :
 - [ ] Implement LMM (Linear Mixed Models).
 
 - [ ] Correct GitHub Actions.
-
-- [ ] Test simulation data on plink and compare against stoat.
