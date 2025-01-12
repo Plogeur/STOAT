@@ -317,12 +317,12 @@ if __name__ == "__main__" :
     parser = argparse.ArgumentParser('List path through the netgraph of each snarl in a pangenome')
     parser.add_argument('-p', type=utils.check_file, help='The input pangenome .pg file', required=True)
     parser.add_argument('-d', type=utils.check_file, help='The input distance index .dist file', required=True)
-    parser.add_argument('-c', "--chr", type=utils.check_file, help='The input reference chr file', required=True)
+    parser.add_argument('-c', "--chr", type=utils.check_file, help='The input reference chr file', required=False)
     parser.add_argument("-t", type=check_threshold, help='Children threshold', required=False)
     parser.add_argument('-o', help='output dir', type=str, required=False)
     args = parser.parse_args()
 
-    reference = utils.parse_chr_reference(args.chr)
+    reference = utils.parse_chr_reference(args.chr) if args.chr else "ref"
     output_dir = args.o or "output"
     os.makedirs(output_dir, exist_ok=True)
     output = os.path.join(output_dir, "list_snarl_paths.tsv")

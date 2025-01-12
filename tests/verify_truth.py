@@ -35,6 +35,29 @@ def split_snarl(input_str):
     # Split the string and filter empty elements, then convert to integers
     return [int(num) for num in re.split(r'[><]', input_str) if num]
 
+def check_valid_snarl(start_node, next_node, snarl_list) :
+    """
+    Check if a valid snarl exists in the snarl_list.
+
+    A valid snarl is defined as:
+    - At least one path contains both start_node and next_node.
+    - At least one path does NOT contain either start_node or next_node.
+    """
+    contains_both = False
+    contains_either_absent = False
+
+    for path in snarl_list:
+        decomposed_path = {int(num) for num in re.findall(r'\d+', path)}  # Use set for faster membership checks
+        if start_node in decomposed_path and next_node in decomposed_path:
+            contains_both = True
+        else:
+            contains_either_absent = True
+
+        if contains_both and contains_either_absent:  # Early exit if both conditions are met
+            return True
+
+    return False
+
 def match_snarl(path_list, true_labels, list_diff, p_value_file, paths_file, type_):
 
     p_value_df = pd.read_csv(p_value_file, sep='\t')
@@ -43,6 +66,8 @@ def match_snarl(path_list, true_labels, list_diff, p_value_file, paths_file, typ
         split = p_value_df['SNARL'].str.split('_')
 
     # To store predicted labels
+    references = []
+    alternative = []
     predicted_labels_10_2 = []
     predicted_labels_10_5 = []
     predicted_labels_10_8 = []
@@ -66,27 +91,26 @@ def match_snarl(path_list, true_labels, list_diff, p_value_file, paths_file, typ
 
             # Check if at least one path in the snarl contains the start node followed by the next node
             for idx_paths, list_path in enumerate(split_paths):
-                for path in list_path.split(',') :
-                    decomposed_path = [int(num) for num in re.findall(r'\d+', path)]
-                    if start_node in decomposed_path and next_node in decomposed_path:
-                        matched_p_value = matched_row.loc[indices[idx_paths]]
-                        if type_ == 'binary':  
-                            p_value = matched_p_value['P_FISHER']
-                        elif type_ == 'quantitative':
-                            p_value = matched_p_value['P']
-                        else :
-                            raise ValueError("type_ must be binary or quantitative")
+                if check_valid_snarl(start_node, next_node, list_path.split(',')) : 
+                    matched_p_value = matched_row.loc[indices[idx_paths]]
+                    if type_ == 'binary':  
+                        p_value = matched_p_value['P_FISHER']
+                    elif type_ == 'quantitative':
+                        p_value = matched_p_value['P']
+                    else :
+                        raise ValueError("type_ must be binary or quantitative")
 
-                        predicted_labels_10_2.append(0 if p_value < 0.01 else 1)
-                        predicted_labels_10_5.append(0 if p_value < 0.00001 else 1)
-                        predicted_labels_10_8.append(0 if p_value < 0.00000001 else 1)
-                        cleaned_true_labels.append(true_labels[idx])
-                        clean_list_diff.append(list_diff[idx])
-                        pvalue.append(p_value)
-                        num_sample.append(matched_row.loc[indices[idx_paths]]['ALLELE_NUM'])
-                        break
+                    references.append(len(matched_p_value['REF']))
+                    alternative.append(','.join(map(str, map(len, matched_p_value['ALT'].split(',')))))
+                    predicted_labels_10_2.append(0 if p_value < 0.01 else 1)
+                    predicted_labels_10_5.append(0 if p_value < 0.00001 else 1)
+                    predicted_labels_10_8.append(0 if p_value < 0.00000001 else 1)
+                    cleaned_true_labels.append(true_labels[idx])
+                    clean_list_diff.append(list_diff[idx])
+                    pvalue.append(p_value)
+                    num_sample.append(matched_row.loc[indices[idx_paths]]['ALLELE_NUM'])
 
-    return predicted_labels_10_2, predicted_labels_10_5, predicted_labels_10_8, cleaned_true_labels, clean_list_diff, pvalue, num_sample
+    return references, alternative, predicted_labels_10_2, predicted_labels_10_5, predicted_labels_10_8, cleaned_true_labels, clean_list_diff, pvalue, num_sample
 
 def vcf_snarl_list(vcf_file):
     vcf = VCF(vcf_file)
@@ -105,7 +129,7 @@ def match_snarl_plink(path_list:list, true_labels:list, list_diff:list, plink_fi
 
     assert len(plink_df) == len(snarl_list)
 
-    # To store predicted labels
+    type_ = []
     predicted_labels_10_2 = []
     predicted_labels_10_5 = []
     predicted_labels_10_8 = []
@@ -124,21 +148,20 @@ def match_snarl_plink(path_list:list, true_labels:list, list_diff:list, plink_fi
         # Case where the snarl is found 
         if not matched_row.empty:
             for idx_m, match in matched_row.iterrows():  # Unpack index and row (Series)
-                for path in snarl_list[int(idx_m)] :
-                    decomposed_path = [int(num) for num in re.findall(r'\d+', path)]
-                    if start_node in decomposed_path and next_node in decomposed_path:
-                        p_value = match.get("P")  # Access the 'P' value from the Series
-                        if str(p_value) == "nan":
-                            continue
-                        predicted_labels_10_2.append(0 if p_value < 0.01 else 1)
-                        predicted_labels_10_5.append(0 if p_value < 0.00001 else 1)
-                        predicted_labels_10_8.append(0 if p_value < 0.00000001 else 1)
-                        cleaned_true_labels.append(true_labels[idx])
-                        clean_list_diff.append(list_diff[idx])
-                        list_pvalue.append(p_value)
-
+                if check_valid_snarl(start_node, next_node, snarl_list[int(idx_m)]) :
+                    p_value = match.get("P")  # Access the 'P' value from the Series
+                    if str(p_value) == "nan":
+                        continue
+                    type_.append(match.get('TYPE'))
+                    predicted_labels_10_2.append(0 if p_value < 0.01 else 1)
+                    predicted_labels_10_5.append(0 if p_value < 0.00001 else 1)
+                    predicted_labels_10_8.append(0 if p_value < 0.00000001 else 1)
+                    cleaned_true_labels.append(true_labels[idx])
+                    clean_list_diff.append(list_diff[idx])
+                    list_pvalue.append(p_value)
+                    break
     # print("total row : ", len(path_list))
-    return predicted_labels_10_2, predicted_labels_10_5, predicted_labels_10_8, cleaned_true_labels, clean_list_diff, list_pvalue
+    return type_, predicted_labels_10_2, predicted_labels_10_5, predicted_labels_10_8, cleaned_true_labels, clean_list_diff, list_pvalue
 
 def conf_mat_maker(p_val, predicted_labels, true_labels, output):
         
@@ -178,7 +201,7 @@ def print_confusion_matrix(predicted_labels_10_2, predicted_labels_10_5, predict
     conf_mat_maker(p_val_10_5, predicted_labels_10_5, true_labels, output)
     conf_mat_maker(p_val_10_8, predicted_labels_10_8, true_labels, output)
 
-def p_value_distribution_plink(test_predicted_labels, cleaned_true_labels, cleaned_list_diff, p_value, output) :
+def p_value_distribution_plink(Type, test_predicted_labels, cleaned_true_labels, cleaned_list_diff, p_value, output) :
 
     false_positive_indices = [
         i for i, (pred, true) in enumerate(zip(test_predicted_labels, cleaned_true_labels)) 
@@ -200,17 +223,21 @@ def p_value_distribution_plink(test_predicted_labels, cleaned_true_labels, clean
 
     diff_false_positive = [cleaned_list_diff[i] for i in false_positive_indices]
     pvalue_false_positive = [p_value[i] for i in false_positive_indices]
+    Type_false_positive = [Type[i] for i in false_positive_indices]
 
     diff_true_positives = [cleaned_list_diff[i] for i in true_positive_indices]
     pvalue_true_positives = [p_value[i] for i in true_positive_indices]
+    Type_true_positives = [Type[i] for i in true_positive_indices]
 
     diff_false_negative = [cleaned_list_diff[i] for i in false_negative_indices]
     pvalue_false_negative = [p_value[i] for i in false_negative_indices]
+    Type_false_negative = [Type[i] for i in false_negative_indices]
 
     # Create a DataFrame for easy plotting
     data = {
         'P-Value': pvalue_false_positive + pvalue_true_positives + pvalue_false_negative,
         'Difference': diff_false_positive + diff_true_positives + diff_false_negative,
+        'Type_' : Type_false_positive + Type_true_positives + Type_false_negative,
         'Type': ['False Positives'] * len(pvalue_false_positive) + ['True Positives'] * len(pvalue_true_positives) + ['False Negatives'] * len(pvalue_false_negative)
     }
 
@@ -223,8 +250,13 @@ def p_value_distribution_plink(test_predicted_labels, cleaned_true_labels, clean
         y='Difference', 
         color='Type',
         hover_name=df.index,
+        hover_data={
+        "Type_": True,  # Include Reference in hover box
+        "P-Value": True,  # Include P-Value in hover box
+        "Difference": True,  # Include Difference in hover box
+        },
         title="Distribution of P-Values for False Positives and True Positives",
-        labels={"P-Value": "P-Value", "Difference": "Simulated Effect (Difference in Probabilities)"}
+        labels={"Type_": "Type_", "P-Value": "P-Value", "Difference": "Simulated Effect (Difference in Probabilities)"}
     )
 
     fig.update_layout(
@@ -240,7 +272,7 @@ def p_value_distribution_plink(test_predicted_labels, cleaned_true_labels, clean
     # Optionally, save the plot as an HTML file
     fig.write_html(f'{output}_pvalue_interactive.html')
 
-def p_value_distribution(test_predicted_labels, cleaned_true_labels, list_diff, p_value, num_sample, output):
+def p_value_distribution(references, alternative, test_predicted_labels, cleaned_true_labels, list_diff, p_value, num_sample, output):
     
     false_positive_indices = [
         i for i, (pred, true) in enumerate(zip(test_predicted_labels, cleaned_true_labels)) 
@@ -263,20 +295,28 @@ def p_value_distribution(test_predicted_labels, cleaned_true_labels, list_diff, 
     diff_false_positive = [list_diff[i] for i in false_positive_indices]
     pvalue_false_positive = [p_value[i] for i in false_positive_indices]
     minsample_false_positive = [num_sample[i] for i in false_positive_indices]
+    references_false_positive = [references[i] for i in false_positive_indices]
+    alternative_false_positive = [alternative[i] for i in false_positive_indices]
 
     diff_true_positives = [list_diff[i] for i in true_positive_indices]
     pvalue_true_positives = [p_value[i] for i in true_positive_indices]
     minsample_true_positives = [num_sample[i] for i in true_positive_indices]
+    references_true_positives = [references[i] for i in true_positive_indices]
+    alternative_true_positives = [alternative[i] for i in true_positive_indices]
 
     diff_false_negative = [list_diff[i] for i in false_negative_indices]
     pvalue_false_negative = [p_value[i] for i in false_negative_indices]
     minsample_false_negative = [num_sample[i] for i in false_negative_indices]
+    references_false_negative = [references[i] for i in false_negative_indices]
+    alternative_false_negative = [alternative[i] for i in false_negative_indices]
 
     # Create a DataFrame for easy plotting
     data = {
         'P-Value': pvalue_false_positive + pvalue_true_positives + pvalue_false_negative,
         'Difference': diff_false_positive + diff_true_positives + diff_false_negative,
         'Min Sample': minsample_false_positive + minsample_true_positives + minsample_false_negative,
+        'Reference' : references_false_positive + references_true_positives + references_false_negative,
+        'Alternative' : alternative_false_positive + alternative_true_positives + alternative_false_negative,
         'Type': ['False Positives'] * len(pvalue_false_positive) + ['True Positives'] * len(pvalue_true_positives) + ['False Negatives'] * len(pvalue_false_negative)
     }
 
@@ -290,8 +330,15 @@ def p_value_distribution(test_predicted_labels, cleaned_true_labels, list_diff, 
         size='Min Sample', 
         color='Type',
         hover_name=df.index,
+        hover_data={
+            "Reference": True,  # Include Reference in hover box
+            "Alternative": True,  # Include Alternative in hover box
+            "P-Value": True,  # Include P-Value in hover box
+            "Difference": True,  # Include Difference in hover box
+            "Min Sample": False,  # Optionally hide Min Sample (size is already shown)
+        },
         title="Distribution of P-Values for False Positives and True Positives",
-        labels={"P-Value": "P-Value", "Difference": "Simulated Effect (Difference in Probabilities)"},
+        labels={"Reference": "Reference", 'Alternative' : 'Alternative', "P-Value": "P-Value", "Difference": "Simulated Effect (Difference in Probabilities)"},
         size_max=20
     )
 
@@ -414,9 +461,9 @@ if __name__ == "__main__":
 
     if args.plink:
         snarl_list = vcf_snarl_list(args.plink)
-        test_predicted_labels_10_2, test_predicted_labels_10_5, test_predicted_labels_10_8, cleaned_true_labels, clean_list_diff, _ = match_snarl_plink(test_path_list, test_true_labels, test_list_diff, args.p_value, snarl_list)
+        type_, test_predicted_labels_10_2, test_predicted_labels_10_5, test_predicted_labels_10_8, cleaned_true_labels, clean_list_diff, _ = match_snarl_plink(test_path_list, test_true_labels, test_list_diff, args.p_value, snarl_list)
     else :
-        test_predicted_labels_10_2, test_predicted_labels_10_5, test_predicted_labels_10_8, cleaned_true_labels, clean_list_diff, _, _ = match_snarl(test_path_list, test_true_labels, test_list_diff, args.p_value, args.paths, type_)
+        references, alternative, test_predicted_labels_10_2, test_predicted_labels_10_5, test_predicted_labels_10_8, cleaned_true_labels, clean_list_diff, _, _ = match_snarl(test_path_list, test_true_labels, test_list_diff, args.p_value, args.paths, type_)
     
     # Plot confusion matrix
     print_confusion_matrix(test_predicted_labels_10_2, test_predicted_labels_10_5, test_predicted_labels_10_8, cleaned_true_labels, f"{output}/confusion_matrix_{THRESHOLD_FREQ}")
@@ -425,36 +472,36 @@ if __name__ == "__main__":
         # THRESHOLD_FREQ = 0.0 : Case where just a difference between both group snarl is considered like Truth label
         THRESHOLD_FREQ = 0.0
         test_path_list, test_true_labels, test_list_diff = process_file(args.freq, THRESHOLD_FREQ)
-        test_predicted_labels_10_2, test_predicted_labels_10_5, test_predicted_labels_10_8, cleaned_true_labels, clean_list_diff, pvalue, num_sample = match_snarl(test_path_list, test_true_labels, test_list_diff, args.p_value, args.paths, type_)
+        references, alternative, test_predicted_labels_10_2, test_predicted_labels_10_5, test_predicted_labels_10_8, cleaned_true_labels, clean_list_diff, pvalue, num_sample = match_snarl(test_path_list, test_true_labels, test_list_diff, args.p_value, args.paths, type_)
         print_confusion_matrix(test_predicted_labels_10_2, test_predicted_labels_10_5, test_predicted_labels_10_8, cleaned_true_labels, f"{output}/confusion_matrix_{THRESHOLD_FREQ}")
         assert len(cleaned_true_labels) == len(clean_list_diff)
 
         # Plot distribution of p-values for false negatives and true positives
         plot_diff_distribution(test_predicted_labels_10_2, cleaned_true_labels, clean_list_diff, output_diff, "10^-2")
-        p_value_distribution(test_predicted_labels_10_2, cleaned_true_labels, clean_list_diff, pvalue, num_sample, output_diff)
+        p_value_distribution(references, alternative, test_predicted_labels_10_2, cleaned_true_labels, clean_list_diff, pvalue, num_sample, output_diff)
     
     elif args.plink :
         # THRESHOLD_FREQ = 0.0 : Case where just a difference between both group snarl is considered like Truth label
         THRESHOLD_FREQ = 0.0
         test_path_list, test_true_labels, test_list_diff = process_file(args.freq, THRESHOLD_FREQ)
-        test_predicted_labels_10_2, test_predicted_labels_10_5, test_predicted_labels_10_8, cleaned_true_labels, clean_list_diff, pvalue = match_snarl_plink(test_path_list, test_true_labels, test_list_diff, args.p_value, snarl_list)
+        type_, test_predicted_labels_10_2, test_predicted_labels_10_5, test_predicted_labels_10_8, cleaned_true_labels, clean_list_diff, pvalue = match_snarl_plink(test_path_list, test_true_labels, test_list_diff, args.p_value, snarl_list)
         print_confusion_matrix(test_predicted_labels_10_2, test_predicted_labels_10_5, test_predicted_labels_10_8, cleaned_true_labels, f"{output}/confusion_matrix_{THRESHOLD_FREQ}")
         assert len(cleaned_true_labels) == len(clean_list_diff)
 
         # Plot distribution of p-values for false negatives and true positives
         plot_diff_distribution(test_predicted_labels_10_2, cleaned_true_labels, clean_list_diff, output_diff, "10^-2")
-        p_value_distribution_plink(test_predicted_labels_10_2, cleaned_true_labels, clean_list_diff, pvalue, output_diff)
+        p_value_distribution_plink(type_, test_predicted_labels_10_2, cleaned_true_labels, clean_list_diff, pvalue, output_diff)
 
     """
     python3 tests/verify_truth.py tests/simulation/quantitative_data/pg.snarls.freq.tsv \
     tests/quantitative_tests_output/quantitative_analysis.tsv tests/simulation/quantitative_data/snarl_paths.tsv -q
 
     python3 tests/verify_truth.py tests/simulation/binary_data/pg.snarls.freq.tsv \
-    tests/binary_tests_output/binary_test.assoc.tsv tests/simulation/binary_data/snarl_paths.tsv -b
+    output/run_20250112_191047/binary_analysis.tsv tests/simulation/binary_data/snarl_paths.tsv -b
 
     python3 tests/verify_truth.py tests/simulation/quantitative_data/pg.snarls.freq.tsv \
     tests/plink_tests_output/plink_quantitative.tsv tests/simulation/quantitative_data/snarl_paths.tsv -p tests/plink_tests_output/test_vcf_quantitative.vcf
 
     python3 tests/verify_truth.py tests/simulation/binary_data/pg.snarls.freq.tsv \
-    tests/plink_tests_output/plink_binary.tsv tests/simulation/binary_data/snarl_paths.tsv -p tests/plink_tests_output/test_vcf_binary.vcf
+    tests/plink_tests_output/combine.tsv tests/simulation/binary_data/snarl_paths.tsv -p tests/plink_tests_output/test_vcf_binary.vcf
     """

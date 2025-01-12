@@ -148,7 +148,7 @@ class SnarlProcessor:
         """
         
         common_headers = (
-            "CHR\tPOS\tSNARL\tTYPE\tP_FISHER\tP_CHI2\tALLELE_NUM\tMIN_ROW_INDEX\tNUM_COLUM\tINTER_GROUP\tAVERAGE"
+            "CHR\tPOS\tSNARL\tTYPE\tREF\tALT\tP_FISHER\tP_CHI2\tALLELE_NUM\tMIN_ROW_INDEX\tNUM_COLUM\tINTER_GROUP\tAVERAGE"
         )
         headers = f"{common_headers}\tGROUP_PATHS\n" if gaf else f"{common_headers}\n"
 
@@ -159,11 +159,13 @@ class SnarlProcessor:
                 snarl, list_snarl, type_var, chromosome, position = snarl_info
                 # Create the binary table, considering covariates if provided
                 df = self.create_binary_table(binary_groups, list_snarl)
-
+                if kinship_matrix and covar :
+                    p_value, beta, vcomp = lmm_pvalue = self.LMM_binary(df, kinship_matrix, covar)
+                ref = alt = 'NA'
                 # Perform statistical tests and compute descriptive statistics
                 fisher_p_value, chi2_p_value, allele_number, min_sample, numb_colum, inter_group, average, group_paths = self.binary_stat_test(df, gaf)
                 common_data = (
-                f"{chromosome}\t{position}\t{snarl}\t{type_var}\t"
+                f"{chromosome}\t{position}\t{snarl}\t{type_var}\t{ref}\t{alt}\t"
                 f"{fisher_p_value}\t{chi2_p_value}\t{allele_number}\t{min_sample}\t"
                 f"{numb_colum}\t{inter_group}\t{average}")
                 data = f"{common_data}\t{group_paths}\n" if gaf else f"{common_data}\n"
@@ -173,13 +175,14 @@ class SnarlProcessor:
     def quantitative_table(self, snarls:list, quantitative_dict:dict, kinship_matrix:pd.DataFrame=None, covar:Optional[dict]=None, output:str="output/quantitative_output.tsv") :
 
         with open(output, 'wb') as outf:
-            headers = 'CHR\tPOS\tSNARL\tTYPE\tRSQUARED\tBETA\tSE\tP\tALLELE_NUM\n'
+            headers = 'CHR\tPOS\tSNARL\tTYPE\tREF\tALT\tRSQUARED\tBETA\tSE\tP\tALLELE_NUM\n'
             outf.write(headers.encode('utf-8'))
             for snarl_info in snarls:
                 snarl, list_snarl, type_var, chromosome, position = snarl_info
                 df, allele_number = self.create_quantitative_table(list_snarl)
                 rsquared, beta, se, pvalue = self.linear_regression(df, quantitative_dict)
-                data = '{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\n'.format(chromosome, position, snarl, type_var, rsquared, beta, se, pvalue, allele_number)
+                ref = alt = 'NA'
+                data = '{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\n'.format(chromosome, position, snarl, ref, alt, type_var, rsquared, beta, se, pvalue, allele_number)
                 outf.write(data.encode('utf-8'))
 
     def identify_correct_path(self, decomposed_snarl:list, idx_srr_save:list) -> list:
@@ -257,7 +260,7 @@ class SnarlProcessor:
         allele_number = int(df.values.sum()) # Calculate the number of samples in the DataFrame
         return df, allele_number
     
-    def linear_regression(self, df:pd.DataFrame, pheno:dict, covar:dict=None) -> tuple :
+    def linear_regression(self, df:pd.DataFrame, pheno:dict) -> tuple :
 
         df = df.astype(int)
         df['Target'] = df.index.map(pheno)
@@ -278,27 +281,24 @@ class SnarlProcessor:
 
         return rsquared, beta_mean, se_mean, formatted_p_value
 
-    # Linear Mixed Model
-
-    # def LMM_quantitatif(self, kinship_matrix:pd.DataFrame, covar:dict, pheno:dict) -> tuple:
+    # def LMM_quantitatif(self, df:pd.DataFrame, kinship_matrix:pd.DataFrame, covar:dict, pheno:dict) -> tuple:
     #     """
     #     Perform Linear Mixed Model (LMM) for quantitative phenotype data.
     #     """
 
     #     # Ensure the covariate matrix is in a DataFrame and map the covariates and phenotype correctly
-    #     covar_df = pd.DataFrame(covar)
-    #     covar_df['Target'] = covar_df.index.map(pheno)  # Map phenotype values
-        
-    #     # Extract dependent (y) and independent variables (x)
-    #     y = covar_df['Target']
-    #     x = covar_df.drop('Target', axis=1)  # Remove target from covariates
-    #     x = sm.add_constant(x)               # Add constant for intercept term
-        
+          # df = df.astype(int)
+          # df['Target'] = df.index.map(pheno)
+          # x = df.drop('Target', axis=1)
+          # y = df['Target']
+
+          # x_with_const = sm.add_constant(x)
+
     #     # Perform Linear Mixed Model scan (assuming a function like scan)
     #     results = scan(y=y, K=kinship_matrix, covariates=x)
         
     #     # Extract metrics from the results object (p-value, beta, beta_se, log-likelihood, heritability)
-    #     p_value = round(results.stats["pv"], 4)  # P-values for each covariate
+    #     p_value = round(results.stats["pv"], 4) # P-values for each covariate
     #     beta = results.stats["beta"]            # Effect sizes (coefficients for covariates)
     #     beta_se = results.stats["beta_se"]      # Standard errors for effect sizes
     #     ll = results.stats["ll"]                # Log-likelihood of the model
@@ -332,11 +332,10 @@ class SnarlProcessor:
         return p_value
 
     # # Logistic Mixed Model
-    # def LMM_binary(df, pheno, kinship_matrix, covar):
+    # def LMM_binary(self, df, kinship_matrix, covar):
     #     """
     #     Perform Logistic Mixed Model on a binary phenotype.
     #     """
-
     #     # Map phenotype to df
     #     df['Target'] = df.index.map(pheno)
     #     y = df['Target'].values
