@@ -83,7 +83,7 @@ def write_pos_snarl(vcf_file, output_file, type):
 
 def write_dic(vcf_dict, fields):
     """Updates a dictionary with VCF data."""
-    chr, pos, snarl_raw, ref, alt = fields[0], fields[1], fields[2], fields[3], fields[4]
+    chr, pos, snarl_raw, ref, alt = fields
 
     # Process snarl, ref, and alt
     snarl = modify_snarl(snarl_raw)
@@ -127,8 +127,8 @@ def parse_vcf_to_dict(vcf_file):
     return vcf_dict
 
 if __name__ == "__main__" :
-    reference = "/home/mbagarre/Bureau/droso_data/fly/fly.deconstruct.normalized.vcf"
-    output_file = "output/run_20250102_134046/quantitative_analysis.tsv"
-    write_pos_snarl(reference, output_file, "quantitatif")
+    reference = "tests/simulation/binary_data/binary.decomposed.vcf"
+    output_file = "output/run_20250112_184218/binary_analysis.tsv"
+    write_pos_snarl(reference, output_file, "binary")
 
-# python3 src/write_position.py
+# python3 stoat/write_position.py

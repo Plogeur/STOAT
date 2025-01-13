@@ -15,7 +15,6 @@ def load_file(file, threshold=None) :
     total_succes = 0  # Track total significant entries
     total_fail = 0
     with open(file, 'r') as f:
-        #chrom_idx, pos_idx, pvalue_idx = identify_header(f)
         chrom_idx, pos_idx, pvalue_idx = identify_header(f)
 
         for line in f:

@@ -1,7 +1,6 @@
 import bdsg # type: ignore
 import argparse
 from stoat import utils
-import re
 import time 
 import os 
 
@@ -130,32 +129,68 @@ def follow_edges(stree, finished_paths, path, paths, pg) :
     # from the last thing in the path
     stree.follow_net_edges(path[-1], pg, False, lambda n: add_to_path(n))
 
-def save_snarls(stree, root, pg, reference, pp_overlay):
-
+def save_snarls(stree, root, pg, ref_paths, ppo) :
     snarls = []
-    chr_pos = []
+    snarls_pos = {}
 
-    def save_snarl_tree_node(net):
+    # given a node handle (dist index) return a position on a reference path
+    def get_node_position(node):
+        node_h = stree.get_handle(node, pg)
+        ret_pos = []
 
         def step_callback(step_handle):
             path_handle = pg.get_path_handle_of_step(step_handle)
             path_name = pg.get_path_name(path_handle)
-            if path_name in reference :
-                position = pp_overlay.get_position_of_step(step_handle)
-                chr_pos.append((path_name, position))
+            if path_name in ref_paths:
+                position = ppo.get_position_of_step(step_handle)
+                ret_pos.append(path_name)
+                ret_pos.append(position)
+                return False
             return True
 
+        pg.for_each_step_on_handle(node_h, step_callback)
+        return (ret_pos)
+
+    def save_snarl_tree_node(net):
+        # check if we can find a position for this snarl on the reference path
+        snarl_pos = get_net_start_position(net)
+        # if we couldn't find a position, use the parent's that we should have
+        # found and saved earlier
+        if len(snarl_pos) == 0:
+            par_net = stree.get_parent(net)
+            snarl_pos = snarls_pos[stree.net_handle_as_string(par_net)]
+        # save this position
+        snarls_pos[stree.net_handle_as_string(net)] = snarl_pos
+        # save snarl
         if stree.is_snarl(net):
-            snarls.append([net, chr_pos[-1][0], chr_pos[-1][1]])
-
-        if stree.is_node(net):
-            handle_t = stree.get_handle(net, pg)
-            pg.for_each_step_on_handle(handle_t, step_callback)
-
+            snarls.append([net, snarl_pos[0], snarl_pos[1]])
+        # explore children
         if not stree.is_node(net) and not stree.is_sentinel(net):
             stree.for_each_child(net, save_snarl_tree_node)
-        return True 
+        return (True)
 
+    # given a handle for a node, snarl, chain, whatever, return a "start" position
+    def get_net_start_position(net):
+        # if node, look at its position
+        if stree.is_node(net):
+            return (get_node_position(net))
+        # otherwise check boundaries
+        bnode1 = stree.get_bound(net, True, False)
+        bnode1_p = get_node_position(bnode1)
+        bnode2 = stree.get_bound(net, False, False)
+        bnode2_p = get_node_position(bnode2)
+        # if one of the bondaries is not on a reference path, return it
+        if len(bnode1_p) == 0:
+            return (bnode1_p)
+        if len(bnode2_p) == 0:
+            return (bnode2_p)
+        assert bnode1_p[0] == bnode1_p[0], 'boundary nodes on different reference paths'
+        # as "start" position, let's return the smallest position
+        if bnode1_p[1] < bnode2_p[1]:
+            return (bnode1_p)
+        else:
+            return (bnode2_p)
+    
     stree.for_each_child(root, save_snarl_tree_node)
     return snarls
 
@@ -200,8 +235,12 @@ def fill_pretty_paths(stree, pg, finished_paths) :
 
             elif stree.is_chain(net) :
                 # if it's a chain, we need to write someting like ">Nl>*>Nr"
-                nodl = stree.get_bound(net, False, True)
-                nodr = stree.get_bound(net, True, False)
+                if stree.starts_at_start(net):
+                    nodl = stree.get_bound(net, False, True)
+                    nodr = stree.get_bound(net, True, False)
+                else:
+                    nodl = stree.get_bound(net, True, True)
+                    nodr = stree.get_bound(net, False, False)
                 ppath.addNodeHandle(nodl, stree)
                 ppath.addNode('*', '>')
                 ppath.addNodeHandle(nodr, stree)
@@ -216,10 +255,6 @@ def fill_pretty_paths(stree, pg, finished_paths) :
     type_variants = calcul_type_variant(length_net_paths)
     assert len(type_variants) == len(pretty_paths)
     return pretty_paths, type_variants
-
-def write_output_not_analyse(output_file, snarl_id, reason) :
-    with open(output_file, 'a') as outf:
-        outf.write('{}\t{}\n'.format(snarl_id, reason))
 
 def loop_over_snarls_write(stree, snarls, pg, output_file, output_snarl_not_analyse, children_treshold=50, bool_return=True) :
 
@@ -237,8 +272,9 @@ def loop_over_snarls_write(stree, snarls, pg, output_file, output_snarl_not_anal
             return (True)
 
         # for each snarl, lists paths through the netgraph and write to output TSV
-        for snarl, chr, pos in snarls:
-
+        for snarl_path_pos in snarls:
+            
+            snarl = snarl_path_pos[0]
             snarl_time = time.time()
             snarl_id = find_snarl_id(stree, snarl)
             not_break = True
@@ -267,10 +303,10 @@ def loop_over_snarls_write(stree, snarls, pg, output_file, output_snarl_not_anal
 
                 # prepare path list to output and write each path directly to the file
                 pretty_paths, type_variants = fill_pretty_paths(stree, pg, finished_paths)
-                out_snarl.write('{}\t{}\t{}\t{}\t{}\n'.format(snarl_id, ','.join(pretty_paths), ','.join(type_variants), chr, pos))
+                out_snarl.write('{}\t{}\t{}\t{}\t{}\n'.format(snarl_id, ','.join(pretty_paths), ','.join(type_variants), snarl_path_pos[1], snarl_path_pos[2]))
 
                 if bool_return :
-                    snarl_paths.append((snarl_id, pretty_paths, ','.join(type_variants), chr, pos))
+                    snarl_paths.append((snarl_id, pretty_paths, ','.join(type_variants), snarl_path_pos[1], snarl_path_pos[2]))
                 
                 paths_number_analysis += len(pretty_paths)
 
@@ -281,18 +317,18 @@ if __name__ == "__main__" :
     parser = argparse.ArgumentParser('List path through the netgraph of each snarl in a pangenome')
     parser.add_argument('-p', type=utils.check_file, help='The input pangenome .pg file', required=True)
     parser.add_argument('-d', type=utils.check_file, help='The input distance index .dist file', required=True)
-    parser.add_argument('-c', "--chr", type=utils.check_file, help='The input reference chr file', required=True)
+    parser.add_argument('-c', "--chr", type=utils.check_file, help='The input reference chr file', required=False)
     parser.add_argument("-t", type=check_threshold, help='Children threshold', required=False)
     parser.add_argument('-o', help='output dir', type=str, required=False)
     args = parser.parse_args()
 
-    reference = utils.parse_chr_reference(args.chr)
+    reference = utils.parse_chr_reference(args.chr) if args.chr else "ref"
     output_dir = args.o or "output"
     os.makedirs(output_dir, exist_ok=True)
     output = os.path.join(output_dir, "list_snarl_paths.tsv")
     output_snarl_not_analyse = os.path.join(output_dir, "snarl_not_analyse.tsv")
-
     stree, pg, root, pp_overlay = parse_graph_tree(args.p, args.d)
+
     snarls = save_snarls(stree, root, pg, reference, pp_overlay)
     print(f"Total of snarls found : {len(snarls)}")
     print("Saving snarl path decomposition...")
@@ -301,7 +337,11 @@ if __name__ == "__main__" :
     _, paths_number_analysis = loop_over_snarls_write(stree, snarls, pg, output, output_snarl_not_analyse, threshold, False)
     print(f"Total of paths analyse : {paths_number_analysis}")
 
-    # python3 stoat/list_snarl_paths.py -p /home/mbagarre/Bureau/droso_data/fly/fly.pg -d /home/mbagarre/Bureau/droso_data/fly/fly.dist -o output/test/test_list_snarl.tsv
+    # python3 stoat/list_snarl_paths.py -p /home/mbagarre/Bureau/droso_data/fly/fly.pg -d /home/mbagarre/Bureau/droso_data/fly/fly.dist -o output/test
     # vg find -x ../snarl_data/fly.gbz -r 5176878:5176884 -c 10 | vg view -dp - | dot -Tsvg -o ../snarl_data/subgraph.svg
 
-    # python3 stoat/list_snarl_paths.py -p tests/simulation/binary_data/pg.full.pg -d tests/simulation/binary_data/pg.dist -c tests/simulation/binary_data/pg.chromosome -o output/test/test_list_snarl.tsv
+    # binary 
+    # python3 stoat/list_snarl_paths.py -p tests/simulation/binary_data/pg.full.pg -d tests/simulation/binary_data/pg.dist -c tests/simulation/binary_data/pg.chromosome -o output/test
+    
+    # quantitative
+    # python3 stoat/list_snarl_paths.py -p tests/simulation/quantitative_data/pg.pg -d tests/simulation/quantitative_data/pg.dist -c tests/simulation/quantitative_data/pg.chromosome -o output/test

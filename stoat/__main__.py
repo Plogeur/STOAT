@@ -72,7 +72,6 @@ def main() :
         utils.check_matching(covar, list_samples, args.covariate)
         kinship_matrix, kinship_ind = utils.parse_plink_grm(args.kinship)
         utils.check_matching(kinship_ind, list_samples, args.kinship)
-
     else :
         covar = None
         kinship_matrix = None
@@ -99,14 +98,11 @@ def main() :
         snarls = list_snarl_paths.save_snarls(stree, root, pg, reference_chr, pp_overlay)
         logger.info(f"Total of snarls found : {len(snarls)}")
         logger.info("Saving snarl path decomposition...")
-
         output_snarl_path_not_analyse = os.path.join(output_dir, "snarl_not_analyse.tsv")
         output_snarl_path = os.path.join(output_dir, "snarl_paths.tsv")
-
         threshold = int(args.threshold) if args.threshold else 10 
         snarl_paths, paths_number_analysis = list_snarl_paths.loop_over_snarls_write(stree, snarls, pg, output_snarl_path, output_snarl_path_not_analyse, threshold)
         logger.info(f"Total of paths analyse : {paths_number_analysis}")
-
     else :
         if args.pg or args.dist : 
             logger.info("list snarls path are provided, .pg and .dist will be not analyse")
@@ -114,13 +110,11 @@ def main() :
         snarl_paths, paths_number_analysis = utils.parse_snarl_path_file(input_snarl_path)
         logger.info(f"Total of snarls found : {paths_number_analysis}")
 
-    # Step 2: Parse VCF Files and Fill the Matrix
     vcf_object = snarl_analyser.SnarlProcessor(args.vcf, list_samples)
     logger.info("Starting fill matrix...")
     vcf_object.fill_matrix()
     reference_vcf = args.reference if args.reference else args.vcf
 
-    # Step 3: P-value Analysis (Binary or Quantitative)
     # Handle Binary Analysis
     if args.binary:
         gaf = True if args.gaf else False
