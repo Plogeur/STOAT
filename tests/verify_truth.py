@@ -331,7 +331,7 @@ def plot_diff_distribution(test_predicted_labels:list, cleaned_true_labels:list,
     # Predict label 1 : No pvalue significative
 
     # ----------------------------- True Positive -----------------------------
-    true_positive_indices = [
+    true_positive_indices= [
         i for i, (pred, true) in enumerate(zip(test_predicted_labels, cleaned_true_labels)) 
         if pred == 0 and true == 0]
 
