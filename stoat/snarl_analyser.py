@@ -124,7 +124,7 @@ class SnarlProcessor:
                 continue
 
             snarl_list = variant.INFO.get('AT', '').split(',')  # Extract and split snarl list once per variant
-            list_list_decomposed_snarl = self.decompose_snarl(snarl_list)  # Decompose snarls once per variant
+            list_set_decomposed_snarl = self.decompose_snarl(snarl_list)  # Decompose snarls once per variant
 
             for index_column, genotype in enumerate(genotypes) :
 
