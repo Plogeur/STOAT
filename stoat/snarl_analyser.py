@@ -60,9 +60,9 @@ class SnarlProcessor:
             i += 1
         return i, s[start_idx:i]
 
-    def decompose_string(self, s:str) -> List[str]:
+    def decompose_string(self, s:str) -> set:
         """Decompose a string with snarl information."""
-        result = []
+        result = set()
         i = 0
         length_s = len(s)
         prev_int = None
@@ -74,14 +74,14 @@ class SnarlProcessor:
             i, current_int = self.determine_str(s, length_s, i)
 
             if prev_int is not None and prev_sym is not None:
-                result.append(f"{prev_sym}{prev_int}{start_sym}{current_int}")
+                result.add(f"{prev_sym}{prev_int}{start_sym}{current_int}")
             
             prev_int = current_int
             prev_sym = start_sym
         
         return result
 
-    def decompose_snarl(self, lst:List[str]) -> List[List[str]]:
+    def decompose_snarl(self, lst:List[str]) -> List[set[str]]:
         """Decompose a list of snarl strings."""
         return [self.decompose_string(s) for s in lst]
 
