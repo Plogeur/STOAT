@@ -124,7 +124,7 @@ class SnarlProcessor:
                 continue
 
             snarl_list = variant.INFO.get('AT', '').split(',')  # Extract and split snarl list once per variant
-            list_list_decomposed_snarl = self.decompose_snarl(snarl_list)  # Decompose snarls once per variant
+            list_set_decomposed_snarl = self.decompose_snarl(snarl_list)  # Decompose snarls once per variant
 
             for index_column, genotype in enumerate(genotypes) :
 
@@ -134,10 +134,10 @@ class SnarlProcessor:
                 if allele_1 == -1 or allele_2 == -1 :# case where we got ./.
                     continue
 
-                for decompose_allele_1 in list_list_decomposed_snarl[allele_1] :
+                for decompose_allele_1 in list_set_decomposed_snarl[allele_1] :
                     self.push_matrix(allele_1, decompose_allele_1, row_header_dict, col_idx)
 
-                for decompose_allele_2 in list_list_decomposed_snarl[allele_2] :
+                for decompose_allele_2 in list_set_decomposed_snarl[allele_2] :
                     self.push_matrix(allele_2, decompose_allele_2, row_header_dict, col_idx + 1)
 
         self.matrix.set_row_header(row_header_dict)
