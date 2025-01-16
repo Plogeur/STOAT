@@ -74,7 +74,8 @@ class SnarlProcessor:
             i, current_int = self.determine_str(s, length_s, i)
 
             if prev_int is not None and prev_sym is not None:
-                result.append(f"{prev_sym}{prev_int}{start_sym}{current_int}")
+                result.append(f"{prev_int}")
+                result.append(f"{current_int}")
             
             prev_int = current_int
             prev_sym = start_sym
@@ -85,16 +86,16 @@ class SnarlProcessor:
         """Decompose a list of snarl strings."""
         return [self.decompose_string(s) for s in lst]
 
-    def get_or_add_index(self, ordered_dict:dict, key:str, length_ordered_dict:int) -> int:
+    def get_or_add_index(self, row_header_dict:dict, key:str, length_ordered_dict:int) -> int:
         """ 
         Retrieve the index of the key if it exists in the OrderedDict.
         If the key does not exist, add it and return the new index.
         """
-        if key in ordered_dict:
-            return ordered_dict[key]
+        if key in row_header_dict:
+            return row_header_dict[key]
         else:
             new_index = length_ordered_dict
-            ordered_dict[key] = new_index
+            row_header_dict[key] = new_index
             return new_index
     
     def push_matrix(self, idx_snarl:int, decomposed_snarl:str, row_header_dict:dict, index_column:int) -> None:
@@ -119,12 +120,9 @@ class SnarlProcessor:
         # Parse variant line by line
         for variant in VCF(self.vcf_path):
             genotypes = variant.genotypes  # Extract genotypes once per variant
-            # Case avoid duplicated 
-            if variant.INFO.get('LV') > 0 :
-                continue
 
-            snarl_list = variant.INFO.get('AT', '').split(',')  # Extract and split snarl list once per variant
-            list_list_decomposed_snarl = self.decompose_snarl(snarl_list)  # Decompose snarls once per variant
+            path_list = variant.INFO.get('AT', '').split(',')  # Extract and split snarl list once per variant
+            list_list_decomposed_node = self.decompose_snarl(path_list)  # Decompose snarls once per variant
 
             for index_column, genotype in enumerate(genotypes) :
 
@@ -134,38 +132,38 @@ class SnarlProcessor:
                 if allele_1 == -1 or allele_2 == -1 :# case where we got ./.
                     continue
 
-                for decompose_allele_1 in list_list_decomposed_snarl[allele_1] :
+                for decompose_allele_1 in list_list_decomposed_node[allele_1] :
                     self.push_matrix(allele_1, decompose_allele_1, row_header_dict, col_idx)
 
-                for decompose_allele_2 in list_list_decomposed_snarl[allele_2] :
+                for decompose_allele_2 in list_list_decomposed_node[allele_2] :
                     self.push_matrix(allele_2, decompose_allele_2, row_header_dict, col_idx + 1)
 
         self.matrix.set_row_header(row_header_dict)
 
-    def binary_table(self, snarls:list, binary_groups:tuple[dict, dict], kinship_matrix:pd.DataFrame=None, covar:Optional[dict]=None, gaf:bool=False, output:str="output/binary_output.tsv"):
+    def binary_table(self, snarls:dict, binary_groups:tuple[dict, dict], kinship_matrix:pd.DataFrame=None, covar:Optional[dict]=None, gaf:bool=False, output:str="output/binary_output.tsv"):
         """
         Generate a binary table with statistical results and write to a file.
         """
         
         common_headers = (
-            "CHR\tPOS\tSNARL\tTYPE\tREF\tALT\tP_FISHER\tP_CHI2\tALLELE_NUM\tMIN_ROW_INDEX\tNUM_COLUM\tINTER_GROUP\tAVERAGE"
+            "CHR\tPOS\tNODE\tREF\tALT\tP_FISHER\tP_CHI2\tALLELE_NUM\tMIN_ROW_INDEX\tNUM_COLUM\tINTER_GROUP\tAVERAGE"
         )
         headers = f"{common_headers}\tGROUP_PATHS\n" if gaf else f"{common_headers}\n"
 
         with open(output, 'wb') as outf:
             outf.write(headers.encode('utf-8'))
-                
-            for snarl_info in snarls:
-                snarl, list_snarl, type_var, chromosome, position = snarl_info
+
+            for node, node_info in snarls.items() :
+                chromosome, position = node_info
                 # Create the binary table, considering covariates if provided
-                df = self.create_binary_table(binary_groups, list_snarl)
+                df = self.create_binary_table(binary_groups, node)
                 if kinship_matrix and covar :
                     p_value, beta, vcomp = lmm_pvalue = self.LMM_binary(df, kinship_matrix, covar)
                 ref = alt = 'NA'
                 # Perform statistical tests and compute descriptive statistics
                 fisher_p_value, chi2_p_value, allele_number, min_sample, numb_colum, inter_group, average, group_paths = self.binary_stat_test(df, gaf)
                 common_data = (
-                f"{chromosome}\t{position}\t{snarl}\t{type_var}\t{ref}\t{alt}\t"
+                f"{chromosome}\t{position}\t{node}\t{ref}\t{alt}\t"
                 f"{fisher_p_value}\t{chi2_p_value}\t{allele_number}\t{min_sample}\t"
                 f"{numb_colum}\t{inter_group}\t{average}")
                 data = f"{common_data}\t{group_paths}\n" if gaf else f"{common_data}\n"
@@ -175,7 +173,7 @@ class SnarlProcessor:
     def quantitative_table(self, snarls:list, quantitative_dict:dict, kinship_matrix:pd.DataFrame=None, covar:Optional[dict]=None, output:str="output/quantitative_output.tsv") :
 
         with open(output, 'wb') as outf:
-            headers = 'CHR\tPOS\tSNARL\tTYPE\tREF\tALT\tRSQUARED\tBETA\tSE\tP\tALLELE_NUM\n'
+            headers = 'CHR\tPOS\tNODE\tTYPE\tREF\tALT\tRSQUARED\tBETA\tSE\tP\tALLELE_NUM\n'
             outf.write(headers.encode('utf-8'))
             for snarl_info in snarls:
                 snarl, list_snarl, type_var, chromosome, position = snarl_info
@@ -185,60 +183,45 @@ class SnarlProcessor:
                 data = '{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\n'.format(chromosome, position, snarl, ref, alt, type_var, rsquared, beta, se, pvalue, allele_number)
                 outf.write(data.encode('utf-8'))
 
-    def identify_correct_path(self, decomposed_snarl:list, idx_srr_save:list) -> list:
+    def identify_correct_path(self, node:str) -> list:
         """
         Return a list of column indices where all specific elements of this column in the matrix are 1.
         """
 
-        rows_to_check = np.array([], dtype=int)
-
-        # Print the decomposed_snarl and row_headers_dict
-        for snarl in decomposed_snarl:
-            if "*" in snarl:
-                continue
-            if snarl in self.matrix.get_row_header():
-                row_index = self.matrix.get_row_header()[snarl]
-                rows_to_check = np.append(rows_to_check, row_index)
-            else:
-                return []
+        try :
+            row_index = self.matrix.get_row_header()[node]
+        except :
+            return []
 
         # Extract the rows from the matrix using rows_to_check
-        extracted_rows = self.matrix.get_matrix()[rows_to_check, :]
+        extracted_rows = self.matrix.get_matrix()[row_index, :]
+        return extracted_rows
 
-        # Check if all elements in the columns are 1 for the specified rows
-        columns_all_ones = np.all(extracted_rows == 1, axis=0)
-
-        # Find the column indices where all elements are 1
-        idx_srr_save = np.where(columns_all_ones)[0].tolist()
-
-        return idx_srr_save
-
-    def create_binary_table(self, binary_groups:dict, list_path_snarl:list[str]) -> pd.DataFrame:
+    def create_binary_table(self, binary_groups:dict, node:str) -> pd.DataFrame:
         """Generates a binary table DataFrame indicating the presence of snarl paths in given groups based on matrix data"""
-        
-        length_column_headers = len(list_path_snarl)
 
         # Initialize g0 and g1 with zeros, corresponding to the length of column_headers
-        g0 = [0] * length_column_headers
-        g1 = [0] * length_column_headers
+        g0 = [0, 0]
+        g1 = [0, 0]
 
-        # Iterate over each path_snarl in column_headers
-        for idx_g, path_snarl in enumerate(list_path_snarl):
-            idx_srr_save = list(range(len(self.list_samples)))
-            decomposed_snarl = self.decompose_string(path_snarl)
-            idx_srr_save = self.identify_correct_path(decomposed_snarl, idx_srr_save)
-
-            # Count occurrences in g0 and g1 based on the updated idx_srr_save
-            for idx in idx_srr_save:
+        # Count occurrences in g0 and g1
+        extracted_rows = self.identify_correct_path(node)
+        if node == "1831" :
+            print("extracted_rows : ", extracted_rows)
+            
+        for idx, allele in enumerate(extracted_rows):
+            if allele == True :
                 srr = self.list_samples[idx // 2]
-
                 if binary_groups[srr] == 0:
-                    g0[idx_g] += 1
+                    g0[0] += 1
                 else :
-                    g1[idx_g] += 1
+                    g1[0] += 1
+
+        g0[1] = len(self.list_samples)*2 - g0[0]
+        g1[1] = len(self.list_samples)*2 - g1[0]
 
         # Create and return the DataFrame
-        df = pd.DataFrame([g0, g1], index=['G0', 'G1'], columns=list_path_snarl)
+        df = pd.DataFrame([g0, g1], index=['G0', 'G1'], columns=[node, f'not_passing_{node}'])
         return df
 
     def create_quantitative_table(self, column_headers:list) -> pd.DataFrame:
@@ -365,8 +348,8 @@ class SnarlProcessor:
         fisher_p_value = self.fisher_test(df)
         chi2_p_value = self.chi2_test(df)
 
-        allele_number = int(df.values.sum()) # Calculate the number of samples in the DataFrame
-        inter_group = int(df.min().sum()) # Calculate the sum of the minimum values from each column
+        allele_number = int(df.iloc[:, 0].sum()) # Calculate the number of samples in the DataFrame
+        inter_group = int(df.iloc[:, 0].min()) # Calculate the sum of the minimum values from each column
         numb_colum = df.shape[1] # Get the total number of columns in the DataFrame
         average = float(allele_number / numb_colum) # Calculate the average of the total sum divided by the number of columns
         row_sums = df.sum(axis=1) # Calculate the sum of values for each row in the DataFrame
@@ -394,7 +377,7 @@ if __name__ == "__main__" :
     print(f"Time Matrix : {time.time() - start} s")
 
     start = time.time()
-    snarl = utils.parse_snarl_path_file(args.snarl)[0]
+    snarl = utils.parse_snarl_path_file_dict(args.snarl)
     covar = utils.parse_covariate_file(args.covariate) if args.covariate else None
 
     output_dir = args.output or "output"    
@@ -406,7 +389,7 @@ if __name__ == "__main__" :
         vcf_object.binary_table(snarl, binary_group, covar, output=output)
 
     # python3 stoat/snarl_analyser.py ../snarl_data/fly.merged.vcf output/test_list_snarl.tsv -b ../snarl_data/group.txt
-    # python3 stoat/snarl_analyser.py tests/simulation/binary_data/merged_output.vcf tests/simulation/binary_data/snarl_paths.tsv -q tests/simulation/binary_data/phenotype.tsv -o tests/binary_tests_output/binary_output.tsv
+    # python3 stoat/snarl_analyser.py tests/simulation/binary_data/merged_output.vcf tests/simulation/binary_data/snarl_paths.tsv -b tests/simulation/binary_data/phenotype.tsv -o tests/binary_tests_output/binary_output.tsv
 
     if args.quantitative:
         quantitative_dict = utils.parse_pheno_quantitatif_file(args.quantitative)

@@ -3,6 +3,7 @@ import argparse
 import numpy as np # type: ignore
 import pandas as pd # type: ignore
 import os
+import re 
 
 # ----------------- Parse functions -----------------
 
@@ -66,16 +67,27 @@ def parse_snarl_path_file(path_file:str) -> tuple[list, int]:
 
     return snarl_paths, snarl_number_analysis
 
-def parse_snarl_path_file_dict(path_file:str) -> tuple[dict, int]:
-    
+def decompose_paths(paths:str) :
+    numbers = re.findall(r'\d+', paths)
+    return [str(num) for num in numbers]
+
+def parse_snarl_path_file_dict(path_file:str) -> dict:
+
     snarl_paths = {}
     df = pd.read_csv(path_file, sep='\t', dtype=str)
     df['paths'] = df['paths'].str.split(',')
-    for snarl, paths, type, chr, pos in zip(df['snarl'], df['paths'], df['type'], df['chr'], df['pos']):
-        snarl_paths[snarl] = (paths, type, chr, pos)
+    for paths, chr, pos in zip(df['paths'], df['chr'], df['pos']):
+        for path in paths :
+            list_node = decompose_paths(path)
+            for node in list_node :
+                # Add position only if less that the previous adding
+                if node in snarl_paths :
+                    if snarl_paths[node][0] > chr :
+                        snarl_paths[node] = (chr, pos)
+                else :
+                    snarl_paths[node] = (chr, pos)
 
     return snarl_paths
-
 
 def parse_plink_grm(prefix: str) -> pd.DataFrame:
     """ Parse PLINK GRM binary files and return the kinship matrix as a pandas DataFrame. """
