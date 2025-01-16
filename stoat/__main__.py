@@ -164,9 +164,9 @@ Usage example:
     -r ../droso_data/fly/fly.deconstruct.vcf -q ../droso_data/pangenome_phenotype.tsv -o output
 
 Usage test:
-    stoat -p tests/simulation/binary_data/pg.pg -d tests/simulation/binary_data/pg.dist -v tests/simulation/binary_data/binary.decomposed.vcf \
+    stoat -p tests/simulation/binary_data/pg.pg -d tests/simulation/binary_data/pg.dist -v tests/simulation/binary_data/merged_output.vcf \
     -b tests/simulation/binary_data/phenotype.tsv --gaf -o output
 
-    stoat -p tests/simulation/quantitative_data/pg.pg -d tests/simulation/quantitative_data/pg.dist -v tests/simulation/quantitative_data/quantitative.decomposed.vcf \
+    stoat -p tests/simulation/quantitative_data/pg.pg -d tests/simulation/quantitative_data/pg.dist -v tests/simulation/quantitative_data/merged_output.vcf \
     -q tests/simulation/quantitative_data/phenotype.tsv -o output
 """
