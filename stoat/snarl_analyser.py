@@ -120,8 +120,8 @@ class SnarlProcessor:
         for variant in VCF(self.vcf_path):
             genotypes = variant.genotypes  # Extract genotypes once per variant
             # Case avoid duplicated 
-            if variant.INFO.get('LV') > 0 :
-                continue
+            # if variant.INFO.get('LV') > 0 :
+            #     continue
 
             snarl_list = variant.INFO.get('AT', '').split(',')  # Extract and split snarl list once per variant
             list_list_decomposed_snarl = self.decompose_snarl(snarl_list)  # Decompose snarls once per variant
@@ -159,6 +159,10 @@ class SnarlProcessor:
                 snarl, list_snarl, type_var, chromosome, position = snarl_info
                 # Create the binary table, considering covariates if provided
                 df = self.create_binary_table(binary_groups, list_snarl)
+                if snarl == "299_302" :
+                    print(df)
+                    print(self.matrix.get_matrix())
+                    print(self.matrix.get_row_header())
                 if kinship_matrix and covar :
                     p_value, beta, vcomp = lmm_pvalue = self.LMM_binary(df, kinship_matrix, covar)
                 ref = alt = 'NA'
@@ -384,7 +388,7 @@ if __name__ == "__main__" :
     group.add_argument("-b", "--binary", type=utils.check_format_pheno, help="Path to the binary phenotype file (.txt or .tsv)")
     group.add_argument("-q", "--quantitative", type=utils.check_format_pheno, help="Path to the quantitative phenotype file (.txt or .tsv)")
     parser.add_argument("-c", "--covariate", type=utils.check_covariate_file, required=False, help="Path to the covariate file (.txt or .tsv)")
-    parser.add_argument("-o", "--output", type=str, required=False, help="Path to the output file")
+    parser.add_argument("-o", "--output", type=str, required=False, help="Path to the output dir")
     args = parser.parse_args()
 
     start = time.time()
