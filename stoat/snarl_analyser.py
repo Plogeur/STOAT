@@ -11,6 +11,7 @@ from typing import Optional, List
 # from limix.stats import scan # type: ignore
 import time
 import os
+import re
  
 class Matrix :
     def __init__(self, default_row_number:int=1_000_000, column_number:int=2):
@@ -123,7 +124,7 @@ class SnarlProcessor:
             # if variant.INFO.get('LV') > 0 :
             #     continue
 
-            snarl_list = variant.INFO.get('AT', '').split(',')  # Extract and split snarl list once per variant
+            snarl_list = variant.INFO.get('AT').split(',')  # Extract and split snarl list once per variant
             list_list_decomposed_snarl = self.decompose_snarl(snarl_list)  # Decompose snarls once per variant
 
             for index_column, genotype in enumerate(genotypes) :
@@ -131,7 +132,7 @@ class SnarlProcessor:
                 allele_1, allele_2 = genotype[:2]  # assume there are only 2 allele
                 col_idx = index_column * 2
 
-                if allele_1 == -1 or allele_2 == -1 :# case where we got ./.
+                if allele_1 == -1 or allele_2 == -1 : # case where we got ./.
                     continue
 
                 for decompose_allele_1 in list_list_decomposed_snarl[allele_1] :
@@ -142,7 +143,7 @@ class SnarlProcessor:
 
         self.matrix.set_row_header(row_header_dict)
 
-    def binary_table(self, snarls:list, binary_groups:tuple[dict, dict], kinship_matrix:pd.DataFrame=None, covar:Optional[dict]=None, gaf:bool=False, output:str="output/binary_output.tsv"):
+    def binary_table(self, snarls:list, binary_groups:tuple[dict, dict], kinship_matrix:pd.DataFrame=None, covar:Optional[dict]=None, gaf:bool=False, output:str="output/binary_output.tsv", make_vdf=False):
         """
         Generate a binary table with statistical results and write to a file.
         """
@@ -154,15 +155,11 @@ class SnarlProcessor:
 
         with open(output, 'wb') as outf:
             outf.write(headers.encode('utf-8'))
-                
+
             for snarl_info in snarls:
                 snarl, list_snarl, type_var, chromosome, position = snarl_info
                 # Create the binary table, considering covariates if provided
                 df = self.create_binary_table(binary_groups, list_snarl)
-                if snarl == "299_302" :
-                    print(df)
-                    print(self.matrix.get_matrix())
-                    print(self.matrix.get_row_header())
                 if kinship_matrix and covar :
                     p_value, beta, vcomp = lmm_pvalue = self.LMM_binary(df, kinship_matrix, covar)
                 ref = alt = 'NA'
@@ -176,17 +173,56 @@ class SnarlProcessor:
             
                 outf.write(data.encode('utf-8'))
 
-    def quantitative_table(self, snarls:list, quantitative_dict:dict, kinship_matrix:pd.DataFrame=None, covar:Optional[dict]=None, output:str="output/quantitative_output.tsv") :
+    def quantitative_table(self, snarls:list, quantitative_dict:dict, kinship_matrix:pd.DataFrame=None, covar:Optional[dict]=None, output:str="output/quantitative_output.tsv", make_vcf=False) :
 
-        with open(output, 'wb') as outf:
+        output_vcf = "output/vcf_from_stoat.vcf"
+        with open(output, 'wb') as outf, open(output_vcf, "wb") as outvcf:
             headers = 'CHR\tPOS\tSNARL\tTYPE\tREF\tALT\tRSQUARED\tBETA\tSE\tP\tALLELE_NUM\n'
             outf.write(headers.encode('utf-8'))
+            if make_vcf :
+                ALLELE = "\t".join(self.list_samples)
+                headers = f'ID\tINFO\t{ALLELE}\n'
+                outvcf.write(headers.encode('utf-8'))
+
             for snarl_info in snarls:
                 snarl, list_snarl, type_var, chromosome, position = snarl_info
                 df, allele_number = self.create_quantitative_table(list_snarl)
                 rsquared, beta, se, pvalue = self.linear_regression(df, quantitative_dict)
                 ref = alt = 'NA'
                 data = f"{chromosome}\t{position}\t{snarl}\t{type_var}\t{ref}\t{alt}\t{rsquared}\t{beta}\t{se}\t{pvalue}\t{allele_number}\n"
+                if make_vcf :
+                    col_header = []
+                    for column_name in df.columns :
+                        col_header.append(column_name)
+
+                    segments = re.findall(r'[><]\d+', col_header[0])
+                    snarl = f"{segments[0]}{segments[-1]}"
+                    at = f"AT={','.join(col_header)}"
+
+                    # Initialize an empty dictionary to store VCF-style results
+                    vcf_strings = ""
+
+                    # Iterate through each sample in the DataFrame
+                    for _, row in df.iterrows():
+                        allele_1 = row.iloc[0]
+                        allele_2 = row.iloc[1]
+                        
+                        # Determine VCF-style genotype
+                        if allele_1 == 0 and allele_2 == 2:
+                            allele = "1/1"
+                        elif allele_1 == 2 and allele_2 == 0:
+                            allele = "0/0"
+                        elif allele_1 == 1 and allele_2 == 1:
+                            allele = "0/1"
+                        else: # allele_1 == 0 and allele_2 == 0
+                            allele = "./."  # Unknown genotype
+
+                        # Store the result in a dictionary
+                        vcf_strings += f"{allele},"
+                    vcf_strings = vcf_strings[:-1] # remove the last , 
+                    # Print the results
+                    vcf_data = f"{snarl}\t{at}\t{vcf_strings}\n"
+                    outvcf.write(vcf_data.encode('utf-8'))
                 outf.write(data.encode('utf-8'))
 
     def identify_correct_path(self, decomposed_snarl:list, idx_srr_save:list) -> list:

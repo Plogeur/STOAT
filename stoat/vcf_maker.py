@@ -28,7 +28,7 @@ def extract_vcf_header(input_vcf):
 
     return header_lines, column_header, len(sample_names)
 
-def create_vcf_from_gwas(gwas_file, input_vcf, output_vcf):
+def create_vcf_from_gwas(gwas_file, input_vcf, info_vcf, output_vcf):
     # Extract the header lines, column header, and number of samples
     header_lines, column_header, num_samples = extract_vcf_header(input_vcf)
 
@@ -38,31 +38,30 @@ def create_vcf_from_gwas(gwas_file, input_vcf, output_vcf):
         out_vcf.write(column_header + '\n')
 
         # Process GWAS file and generate VCF body
-        with open(gwas_file, 'r') as gwas:
+        with open(gwas_file, 'r') as gwas, open(info_vcf, 'r') as info:
             next(gwas)
-            for line in gwas:
-                fields = line.strip().split('\t')
+            next(info)
+            for line_gwas, line_info in zip(gwas, info):
+                fields = line_gwas.strip().split('\t')
+                information = line_info.strip().split('\t')
                 #CHR POS SNARL TYPE	REF	ALT	P_FISHER
                 chrom, pos_str, snarl_id, _, ref_str_brut, alt_str_brut, p_value = fields[:7]
 
-                # Generate placeholder sample data (e.g., "." repeated for each sample)
-                sample_placeholder = "0/0"  # GT field placeholder for one sample
-                placeholder = "\t".join([sample_placeholder] * num_samples)  # GT field placeholder for all samples
+                placeholder = str(information[2]).replace(',', '\t')
 
                 # Create placeholder fields
                 qual = "."
                 filter_field = "PASS" if float(p_value) <= 0.05 else "LOWQ"
-                info_field = f"P={p_value}"
+                info_field = information[1]
                 format_field = "GT"
-                list_pos = pos_str.split(',')
+                pos = pos_str.split(',')[0] # take only the first position
                 list_ref = ref_str_brut.split(':')
                 list_list_ref = [ref_str.split(',') for ref_str in list_ref]
                 list_alt = alt_str_brut.split(':')
                 list_list_alt = [alt_str.split(',') for alt_str in list_alt]
 
                 dict_pos = {}
-                for idx, pos in enumerate(list_pos) :
-                    dict_pos[pos] = [list_list_ref[idx], list_list_alt[idx]]
+                dict_pos[pos] = [list_list_ref[0], list_list_alt[0]]
 
                 for pos, [list_ref, list_alt] in dict_pos.items() :
                     for ref, alt in zip(list_ref, list_alt) :
@@ -73,12 +72,13 @@ def create_vcf_from_gwas(gwas_file, input_vcf, output_vcf):
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Convert GWAS output to a VCF file using an input VCF header.")
     parser.add_argument('-g', '--gwas', type=str, required=True, help="Path to the GWAS output file (TSV format).")
-    parser.add_argument('-i', '--input_vcf', type=str, required=True, help="Path to the input VCF file (to extract header information).")
+    parser.add_argument('-v', '--input_vcf', type=str, required=True, help="Path to the input VCF file (to extract header information).")
+    parser.add_argument('-i', '--info', type=str, required=True, help="Path to the input VCF file (to extract header information).")
     parser.add_argument('-o', '--output_vcf', type=str, required=True, help="Path to the output VCF file.")
     
     args = parser.parse_args()
 
     # Run the function with the parsed arguments
-    create_vcf_from_gwas(args.gwas, args.input_vcf, args.output_vcf)
+    create_vcf_from_gwas(args.gwas, args.input_vcf, args.info, args.output_vcf)
 
-# python3 src/vcf_maker.py -g output/run_20241228_003954/binary_analysis.tsv -i tests/simulation/binary_data/merged_output.vcf -o test_vcf.vcf
+# python3 stoat/vcf_maker.py -g output/run_20250117_105311/quantitative_analysis.tsv -v tests/simulation/quantitative_data/merged_output.vcf -i output/vcf_from_stoat.vcf -o output/quantitative_test_vcf.vcf

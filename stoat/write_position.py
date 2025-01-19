@@ -48,11 +48,10 @@ def write_pos_snarl(vcf_file, output_file, type):
     temp_output_file = output_file + ".tmp"
 
     with open(output_file, 'r', encoding='utf-8') as in_f, open(temp_output_file, 'w', encoding='utf-8') as out_f:
-        if type == "quantitatif" :
+        if type == "quantitative" :
             out_f.write("CHR\tPOS\tSNARL\tTYPE\tREF\tALT\tRSQUARED\tBETA\tSE\tP\tALLELE_NUM\n")
         elif type == "binary" :
             out_f.write("CHR\tPOS\tSNARL\tTYPE\tREF\tALT\tP_FISHER\tP_CHI2\tALLELE_NUM\tMIN_ROW_INDEX\tNUM_COLUM\tINTER_GROUP\tAVERAGE\tGROUP_PATHS\n")
-        next(in_f)
         for line in in_f:
             columns = line.strip().split('\t')
             snarl = columns[2]
@@ -122,13 +121,14 @@ def parse_vcf_to_dict(vcf_file):
                     fields_snarl = fields[0:2] + [snarl] + fields[3:5]
                     vcf_dict = write_dic(vcf_dict, fields_snarl)
             else :
-                vcf_dict = write_dic(vcf_dict, fields)
+                fields_snarl = fields[0:5]
+                vcf_dict = write_dic(vcf_dict, fields_snarl)
 
     return vcf_dict
 
 if __name__ == "__main__" :
-    reference = "tests/simulation/binary_data/binary.decomposed.vcf"
-    output_file = "output/run_20250112_184218/binary_analysis.tsv"
-    write_pos_snarl(reference, output_file, "binary")
+    reference = "tests/simulation/quantitative_data/merged_output.vcf"
+    output_file = "output/run_20250117_105311/quantitative_analysis.tsv"
+    write_pos_snarl(reference, output_file, "quantitative")
 
 # python3 stoat/write_position.py

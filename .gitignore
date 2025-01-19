@@ -10,3 +10,8 @@ STOAT.egg-info
 .DS_Store
 htmlcov
 .coverage
+tests/binary_tests_output/*
+tests/plink_tests_output/*
+tests/quantitative_tests_output/*
+tests/simulation/quantitative_data/*
+tests/simulation/binary_data/*
