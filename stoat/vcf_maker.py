@@ -3,6 +3,8 @@ import argparse
 def extract_vcf_header(input_vcf):
     header_lines = [
         '##fileformat=VCFv4.2\n',
+        '##FILTER=<ID=PASS,Description="All filters passed">\n',
+        '##INFO=<ID=AT,Number=R,Type=String,Description="Allele Traversal as path in graph">\n',
         '##INFO=<ID=P,Number=1,Type=String,Description="P-value">\n',
         '##FORMAT=<ID=GT,Number=1,Type=String,Description="Genotype">\n'
     ]
@@ -26,11 +28,11 @@ def extract_vcf_header(input_vcf):
     header_lines.extend([f"{chr}\n" for chr in chr_name])
     header_lines.extend([f"##SAMPLE=<ID={sample}>\n" for sample in sample_names])
 
-    return header_lines, column_header, len(sample_names)
+    return header_lines, column_header
 
 def create_vcf_from_gwas(gwas_file, input_vcf, info_vcf, output_vcf):
     # Extract the header lines, column header, and number of samples
-    header_lines, column_header, num_samples = extract_vcf_header(input_vcf)
+    header_lines, column_header = extract_vcf_header(input_vcf)
 
     # Open the output VCF for writing
     with open(output_vcf, 'w') as out_vcf:
@@ -45,13 +47,12 @@ def create_vcf_from_gwas(gwas_file, input_vcf, info_vcf, output_vcf):
                 fields = line_gwas.strip().split('\t')
                 information = line_info.strip().split('\t')
                 #CHR POS SNARL TYPE	REF	ALT	P_FISHER
-                chrom, pos_str, snarl_id, _, ref_str_brut, alt_str_brut, p_value = fields[:7]
+                chrom, pos_str, _, _, ref_str_brut, alt_str_brut = fields[:6]
 
                 placeholder = str(information[2]).replace(',', '\t')
-
-                # Create placeholder fields
                 qual = "."
-                filter_field = "PASS" if float(p_value) <= 0.05 else "LOWQ"
+                filter_field = "PASS"
+                snarl_id = information[0]
                 info_field = information[1]
                 format_field = "GT"
                 pos = pos_str.split(',')[0] # take only the first position
@@ -75,7 +76,7 @@ if __name__ == "__main__":
     parser.add_argument('-v', '--input_vcf', type=str, required=True, help="Path to the input VCF file (to extract header information).")
     parser.add_argument('-i', '--info', type=str, required=True, help="Path to the input VCF file (to extract header information).")
     parser.add_argument('-o', '--output_vcf', type=str, required=True, help="Path to the output VCF file.")
-    
+
     args = parser.parse_args()
 
     # Run the function with the parsed arguments

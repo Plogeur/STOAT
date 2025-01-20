@@ -20,7 +20,10 @@ def reverse_numbers(input_str):
     """
     # Split the string by the underscore
     parts = input_str.split('_')
-    return f"{parts[1]}_{parts[0]}"
+    try :
+        return f"{parts[1]}_{parts[0]}"
+    except :
+        print("parts : ", parts)
 
 def classify_variant(ref, list_alt) :
 
@@ -52,6 +55,7 @@ def write_pos_snarl(vcf_file, output_file, type):
             out_f.write("CHR\tPOS\tSNARL\tTYPE\tREF\tALT\tRSQUARED\tBETA\tSE\tP\tALLELE_NUM\n")
         elif type == "binary" :
             out_f.write("CHR\tPOS\tSNARL\tTYPE\tREF\tALT\tP_FISHER\tP_CHI2\tALLELE_NUM\tMIN_ROW_INDEX\tNUM_COLUM\tINTER_GROUP\tAVERAGE\tGROUP_PATHS\n")
+        next(in_f) # next header
         for line in in_f:
             columns = line.strip().split('\t')
             snarl = columns[2]
@@ -128,7 +132,7 @@ def parse_vcf_to_dict(vcf_file):
 
 if __name__ == "__main__" :
     reference = "tests/simulation/quantitative_data/merged_output.vcf"
-    output_file = "output/run_20250117_105311/quantitative_analysis.tsv"
+    output_file = "output/run_20250120_100849/quantitative_analysis.tsv"
     write_pos_snarl(reference, output_file, "quantitative")
 
 # python3 stoat/write_position.py

@@ -38,13 +38,16 @@ def count_alleles_in_paths(vcf_file, paths):
             for path_index, allele_path in enumerate(allele_paths):
                 if sub_path in allele_path:
                     for sample_index, genotype in enumerate(variant.genotypes):
-                        path_counts[sub_path][sample_index * 2] |= (genotype[0] == path_index)
-                        path_counts[sub_path][sample_index * 2 + 1] |= (genotype[1] == path_index)
+                        if genotype[0] == path_index :
+                            path_counts[sub_path][sample_index * 2] = True
+                        if genotype[1] == path_index :
+                            path_counts[sub_path][sample_index * 2 + 1] = True
 
     # Combine sub-path counts to compute full path counts
     result_counts = {}
     for path, sub_paths in decomposed_paths.items():
         sub_path1, sub_path2 = sub_paths
+        # If for the same idx both allele is true, return true
         valid_samples = path_counts[sub_path1] & path_counts[sub_path2]
         result_counts[path] = np.sum(valid_samples)
 
@@ -52,10 +55,13 @@ def count_alleles_in_paths(vcf_file, paths):
     return result_counts
 
 # Example usage
-vcf_file = "tests/simulation/binary_data/norm_merged.vcf"
+vcf_file = "tests/simulation/binary_data/merged_output.vcf"
 paths_to_check = [">4242>4243>4245", ">4242>4244>4245"]
 
 path_counts = count_alleles_in_paths(vcf_file, paths_to_check)
 
 for path, count in path_counts.items():
     print(f"Path {path}: {count} valid alleles")
+
+# Path >4242>4243>4245: 349 valid alleles
+# Path >4242>4244>4245: 136 valid alleles
