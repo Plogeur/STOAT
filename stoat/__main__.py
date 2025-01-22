@@ -22,6 +22,7 @@ def main() :
     parser.add_argument("-v", "--vcf",type=utils.check_format_vcf_file, help="Path to the merged VCF file (.vcf or .vcf.gz)", required=True)
     parser.add_argument("-r", "--reference", type=utils.check_format_vcf_file, help="Path to the VCF file referencing all snarl positions (only .vcf)", required=False)
     parser.add_argument("-l", "--listpath", type=utils.check_format_list_path, help="Path to the list paths", required=False)
+    parser.add_argument("-m", "--make-vcf", action="store_true", help="Make a vcf file from the analysis", required=False)
 
     group = parser.add_mutually_exclusive_group(required=True)
     group.add_argument("-b", "--binary", type=utils.check_format_pheno, help="Path to the binary group file (.txt or .tsv)")
@@ -67,6 +68,7 @@ def main() :
     # Check vcf samples matching other files (pheno, covar)
     list_samples = utils.parsing_samples_vcf(args.vcf)
 
+    make_vcf = True if args.make_vcf else False
     if args.covariate :
         covar = utils.parse_covariate_file(args.covariate)
         utils.check_matching(covar, list_samples, args.covariate)
@@ -120,8 +122,8 @@ def main() :
         gaf = True if args.gaf else False
         output_snarl = os.path.join(output_dir, "binary_analysis.tsv")
         logger.info("Binary table creation...")
-        vcf_object.binary_table(snarl_paths, pheno, kinship_matrix, covar, gaf, output_snarl)
-        logger.info("Writing position...")
+        vcf_object.binary_table(snarl_paths, pheno, kinship_matrix, covar, gaf, output_snarl, make_vcf)
+        # logger.info("Writing position...")
         # write_position.write_pos_snarl(reference_vcf, output_snarl, "binary")
 
         output_manh = os.path.join(output_dir, "manhattan_plot_binary.png")
@@ -140,9 +142,9 @@ def main() :
     elif args.quantitative:
         output_file = os.path.join(output_dir, "quantitative_analysis.tsv")
         logger.info("Quantitative table creation...")
-        vcf_object.quantitative_table(snarl_paths, pheno, kinship_matrix, covar, output_file)
+        vcf_object.quantitative_table(snarl_paths, pheno, kinship_matrix, covar, output_file, make_vcf)
         logger.info("Writing position...")
-        # write_position.write_pos_snarl(reference_vcf, output_file, "quantitatif")
+        write_position.write_pos_snarl(reference_vcf, output_file, "quantitatif")
 
         output_manh = os.path.join(output_dir, "manhattan_plot_quantitative.png")
         output_qq = os.path.join(output_dir, "qq_plot_quantitative.png")
@@ -164,9 +166,9 @@ Usage example:
     -r ../droso_data/fly/fly.deconstruct.vcf -q ../droso_data/pangenome_phenotype.tsv -o output
 
 Usage test:
-    stoat -p tests/simulation/binary_data/pg.pg -d tests/simulation/binary_data/pg.dist -v tests/simulation/binary_data/binary.decomposed.vcf \
+    stoat -p tests/simulation/binary_data/pg.pg -d tests/simulation/binary_data/pg.dist -v tests/simulation/binary_data/merged_output.vcf \
     -b tests/simulation/binary_data/phenotype.tsv --gaf -o output
 
-    stoat -p tests/simulation/quantitative_data/pg.pg -d tests/simulation/quantitative_data/pg.dist -v tests/simulation/quantitative_data/quantitative.decomposed.vcf \
-    -q tests/simulation/quantitative_data/phenotype.tsv -o output
+    stoat -p tests/simulation/quantitative_data/pg.pg -d tests/simulation/quantitative_data/pg.dist -v tests/simulation/quantitative_data/merged_output.vcf \
+    -q tests/simulation/quantitative_data/phenotype.tsv -o output --make-vcf
 """
