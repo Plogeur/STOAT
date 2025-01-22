@@ -159,10 +159,6 @@ class SnarlProcessor:
                 snarl, list_snarl, type_var, chromosome, position = snarl_info
                 # Create the binary table, considering covariates if provided
                 df = self.create_binary_table(binary_groups, list_snarl)
-                if snarl == "299_302" :
-                    print(df)
-                    print(self.matrix.get_matrix())
-                    print(self.matrix.get_row_header())
                 if kinship_matrix and covar :
                     p_value, beta, vcomp = lmm_pvalue = self.LMM_binary(df, kinship_matrix, covar)
                 ref = alt = 'NA'

@@ -13,7 +13,7 @@ def process_file(freq_file, threshold=0.2):
     path_list = []
     true_labels = []
     list_diff = []
-
+ 
     # Iterate in pairs and calculate the differences
     for i in range(0, len(df) - 1, 2):
         row_1 = df.iloc[i]
