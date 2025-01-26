@@ -9,6 +9,7 @@ from scipy.stats import fisher_exact # type: ignore
 from typing import Optional, List
 # from limix.stats import logisticMixedModel # type: ignore
 # from limix.stats import scan # type: ignore
+import subprocess
 import time
 import os
  
@@ -39,8 +40,13 @@ class Matrix :
 class SnarlProcessor:
     def __init__(self, vcf_path:str, list_samples:list):
         self.list_samples = list_samples
-        self.matrix = Matrix(1_000_000, len(self.list_samples)*2)
+        self.matrix = Matrix(self._count_lines_with_wc(vcf_path)*4, len(self.list_samples)*2)
         self.vcf_path = vcf_path
+
+    def _count_lines_with_wc(file_path):
+        result = subprocess.run(['wc', '-l', file_path], stdout=subprocess.PIPE, text=True)
+        line_count = int(result.stdout.split()[0])
+        return line_count
 
     def expand_matrix(self):
         """Expands a given numpy matrix by doubling the number of rows."""
@@ -120,6 +126,9 @@ class SnarlProcessor:
         # Parse variant line by line
         for variant in VCF(self.vcf_path):
             genotypes = variant.genotypes  # Extract genotypes once per variant
+            
+            if variant.INFO.get('LV') > 0 :
+                continue
 
             path_list = variant.INFO.get('AT', '').split(',')  # Extract and split snarl list once per variant
             list_list_decomposed_node = self.decompose_snarl(path_list)  # Decompose snarls once per variant
@@ -173,14 +182,17 @@ class SnarlProcessor:
     def quantitative_table(self, snarls:list, quantitative_dict:dict, kinship_matrix:pd.DataFrame=None, covar:Optional[dict]=None, output:str="output/quantitative_output.tsv") :
 
         with open(output, 'wb') as outf:
-            headers = 'CHR\tPOS\tNODE\tTYPE\tREF\tALT\tRSQUARED\tBETA\tSE\tP\tALLELE_NUM\n'
+            headers = 'CHR\tPOS\tNODE\tREF\tALT\tRSQUARED\tBETA\tSE\tP\tALLELE_NUM\n'
             outf.write(headers.encode('utf-8'))
-            for snarl_info in snarls:
-                snarl, list_snarl, type_var, chromosome, position = snarl_info
-                df, allele_number = self.create_quantitative_table(list_snarl)
+            for node, node_info in snarls.items() :
+                chromosome, position = node_info
+                df, allele_number = self.create_quantitative_table(node)
                 rsquared, beta, se, pvalue = self.linear_regression(df, quantitative_dict)
                 ref = alt = 'NA'
-                data = '{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\t{}\n'.format(chromosome, position, snarl, ref, alt, type_var, rsquared, beta, se, pvalue, allele_number)
+                data = (
+                f"{chromosome}\t{position}\t{node}\t{ref}\t{alt}\t"
+                f"{rsquared}\t{beta}\t{se}\t"
+                f"{pvalue}\t{allele_number}\n")
                 outf.write(data.encode('utf-8'))
 
     def identify_correct_path(self, node:str) -> list:
@@ -206,11 +218,9 @@ class SnarlProcessor:
 
         # Count occurrences in g0 and g1
         extracted_rows = self.identify_correct_path(node)
-        if node == "1831" :
-            print("extracted_rows : ", extracted_rows)
-            
+
         for idx, allele in enumerate(extracted_rows):
-            if allele == True :
+            if allele :
                 srr = self.list_samples[idx // 2]
                 if binary_groups[srr] == 0:
                     g0[0] += 1
@@ -224,25 +234,35 @@ class SnarlProcessor:
         df = pd.DataFrame([g0, g1], index=['G0', 'G1'], columns=[node, f'not_passing_{node}'])
         return df
 
-    def create_quantitative_table(self, column_headers:list) -> pd.DataFrame:
+    def create_quantitative_table(self, node: str) -> pd.DataFrame:
+        """
+        Creates a quantitative table for a given node, showing passing and not passing alleles,
+        and calculates the total allele count.
+        """
+
         length_sample = len(self.list_samples)
+        extracted_rows = self.identify_correct_path(node)
 
-        # Initialize a zero matrix for genotypes with shape (length_sample, len(column_headers))
-        genotypes = np.zeros((length_sample, len(column_headers)), dtype=int)
+        # Initialize genotype counts for 'passing' and 'not passing' alleles
+        passing = [0] * length_sample
 
-        # Iterate over each path_snarl and fill in the matrix
-        for col_idx, path_snarl in enumerate(column_headers):
-            decomposed_snarl = self.decompose_string(path_snarl)
-            idx_srr_save = self.identify_correct_path(decomposed_snarl, list(range(length_sample)))
+        # Count passing alleles
+        for idx, allele in enumerate(extracted_rows):
+            if allele:
+                passing[idx // 2] += 1
 
-            for idx in idx_srr_save:
-                srr_idx = idx // 2  # Convert index to the appropriate sample index
-                genotypes[srr_idx, col_idx] += 1
+        # Calculate 'not passing' alleles
+        # not_passing = [2 - count for count in passing]
 
-        df = pd.DataFrame(genotypes, index=self.list_samples, columns=column_headers)
-        allele_number = int(df.values.sum()) # Calculate the number of samples in the DataFrame
+        # Create a DataFrame
+        df = pd.DataFrame(
+            {'Passing': passing},
+            index=self.list_samples)
+
+        # Calculate total allele count
+        allele_number = sum(passing) # + sum(not_passing)
         return df, allele_number
-    
+
     def linear_regression(self, df:pd.DataFrame, pheno:dict) -> tuple :
 
         df = df.astype(int)
@@ -388,7 +408,6 @@ if __name__ == "__main__" :
         binary_group = utils.parse_pheno_binary_file(args.binary)
         vcf_object.binary_table(snarl, binary_group, covar, output=output)
 
-    # python3 stoat/snarl_analyser.py ../snarl_data/fly.merged.vcf output/test_list_snarl.tsv -b ../snarl_data/group.txt
     # python3 stoat/snarl_analyser.py tests/simulation/binary_data/merged_output.vcf tests/simulation/binary_data/snarl_paths.tsv -b tests/simulation/binary_data/phenotype.tsv -o tests/binary_tests_output/binary_output.tsv
 
     if args.quantitative:
