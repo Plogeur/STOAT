@@ -206,9 +206,9 @@ class SnarlProcessor:
 
         # Count occurrences in g0 and g1
         extracted_rows = self.identify_correct_path(node)
-        if node == "1831" :
+        if node == "3409" :
             print("extracted_rows : ", extracted_rows)
-            
+
         for idx, allele in enumerate(extracted_rows):
             if allele == True :
                 srr = self.list_samples[idx // 2]

@@ -28,7 +28,7 @@ def process_file(freq_file, threshold=0.2):
 
         path_list.append(f"{int(row_1['start_node'])}_{int(row_1['next_node'])}")
         list_diff.append(float(diff))
-        if float(diff) == 0.499 :
+        if float(diff) == 0.365 :
             print(f"{int(row_1['start_node'])}_{int(row_1['next_node'])}")
 
     return path_list, true_labels, list_diff
