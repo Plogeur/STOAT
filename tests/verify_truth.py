@@ -28,8 +28,6 @@ def process_file(freq_file, threshold=0.2):
 
         path_list.append(f"{int(row_1['start_node'])}_{int(row_1['next_node'])}")
         list_diff.append(float(diff))
-        if float(diff) == 0.365 :
-            print(f"{int(row_1['start_node'])}_{int(row_1['next_node'])}")
 
     return path_list, true_labels, list_diff
 
@@ -81,7 +79,7 @@ def match_snarl(path_list, true_labels, list_diff, p_value_file, paths_file, typ
 
         # We want to know if the snarl is in the range/containt of the snarl in the p_value file
         matched_row = p_value_df[(node == next_node)]
-
+ 
         # Case where the snarl is found 
         if not matched_row.empty:
 
@@ -457,6 +455,8 @@ if __name__ == "__main__":
         print_confusion_matrix(test_predicted_labels_10_2, test_predicted_labels_10_5, test_predicted_labels_10_8, cleaned_true_labels, f"{output}/confusion_matrix_{THRESHOLD_FREQ}")
         assert len(cleaned_true_labels) == len(clean_list_diff)
 
+        print("Pourcentage of paths tested : ", (len(pvalue)/len(test_path_list))*100)
+
         # Plot distribution of p-values for false negatives and true positives
         plot_diff_distribution(test_predicted_labels_10_2, cleaned_true_labels, clean_list_diff, output_diff, "10^-2")
         p_value_distribution(test_predicted_labels_10_2, cleaned_true_labels, clean_list_diff, pvalue, num_sample, output_diff)
@@ -472,14 +472,8 @@ if __name__ == "__main__":
 
     """
     python3 tests/verify_truth.py tests/simulation/quantitative_data/pg.snarls.freq.tsv \
-    tests/quantitative_tests_output/quantitative_analysis.tsv tests/simulation/quantitative_data/snarl_paths.tsv -q
+    tests/quantitative_tests_output/stoat.assoc.tsv tests/simulation/quantitative_data/snarl_paths.tsv -q
 
     python3 tests/verify_truth.py tests/simulation/binary_data/pg.snarls.freq.tsv \
     tests/binary_tests_output/binary_output/stoat.assoc.tsv tests/simulation/binary_data/snarl_paths.tsv -b
-
-    python3 tests/verify_truth.py tests/simulation/quantitative_data/pg.snarls.freq.tsv \
-    tests/plink_tests_output/plink_quantitative.tsv tests/simulation/quantitative_data/snarl_paths.tsv -p tests/plink_tests_output/test_vcf_quantitative.vcf
-
-    python3 tests/verify_truth.py tests/simulation/binary_data/pg.snarls.freq.tsv \
-    tests/plink_tests_output/combine.tsv tests/simulation/binary_data/snarl_paths.tsv -p tests/plink_tests_output/test_vcf_binary.vcf
     """

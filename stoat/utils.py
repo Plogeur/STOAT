@@ -79,10 +79,10 @@ def parse_snarl_path_file_dict(path_file:str) -> dict:
     for paths, chr, pos in zip(df['paths'], df['chr'], df['pos']):
         for path in paths :
             list_node = decompose_paths(path)
-            # avoid case of P>N>*>M>O
+            # avoid case of P>N>*>M>O, W>S, P>N>M>O 
             if len(list_node) != 3 :
                 continue
-            
+
             # Add only the node Y where snarl is : >X>Y>Z
             node = list_node[1]
             if node in snarl_paths :
