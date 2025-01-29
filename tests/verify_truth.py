@@ -7,6 +7,26 @@ import plotly.express as px
 import re
 from cyvcf2 import VCF # type: ignore
 
+def decompose_paths(paths:str) :
+    numbers = re.findall(r'\d+', paths)
+    return [str(num) for num in numbers]
+
+def parse_snarl_path_file_dict(path_file:str) -> set:
+    node_set = set()
+    df = pd.read_csv(path_file, sep='\t', dtype=str)
+    df['paths'] = df['paths'].str.split(',')
+    for paths in df['paths']:
+        for path in paths :
+            list_node = decompose_paths(path)
+            # avoid case of P>N>*>M>O, W>S, P>N>M>O 
+            if len(list_node) != 3 :
+                continue
+
+            # Add only the node Y where snarl is : >X>Y>Z
+            node = list_node[1]
+            node_set.add(node)
+    return node_set
+
 # Function to process the frequency file and get result list with differences
 def process_file(freq_file, threshold=0.2):
     df = pd.read_csv(freq_file, sep='\t')
@@ -26,7 +46,7 @@ def process_file(freq_file, threshold=0.2):
         else :
             true_labels.append(1)
 
-        path_list.append(f"{int(row_1['start_node'])}_{int(row_1['next_node'])}")
+        path_list.append(int(row_1['next_node']))
         list_diff.append(float(diff))
 
     return path_list, true_labels, list_diff
@@ -58,7 +78,7 @@ def check_valid_snarl(start_node, next_node, snarl_list) :
 
     return False
 
-def match_snarl(path_list, true_labels, list_diff, p_value_file, paths_file, type_):
+def match_snarl(path_list, true_labels, list_diff, p_value_file, type_):
 
     p_value_df = pd.read_csv(p_value_file, sep='\t')
     if type_ == 'binary' or type_ == 'quantitative':
@@ -73,9 +93,7 @@ def match_snarl(path_list, true_labels, list_diff, p_value_file, paths_file, typ
     pvalue = []
     num_sample = []
 
-    for idx, snarl_id in enumerate(path_list):
-
-        _, next_node = map(int, snarl_id.split('_'))
+    for idx, next_node in enumerate(path_list):
 
         # We want to know if the snarl is in the range/containt of the snarl in the p_value file
         matched_row = p_value_df[(node == next_node)]
@@ -111,46 +129,41 @@ def vcf_snarl_list(vcf_file):
 
     return vcf_snarl_list
 
-def match_snarl_plink(path_list:list, true_labels:list, list_diff:list, plink_file:str, snarl_list:list):
+def match_snarl_plink(path_list:list, true_labels:list, list_diff:list, plink_file:str, node_set:set):
 
     plink_df = pd.read_csv(plink_file, sep='\t')
-    snarl_splited = plink_df['SNP'].apply(split_snarl)
+    node = plink_df['SNP']
 
-    assert len(plink_df) == len(snarl_list)
-
-    type_ = []
     predicted_labels_10_2 = []
     predicted_labels_10_5 = []
     predicted_labels_10_8 = []
     cleaned_true_labels = []
     clean_list_diff = []
-    list_pvalue = []
+    pvalue = []
 
-    for idx, snarl_id in enumerate(path_list):
+    for idx, next_node in enumerate(path_list):
 
-        start_node, next_node = map(int, snarl_id.split('_'))
+        if not next_node in node_set:
+            continue
 
         # We want to know if the snarl is in the range/containt of the snarl in the p_value file
-        matched_row = plink_df[(snarl_splited.str[1].astype(int) <= start_node) & (snarl_splited.str[0].astype(int) >= next_node) |
-                                 (snarl_splited.str[0].astype(int) <= start_node) & (snarl_splited.str[1].astype(int) >= next_node)]
-
+        matched_row = plink_df[(node == next_node)]
+ 
         # Case where the snarl is found 
         if not matched_row.empty:
-            for idx_m, match in matched_row.iterrows():  # Unpack index and row (Series)
-                if check_valid_snarl(start_node, next_node, snarl_list[int(idx_m)]) :
-                    p_value = match.get("P")  # Access the 'P' value from the Series
-                    if str(p_value) == "nan":
-                        continue
-                    type_.append(match.get('TYPE'))
-                    predicted_labels_10_2.append(0 if p_value < 0.01 else 1)
-                    predicted_labels_10_5.append(0 if p_value < 0.00001 else 1)
-                    predicted_labels_10_8.append(0 if p_value < 0.00000001 else 1)
-                    cleaned_true_labels.append(true_labels[idx])
-                    clean_list_diff.append(list_diff[idx])
-                    list_pvalue.append(p_value)
-                    break
-    # print("total row : ", len(path_list))
-    return type_, predicted_labels_10_2, predicted_labels_10_5, predicted_labels_10_8, cleaned_true_labels, clean_list_diff, list_pvalue
+
+            for _, row in matched_row.iterrows():
+               
+                p_value = row['P']
+                predicted_labels_10_2.append(0 if p_value < 0.01 else 1)
+                predicted_labels_10_5.append(0 if p_value < 0.00001 else 1)
+                predicted_labels_10_8.append(0 if p_value < 0.00000001 else 1)
+                cleaned_true_labels.append(true_labels[idx])
+                clean_list_diff.append(list_diff[idx])
+                pvalue.append(p_value)
+                num_sample.append(row['ALLELE_NUM'])
+
+    return predicted_labels_10_2, predicted_labels_10_5, predicted_labels_10_8, cleaned_true_labels, clean_list_diff, pvalue, num_sample
 
 def conf_mat_maker(p_val, predicted_labels, true_labels, output):
         
@@ -406,13 +419,13 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Parse a file with start_node, next_node, group, and freq columns.")
     parser.add_argument("freq", help="Path to allele frequence file")
     parser.add_argument("p_value", help="Path to p_value file")
-    parser.add_argument("paths", help="Path to p_value file")
+    parser.add_argument("paths", help="Path to paths snarl file")
     parser.add_argument("-t", "--threshold", type=float, required=False, help="Threshold to define the truth label")
 
     group = parser.add_mutually_exclusive_group(required=True)
     group.add_argument("-b", "--binary", action='store_true', help="binary test")
     group.add_argument("-q", "--quantitative", action='store_true', help="quantitative test")
-    group.add_argument("-p", "--plink", type=str, help="path to the vcf / plink test")
+    group.add_argument("-p", "--plink", action='store_true', help="plink test")
 
     args = parser.parse_args()
 
@@ -435,14 +448,14 @@ if __name__ == "__main__":
     THRESHOLD_FREQ = 0.2
 
     # Define Truth label from freq file
+    node_set = parse_snarl_path_file_dict(args.paths) 
     test_path_list, test_true_labels, test_list_diff = process_file(args.freq, THRESHOLD_FREQ)
     assert len(test_path_list) == len(test_true_labels) == len(test_list_diff)
 
     if args.plink:
-        snarl_list = vcf_snarl_list(args.plink)
-        type_, test_predicted_labels_10_2, test_predicted_labels_10_5, test_predicted_labels_10_8, cleaned_true_labels, clean_list_diff, _ = match_snarl_plink(test_path_list, test_true_labels, test_list_diff, args.p_value, snarl_list)
+        type_, test_predicted_labels_10_2, test_predicted_labels_10_5, test_predicted_labels_10_8, cleaned_true_labels, clean_list_diff, _ = match_snarl_plink(test_path_list, test_true_labels, test_list_diff, args.p_value, node_set)
     else :
-        test_predicted_labels_10_2, test_predicted_labels_10_5, test_predicted_labels_10_8, cleaned_true_labels, clean_list_diff, _, _ = match_snarl(test_path_list, test_true_labels, test_list_diff, args.p_value, args.paths, type_)
+        test_predicted_labels_10_2, test_predicted_labels_10_5, test_predicted_labels_10_8, cleaned_true_labels, clean_list_diff, _, _ = match_snarl(test_path_list, test_true_labels, test_list_diff, args.p_value, type_)
     
     # Plot confusion matrix
     print_confusion_matrix(test_predicted_labels_10_2, test_predicted_labels_10_5, test_predicted_labels_10_8, cleaned_true_labels, f"{output}/confusion_matrix_{THRESHOLD_FREQ}")
@@ -451,7 +464,7 @@ if __name__ == "__main__":
     THRESHOLD_FREQ = 0.0
     test_path_list, test_true_labels, test_list_diff = process_file(args.freq, THRESHOLD_FREQ)
     if args.binary or args.quantitative :
-        test_predicted_labels_10_2, test_predicted_labels_10_5, test_predicted_labels_10_8, cleaned_true_labels, clean_list_diff, pvalue, num_sample = match_snarl(test_path_list, test_true_labels, test_list_diff, args.p_value, args.paths, type_)
+        test_predicted_labels_10_2, test_predicted_labels_10_5, test_predicted_labels_10_8, cleaned_true_labels, clean_list_diff, pvalue, num_sample = match_snarl(test_path_list, test_true_labels, test_list_diff, args.p_value, type_)
         print_confusion_matrix(test_predicted_labels_10_2, test_predicted_labels_10_5, test_predicted_labels_10_8, cleaned_true_labels, f"{output}/confusion_matrix_{THRESHOLD_FREQ}")
         assert len(cleaned_true_labels) == len(clean_list_diff)
 
@@ -462,7 +475,7 @@ if __name__ == "__main__":
         p_value_distribution(test_predicted_labels_10_2, cleaned_true_labels, clean_list_diff, pvalue, num_sample, output_diff)
     
     elif args.plink :
-        type_, test_predicted_labels_10_2, test_predicted_labels_10_5, test_predicted_labels_10_8, cleaned_true_labels, clean_list_diff, pvalue = match_snarl_plink(test_path_list, test_true_labels, test_list_diff, args.p_value, snarl_list)
+        type_, test_predicted_labels_10_2, test_predicted_labels_10_5, test_predicted_labels_10_8, cleaned_true_labels, clean_list_diff, pvalue = match_snarl_plink(test_path_list, test_true_labels, test_list_diff, args.p_value, node_set)
         print_confusion_matrix(test_predicted_labels_10_2, test_predicted_labels_10_5, test_predicted_labels_10_8, cleaned_true_labels, f"{output}/confusion_matrix_{THRESHOLD_FREQ}")
         assert len(cleaned_true_labels) == len(clean_list_diff)
 
@@ -471,9 +484,17 @@ if __name__ == "__main__":
         p_value_distribution_plink(type_, test_predicted_labels_10_2, cleaned_true_labels, clean_list_diff, pvalue, output_diff)
 
     """
+    # Stoat
     python3 tests/verify_truth.py tests/simulation/quantitative_data/pg.snarls.freq.tsv \
     tests/quantitative_tests_output/stoat.assoc.tsv tests/simulation/quantitative_data/snarl_paths.tsv -q
 
     python3 tests/verify_truth.py tests/simulation/binary_data/pg.snarls.freq.tsv \
     tests/binary_tests_output/binary_output/stoat.assoc.tsv tests/simulation/binary_data/snarl_paths.tsv -b
+
+    # Plink
+    python3 tests/verify_truth.py tests/simulation/quantitative_data/pg.snarls.freq.tsv \
+    tests/plink_tests_output/ tests/simulation/quantitative_data/snarl_paths.tsv -q
+
+    python3 tests/verify_truth.py tests/simulation/binary_data/pg.snarls.freq.tsv \
+    tests/plink_tests_output/binary_output/  tests/simulation/binary_data/snarl_paths.tsv -b
     """

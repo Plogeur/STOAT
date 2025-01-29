@@ -12,7 +12,7 @@ from typing import Optional, List
 import subprocess
 import time
 import os
- 
+
 class Matrix :
     def __init__(self, default_row_number:int=1_000_000, column_number:int=2):
         self.default_row_number = default_row_number 
@@ -43,7 +43,7 @@ class SnarlProcessor:
         self.matrix = Matrix(self._count_lines_with_wc(vcf_path)*4, len(self.list_samples)*2)
         self.vcf_path = vcf_path
 
-    def _count_lines_with_wc(file_path):
+    def _count_lines_with_wc(self, file_path):
         result = subprocess.run(['wc', '-l', file_path], stdout=subprocess.PIPE, text=True)
         line_count = int(result.stdout.split()[0])
         return line_count
@@ -166,8 +166,8 @@ class SnarlProcessor:
                 chromosome, position = node_info
                 # Create the binary table, considering covariates if provided
                 df = self.create_binary_table(binary_groups, node)
-                if kinship_matrix and covar :
-                    p_value, beta, vcomp = lmm_pvalue = self.LMM_binary(df, kinship_matrix, covar)
+                # if kinship_matrix and covar :
+                #     p_value, beta, vcomp = lmm_pvalue = self.LMM_binary(df, kinship_matrix, covar)
                 ref = alt = 'NA'
                 # Perform statistical tests and compute descriptive statistics
                 fisher_p_value, chi2_p_value, allele_number, min_sample, numb_colum, inter_group, average, group_paths = self.binary_stat_test(df, gaf)
@@ -179,7 +179,7 @@ class SnarlProcessor:
             
                 outf.write(data.encode('utf-8'))
 
-    def quantitative_table(self, snarls:list, quantitative_dict:dict, kinship_matrix:pd.DataFrame=None, covar:Optional[dict]=None, output:str="output/quantitative_output.tsv") :
+    def quantitative_table(self, snarls:dict, quantitative_dict:dict, kinship_matrix:pd.DataFrame=None, covar:Optional[dict]=None, output:str="output/quantitative_output.tsv") :
 
         with open(output, 'wb') as outf:
             headers = 'CHR\tPOS\tNODE\tREF\tALT\tRSQUARED\tBETA\tSE\tP\tALLELE_NUM\n'
@@ -269,9 +269,7 @@ class SnarlProcessor:
         df['Target'] = df.index.map(pheno)
         x = df.drop('Target', axis=1)
         y = df['Target']
-
-        x_with_const = sm.add_constant(x)
-        result = sm.OLS(y, x_with_const).fit()
+        result = sm.OLS(y, x).fit()
 
         rsquared = f"{result.rsquared:.4e}" if result.rsquared < 0.0001 else f"{result.rsquared:.4f}"
 
@@ -408,13 +406,13 @@ if __name__ == "__main__" :
         binary_group = utils.parse_pheno_binary_file(args.binary)
         vcf_object.binary_table(snarl, binary_group, covar, output=output)
 
-    # python3 stoat/snarl_analyser.py tests/simulation/binary_data/merged_output.vcf tests/simulation/binary_data/snarl_paths.tsv -b tests/simulation/binary_data/phenotype.tsv -o tests/binary_tests_output/binary_output.tsv
+    # python3 stoat/snarl_analyser.py tests/simulation/binary_data/merged_output.vcf tests/simulation/binary_data/snarl_paths.tsv -b tests/simulation/binary_data/phenotype.tsv -o tests/binary_tests_output/binary_output
 
     if args.quantitative:
         quantitative_dict = utils.parse_pheno_quantitatif_file(args.quantitative)
         vcf_object.quantitative_table(snarl, quantitative_dict, covar, output=output)
 
-    # python3 stoat/snarl_analyser.py tests/simulation/quantitative_data/merged_output.vcf tests/simulation/quantitative_data/snarl_paths.tsv -q tests/simulation/quantitative_data/phenotype.tsv -o tests/quantitative_tests_output/quantitative_output.tsv
+    # python3 stoat/snarl_analyser.py tests/simulation/quantitative_data/merged_output.vcf tests/simulation/quantitative_data/snarl_paths.tsv -q tests/simulation/quantitative_data/phenotype.tsv -o tests/quantitative_tests_output/quantitative_output
 
     print(f"Time P-value : {time.time() - start} s")
 
