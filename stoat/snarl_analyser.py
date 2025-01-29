@@ -120,9 +120,10 @@ class SnarlProcessor:
         # Parse variant line by line
         for variant in VCF(self.vcf_path):
             genotypes = variant.genotypes  # Extract genotypes once per variant
-            # Case avoid duplicated 
-            # if variant.INFO.get('LV') > 0 :
-            #     continue
+            
+            # Avoid inconsistence allelic indexing
+            if variant.INFO.get('LV') != 0 :
+                continue
 
             snarl_list = variant.INFO.get('AT').split(',')  # Extract and split snarl list once per variant
             list_list_decomposed_snarl = self.decompose_snarl(snarl_list)  # Decompose snarls once per variant
