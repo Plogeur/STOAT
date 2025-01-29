@@ -75,7 +75,7 @@ def match_snarl(path_list, true_labels, list_diff, p_value_file, paths_file, typ
 
     for idx, snarl_id in enumerate(path_list):
 
-        start_node, next_node = map(int, snarl_id.split('_'))
+        _, next_node = map(int, snarl_id.split('_'))
 
         # We want to know if the snarl is in the range/containt of the snarl in the p_value file
         matched_row = p_value_df[(node == next_node)]
