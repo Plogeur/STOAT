@@ -72,7 +72,6 @@ def decompose_paths(paths:str) :
     return [str(num) for num in numbers]
 
 def parse_snarl_path_file_dict(path_file:str) -> dict:
-
     snarl_paths = {}
     df = pd.read_csv(path_file, sep='\t', dtype=str)
     df['paths'] = df['paths'].str.split(',')
@@ -90,7 +89,6 @@ def parse_snarl_path_file_dict(path_file:str) -> dict:
                     snarl_paths[node] = (chr, pos)
             else :
                 snarl_paths[node] = (chr, pos)
-
     return snarl_paths
 
 def parse_plink_grm(prefix: str) -> pd.DataFrame:

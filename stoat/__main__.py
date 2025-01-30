@@ -107,8 +107,7 @@ def main() :
         if args.pg or args.dist : 
             logger.info("list snarls path are provided, .pg and .dist will be not analyse")
         input_snarl_path = args.listpath
-        snarl_paths, paths_number_analysis = utils.parse_snarl_path_file(input_snarl_path)
-        logger.info(f"Total of snarls found : {paths_number_analysis}")
+        snarl_paths = utils.parse_snarl_path_file_dict(input_snarl_path)
 
     vcf_object = snarl_analyser.SnarlProcessor(args.vcf, list_samples)
     logger.info("Starting fill matrix...")
@@ -164,9 +163,9 @@ Usage example:
     -r ../droso_data/fly/fly.deconstruct.vcf -q ../droso_data/pangenome_phenotype.tsv -o output
 
 Usage test:
-    stoat -p tests/simulation/binary_data/pg.pg -d tests/simulation/binary_data/pg.dist -v tests/simulation/binary_data/binary.decomposed.vcf \
-    -b tests/simulation/binary_data/phenotype.tsv --gaf -o output
+    stoat -p tests/simulation/binary_data/pg.pg -d tests/simulation/binary_data/pg.dist -v tests/simulation/binary_data/merged_output.vcf \
+    -b tests/simulation/binary_data/phenotype.tsv -o output
 
-    stoat -p tests/simulation/quantitative_data/pg.pg -d tests/simulation/quantitative_data/pg.dist -v tests/simulation/quantitative_data/quantitative.decomposed.vcf \
+    stoat -p tests/simulation/quantitative_data/pg.pg -d tests/simulation/quantitative_data/pg.dist -v tests/simulation/quantitative_data/merged_output.vcf \
     -q tests/simulation/quantitative_data/phenotype.tsv -o output
 """
