@@ -400,19 +400,19 @@ if __name__ == "__main__" :
 
     output_dir = args.output or "output"    
     os.makedirs(output_dir, exist_ok=True)
-    output = os.path.join(output_dir, "stoat.assoc.tsv")
+    output = os.path.join(output_dir, "stoat2bin.assoc.tsv")
 
     if args.binary:
         binary_group = utils.parse_pheno_binary_file(args.binary)
         vcf_object.binary_table(snarl, binary_group, covar, output=output)
 
-    # python3 stoat/snarl_analyser.py tests/simulation/binary_data/merged_output.vcf tests/simulation/binary_data/snarl_paths.tsv -b tests/simulation/binary_data/phenotype.tsv -o tests/binary_tests_output/binary_output
+    # python3 stoat/snarl_analyser.py tests/simulation/binary_data/merged_output.vcf tests/simulation/binary_data/snarl_paths.tsv -b tests/simulation/binary_data/phenotype.tsv -o tests/binary_tests_output
 
     if args.quantitative:
         quantitative_dict = utils.parse_pheno_quantitatif_file(args.quantitative)
         vcf_object.quantitative_table(snarl, quantitative_dict, covar, output=output)
 
-    # python3 stoat/snarl_analyser.py tests/simulation/quantitative_data/merged_output.vcf tests/simulation/quantitative_data/snarl_paths.tsv -q tests/simulation/quantitative_data/phenotype.tsv -o tests/quantitative_tests_output/quantitative_output
+    # python3 stoat/snarl_analyser.py tests/simulation/quantitative_data/merged_output.vcf tests/simulation/quantitative_data/snarl_paths.tsv -q tests/simulation/quantitative_data/phenotype.tsv -o tests/quantitative_tests_output
 
     print(f"Time P-value : {time.time() - start} s")
 
