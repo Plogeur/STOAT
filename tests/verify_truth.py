@@ -486,7 +486,7 @@ if __name__ == "__main__":
         print_confusion_matrix(test_predicted_labels_10_2, test_predicted_labels_10_5, test_predicted_labels_10_8, cleaned_true_labels, f"{output}/confusion_matrix_{THRESHOLD_FREQ}")
         assert len(cleaned_true_labels) == len(clean_list_diff)
 
-        print("number of paths tested : ", (len(pvalue)/len(test_path_list))*100)
+        print("Pourcentage of paths tested : ", (len(pvalue)/len(test_path_list))*100*2) # *2 because we jump 2 per 2 the paths
         # Plot distribution of p-values for false negatives and true positives
         plot_diff_distribution(test_predicted_labels_10_2, cleaned_true_labels, clean_list_diff, output_diff, "10^-2")
         p_value_distribution(test_predicted_labels_10_2, cleaned_true_labels, clean_list_diff, pvalue, num_sample, output_diff)
@@ -499,17 +499,17 @@ if __name__ == "__main__":
         print_confusion_matrix(test_predicted_labels_10_2, test_predicted_labels_10_5, test_predicted_labels_10_8, cleaned_true_labels, f"{output}/confusion_matrix_{THRESHOLD_FREQ}")
         assert len(cleaned_true_labels) == len(clean_list_diff)
 
-        print("number of paths tested : ", (len(pvalue)/len(test_path_list))*100)
+        print("Pourcentage of paths tested : ", (len(pvalue)/len(test_path_list))*100*2)
         # Plot distribution of p-values for false negatives and true positives
         plot_diff_distribution(test_predicted_labels_10_2, cleaned_true_labels, clean_list_diff, output_diff, "10^-2")
         p_value_distribution_plink(type_, test_predicted_labels_10_2, cleaned_true_labels, clean_list_diff, pvalue, num_sample, output_diff)
 
     """
     python3 tests/verify_truth.py --freq tests/simulation/quantitative_data/pg.snarls.freq.tsv \
-    --p_value output/run_20250118_184122/quantitative_analysis.tsv --paths output/run_20250118_184122/snarl_paths.tsv -q
+    --p_value output/run_20250129_104641/quantitative_analysis.tsv --paths tests/simulation/quantitative_data/snarl_paths.tsv -q
 
     python3 tests/verify_truth.py --freq tests/simulation/binary_data/pg.snarls.freq.tsv \
-    --p_value output/run_20250118_185403/binary_analysis.tsv --paths tests/simulation/binary_data/snarl_paths.tsv -b
+    --p_value output/run_20250120_170153/binary_analysis.tsv --paths tests/simulation/binary_data/snarl_paths.tsv -b
 
     # PLINK 
     python3 tests/verify_truth.py --freq tests/simulation/quantitative_data/pg.snarls.freq.tsv \

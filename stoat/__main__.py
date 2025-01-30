@@ -143,8 +143,8 @@ def main() :
         output_file = os.path.join(output_dir, "quantitative_analysis.tsv")
         logger.info("Quantitative table creation...")
         vcf_object.quantitative_table(snarl_paths, pheno, kinship_matrix, covar, output_file, make_vcf)
-        logger.info("Writing position...")
-        write_position.write_pos_snarl(reference_vcf, output_file, "quantitatif")
+        # logger.info("Writing position...")
+        # write_position.write_pos_snarl(reference_vcf, output_file, "quantitatif")
 
         output_manh = os.path.join(output_dir, "manhattan_plot_quantitative.png")
         output_qq = os.path.join(output_dir, "qq_plot_quantitative.png")
@@ -164,7 +164,7 @@ if __name__ == "__main__":
 Usage example:
     stoat -p ../droso_data/fly/fly.pg -d ../droso_data/fly/fly.dist -v ../droso_data/pangenome.dm6.vcf \
     -r ../droso_data/fly/fly.deconstruct.vcf -q ../droso_data/pangenome_phenotype.tsv -o output
-
+ 
 Usage test:
     stoat -p tests/simulation/binary_data/pg.pg -d tests/simulation/binary_data/pg.dist -v tests/simulation/binary_data/merged_output.vcf \
     -b tests/simulation/binary_data/phenotype.tsv --gaf -o output
