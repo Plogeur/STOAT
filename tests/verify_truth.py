@@ -502,7 +502,7 @@ if __name__ == "__main__":
 
     """
     python3 tests/verify_truth.py --freq tests/simulation/quantitative_data/pg.snarls.freq.tsv \
-    --p_value output/run_20250120_170827/quantitative_analysis.tsv --paths tests/simulation/quantitative_data/snarl_paths.tsv -q
+    --p_value output/run_20250129_104641/quantitative_analysis.tsv --paths tests/simulation/quantitative_data/snarl_paths.tsv -q
 
     python3 tests/verify_truth.py --freq tests/simulation/binary_data/pg.snarls.freq.tsv \
     --p_value output/run_20250120_170153/binary_analysis.tsv --paths tests/simulation/binary_data/snarl_paths.tsv -b

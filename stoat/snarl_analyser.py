@@ -9,10 +9,11 @@ from scipy.stats import fisher_exact # type: ignore
 from typing import Optional, List
 # from limix.stats import logisticMixedModel # type: ignore
 # from limix.stats import scan # type: ignore
+import subprocess
 import time
 import os
 import re
- 
+
 class Matrix :
     def __init__(self, default_row_number:int=1_000_000, column_number:int=2):
         self.default_row_number = default_row_number 
@@ -40,9 +41,14 @@ class Matrix :
 class SnarlProcessor:
     def __init__(self, vcf_path:str, list_samples:list):
         self.list_samples = list_samples
-        self.matrix = Matrix(1_000_000, len(self.list_samples)*2)
+        self.matrix = Matrix(self._count_lines_with_wc(vcf_path)*4, len(self.list_samples)*2)
         self.vcf_path = vcf_path
 
+    def _count_lines_with_wc(self, file_path):
+        result = subprocess.run(['wc', '-l', file_path], stdout=subprocess.PIPE, text=True)
+        line_count = int(result.stdout.split()[0])
+        return line_count
+    
     def expand_matrix(self):
         """Expands a given numpy matrix by doubling the number of rows."""
         data_matrix = self.matrix.get_matrix()
@@ -120,7 +126,7 @@ class SnarlProcessor:
         # Parse variant line by line
         for variant in VCF(self.vcf_path):
             genotypes = variant.genotypes  # Extract genotypes once per variant
-            
+
             # Avoid inconsistence allelic indexing
             if variant.INFO.get('LV') != 0 :
                 continue
@@ -188,6 +194,9 @@ class SnarlProcessor:
             for snarl_info in snarls:
                 snarl, list_snarl, type_var, chromosome, position = snarl_info
                 df, allele_number = self.create_quantitative_table(list_snarl)
+                if snarl == "2476_2479" or snarl == "2080_2083" or snarl == "154_157" :
+                    print(snarl, " : ", df)
+                
                 rsquared, beta, se, pvalue = self.linear_regression(df, quantitative_dict)
                 ref = alt = 'NA'
                 data = f"{chromosome}\t{position}\t{snarl}\t{type_var}\t{ref}\t{alt}\t{rsquared}\t{beta}\t{se}\t{pvalue}\t{allele_number}\n"
@@ -291,7 +300,8 @@ class SnarlProcessor:
         # Iterate over each path_snarl and fill in the matrix
         for col_idx, path_snarl in enumerate(column_headers):
             decomposed_snarl = self.decompose_string(path_snarl)
-            idx_srr_save = self.identify_correct_path(decomposed_snarl, list(range(length_sample)))
+            list_length_sample = list(range(length_sample))
+            idx_srr_save = self.identify_correct_path(decomposed_snarl, list_length_sample)
 
             for idx in idx_srr_save:
                 srr_idx = idx // 2  # Convert index to the appropriate sample index
@@ -308,8 +318,9 @@ class SnarlProcessor:
         x = df.drop('Target', axis=1)
         y = df['Target']
 
-        x_with_const = sm.add_constant(x)
-        result = sm.OLS(y, x_with_const).fit()
+        # x_with_const = sm.add_constant(x)
+        # result = sm.OLS(y, x_with_const).fit()
+        result = sm.OLS(y, x).fit()
 
         rsquared = f"{result.rsquared:.4e}" if result.rsquared < 0.0001 else f"{result.rsquared:.4f}"
 
