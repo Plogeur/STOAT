@@ -43,4 +43,5 @@ echo "Second column in GWAS replaced with SS IDs."
 python3 tests/add_info_plink.py "$vcf_file" "$out_file"
 echo "Python script add_info_plink.py executed."
 
-mv updated_formatted_gwas.tsv formatted_gwas.tsv
+mv updated_formatted_gwas.tsv tests/plink_tests_output/$out_file
+rm formatted_gwas.tsv

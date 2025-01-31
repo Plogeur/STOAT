@@ -139,14 +139,13 @@ class SnarlProcessor:
                 allele_1, allele_2 = genotype[:2]  # assume there are only 2 allele
                 col_idx = index_column * 2
 
-                if allele_1 == -1 or allele_2 == -1 : # case where we got ./.
-                    continue
+                if allele_1 != -1 : # avoid missing genotype .
+                    for decompose_allele_1 in list_list_decomposed_snarl[allele_1] :
+                        self.push_matrix(allele_1, decompose_allele_1, row_header_dict, col_idx)
 
-                for decompose_allele_1 in list_list_decomposed_snarl[allele_1] :
-                    self.push_matrix(allele_1, decompose_allele_1, row_header_dict, col_idx)
-
-                for decompose_allele_2 in list_list_decomposed_snarl[allele_2] :
-                    self.push_matrix(allele_2, decompose_allele_2, row_header_dict, col_idx + 1)
+                if allele_2 != -1 : # avoid missing genotype .
+                    for decompose_allele_2 in list_list_decomposed_snarl[allele_2] :
+                        self.push_matrix(allele_2, decompose_allele_2, row_header_dict, col_idx + 1)
 
         self.matrix.set_row_header(row_header_dict)
 
@@ -177,7 +176,6 @@ class SnarlProcessor:
                 f"{fisher_p_value}\t{chi2_p_value}\t{allele_number}\t{min_sample}\t"
                 f"{numb_colum}\t{inter_group}\t{average}")
                 data = f"{common_data}\t{group_paths}\n" if gaf else f"{common_data}\n"
-            
                 outf.write(data.encode('utf-8'))
 
     def quantitative_table(self, snarls:list, quantitative_dict:dict, kinship_matrix:pd.DataFrame=None, covar:Optional[dict]=None, output:str="output/quantitative_output.tsv", make_vcf=False) :
@@ -194,8 +192,6 @@ class SnarlProcessor:
             for snarl_info in snarls:
                 snarl, list_snarl, type_var, chromosome, position = snarl_info
                 df, allele_number = self.create_quantitative_table(list_snarl)
-                if snarl == "2476_2479" or snarl == "2080_2083" or snarl == "154_157" :
-                    print(snarl, " : ", df)
                 
                 rsquared, beta, se, pvalue = self.linear_regression(df, quantitative_dict)
                 ref = alt = 'NA'

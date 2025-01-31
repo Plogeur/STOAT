@@ -271,6 +271,7 @@ def p_value_distribution_plink(Type, test_predicted_labels, cleaned_true_labels,
         "Type_": True,  # Include Reference in hover box
         "P-Value": True,  # Include P-Value in hover box
         "Difference": True,  # Include Difference in hover box
+        'Min Sample': True, # Include Min Sample in hover box
         },
         title="Distribution of P-Values for False Positives and True Positives",
         labels={"Type_": "Type_", "P-Value": "P-Value", "Difference": "Simulated Effect (Difference in Probabilities)"}
@@ -280,7 +281,11 @@ def p_value_distribution_plink(Type, test_predicted_labels, cleaned_true_labels,
         xaxis_title="P-Value",
         yaxis_title="Simulated Effect (Difference in Probabilities)",
         legend_title="Type",
-        template="plotly_white"
+        template="plotly_white",
+        xaxis_title_font=dict(size=30),  # Increase font size for x-axis title
+        yaxis_title_font=dict(size=30),  # Increase font size for y-axis title
+        xaxis=dict(tickfont=dict(size=25)),  # Increase font size for x-axis ticks
+        yaxis=dict(tickfont=dict(size=25)),  # Increase font size for y-axis ticks
     )
 
     # Show the interactive plot
@@ -440,7 +445,7 @@ if __name__ == "__main__":
     group = parser.add_mutually_exclusive_group(required=True)
     group.add_argument("-b", "--binary", action='store_true', help="binary test")
     group.add_argument("-q", "--quantitative", action='store_true', help="quantitative test")
-    group.add_argument("-p", "--plink",action='store_true', help="plink test")
+    group.add_argument("-p", "--plink", action='store_true', help="plink test")
 
     args = parser.parse_args()
 
