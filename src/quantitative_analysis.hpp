@@ -24,7 +24,7 @@ double variance(const std::vector<double>& v);
 double covariance(const std::vector<double>& x, const std::vector<double>& y);
 
 // Linear regression function that returns a tuple of p_value, standard error (se), and beta
-std::tuple<double, double, double> linear_regression(
+std::tuple<std::string, std::string, std::string> linear_regression(
     const std::unordered_map<std::string, std::vector<int>>& df,
     const std::unordered_map<std::string, float>& quantitative_phenotype);
 

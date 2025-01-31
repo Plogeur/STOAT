@@ -233,10 +233,10 @@ void SnarlParser::quantitative_table(const std::unordered_map<std::string, std::
     // Iterate over each snarl
     for (const auto& [snarl, list_snarl] : snarls) {
 
-        std::unordered_map<std::string, std::vector<int>> df = create_quantitative_table(list_snarl, sampleNames, matrix);
+        std::unordered_map<std::string, std::vector<int>> df = create_quantitative_table(sampleNames, list_snarl, matrix);
 
         // std::make_tuple(se, beta, p_value)
-        std::tuple<double, double, double> tuple_info = linear_regression(df, quantitative_phenotype);
+        std::tuple<std::string, std::string, std::string> tuple_info = linear_regression(df, quantitative_phenotype);
 
         std::string chrom = "NA", pos = "NA", type_var = "NA", ref = "NA", alt = "NA";
         std::stringstream data;
