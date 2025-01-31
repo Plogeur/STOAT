@@ -10,6 +10,7 @@
 #include <utility>
 #include <iostream>
 #include <chrono>
+#include <htslib/vcf.h>
 #include "matrix.hpp"
 
 struct Variant {

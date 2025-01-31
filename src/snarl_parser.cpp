@@ -121,8 +121,8 @@ void SnarlParser::fill_matrix() {
 
         Variant variant(line, sampleNames);
         const std::vector<std::vector<int>>& genotypes = variant.genotypes;
-        const std::vector<std::string>& snarl_list = variant.atInfo;
-        const std::vector<std::vector<std::string>> list_list_decomposed_snarl = decompose_snarl(snarl_list);
+        const std::vector<std::string>& path_list = variant.atInfo;
+        const std::vector<std::vector<std::string>> list_list_decomposed_snarl = decompose_snarl(path_list);
 
         // Process genotypes and fill matrix
         for (size_t index_column = 0; index_column < genotypes.size(); ++index_column) {
@@ -131,17 +131,18 @@ void SnarlParser::fill_matrix() {
             int allele_2 = genotypes[index_column][1];
             size_t col_idx = index_column * 2;
 
-            if (allele_1 == -1 || allele_2 == -1) { // Handle missing genotypes (./.)
-                continue;
+            if (allele_1 != -1) { // Handle missing genotypes (.)
+
+                for (auto& decompose_allele_1 : list_list_decomposed_snarl[allele_1]) {
+                    pushMatrix(decompose_allele_1, row_header_dict, col_idx);
+                }
             }
 
-            // Measure the time taken to push each allele into the matrix
-            for (auto& decompose_allele_1 : list_list_decomposed_snarl[allele_1]) {
-                pushMatrix(decompose_allele_1, row_header_dict, col_idx);
-            }
+            if (allele_2 != -1) { // Handle missing genotypes (.)
 
-            for (auto& decompose_allele_2 : list_list_decomposed_snarl[allele_2]) {
-                pushMatrix(decompose_allele_2, row_header_dict, col_idx+1);
+                for (auto& decompose_allele_2 : list_list_decomposed_snarl[allele_2]) {
+                    pushMatrix(decompose_allele_2, row_header_dict, col_idx+1);
+                }
             }
         }
         matrix.set_row_header(row_header_dict);
