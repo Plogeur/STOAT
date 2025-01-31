@@ -45,10 +45,10 @@ bool Matrix::operator()(size_t row, size_t col) const {
     return (matrix_1D[byteIndex] >> bitPosition) & 1;
 }
 
-// Function to set a specific element (row, col) to true or false
+// Function to set a specific element (row, col) modify false to true (only this ways)
 void Matrix::set(size_t row, size_t col) {
     size_t bitIndex = row * cols_ + col;
     size_t byteIndex = bitIndex / 8;
     size_t bitPosition = bitIndex % 8;
-    matrix_1D[byteIndex] |= (1 << bitPosition);
+    matrix_1D[byteIndex] |= (1U << bitPosition);
 }
