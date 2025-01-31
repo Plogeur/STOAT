@@ -128,7 +128,7 @@ def follow_edges(stree, finished_paths, path, paths, pg) :
 
     # from the last thing in the path
     stree.follow_net_edges(path[-1], pg, False, lambda n: add_to_path(n))
-
+ 
 def save_snarls(stree, root, pg, ref_paths, ppo) :
     snarls = []
     snarls_pos = {}
