@@ -271,6 +271,7 @@ def p_value_distribution_plink(Type, test_predicted_labels, cleaned_true_labels,
         "Type_": True,  # Include Reference in hover box
         "P-Value": True,  # Include P-Value in hover box
         "Difference": True,  # Include Difference in hover box
+        'Min Sample': True, # Include Min Sample in hover box
         },
         title="Distribution of P-Values for False Positives and True Positives",
         labels={"Type_": "Type_", "P-Value": "P-Value", "Difference": "Simulated Effect (Difference in Probabilities)"}
