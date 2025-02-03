@@ -111,7 +111,7 @@ void SnarlParser::pushMatrix(const std::string& decomposedSnarl, std::unordered_
     // Add data to the matrix
     matrix.set(idxSnarl, indexColumn);
 }
-
+ 
 // Main function that parses the VCF file and fills the matrix
 void SnarlParser::fill_matrix() {
 
