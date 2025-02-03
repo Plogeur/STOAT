@@ -91,7 +91,6 @@ std::unordered_map<std::string, std::vector<std::string>> parse_snarl_path(const
         }
     }
     file.close();
-    
     return snarl_paths;
 }
 

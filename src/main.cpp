@@ -93,7 +93,6 @@ int main(int argc, char* argv[]) {
 
     // Process quantitative phenotype file if provided
     if (!quantitative_path.empty()) {
-        std::cout << "quantitative analysis not available for now (working progess)" << std::endl;
         if (!output_path.empty()) {
             vcf_object.quantitative_table(snarl, quantitative, output_path);
         } else {
