@@ -58,11 +58,11 @@ struct GraphTree {
     bdsg::SnarlDistanceIndex stree;
     bdsg::PackedPositionOverlay pp_overlay;
     net_handle_t root;
-    GraphTree(const std::string& pg_file, const std::string& dist_file);
-    const bdsg::PackedGraph& get_pg() const;
-    bdsg::SnarlDistanceIndex& get_stree() const;
-    const bdsg::PackedPositionOverlay& get_pp_overlay() const;
-    net_handle_t& get_root() const;
+    GraphTree(std::string& pg_file, std::string& dist_file);
+    bdsg::PackedGraph& get_pg();
+    bdsg::SnarlDistanceIndex& get_stree();
+    bdsg::PackedPositionOverlay& get_pp_overlay();
+    net_handle_t& get_root();
 };
 
 // Function to calculate the type of variant
@@ -89,7 +89,7 @@ vector<tuple<net_handle_t, string, size_t>> save_snarls(SnarlDistanceIndex& stre
                                    PackedPositionOverlay& ppo);
 
 // Function to fill pretty paths
-pair<vector<string>, vector<vector<string>>> fill_pretty_paths(SnarlDistanceIndex& stree, 
+pair<vector<string>, vector<string>> fill_pretty_paths(SnarlDistanceIndex& stree, 
                                                                PackedGraph& pg, 
                                                                vector<vector<net_handle_t>>& finished_paths);
 

@@ -154,7 +154,8 @@
     "future": "cpp",
     "queue": "cpp",
     "ranges": "cpp",
-    "span": "cpp"
+    "span": "cpp",
+    "*.classfragment": "cpp"
   },
   "C_Cpp.errorSquiggles": "disabled"
 }
