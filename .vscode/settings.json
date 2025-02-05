@@ -147,7 +147,14 @@
     "semaphore": "cpp",
     "stop_token": "cpp",
     "thread": "cpp",
-    "cinttypes": "cpp"
+    "cinttypes": "cpp",
+    "any": "cpp",
+    "csignal": "cpp",
+    "coroutine": "cpp",
+    "future": "cpp",
+    "queue": "cpp",
+    "ranges": "cpp",
+    "span": "cpp"
   },
   "C_Cpp.errorSquiggles": "disabled"
 }

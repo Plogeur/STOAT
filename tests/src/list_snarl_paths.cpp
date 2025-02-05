@@ -186,7 +186,9 @@ pair<vector<tuple<string, vector<string>, string, string, string>>, int> loop_ov
         }
 
         if (not_break) {
+            // pair<vector<string>, vector<vector<string>>>
             auto [pretty_paths, type_variants] = fill_pretty_paths(stree, pg, finished_paths);
+            std::ostringstream pretty_paths_stream, type_variants_stream;
 
             // Convert pretty_paths (vector<string>) into a comma-separated string
             for (size_t i = 0; i < pretty_paths.size(); ++i) {
@@ -194,25 +196,19 @@ pair<vector<tuple<string, vector<string>, string, string, string>>, int> loop_ov
                 pretty_paths_stream << pretty_paths[i];
             }
 
-            // Convert type_variants (vector<vector<string>>) into a comma-separated string
+            // Convert type_variants to a comma-separated string
             for (size_t i = 0; i < type_variants.size(); ++i) {
                 if (i > 0) type_variants_stream << ",";
-
-                std::ostringstream inner_stream;
-                for (size_t j = 0; j < type_variants[i].size(); ++j) {
-                    if (j > 0) inner_stream << "|";  // Separate inner vector elements with "|"
-                    inner_stream << type_variants[i][j];
-                }
-                type_variants_stream << inner_stream.str();
+                type_variants_stream << type_variants[i];
             }
 
             out_snarl << snarl_id << "\t" << pretty_paths_stream.str() << "\t"
-                    << type_variants_stream.str() << "\t" << snarl_path_pos
-                    << "\t" << snarl_path_pos[2] << "\n";
+                    << type_variants_stream.str() << "\t" << std::get<1>(snarl_path_pos)
+                    << "\t" << std::get<2>(snarl_path_pos) << "\n";
 
             if (bool_return) {
                 snarl_paths.emplace_back(snarl_id, pretty_paths, type_variants_stream.str(),
-                                        snarl_path_pos[1], snarl_path_pos[2]);
+                                        std::get<1>(snarl_path_pos), std::get<2>(snarl_path_pos));
             }
 
             paths_number_analysis += pretty_paths.size();
@@ -229,7 +225,7 @@ vector<tuple<net_handle_t, string, size_t>> save_snarls(SnarlDistanceIndex& stre
     unordered_map<string, size_t> snarls_pos;
 
     // Given a node handle (dist index), return a position on a reference path
-    auto get_node_position = [&](net_handle_t node) -> vector<string> {
+    auto get_node_position = [&](auto node) -> vector<string> { // node : net_handle_t
         handle_t node_h = stree.get_handle(node, pg);
         vector<string> ret_pos;
 
@@ -356,7 +352,7 @@ pair<vector<string>, vector<vector<string>>> fill_pretty_paths(
                     nodr = stree.get_bound(net, false, false);
                 }
                 ppath.addNodeHandle(nodl, stree);
-                ppath.addNode('*', '>');
+                ppath.addNode("*", '>');
                 ppath.addNodeHandle(nodr, stree);
                 length_net.push_back("-1");
             }
