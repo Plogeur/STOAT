@@ -13,8 +13,9 @@
 #include <regex>
 #include <stdexcept>
 #include <utility>
-#include <bdsg/internal/packed_graph.hpp>
+#include <bdsg/packed_graph.hpp>
 #include <bdsg/snarl_distance_index.hpp>
+#include <bdsg/packed_position_overlay.hpp>
 
 using namespace std;
 using namespace bdsg;

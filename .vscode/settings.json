@@ -133,6 +133,20 @@
     "set": "cpp",
     "strstream": "cpp",
     "typeindex": "cpp",
-    "valarray": "cpp"
+    "valarray": "cpp",
+    "bit": "cpp",
+    "*.tcc": "cpp",
+    "codecvt": "cpp",
+    "condition_variable": "cpp",
+    "forward_list": "cpp",
+    "functional": "cpp",
+    "iterator": "cpp",
+    "memory_resource": "cpp",
+    "utility": "cpp",
+    "numbers": "cpp",
+    "semaphore": "cpp",
+    "stop_token": "cpp",
+    "thread": "cpp",
+    "cinttypes": "cpp"
   }
 }
