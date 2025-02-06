@@ -298,9 +298,12 @@ parse_graph_tree(const std::string& pg_file, const std::string& dist_file) {
     
     bdsg::SnarlDistanceIndex stree;
     stree.deserialize(dist_file);
-    
-    bdsg::PackedPositionOverlay pp_overlay(pg);
-    
+
+    bdsg::PathHandleGraph* path_graph = &pg;
+    bdsg::PackedPositionOverlay pp_overlay(path_graph);
+    // /Users/aliasmatis/Desktop/stoat_cxx/tests/src/list_snarl_paths.cpp:302:33: error: no matching constructor for initialization of 'bdsg::PackedPositionOverlay'
+    // bdsg::PackedPositionOverlay pp_overlay(pg);
+
     // Get the root of the snarl tree
     auto root = stree.get_root();
     
