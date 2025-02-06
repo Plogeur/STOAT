@@ -5,12 +5,15 @@
 #include "snarl_parser.hpp"     
 #include "matrix.hpp"
 #include "arg_parser.hpp"
+#include "list_snarl_paths.hpp"
 
 void print_help() {
     std::cout << "Usage: SnarlParser [options]\n\n"
               << "Options:\n"
               << "  -v, --vcf_path <path>       Path to the VCF file (.vcf or .vcf.gz)\n"
               << "  -s, --snarl <path>          Path to the snarl file (.txt or .tsv)\n"
+              << "  -p, --pg <path>             Path to the pg file (.pg)\n"
+              << "  -d, --dist <path>           Path to the dist file (.dist)\n"
               << "  -b, --binary <path>         Path to the binary group file (.txt or .tsv)\n"
               << "  -q, --quantitative <path>   Path to the quantitative phenotype file (.txt or .tsv)\n"
               << "  -o, --output <name>         Output name\n"
@@ -29,6 +32,10 @@ int main(int argc, char* argv[]) {
             vcf_path = argv[++i];
         } else if ((arg == "-s" || arg == "--snarl") && i + 1 < argc) {
             snarl_path = argv[++i];
+        } else if ((arg == "-p" || arg == "--pg") && i + 1 < argc) {
+            pg_path = argv[++i];
+        } else if ((arg == "-d" || arg == "--dist") && i + 1 < argc) {
+            dist_path = argv[++i];
         } else if ((arg == "-b" || arg == "--binary") && i + 1 < argc) {
             binary_path = argv[++i];
         } else if ((arg == "-q" || arg == "--quantitative") && i + 1 < argc) {
@@ -53,8 +60,10 @@ int main(int argc, char* argv[]) {
     // Check format of the VCF file
     check_format_vcf_file(vcf_path);
 
-    // Check format of the snarl paths file
-    check_format_paths_snarl(snarl_path);
+    if (!pg_path) && (!dist_path):
+        check_format_paths_snarl(snarl_path);
+    else :
+        parse_graph_tree(pg_path, dist_path)
 
     std::vector<std::string> list_samples = parseHeader(vcf_path);    
     std::unordered_map<std::string, bool> binary;

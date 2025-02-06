@@ -1,0 +1,47 @@
+#include "list_snarl_paths.hpp"
+
+void print_help() {
+    std::cout << "Usage: SnarlParser [options]\n\n"
+              << "Options:\n"
+              << "  -p, --pgfile <path>       Path to the VCF file (.vcf or .vcf.gz)\n"
+              << "  -d, --distfile <path>          Path to the snarl file (.txt or .tsv)\n"
+              << "  -o, --output <name>         Output name\n"
+              << "  -h, --help                  Print this help message\n";
+}
+
+int main(int argc, char* argv[]) {
+
+    bool show_help = false;
+    std::string pg_file, dist_file, output_path;
+
+    for (int i = 1; i < argc; ++i) {
+        std::string arg = argv[i];
+        if ((arg == "-p" || arg == "--pgfile") && i + 1 < argc) {
+            pg_file = argv[++i];
+        } else if ((arg == "-d" || arg == "--distfile") && i + 1 < argc) {
+            dist_file = argv[++i];
+        } else if ((arg == "-o" || arg == "--output") && i + 1 < argc) {
+            output_path = argv[++i];
+        } else if (arg == "-h" || arg == "--help") {
+            show_help = true;
+        } else {
+            show_help = true;
+        }
+    }
+
+    if (show_help || pg_file.empty() || dist_file.empty()) {
+        print_help();
+        return 0;
+    }
+
+    unordered_set<string> reference {"ref"};
+    auto [pg, stree, pp_overlay, root] = parse_graph_tree(pg_file, dist_file);
+    vector<tuple<net_handle_t, string, size_t>> snarls = save_snarls(stree, root, pg, reference, pp_overlay);
+    string output_snarl_not_analyse = output_path + "/snarl_not_analyse.txt";
+    string output_file = output_path + "/output.txt";
+    loop_over_snarls_write(stree, snarls, pg, output_file, output_snarl_not_analyse);
+
+    return EXIT_SUCCESS;
+}
+
+// ./snarl -p tests/data/pg_test -d tests/data/dist_test -o tests/data/output_test

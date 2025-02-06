@@ -31,6 +31,7 @@ set(SRCS
     src/binary_analysis.cpp 
     src/quantitative_analysis.cpp 
     src/main.cpp
+    src/list_snarl_paths.cpp
 )
 
 # Create the executable
