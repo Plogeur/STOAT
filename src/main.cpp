@@ -5,7 +5,6 @@
 #include "snarl_parser.hpp"     
 #include "matrix.hpp"
 #include "arg_parser.hpp"
-#include "list_snarl_paths.hpp"
 
 void print_help() {
     std::cout << "Usage: SnarlParser [options]\n\n"

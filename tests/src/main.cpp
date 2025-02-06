@@ -35,11 +35,11 @@ int main(int argc, char* argv[]) {
     }
 
     unordered_set<string> reference {"ref"};
-    auto [pg, stree, pp_overlay, root] = parse_graph_tree(pg_file, dist_file);
-    vector<tuple<net_handle_t, string, size_t>> snarls = save_snarls(stree, root, pg, reference, pp_overlay);
+    auto [stree, pg, root, pp_overlay] = parse_graph_tree(pg_file, dist_file);
+    vector<tuple<net_handle_t, string, size_t>> snarls = save_snarls(*stree, root, *pg, reference, *pp_overlay);
     string output_snarl_not_analyse = output_path + "/snarl_not_analyse.txt";
     string output_file = output_path + "/output.txt";
-    loop_over_snarls_write(stree, snarls, pg, output_file, output_snarl_not_analyse);
+    loop_over_snarls_write(*stree, snarls, *pg, output_file, output_snarl_not_analyse);
 
     return EXIT_SUCCESS;
 }

@@ -3,8 +3,8 @@ project(Snarl)
 
 set(CMAKE_CXX_STANDARD 17)
 
-include_directories(/usr/local/include)  # bdsg is in /usr/local/include
-link_directories(/usr/local/lib)  # libbdsg.dylib is in /usr/local/lib
+include_directories(/usr/include /usr/local/include)
+link_directories(/usr/include /usr/local/lib)  # libbdsg.dylib
 
 add_executable(Snarl src/main.cpp src/list_snarl_paths.cpp)
 

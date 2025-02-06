@@ -14,14 +14,17 @@
 #include <regex>
 #include <stdexcept>
 #include <utility>
-#include "bdsg/hash_graph.hpp"
-#include "bdsg/packed_graph.hpp"
-#include "bdsg/snarl_distance_index.hpp"
-#include "bdsg/overlays/packed_path_position_overlay.hpp"
+#include <bdsg/hash_graph.hpp>
+#include <bdsg/packed_graph.hpp>
+#include <bdsg/snarl_distance_index.hpp>
+#include <bdsg/overlays/packed_path_position_overlay.hpp>
+#include <handlegraph/handle_graph.hpp>
+#include <handlegraph/path_position_handle_graph.hpp>
+#include <handlegraph/path_handle_graph.hpp>
 
 using namespace std;
 using namespace bdsg;
-using bdsg::HandleGraph;
+using handlegraph::step_handle_t;
 using handlegraph::handle_t;
 using handlegraph::net_handle_t;
 
@@ -53,7 +56,10 @@ public:
     size_t nreversed() const;
 };
 
-std::tuple<bdsg::PackedGraph, bdsg::SnarlDistanceIndex, bdsg::PackedPositionOverlay, net_handle_t>
+std::tuple<std::unique_ptr<bdsg::SnarlDistanceIndex>, 
+           std::unique_ptr<bdsg::PackedGraph>, 
+           handlegraph::net_handle_t, 
+           std::unique_ptr<bdsg::PackedPositionOverlay>>
 parse_graph_tree(const std::string& pg_file, const std::string& dist_file);
 
 // Function to calculate the type of variant

@@ -2,7 +2,7 @@
 
 using namespace std;
 using namespace bdsg;
-using bdsg::HandleGraph;
+using handlegraph::step_handle_t;
 using handlegraph::handle_t;
 using handlegraph::net_handle_t;
 
@@ -128,6 +128,29 @@ string find_snarl_id(SnarlDistanceIndex& stree, net_handle_t& snarl) {
     return snarl_id.str();  // Return the generated snarl ID as a string
 }
 
+std::tuple<std::unique_ptr<bdsg::SnarlDistanceIndex>, 
+           std::unique_ptr<bdsg::PackedGraph>, 
+           handlegraph::net_handle_t, 
+           std::unique_ptr<bdsg::PackedPositionOverlay>>
+parse_graph_tree(const std::string& pg_file, const std::string& dist_file) {
+    
+    // Load graph
+    auto pg = std::make_unique<bdsg::PackedGraph>();
+    pg->deserialize(pg_file);
+
+    // Load snarl tree
+    auto stree = std::make_unique<bdsg::SnarlDistanceIndex>();
+    stree->deserialize(dist_file);
+
+    // PackedPositionOverlay takes a pointer to pg
+    auto pp_overlay = std::make_unique<bdsg::PackedPositionOverlay>(pg.get());
+
+    // Get root of snarl tree
+    handlegraph::net_handle_t root = stree->get_root();
+
+    return std::make_tuple(std::move(stree), std::move(pg), root, std::move(pp_overlay));
+}
+
 void follow_edges(SnarlDistanceIndex& stree, vector<vector<net_handle_t>>& finished_paths,
                   vector<net_handle_t>& path,
                   vector<vector<net_handle_t>>& paths, PackedGraph& pg) {
@@ -150,20 +173,21 @@ pair<vector<tuple<string, vector<string>, string, string, string>>, int> loop_ov
     int paths_number_analysis = 0;
     chrono::seconds time_threshold(2);
     
+    std::vector<int> children = {0};
+    auto count_children = [&](net_handle_t net) {
+        children[0] += 1;
+        return true;
+    };
+
     for (const auto& snarl_path_pos : snarls) {
         net_handle_t snarl = std::get<0>(snarl_path_pos);
         auto snarl_time = chrono::steady_clock::now();
         string snarl_id = find_snarl_id(stree, snarl);
         bool not_break = true;
-        int children = 0;
-        
-        auto count_children = [&](auto net) {
-            children++;
-            return true;
-        };
+        children = {0}; // re-initialise the children vec
         
         stree.for_each_child(snarl, count_children);
-        if (children > children_threshold) {
+        if (children[0] > children_threshold) {
             out_fail << snarl_id << "\ttoo_many_children\n";
             continue;
         }
@@ -229,24 +253,26 @@ vector<tuple<net_handle_t, string, size_t>> save_snarls(SnarlDistanceIndex& stre
     unordered_map<string, vector<string>> snarls_pos;
 
     // Given a node handle (dist index), return a position on a reference path
-    auto get_node_position = [&](auto node) -> vector<string> { // node : net_handle_t
-        handle_t node_h = stree.get_handle(node, pg);
-        vector<string> ret_pos(2); // pair<string, size_t>
+    auto get_node_position = [&](net_handle_t node) -> vector<string> { // node : net_handle_t
+        handle_t node_h = stree.get_handle(node, &pg);
+        vector<string> ret_pos(2); // pair<string, size_t> path_name, position
 
-        pg.for_each_step_on_handle(node_h, [&](auto step_handle) {
+        auto step_callback = [&](const step_handle_t& step_handle) {
             path_handle_t path_handle = pg.get_path_handle_of_step(step_handle);
             string path_name = pg.get_path_name(path_handle);
 
             if (ref_paths.count(path_name)) {
-                size_t position = ppo.get_position_of_step(step_handle);
                 ret_pos[0] = path_name;
-                ret_pos[1] = position;
-                return false; // Stop iteration once a reference path is found
+                ret_pos[1] = ppo.get_position_of_step(step_handle); // position
+                return (false); // Stop iteration once a reference path is found
             }
-            return true; // Continue iteration
-        });
+            return (true); // Continue iteration
+        };
+
+        pg.for_each_step_on_handle(node_h, step_callback);
         return ret_pos;
     };
+
 
     auto get_net_start_position = [&](net_handle_t net) -> vector<string> {
         if (stree.is_node(net)) {
@@ -288,26 +314,6 @@ vector<tuple<net_handle_t, string, size_t>> save_snarls(SnarlDistanceIndex& stre
     
     stree.for_each_child(root, save_snarl_tree_node);
     return snarls;
-}
-
-std::tuple<bdsg::PackedGraph, bdsg::SnarlDistanceIndex, bdsg::PackedPositionOverlay, net_handle_t>
-parse_graph_tree(const std::string& pg_file, const std::string& dist_file) {
-    // Load graph and snarl tree
-    bdsg::PackedGraph pg;
-    pg.deserialize(pg_file);
-    
-    bdsg::SnarlDistanceIndex stree;
-    stree.deserialize(dist_file);
-
-    bdsg::PathHandleGraph* path_graph = &pg;
-    bdsg::PackedPositionOverlay pp_overlay(path_graph);
-    // /Users/aliasmatis/Desktop/stoat_cxx/tests/src/list_snarl_paths.cpp:302:33: error: no matching constructor for initialization of 'bdsg::PackedPositionOverlay'
-    // bdsg::PackedPositionOverlay pp_overlay(pg);
-
-    // Get the root of the snarl tree
-    auto root = stree.get_root();
-    
-    return std::make_tuple(pg, stree, pp_overlay, root);
 }
 
 pair<vector<string>, vector<string>> fill_pretty_paths(
