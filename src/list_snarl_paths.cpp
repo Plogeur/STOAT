@@ -4,7 +4,7 @@ using namespace std;
 using Snarl = bdsg::SnarlDistanceIndex::NetHandle;
 
 class Path {
-private:
+private: 
     std::vector<std::string> nodes;
     std::vector<char> orients;
 
