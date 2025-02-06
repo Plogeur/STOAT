@@ -290,34 +290,21 @@ vector<tuple<net_handle_t, string, size_t>> save_snarls(SnarlDistanceIndex& stre
     return snarls;
 }
 
-// Constructor for GraphTree
-GraphTree::GraphTree(std::string& pg_file, std::string& dist_file)
-    : pp_overlay(), pg(), stree() {
-    
+std::tuple<bdsg::PackedGraph, bdsg::SnarlDistanceIndex, bdsg::PackedPositionOverlay, net_handle_t>
+parse_graph_tree(const std::string& pg_file, const std::string& dist_file) {
+    // Load graph and snarl tree
+    bdsg::PackedGraph pg;
     pg.deserialize(pg_file);
+    
+    bdsg::SnarlDistanceIndex stree;
     stree.deserialize(dist_file);
-    pp_overlay(pg);
-    root = stree.get_root();
-}
-
-// Getter for PackedGraph
-bdsg::PackedGraph& GraphTree::get_pg() {
-    return pg;
-}
-
-// Getter for SnarlDistanceIndex
-bdsg::SnarlDistanceIndex& GraphTree::get_stree() {
-    return stree;
-}
-
-// Getter for PackedPositionOverlay
-bdsg::PackedPositionOverlay& GraphTree::get_pp_overlay() {
-    return pp_overlay;
-}
-
-// Getter for the root net handle
-net_handle_t& GraphTree::get_root() {
-    return root;
+    
+    bdsg::PackedPositionOverlay pp_overlay(pg);
+    
+    // Get the root of the snarl tree
+    auto root = stree.get_root();
+    
+    return std::make_tuple(pg, stree, pp_overlay, root);
 }
 
 pair<vector<string>, vector<string>> fill_pretty_paths(

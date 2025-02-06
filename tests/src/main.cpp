@@ -35,12 +35,7 @@ int main(int argc, char* argv[]) {
     }
 
     unordered_set<string> reference {"ref"};
-    GraphTree Tree = GraphTree(pg_file, dist_file);
-    bdsg::PackedGraph pg = Tree.get_pg();
-    bdsg::SnarlDistanceIndex& stree = Tree.get_stree();
-    bdsg::net_handle_t& root = Tree.get_root();
-    bdsg::PackedPositionOverlay pp_overlay = Tree.get_pp_overlay();
-
+    auto [pg, stree, pp_overlay, root] = parse_graph_tree(pg_file, dist_file);
     vector<tuple<net_handle_t, string, size_t>> snarls = save_snarls(stree, root, pg, reference, pp_overlay);
     string output_snarl_not_analyse = output_path + "/snarl_not_analyse.txt";
     string output_file = output_path + "/output.txt";

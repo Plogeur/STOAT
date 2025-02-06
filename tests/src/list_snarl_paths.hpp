@@ -53,17 +53,8 @@ public:
     size_t nreversed() const;
 };
 
-struct GraphTree {
-    bdsg::PackedGraph pg;
-    bdsg::SnarlDistanceIndex stree;
-    bdsg::PackedPositionOverlay pp_overlay;
-    net_handle_t root;
-    GraphTree(std::string& pg_file, std::string& dist_file);
-    bdsg::PackedGraph& get_pg();
-    bdsg::SnarlDistanceIndex& get_stree();
-    bdsg::PackedPositionOverlay& get_pp_overlay();
-    net_handle_t& get_root();
-};
+std::tuple<bdsg::PackedGraph, bdsg::SnarlDistanceIndex, bdsg::PackedPositionOverlay, net_handle_t>
+parse_graph_tree(const std::string& pg_file, const std::string& dist_file);
 
 // Function to calculate the type of variant
 vector<string> calcul_type_variant(const vector<vector<int>>& list_list_length_paths);
