@@ -63,7 +63,7 @@ std::tuple<std::unique_ptr<bdsg::SnarlDistanceIndex>,
 parse_graph_tree(const std::string& pg_file, const std::string& dist_file);
 
 // Function to calculate the type of variant
-vector<string> calcul_type_variant(const vector<vector<int>>& list_list_length_paths);
+pair<vector<string>, size_t> calcul_pos_type_variant(const vector<vector<int>>& list_list_length_paths);
 
 // Function to check threshold
 void check_threshold(double proportion);
@@ -89,7 +89,7 @@ vector<tuple<net_handle_t, string, size_t>> save_snarls(
                             PackedPositionOverlay& ppo);
 
 // Function to fill pretty paths
-pair<vector<string>, vector<string>> fill_pretty_paths(
+tuple<vector<string>, vector<string>, size_t> fill_pretty_paths(
                             SnarlDistanceIndex& stree, 
                             PackedGraph& pg, 
                             vector<vector<net_handle_t>>& finished_paths);
