@@ -301,7 +301,7 @@ vector<tuple<net_handle_t, string, size_t>> save_snarls(SnarlDistanceIndex& stre
             auto par_net = stree.get_parent(net);
             snarl_pos = snarls_pos[stree.net_handle_as_string(par_net)];
         }
-
+ 
         snarls_pos[stree.net_handle_as_string(net)] = snarl_pos;
         if (stree.is_snarl(net)) {
             snarls.push_back(std::make_tuple(net, snarl_pos[0], std::stoull(snarl_pos[1])));

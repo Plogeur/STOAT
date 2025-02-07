@@ -14,12 +14,12 @@
 #include <regex>
 #include <stdexcept>
 #include <utility>
+
 #include <bdsg/hash_graph.hpp>
 #include <bdsg/packed_graph.hpp>
 #include <bdsg/snarl_distance_index.hpp>
 #include <bdsg/overlays/packed_path_position_overlay.hpp>
 #include <handlegraph/handle_graph.hpp>
-#include <handlegraph/path_position_handle_graph.hpp>
 #include <handlegraph/path_handle_graph.hpp>
 
 using namespace std;
