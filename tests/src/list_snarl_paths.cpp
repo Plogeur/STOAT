@@ -11,7 +11,7 @@ void Path::addNode(const std::string& node, char orient) {
     nodes.push_back(node);
     orients.push_back(orient);
 }
-
+ 
 // Add a node handle and extract information using the string representation
 void Path::addNodeHandle(const net_handle_t& node_h, const SnarlDistanceIndex& stree) {
     std::string node_s = stree.net_handle_as_string(node_h);
