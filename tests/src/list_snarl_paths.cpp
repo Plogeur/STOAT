@@ -273,7 +273,6 @@ vector<tuple<net_handle_t, string, size_t>> save_snarls(SnarlDistanceIndex& stre
         return ret_pos;
     };
 
-
     auto get_net_start_position = [&](net_handle_t net) -> vector<string> {
         if (stree.is_node(net)) {
             return get_node_position(net);
