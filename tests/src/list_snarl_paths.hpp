@@ -73,22 +73,26 @@ string find_snarl_id(SnarlDistanceIndex& stree, net_handle_t& snarl);
 
 // Function to follow edges
 void follow_edges(
-    const SnarlDistanceIndex& stree,
+    SnarlDistanceIndex& stree,
     vector<vector<net_handle_t>>& finished_paths,
-    const vector<net_handle_t>& path,
+    vector<net_handle_t>& path,
     vector<vector<net_handle_t>>& paths,
-    const PackedGraph& pg
+    PackedGraph& pg
 );
 
 // Function to save snarls
-vector<tuple<net_handle_t, string, size_t>> save_snarls(SnarlDistanceIndex& stree, net_handle_t& root,
-                                   PackedGraph& pg, unordered_set<string>& ref_paths,
-                                   PackedPositionOverlay& ppo);
+vector<tuple<net_handle_t, string, size_t>> save_snarls(
+                            SnarlDistanceIndex& stree, 
+                            net_handle_t& root,
+                            PackedGraph& pg, 
+                            unordered_set<string>& ref_paths,
+                            PackedPositionOverlay& ppo);
 
 // Function to fill pretty paths
-pair<vector<string>, vector<string>> fill_pretty_paths(SnarlDistanceIndex& stree, 
-                                                               PackedGraph& pg, 
-                                                               vector<vector<net_handle_t>>& finished_paths);
+pair<vector<string>, vector<string>> fill_pretty_paths(
+                            SnarlDistanceIndex& stree, 
+                            PackedGraph& pg, 
+                            vector<vector<net_handle_t>>& finished_paths);
 
 // Function to loop over snarls and write output
 pair<vector<tuple<string, vector<string>, string, string, string>>, int> loop_over_snarls_write(
@@ -97,6 +101,7 @@ pair<vector<tuple<string, vector<string>, string, string, string>>, int> loop_ov
                             PackedGraph& pg, 
                             const string& output_file, 
                             const string& output_snarl_not_analyse, 
-                            int time_threshold = 50, bool bool_return = true);
+                            int children_treshold, 
+                            bool bool_return);
 
 #endif 
