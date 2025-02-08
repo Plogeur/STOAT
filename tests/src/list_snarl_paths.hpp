@@ -64,7 +64,7 @@ parse_graph_tree(const std::string& pg_file, const std::string& dist_file);
 
 // Function to calculate the type of variant
 pair<vector<string>, size_t> calcul_pos_type_variant(const vector<vector<int>>& list_list_length_paths);
-
+ 
 // Function to check threshold
 void check_threshold(double proportion);
 

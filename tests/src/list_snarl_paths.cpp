@@ -394,7 +394,7 @@ pair<vector<tuple<string, vector<string>, string, string, string>>, int> loop_ov
                 if (i > 0) pretty_paths_stream << ",";
                 pretty_paths_stream << pretty_paths[i];
             }
-
+ 
             for (size_t i = 0; i < type_variants.size(); ++i) {
                 if (i > 0) type_variants_stream << ",";  // Add a comma and space between strings
                 type_variants_stream << type_variants[i];
