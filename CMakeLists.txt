@@ -30,6 +30,7 @@ set(SRCS
     src/snarl_parser.cpp 
     src/binary_analysis.cpp 
     src/quantitative_analysis.cpp 
+    src/list_snarl_paths.cpp
     src/main.cpp
 )
 
@@ -37,7 +38,7 @@ set(SRCS
 add_executable(${PROJECT_NAME} ${SRCS})
 
 # Link Boost libraries
-target_link_libraries(${PROJECT_NAME} Boost::math)
+target_link_libraries(${PROJECT_NAME} Boost::math bdsg handlegraph libsdsl.so.3)
 
 # Custom target for get-deps
 add_custom_target(get-deps

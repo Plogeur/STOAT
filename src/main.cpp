@@ -5,6 +5,9 @@
 #include "snarl_parser.hpp"     
 #include "matrix.hpp"
 #include "arg_parser.hpp"
+#include "list_snarl_paths.hpp"
+
+using namespace std;
 
 void print_help() {
     std::cout << "Usage: SnarlParser [options]\n\n"
@@ -21,7 +24,7 @@ void print_help() {
 
 int main(int argc, char* argv[]) {
     // Declare variables to hold argument values
-    std::string vcf_path, snarl_path, binary_path, quantitative_path, output_path;
+    std::string vcf_path, snarl_path, pg_path, dist_path, binary_path, quantitative_path, output_path;
     bool show_help = false;
 
     // Parse arguments manually
@@ -48,6 +51,7 @@ int main(int argc, char* argv[]) {
 
     std::filesystem::path output_dir = "output";
     std::filesystem::create_directory(output_dir);
+    unordered_set<string> reference {"ref"};
     output_path = (output_dir / output_path).string();
 
     if (show_help || vcf_path.empty() || snarl_path.empty() || 
@@ -58,12 +62,24 @@ int main(int argc, char* argv[]) {
 
     // Check format of the VCF file
     check_format_vcf_file(vcf_path);
+    std::unordered_map<std::string, std::vector<std::string>> snarl;
 
-    if (!pg_path) && (!dist_path):
+    if (!snarl_path.empty()) {
         check_format_paths_snarl(snarl_path);
-    else :
-        parse_graph_tree(pg_path, dist_path)
+        snarl = parse_snarl_path(snarl_path);
 
+    } else if (!pg_path.empty() && !dist_path.empty()) {
+        auto [stree, pg, root, pp_overlay] = parse_graph_tree(pg_path, dist_path);
+        auto snarls = save_snarls(*stree, root, *pg, reference, *pp_overlay);
+        string output_snarl_not_analyse = output_path + "/snarl_not_analyse.tsv";
+        string output_file = output_path + "/snarl_analyse.tsv";
+        int children_threshold = 50;
+        snarl = loop_over_snarls_write(*stree, snarls, *pg, output_file, output_snarl_not_analyse, children_threshold, true);
+    
+    } else {
+        std::cerr << "Error: Either snarl file or pg and dist files must be provided\n";
+        return EXIT_FAILURE;
+    }
     std::vector<std::string> list_samples = parseHeader(vcf_path);    
     std::unordered_map<std::string, bool> binary;
     std::unordered_map<std::string, float> quantitative;
@@ -79,9 +95,6 @@ int main(int argc, char* argv[]) {
         quantitative = parse_quantitative_pheno(quantitative_path);
         check_match_samples(quantitative, list_samples);
     }
-
-    // Parse the snarl file
-    auto snarl = parse_snarl_path(snarl_path);
 
     // Initialize the SnarlProcessor with the VCF path
     SnarlParser vcf_object(vcf_path);
