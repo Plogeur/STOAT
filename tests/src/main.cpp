@@ -51,6 +51,3 @@ int main(int argc, char* argv[]) {
 }
 
 // ./list_snarl_paths -p ../../data/binary/pg.pg -d ../../data/binary/pg.dist -o ../binary_test
-// terminate called after throwing an instance of 'std::invalid_argument'
-//   what():  stoi
-// Abandon (core dumped)
