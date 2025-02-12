@@ -149,7 +149,40 @@ class SnarlProcessor:
 
         self.matrix.set_row_header(row_header_dict)
 
-    def binary_table(self, snarls:list, binary_groups:tuple[dict, dict], kinship_matrix:pd.DataFrame=None, covar:Optional[dict]=None, gaf:bool=False, output:str="output/binary_output.tsv", make_vdf=False):
+    def make_vcf_q(self, df) :
+        col_header = []
+        for column_name in df.columns :
+            col_header.append(column_name)
+
+        segments = re.findall(r'[><]\d+', col_header[0])
+        snarl = f"{segments[0]}{segments[-1]}"
+        at = f"AT={','.join(col_header)}"
+
+        # Initialize an empty dictionary to store VCF-style results
+        vcf_strings = ""
+
+        # Iterate through each sample in the DataFrame
+        for _, row in df.iterrows():
+            allele_1 = row.iloc[0]
+            allele_2 = row.iloc[1]
+            
+            # Determine VCF-style genotype
+            if allele_1 == 0 and allele_2 == 2:
+                allele = "1/1"
+            elif allele_1 == 2 and allele_2 == 0:
+                allele = "0/0"
+            elif allele_1 == 1 and allele_2 == 1:
+                allele = "0/1"
+            else: # allele_1 == 0 and allele_2 == 0
+                allele = "./."  # Unknown genotype
+
+            # Store the result in a dictionary
+            vcf_strings += f"{allele},"
+        vcf_strings = vcf_strings[:-1] # remove the last ','
+        vcf_data = f"{snarl}\t{at}\t{vcf_strings}\n"
+        return vcf_data
+
+    def binary_table(self, snarls:list, binary_groups:tuple[dict, dict], kinship_matrix:pd.DataFrame=None, covar:Optional[dict]=None, gaf:bool=False, output_gwas:str="output/binary_output.tsv", output_vcf:str="output/vcf_from_stoat.vcf", make_vcf=False):
         """
         Generate a binary table with statistical results and write to a file.
         """
@@ -159,8 +192,12 @@ class SnarlProcessor:
         )
         headers = f"{common_headers}\tGROUP_PATHS\n" if gaf else f"{common_headers}\n"
 
-        with open(output, 'wb') as outf:
+        with open(output_gwas, 'wb') as outf: #, open(output_vcf, "wb") as outvcf:
             outf.write(headers.encode('utf-8'))
+            # if make_vcf :
+            #     ALLELE = "\t".join(self.list_samples)
+            #     headers = f'ID\tINFO\t{ALLELE}\n'
+            #     outvcf.write(headers.encode('utf-8'))
 
             for snarl_info in snarls:
                 snarl, list_snarl, type_var, chromosome, position = snarl_info
@@ -178,10 +215,9 @@ class SnarlProcessor:
                 data = f"{common_data}\t{group_paths}\n" if gaf else f"{common_data}\n"
                 outf.write(data.encode('utf-8'))
 
-    def quantitative_table(self, snarls:list, quantitative_dict:dict, kinship_matrix:pd.DataFrame=None, covar:Optional[dict]=None, output:str="output/quantitative_output.tsv", make_vcf=False) :
+    def quantitative_table(self, snarls:list, quantitative_dict:dict, kinship_matrix:pd.DataFrame=None, covar:Optional[dict]=None, output_gwas:str="output/quantitative_output.tsv", output_vcf:str="output/vcf_from_stoat.vcf", make_vcf=False) :
 
-        output_vcf = "output/vcf_from_stoat.vcf"
-        with open(output, 'wb') as outf, open(output_vcf, "wb") as outvcf:
+        with open(output_gwas, 'wb') as outf, open(output_vcf, "wb") as outvcf:
             headers = 'CHR\tPOS\tSNARL\tTYPE\tREF\tALT\tRSQUARED\tBETA\tSE\tP\tALLELE_NUM\n'
             outf.write(headers.encode('utf-8'))
             if make_vcf :
@@ -197,37 +233,7 @@ class SnarlProcessor:
                 ref = alt = 'NA'
                 data = f"{chromosome}\t{position}\t{snarl}\t{type_var}\t{ref}\t{alt}\t{rsquared}\t{beta}\t{se}\t{pvalue}\t{allele_number}\n"
                 if make_vcf :
-                    col_header = []
-                    for column_name in df.columns :
-                        col_header.append(column_name)
-
-                    segments = re.findall(r'[><]\d+', col_header[0])
-                    snarl = f"{segments[0]}{segments[-1]}"
-                    at = f"AT={','.join(col_header)}"
-
-                    # Initialize an empty dictionary to store VCF-style results
-                    vcf_strings = ""
-
-                    # Iterate through each sample in the DataFrame
-                    for _, row in df.iterrows():
-                        allele_1 = row.iloc[0]
-                        allele_2 = row.iloc[1]
-                        
-                        # Determine VCF-style genotype
-                        if allele_1 == 0 and allele_2 == 2:
-                            allele = "1/1"
-                        elif allele_1 == 2 and allele_2 == 0:
-                            allele = "0/0"
-                        elif allele_1 == 1 and allele_2 == 1:
-                            allele = "0/1"
-                        else: # allele_1 == 0 and allele_2 == 0
-                            allele = "./."  # Unknown genotype
-
-                        # Store the result in a dictionary
-                        vcf_strings += f"{allele},"
-                    vcf_strings = vcf_strings[:-1] # remove the last , 
-                    # Print the results
-                    vcf_data = f"{snarl}\t{at}\t{vcf_strings}\n"
+                    vcf_data = self.make_vcf_q(df)
                     outvcf.write(vcf_data.encode('utf-8'))
                 outf.write(data.encode('utf-8'))
 

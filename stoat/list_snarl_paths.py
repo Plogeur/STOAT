@@ -140,6 +140,7 @@ def save_snarls(stree, root, pg, ref_paths, ppo) :
 
         def step_callback(step_handle):
             path_handle = pg.get_path_handle_of_step(step_handle)
+
             path_name = pg.get_path_name(path_handle)
             if path_name in ref_paths:
                 position = ppo.get_position_of_step(step_handle)
@@ -179,6 +180,7 @@ def save_snarls(stree, root, pg, ref_paths, ppo) :
         bnode1_p = get_node_position(bnode1)
         bnode2 = stree.get_bound(net, False, False)
         bnode2_p = get_node_position(bnode2)
+
         # if one of the bondaries is not on a reference path, return it
         if len(bnode1_p) == 0:
             return (bnode1_p)
@@ -341,7 +343,7 @@ if __name__ == "__main__" :
     # vg find -x ../snarl_data/fly.gbz -r 5176878:5176884 -c 10 | vg view -dp - | dot -Tsvg -o ../snarl_data/subgraph.svg
 
     # binary 
-    # python3 stoat/list_snarl_paths.py -p tests/simulation/binary_data/pg.full.pg -d tests/simulation/binary_data/pg.dist -c tests/simulation/binary_data/pg.chromosome -o output/test
+    # python3 stoat/list_snarl_paths.py -p tests/simulation/binary_data/pg.pg -d tests/simulation/binary_data/pg.dist -c tests/simulation/binary_data/pg.chromosome -o output/test
     
     # quantitative
     # python3 stoat/list_snarl_paths.py -p tests/simulation/quantitative_data/pg.pg -d tests/simulation/quantitative_data/pg.dist -c tests/simulation/quantitative_data/pg.chromosome -o output/test
