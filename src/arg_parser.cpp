@@ -1,6 +1,7 @@
 #include "arg_parser.hpp"
 
 namespace fs = std::filesystem;
+using namespace std;
 
 std::unordered_map<std::string, bool> parse_binary_pheno(const std::string& file_path) {
     
@@ -64,13 +65,13 @@ template void check_match_samples<bool>(const std::unordered_map<std::string, bo
 template void check_match_samples<float>(const std::unordered_map<std::string, float>&, const std::vector<std::string>&);
 
 // Function to parse the snarl path file
-std::unordered_map<std::string, std::vector<std::string>> parse_snarl_path(const std::string& file_path) {
+unordered_map<std::string, tuple<std::vector<std::string>, std::string, std::string, std::vector<std::string>>> parse_snarl_path(const std::string& file_path) {
 
     // Check file
     check_file(file_path);
 
-    std::string line, snarl, path_list;
-    std::unordered_map<std::string, std::vector<std::string>> snarl_paths;
+    std::string line, chr, pos, snarl, path_list, type_var;
+    unordered_map<std::string, std::tuple<std::vector<std::string>, std::string, std::string, std::vector<std::string>>> snarl_paths;
     std::ifstream file(file_path);
 
     // Read header
@@ -79,17 +80,33 @@ std::unordered_map<std::string, std::vector<std::string>> parse_snarl_path(const
     // Process each line
     while (std::getline(file, line)) {
         std::istringstream ss(line);
+
+        std::getline(ss, chr, '\t');   // chr column
+        std::getline(ss, pos, '\t');   // pos column
         std::getline(ss, snarl, '\t');   // snarl column
         std::getline(ss, path_list, '\t'); // paths column
-        
-        if (!path_list.empty()) {
-            std::istringstream path_stream(path_list);
-            std::string path;
-            while (std::getline(path_stream, path, ',')) {
-                snarl_paths[snarl].push_back(path);
-            }
+        std::getline(ss, type_var, '\t');   // type_var column
+
+        std::istringstream path_stream(path_list);
+        std::istringstream type_stream(type_var);
+        std::vector<std::string> paths;
+        std::vector<std::string> type;
+
+        // create a vector of paths
+        while (std::getline(path_stream, path_list, ',')) {
+            paths.push_back(path_list);
         }
+
+        // create a vector of types
+        while (std::getline(type_stream, type_var, ',')) {
+            type.push_back(type_var);
+        }
+
+        // {snarl : (paths, chr, pos, type)} 
+        snarl_paths[snarl] = make_tuple(paths, chr, pos, type);
+
     }
+
     file.close();
     return snarl_paths;
 }

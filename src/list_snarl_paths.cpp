@@ -346,7 +346,7 @@ tuple<vector<string>, vector<string>, size_t> fill_pretty_paths(
 
 // {snarl : (paths, chr, pos, type)} 
 // unordered_map<string, tuple<vector<string>, string, string, vector<string>>>
-std::unordered_map<std::string, std::vector<std::string>> loop_over_snarls_write(
+unordered_map<string, tuple<vector<string>, string, string, vector<string>>> loop_over_snarls_write(
         SnarlDistanceIndex& stree, 
         vector<tuple<net_handle_t, string, size_t>>& snarls,
         PackedGraph& pg, 
@@ -361,7 +361,7 @@ std::unordered_map<std::string, std::vector<std::string>> loop_over_snarls_write
     out_snarl << "chr\tpos\tsnarl\tpaths\ttype\n";
     out_fail << "snarl\treason\n";
     
-    std::unordered_map<std::string, std::vector<std::string>> snarl_paths;
+    unordered_map<string, tuple<vector<string>, string, string, vector<string>>> snarl_paths;
     size_t paths_number_analysis = 0;
     chrono::seconds time_threshold(2);
     
@@ -423,9 +423,9 @@ std::unordered_map<std::string, std::vector<std::string>> loop_over_snarls_write
 
             if (bool_return) {
                 // {snarl : (paths, chr, pos, type)} 
-                // snarl_paths[snarl_id] = make_tuple(pretty_paths, std::get<1>(snarl_path_pos),
-                //                         std::to_string(std::get<2>(snarl_path_pos)+padding), type_variants);
-                snarl_paths[snarl_id] = pretty_paths;
+                snarl_paths[snarl_id] = make_tuple(pretty_paths, std::get<1>(snarl_path_pos),
+                                        std::to_string(std::get<2>(snarl_path_pos)+padding), type_variants);
+                // snarl_paths[snarl_id] = pretty_paths;
             }
             paths_number_analysis += pretty_paths.size();
         }

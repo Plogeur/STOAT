@@ -35,17 +35,13 @@ int main(int argc, char* argv[]) {
     }
 
     unordered_set<string> reference {"ref"};
-    std::cout << "Checking input files: " << pg_file << " " << dist_file << std::endl;
     auto [stree, pg, root, pp_overlay] = parse_graph_tree(pg_file, dist_file);
-    std::cout << "Parsing successful!" << std::endl;
     vector<tuple<net_handle_t, string, size_t>> snarls = save_snarls(*stree, root, *pg, reference, *pp_overlay);
-    std::cout << "saving snarls successful!" << std::endl;
     string output_snarl_not_analyse = output_path + "/snarl_not_analyse.tsv";
     string output_file = output_path + "/snarl_analyse.tsv";
     int children_threshold = 50;
     bool bool_return = true;
     loop_over_snarls_write(*stree, snarls, *pg, output_file, output_snarl_not_analyse, children_threshold, bool_return);
-    std::cout << "Write snarls successful!" << std::endl;
 
     return EXIT_SUCCESS;
 }

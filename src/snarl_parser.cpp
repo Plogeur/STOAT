@@ -3,6 +3,8 @@
 #include "binary_analysis.hpp"
 #include "quantitative_analysis.hpp"
 
+using namespace std;
+
 SnarlParser::SnarlParser(const std::string& vcf_path) : filename(vcf_path), file(vcf_path), matrix(1000000, parseHeader().size() * 2) {
     sampleNames = parseHeader();
 }
@@ -192,28 +194,39 @@ std::vector<int> identify_correct_path(
 }
 
 // Binary Table Generation
-void SnarlParser::binary_table(const std::unordered_map<std::string, std::vector<std::string>>& snarls,
+void SnarlParser::binary_table(const unordered_map<string, tuple<vector<string>, string, string, vector<string>>>& snarls,
                                   const std::unordered_map<std::string, bool>& binary_groups,
                                   const std::string& output) 
 {
     std::ofstream outf(output, std::ios::binary);
 
     // Write headers
-    std::string headers = "CHR\tPOS\tSNARL\tTYPE\tREF\tALT\tP_FISHER\tP_CHI2\n";
+    std::string headers = "CHR\tPOS\tSNARL\tTYPE\tP_FISHER\tP_CHI2\n";
     outf.write(headers.c_str(), headers.size());
 
     // Iterate over each snarl
-    for (const auto& [snarl, list_snarl] : snarls) {
+    for (const auto& [snarl, tuple_snarl] : snarls) {
 
+        std::vector<std::string> list_snarl = std::get<0>(tuple_snarl);
         std::vector<std::vector<int>> df = create_binary_table(binary_groups, list_snarl, sampleNames, matrix);
         std::vector<std::string> stats = binary_stat_test(df);
 
-        std::string chrom = "NA", pos = "NA", type_var = "NA", ref = "NA", alt = "NA";
-        // Stats is a vector containing the values in the order: 
+        std::string chrom = std::get<1>(tuple_snarl), pos = std::get<2>(tuple_snarl);
+        std::vector<std::string> type_var = std::get<3>(tuple_snarl);
+
+        // make a string separated by , from a vector of string
+        std::ostringstream oss;
+            for (size_t i = 0; i < type_var.size(); ++i) {
+                if (i != 0) oss << ","; // Add comma before all elements except the first
+                oss << type_var[i];
+            }
+
+        std::string type_var_str = oss.str();
+        
         // fisher_p_value, chi2_p_value 
         // TODO : add other metrics 
         std::stringstream data;
-        data << chrom << "\t" << pos << "\t" << snarl << "\t" << type_var << "\t" << ref << "\t" << alt
+        data << chrom << "\t" << pos << "\t" << snarl << "\t" << type_var_str << "\t"
              << "\t" << stats[0] << "\t" << stats[1] << "\n";
         
         outf.write(data.str().c_str(), data.str().size());
@@ -221,7 +234,7 @@ void SnarlParser::binary_table(const std::unordered_map<std::string, std::vector
 }
 
 // Quantitative Table Generation
-void SnarlParser::quantitative_table(const std::unordered_map<std::string, std::vector<std::string>>& snarls,
+void SnarlParser::quantitative_table(const unordered_map<string, tuple<vector<string>, string, string, vector<string>>>& snarls,
                                         const std::unordered_map<std::string, float>& quantitative_phenotype,
                                         const std::string& output) 
 {
@@ -232,8 +245,9 @@ void SnarlParser::quantitative_table(const std::unordered_map<std::string, std::
     outf.write(headers.c_str(), headers.size());
 
     // Iterate over each snarl
-    for (const auto& [snarl, list_snarl] : snarls) {
+    for (const auto& [snarl, tuple_snarl] : snarls) {
 
+        std::vector<std::string> list_snarl = std::get<0>(tuple_snarl);
         std::unordered_map<std::string, std::vector<int>> df = create_quantitative_table(sampleNames, list_snarl, matrix);
 
         // std::make_tuple(se, beta, p_value)

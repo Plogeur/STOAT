@@ -13,6 +13,7 @@ add_compile_options(-Wall -Wextra -O2)
 
 # Include directories
 include_directories(/usr/include /usr/local/include)
+link_directories(/usr/include /usr/local/lib)  # libbdsg.dylib
 
 # Define Boost dependency
 find_package(Boost REQUIRED COMPONENTS math)

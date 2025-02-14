@@ -7,3 +7,7 @@ vcf_test.normalized.vcf
 data/*
 tests/build/*
 tests/src/CMakeFiles/*
+src/CMakeFiles/*
+src/output/*
+src/cmake_install.cmake
+src/CMakeCache.txt

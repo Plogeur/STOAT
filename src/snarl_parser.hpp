@@ -13,6 +13,7 @@
 #include <htslib/vcf.h>
 #include "matrix.hpp"
 
+using namespace std;
 struct Variant {
     std::vector<std::string> atInfo;
     std::vector<std::vector<int>> genotypes;
@@ -31,10 +32,10 @@ public:
     void pushMatrix(const std::string& decomposedSnarl, std::unordered_map<std::string, size_t>& rowHeaderDict, size_t indexColumn);
     void fill_matrix();
     std::vector<std::string> parseHeader();
-    void binary_table(const std::unordered_map<std::string, std::vector<std::string> >& snarls,
+    void binary_table(const unordered_map<string, tuple<vector<string>, string, string, vector<string>>>& snarls,
                         const std::unordered_map<std::string, bool>& binary_groups,
                         const std::string& output = "output/binary_output.tsv");
-    void quantitative_table(const std::unordered_map<std::string, std::vector<std::string> >& snarls,
+    void quantitative_table(const unordered_map<string, tuple<vector<string>, string, string, vector<string>>>& snarls,
                                 const std::unordered_map<std::string, float>& quantitative,
                                 const std::string& output = "output/quantitative_output.tsv");
 };

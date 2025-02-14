@@ -54,17 +54,23 @@ int main(int argc, char* argv[]) {
     unordered_set<string> reference {"ref"};
     output_path = (output_dir / output_path).string();
 
-    if (show_help || vcf_path.empty() || snarl_path.empty() || 
+    if (show_help || vcf_path.empty() ||
         binary_path.empty() == quantitative_path.empty()) {
+        cerr << "vcf_path or phenotype are missing";
+        print_help();
+        return 0;
+    }
+
+    if (snarl_path.empty() && (pg_path.empty() || dist_path.empty())) {
+        cerr << "snarl or pg and dist files are missing";
         print_help();
         return 0;
     }
 
     // Check format of the VCF file
-    check_format_vcf_file(vcf_path);
-    std::unordered_map<std::string, std::vector<std::string>> snarl;
+    unordered_map<string, std::tuple<vector<string>, std::string, string, std::vector<string>>> snarl;
 
-    if (!snarl_path.empty()) {
+    if (!snarl_path.empty()){
         check_format_paths_snarl(snarl_path);
         snarl = parse_snarl_path(snarl_path);
 
@@ -80,6 +86,7 @@ int main(int argc, char* argv[]) {
         std::cerr << "Error: Either snarl file or pg and dist files must be provided\n";
         return EXIT_FAILURE;
     }
+
     std::vector<std::string> list_samples = parseHeader(vcf_path);    
     std::unordered_map<std::string, bool> binary;
     std::unordered_map<std::string, float> quantitative;
@@ -101,7 +108,8 @@ int main(int argc, char* argv[]) {
     auto start_1 = std::chrono::high_resolution_clock::now();
     vcf_object.fill_matrix();
     auto end_1 = std::chrono::high_resolution_clock::now();
-    std::cout << "Time Matrix: " << std::chrono::duration<double>(end_1 - start_1).count() << " s" << std::endl;
+    std::cout << "Time Matrix : " << std::chrono::duration<double>(end_1 - start_1).count() << " s" << std::endl;
+    auto start_2 = std::chrono::high_resolution_clock::now();
 
     // Process binary group file if provided
     if (!binary_path.empty()) {
@@ -121,10 +129,11 @@ int main(int argc, char* argv[]) {
         }
     }
 
-    end_1 = std::chrono::high_resolution_clock::now();
-    std::cout << "Time P-value: " << std::chrono::duration<double>(end_1 - start_1).count() << " s" << std::endl;
+    auto end_2 = std::chrono::high_resolution_clock::now();
+    std::cout << "Time P-value : " << std::chrono::duration<double>(end_2 - start_2).count() << " s" << std::endl;
+    std::cout << "Time Gwas analysis : " << std::chrono::duration<double>(end_2 - start_1).count() << " s" << std::endl;
 
     return EXIT_SUCCESS;
 }
 
-// ./stoat_cxx --vcf_path ../examples/small_vcf.vcf --snarl ../examples/list_snarl_short.txt -b ../examples/group.txt -o snarl_project
+// ./stoat_cxx -p ../data/binary/pg.pg -d ../data/binary/pg.dist -v ../data/binary/binary.vcf.gz -b ../data/binary/phenotype.tsv -o output
