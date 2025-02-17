@@ -69,6 +69,7 @@ def check_valid_snarl(start_node, next_node, snarl_list) :
     - At least one path contains both start_node and next_node.
     - At least one path does NOT contain either start_node or next_node.
     """
+    
     contains_both = False
     contains_either_absent = False
 
@@ -254,14 +255,14 @@ def p_value_distribution_plink(test_predicted_labels, cleaned_true_labels, clean
         'Min Sample': True, # Include Min Sample in hover box
         },
         title="Distribution of P-Values",
-        labels={"P-Value": "P-Value", "Min Sample" : 'number of alleles passing throught', "Difference": "Simulated Effect (Difference in Probabilities)"},
+        labels={"P-Value": "P-Value", "Min Sample" : 'Min Sample', "Difference": "Simulated Effect (Difference in Probabilities)"},
     )
 
     fig.update_layout(
         dict(
         title="Distribution of P-Values compare to the simulated effect",
         font=dict(size=40)  # Increase font size for the title
-    ),
+        ),
         xaxis_title="P-Value",
         yaxis_title="Simulated Effect (Difference in Probabilities)",
         legend_title="Type",
@@ -325,18 +326,25 @@ def p_value_distribution(test_predicted_labels, cleaned_true_labels, list_diff, 
         hover_data={
             "P-Value": True,  # Include P-Value in hover box
             "Difference": True,  # Include Difference in hover box
-            "Min Sample": False,  # Optionally hide Min Sample (size is already shown)
+            "Min Sample": True,  # Optionally hide Min Sample (size is already shown)
         },
         title="Distribution of P-Values for False Positives and True Positives",
-        labels={"P-Value": "P-Value", "Difference": "Simulated Effect (Difference in Probabilities)"},
-        size_max=20
+        labels={"P-Value": "P-Value", "Min Sample" : 'Min Sample', "Difference": "Simulated Effect (Difference in Probabilities)"},
     )
 
     fig.update_layout(
+        dict(
+        title="Distribution of P-Values compare to the simulated effect",
+        font=dict(size=40)
+        ),
         xaxis_title="P-Value",
         yaxis_title="Simulated Effect (Difference in Probabilities)",
         legend_title="Type",
-        template="plotly_white"
+        template="plotly_white",
+        xaxis_title_font=dict(size=30),  # Increase font size for x-axis title
+        yaxis_title_font=dict(size=30),  # Increase font size for y-axis title
+        xaxis=dict(tickfont=dict(size=35)),  # Increase font size for x-axis ticks
+        yaxis=dict(tickfont=dict(size=35)),  # Increase font size for y-axis ticks
     )
 
     # Show the interactive plot
@@ -486,14 +494,14 @@ if __name__ == "__main__":
     """
     # STOAT
     python3 tests/verify_truth.py --freq tests/simulation/quantitative_data/pg.snarls.freq.tsv \
-    --p_value tests/quantitative_tests_output/stoat.assoc.tsv --paths tests/simulation/quantitative_data/snarl_paths.tsv -q
+    --p_value tests/quantitative_tests_output/stoat2bin.assoc.tsv --paths tests/simulation/quantitative_data/snarl_paths.tsv -q
 
     python3 tests/verify_truth.py --freq tests/simulation/binary_data/pg.snarls.freq.tsv \
-    --p_value tests/binary_tests_output/binary_output/stoat.assoc.tsv --paths tests/simulation/binary_data/snarl_paths.tsv -b
+    --p_value tests/binary_tests_output/stoat2bin.assoc.tsv --paths tests/simulation/binary_data/snarl_paths.tsv -b
 
     # PLINK
     python3 tests/verify_truth.py --freq tests/simulation/quantitative_data/pg.snarls.freq.tsv \
-    --p_value tests/plink_tests_output/modify_quantitative_gwas.assoc.linear --paths tests/simulation/quantitative_data/snarl_paths.tsv -p
+    --p_value tests/plink_tests_output/quantitative_gfa2bin_plink_allele.tsv --paths tests/simulation/quantitative_data/snarl_paths.tsv -p
 
     python3 tests/verify_truth.py --freq tests/simulation/binary_data/pg.snarls.freq.tsv \
     --p_value tests/plink_tests_output/binary_gfa2bin_plink_allele.tsv --paths tests/simulation/binary_data/snarl_paths.tsv -p 

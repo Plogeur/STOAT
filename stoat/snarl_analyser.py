@@ -269,7 +269,8 @@ class SnarlProcessor:
         df['Target'] = df.index.map(pheno)
         x = df.drop('Target', axis=1)
         y = df['Target']
-        result = sm.OLS(y, x).fit()
+        x_with_const = sm.add_constant(x)
+        result = sm.OLS(y, x_with_const).fit()
 
         rsquared = f"{result.rsquared:.4e}" if result.rsquared < 0.0001 else f"{result.rsquared:.4f}"
 
