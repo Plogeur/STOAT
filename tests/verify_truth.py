@@ -7,6 +7,27 @@ import plotly.express as px
 import re
 from cyvcf2 import VCF # type: ignore
 
+def split_snarl(input_str):
+    # Split the string and filter empty elements, then convert to integers
+    return [int(num) for num in re.split(r'[><]', input_str) if num]
+
+def parse_snarl_path_file_dict(path_file:str) -> dict :
+    
+    snarl_paths = {}
+    df = pd.read_csv(path_file, sep='\t', dtype=str)
+    df['paths'] = df['paths'].str.split(',')
+    for paths, pos in zip(df['paths'], df['pos']):
+        for path in paths :
+            list_node  = split_snarl(path)
+            # Case COMPLEX or DELETION
+            if "*" in list_node or len(list_node) < 3:
+                continue
+            # Case INS or SNP 
+            node = list_node[1]
+        snarl_paths[node] = pos
+
+    return snarl_paths
+
 # Function to process the frequency file and get result list with differences
 def process_file(freq_file, threshold=0.2):
     df = pd.read_csv(freq_file, sep='\t')
@@ -30,10 +51,6 @@ def process_file(freq_file, threshold=0.2):
         list_diff.append(float(diff))
 
     return path_list, true_labels, list_diff
-
-def split_snarl(input_str):
-    # Split the string and filter empty elements, then convert to integers
-    return [int(num) for num in re.split(r'[><]', input_str) if num]
 
 def check_valid_snarl(start_node_1, next_node_1, start_node_2, next_node_2, snarl_list):
     """
@@ -132,10 +149,10 @@ def vcf_snarl_list(vcf_file):
 
     return vcf_snarl_list
 
-def match_snarl_plink(path_list:list, true_labels:list, list_diff:list, plink_file:str):
+def match_snarl_plink(path_list:list, true_labels:list, list_diff:list, plink_file:str, snarl_paths_file:str):
 
     plink_df = pd.read_csv(plink_file, sep='\t')
-    snarl_splited = plink_df['SNP'].apply(split_snarl)
+    dict_node_pos = parse_snarl_path_file_dict(snarl_paths_file)
 
     type_ = []
     num_samples = []
@@ -151,9 +168,11 @@ def match_snarl_plink(path_list:list, true_labels:list, list_diff:list, plink_fi
         start_node_1, next_node_1 = map(int, path_list[idx].split('_'))
         start_node_2, next_node_2 = map(int, path_list[idx+1].split('_'))
 
+        pos_node_1 = dict_node_pos[next_node_1] 
+        pos_node_2 = dict_node_pos[next_node_2]
+
         # We want to know if the snarl is in the range/containt of the snarl in the p_value file
-        matched_row = plink_df[(snarl_splited.str[1].astype(int) <= start_node_1) & (snarl_splited.str[0].astype(int) >= next_node_1) |
-                                 (snarl_splited.str[0].astype(int) <= start_node_1) & (snarl_splited.str[1].astype(int) >= next_node_1)]
+        matched_row = plink_df[]
 
         # Case where the snarl is found 
         if not matched_row.empty:
@@ -438,8 +457,8 @@ if __name__ == "__main__":
 
     parser = argparse.ArgumentParser(description="Parse a file with start_node, next_node, group, and freq columns.")
     parser.add_argument("--freq", help="Path to allele frequence file")
-    parser.add_argument("--p_value", help="Path to p_value file")
-    parser.add_argument("--paths", help="Path to p_value file")
+    parser.add_argument("--p_value", help="Path to p_value gwas output file")
+    parser.add_argument("--paths", help="Path to snarl paths list file")
     parser.add_argument("-t", "--threshold", type=float, required=False, help="Threshold to define the truth label")
 
     group = parser.add_mutually_exclusive_group(required=True)
@@ -472,7 +491,7 @@ if __name__ == "__main__":
     assert len(test_path_list) == len(test_true_labels) == len(test_list_diff)
 
     if args.plink:
-        type_, test_predicted_labels_10_2, test_predicted_labels_10_5, test_predicted_labels_10_8, cleaned_true_labels, clean_list_diff, _, _ = match_snarl_plink(test_path_list, test_true_labels, test_list_diff, args.p_value)
+        type_, test_predicted_labels_10_2, test_predicted_labels_10_5, test_predicted_labels_10_8, cleaned_true_labels, clean_list_diff, _, _ = match_snarl_plink(test_path_list, test_true_labels, test_list_diff, args.p_value, args.paths)
     else :
         test_predicted_labels_10_2, test_predicted_labels_10_5, test_predicted_labels_10_8, cleaned_true_labels, clean_list_diff, _, _ = match_snarl(test_path_list, test_true_labels, test_list_diff, args.p_value, args.paths, type_)
     
@@ -496,7 +515,7 @@ if __name__ == "__main__":
         # THRESHOLD_FREQ = 0.0 : Case where just a difference between both group snarl is considered like Truth label
         THRESHOLD_FREQ = 0.0
         test_path_list, test_true_labels, test_list_diff = process_file(args.freq, THRESHOLD_FREQ)
-        type_, test_predicted_labels_10_2, test_predicted_labels_10_5, test_predicted_labels_10_8, cleaned_true_labels, clean_list_diff, pvalue, num_sample = match_snarl_plink(test_path_list, test_true_labels, test_list_diff, args.p_value)
+        type_, test_predicted_labels_10_2, test_predicted_labels_10_5, test_predicted_labels_10_8, cleaned_true_labels, clean_list_diff, pvalue, num_sample = match_snarl_plink(test_path_list, test_true_labels, test_list_diff, args.p_value, args.paths)
         print_confusion_matrix(test_predicted_labels_10_2, test_predicted_labels_10_5, test_predicted_labels_10_8, cleaned_true_labels, f"{output}/confusion_matrix_{THRESHOLD_FREQ}")
         assert len(cleaned_true_labels) == len(clean_list_diff)
 
@@ -514,8 +533,8 @@ if __name__ == "__main__":
 
     # PLINK 
     python3 tests/verify_truth.py --freq tests/simulation/quantitative_data/pg.snarls.freq.tsv \
-    --p_value tests/plink_tests_output/quantitative_plink_formatted.tsv -p
+    --p_value tests/plink_tests_output/quantitative_plink_formatted.tsv -p --paths tests/simulation/binary_data/snarl_paths.tsv
 
     python3 tests/verify_truth.py --freq tests/simulation/binary_data/pg.snarls.freq.tsv \
-    --p_value tests/plink_tests_output/binary.natif.tsv -p
+    --p_value tests/plink_tests_output/binary.natif.tsv -p --paths tests/simulation/binary_data/snarl_paths.tsv
     """

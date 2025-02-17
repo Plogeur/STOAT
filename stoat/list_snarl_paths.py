@@ -209,7 +209,14 @@ def parse_graph_tree(pg_file, dist_file) :
     # init with the child (only one ideally) of the root
     root = stree.get_root()
     return stree, pg, root, pp_overlay
-   
+
+def parse_pg(pg_file) :
+
+    # load graph and snarl tree
+    pg = bdsg.bdsg.PackedGraph()
+    pg.deserialize(pg_file)
+    return pg
+
 def fill_pretty_paths(stree, pg, finished_paths) :
     pretty_paths = []
     length_net_paths = []
