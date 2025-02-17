@@ -128,7 +128,7 @@ def follow_edges(stree, finished_paths, path, paths, pg) :
 
     # from the last thing in the path
     stree.follow_net_edges(path[-1], pg, False, lambda n: add_to_path(n))
-
+ 
 def save_snarls(stree, root, pg, ref_paths, ppo) :
     snarls = []
     snarls_pos = {}
@@ -140,6 +140,7 @@ def save_snarls(stree, root, pg, ref_paths, ppo) :
 
         def step_callback(step_handle):
             path_handle = pg.get_path_handle_of_step(step_handle)
+
             path_name = pg.get_path_name(path_handle)
             if path_name in ref_paths:
                 position = ppo.get_position_of_step(step_handle)
@@ -179,6 +180,7 @@ def save_snarls(stree, root, pg, ref_paths, ppo) :
         bnode1_p = get_node_position(bnode1)
         bnode2 = stree.get_bound(net, False, False)
         bnode2_p = get_node_position(bnode2)
+
         # if one of the bondaries is not on a reference path, return it
         if len(bnode1_p) == 0:
             return bnode1_p
