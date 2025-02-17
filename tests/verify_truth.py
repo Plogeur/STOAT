@@ -35,8 +35,6 @@ def split_snarl(input_str):
     # Split the string and filter empty elements, then convert to integers
     return [int(num) for num in re.split(r'[><]', input_str) if num]
 
-import re
-
 def check_valid_snarl(start_node_1, next_node_1, start_node_2, next_node_2, snarl_list):
     """
     Check if a valid snarl exists in the snarl_list.
@@ -45,7 +43,9 @@ def check_valid_snarl(start_node_1, next_node_1, start_node_2, next_node_2, snar
     - At least one path contains both start_node_1 and next_node_1.
     - At least one path contains both start_node_2 and next_node_2.
     - start_node_1 and start_node_2 must be the same str.
+    - One path can not containt the 4 node.
     """
+
     if start_node_1 != start_node_2:  # First condition: start nodes must match
         raise ValueError("start_node_1 != start_node_2")
 
@@ -517,5 +517,5 @@ if __name__ == "__main__":
     --p_value tests/plink_tests_output/quantitative_plink_formatted.tsv -p
 
     python3 tests/verify_truth.py --freq tests/simulation/binary_data/pg.snarls.freq.tsv \
-    --p_value tests/plink_tests_output/binary_plink_formatted.tsv -p
+    --p_value tests/plink_tests_output/binary.natif.tsv -p
     """

@@ -173,7 +173,7 @@ def save_snarls(stree, root, pg, ref_paths, ppo) :
     def get_net_start_position(net):
         # if node, look at its position
         if stree.is_node(net):
-            return (get_node_position(net))
+            return get_node_position(net)
         # otherwise check boundaries
         bnode1 = stree.get_bound(net, True, False)
         bnode1_p = get_node_position(bnode1)
@@ -181,15 +181,15 @@ def save_snarls(stree, root, pg, ref_paths, ppo) :
         bnode2_p = get_node_position(bnode2)
         # if one of the bondaries is not on a reference path, return it
         if len(bnode1_p) == 0:
-            return (bnode1_p)
+            return bnode1_p
         if len(bnode2_p) == 0:
-            return (bnode2_p)
-        assert bnode1_p[0] == bnode1_p[0], 'boundary nodes on different reference paths'
+            return bnode2_p
+        assert bnode1_p[0] == bnode2_p[0], 'boundary nodes on different reference paths'
         # as "start" position, let's return the smallest position
         if bnode1_p[1] < bnode2_p[1]:
-            return (bnode1_p)
+            return bnode1_p
         else:
-            return (bnode2_p)
+            return bnode2_p
     
     stree.for_each_child(root, save_snarl_tree_node)
     return snarls
@@ -341,7 +341,7 @@ if __name__ == "__main__" :
     # vg find -x ../snarl_data/fly.gbz -r 5176878:5176884 -c 10 | vg view -dp - | dot -Tsvg -o ../snarl_data/subgraph.svg
 
     # binary 
-    # python3 stoat/list_snarl_paths.py -p tests/simulation/binary_data/pg.full.pg -d tests/simulation/binary_data/pg.dist -c tests/simulation/binary_data/pg.chromosome -o output/test
+    # python3 stoat/list_snarl_paths.py -p tests/simulation/binary_data/pg.pg -d tests/simulation/binary_data/pg.dist -c tests/simulation/binary_data/pg.chromosome -o output/test
     
     # quantitative
     # python3 stoat/list_snarl_paths.py -p tests/simulation/quantitative_data/pg.pg -d tests/simulation/quantitative_data/pg.dist -c tests/simulation/quantitative_data/pg.chromosome -o output/test
