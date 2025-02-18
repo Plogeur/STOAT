@@ -9,7 +9,7 @@ from cyvcf2 import VCF # type: ignore
 
 def split_snarl(input_str):
     # Split the string and filter empty elements, then convert to integers
-    return [int(num) for num in re.split(r'[><]', input_str) if num]
+    return [str(num) for num in re.split(r'[><]', input_str) if num]
 
 def parse_snarl_path_file_dict(path_file:str) -> dict :
     
@@ -18,13 +18,10 @@ def parse_snarl_path_file_dict(path_file:str) -> dict :
     df['paths'] = df['paths'].str.split(',')
     for paths, pos in zip(df['paths'], df['pos']):
         for path in paths :
-            list_node  = split_snarl(path)
-            # Case COMPLEX or DELETION
-            if "*" in list_node or len(list_node) < 3:
-                continue
-            # Case INS or SNP 
-            node = list_node[1]
-        snarl_paths[node] = pos
+            list_node = split_snarl(path)
+            # all case : SNP, INS, DEL, COMPLEX
+            node = int(list_node[1])
+            snarl_paths[node] = pos
 
     return snarl_paths
 
@@ -154,6 +151,7 @@ def match_snarl_plink(path_list:list, true_labels:list, list_diff:list, plink_fi
     plink_df = pd.read_csv(plink_file, sep='\t')
     dict_node_pos = parse_snarl_path_file_dict(snarl_paths_file)
 
+    nan_pvalue = 0
     type_ = []
     num_samples = []
     predicted_labels_10_2 = []
@@ -165,33 +163,31 @@ def match_snarl_plink(path_list:list, true_labels:list, list_diff:list, plink_fi
 
     for idx in range(0, len(path_list) - 1, 2):  # Step by 2 to process pairs
 
-        start_node_1, next_node_1 = map(int, path_list[idx].split('_'))
-        start_node_2, next_node_2 = map(int, path_list[idx+1].split('_'))
+        start_node, next_node = map(int, path_list[idx].split('_'))
+        #start_node_2, next_node_2 = map(int, path_list[idx+1].split('_'))
 
-        pos_node_1 = dict_node_pos[next_node_1] 
-        pos_node_2 = dict_node_pos[next_node_2]
+        pos_node = dict_node_pos[next_node]
 
-        # We want to know if the snarl is in the range/containt of the snarl in the p_value file
-        matched_row = plink_df[]
+        # correct matched_row get the row BP is matching with pos_node
+        matched_row = plink_df[plink_df['BP'] == int(pos_node)]
 
         # Case where the snarl is found 
         if not matched_row.empty:
             for _, match in matched_row.iterrows():  # Unpack index and row (Series)
-                if check_valid_snarl(start_node_1, next_node_1, start_node_2, next_node_2, match.get("AT").split(",")) :
-                    p_value = match.get("P")  # Access the 'P' value from the Series
-                    if str(p_value) == "nan":
-                        continue
-                    type_.append(match.get('TYPE'))
-                    predicted_labels_10_2.append(0 if p_value < 0.01 else 1)
-                    predicted_labels_10_5.append(0 if p_value < 0.00001 else 1)
-                    predicted_labels_10_8.append(0 if p_value < 0.00000001 else 1)
-                    cleaned_true_labels.append(true_labels[idx])
-                    clean_list_diff.append(list_diff[idx])
-                    list_pvalue.append(p_value)
-                    num_sample = match.get("NUM_SAMPLE")
-                    num_samples.append(num_sample)
-                    break
+                p_value = match.get("P")  # Access the 'P' value from the Series
+                if str(p_value) == "NA" or str(p_value) == "nan":
+                    nan_pvalue += 1
+                    continue
+                type_.append(match.get('TYPE'))
+                predicted_labels_10_2.append(0 if p_value < 0.01 else 1)
+                predicted_labels_10_5.append(0 if p_value < 0.00001 else 1)
+                predicted_labels_10_8.append(0 if p_value < 0.00000001 else 1)
+                cleaned_true_labels.append(true_labels[idx])
+                clean_list_diff.append(list_diff[idx])
+                list_pvalue.append(p_value)
+                num_samples.append(match.get("NUM_SAMPLE"))
 
+    print(f"Number of NA p-values: {nan_pvalue}")
     return type_, predicted_labels_10_2, predicted_labels_10_5, predicted_labels_10_8, cleaned_true_labels, clean_list_diff, list_pvalue, num_samples
 
 def conf_mat_maker(p_val, predicted_labels, true_labels, output):
@@ -533,8 +529,8 @@ if __name__ == "__main__":
 
     # PLINK 
     python3 tests/verify_truth.py --freq tests/simulation/quantitative_data/pg.snarls.freq.tsv \
-    --p_value tests/plink_tests_output/quantitative_plink_formatted.tsv -p --paths tests/simulation/binary_data/snarl_paths.tsv
+    --p_value tests/plink_tests_output/quantitative_plink_formatted.tsv -p --paths tests/simulation/quantitative_data/list_snarl_paths.tsv
 
     python3 tests/verify_truth.py --freq tests/simulation/binary_data/pg.snarls.freq.tsv \
-    --p_value tests/plink_tests_output/binary.natif.tsv -p --paths tests/simulation/binary_data/snarl_paths.tsv
+    --p_value tests/plink_tests_output/binary.natif.tsv -p --paths tests/simulation/binary_data/list_snarl_paths.tsv
     """

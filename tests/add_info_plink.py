@@ -11,7 +11,7 @@ vcf = VCF(vcf_file)
 with open(gwas_file, 'r') as infile, open(output_file, 'w') as outfile:
     # Read the header from the GWAS file and append new column names
     header = infile.readline().strip()
-    outfile.write(header + "\tNUM_SAMPLE\tAT\n")  # Add new columns to the header
+    outfile.write(header + "\tNUM_SAMPLE\n")  # Add new columns to the header
 
     # Iterate through the GWAS file and VCF variants
     for line, variant in zip(infile, vcf):
@@ -23,11 +23,8 @@ with open(gwas_file, 'r') as infile, open(output_file, 'w') as outfile:
         # Count the number of samples with non-zero alleles
         num_sample = sum(sum(gt[:2]) > 0 for gt in sample_genotypes if gt[0] != -1)
 
-        # Extract the 'AT' field from the VCF INFO column
-        allele_type = variant.INFO.get("AT", "NA")  # Use "NA" if AT is not found
-
         # Write the updated line to the output file
-        outfile.write(line.strip() + f"\t{num_sample}\t{allele_type}\n")
+        outfile.write(line.strip() + f"\t{num_sample}\n")
 
 print(f"Updated GWAS file with NUM_SAMPLE and AT columns saved to {output_file}")
 
