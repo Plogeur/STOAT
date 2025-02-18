@@ -42,6 +42,9 @@ def main() :
     if (args.covariate and not args.kinship) or (args.kinship and not args.covariate):
         parser.error("Both --covariate (-c) and --kinship (-k) must be provided together.")
 
+    if args.gaf and not args.pg:
+        parser.error("The '--gaf' argument cannot be used without the '--pg' ('-p') argument.")
+
     # Generate unique output directory based on timestamp
     timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
     output_dir = os.path.join(args.output or "output", f"run_{timestamp}")
@@ -107,7 +110,9 @@ def main() :
         logger.info(f"Total of paths analyse : {paths_number_analysis}")
     else :
         if args.pg or args.dist : 
-            logger.info("list snarls path are provided, .pg and .dist will be not analyse")
+            logger.info("list snarls path are provided, .pg and .dist will be not use to make another list paths snarl")
+        if args.gaf :
+            pg = list_snarl_paths.parse_pg(args.pg)
         input_snarl_path = args.listpath
         snarl_paths, paths_number_analysis = utils.parse_snarl_path_file(input_snarl_path)
         logger.info(f"Total of snarls found : {paths_number_analysis}")

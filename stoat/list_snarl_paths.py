@@ -182,7 +182,7 @@ def save_snarls(stree, root, pg, ref_paths, ppo) :
     def get_net_start_position(net):
         # if node, look at its position
         if stree.is_node(net):
-            return (get_node_position(net))
+            return get_node_position(net)
         # otherwise check boundaries
         bnode1 = stree.get_bound(net, True, False)
         bnode1_p = get_node_position(bnode1)
@@ -191,15 +191,15 @@ def save_snarls(stree, root, pg, ref_paths, ppo) :
 
         # if one of the bondaries is not on a reference path, return it
         if len(bnode1_p) == 0:
-            return (bnode1_p)
+            return bnode1_p
         if len(bnode2_p) == 0:
-            return (bnode2_p)
-        assert bnode1_p[0] == bnode1_p[0], 'boundary nodes on different reference paths'
+            return bnode2_p
+        assert bnode1_p[0] == bnode2_p[0], 'boundary nodes on different reference paths'
         # as "start" position, let's return the smallest position
         if bnode1_p[1] < bnode2_p[1]:
-            return (bnode1_p)
+            return bnode1_p
         else:
-            return (bnode2_p)
+            return bnode2_p
     
     stree.for_each_child(root, save_snarl_tree_node)
     return snarls
@@ -217,7 +217,14 @@ def parse_graph_tree(pg_file, dist_file) :
     # init with the child (only one ideally) of the root
     root = stree.get_root()
     return stree, pg, root, pp_overlay
-   
+
+def parse_pg(pg_file) :
+
+    # load graph and snarl tree
+    pg = bdsg.bdsg.PackedGraph()
+    pg.deserialize(pg_file)
+    return pg
+
 def fill_pretty_paths(stree, pg, finished_paths) :
     pretty_paths = []
     seq_net_paths = []

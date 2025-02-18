@@ -66,16 +66,15 @@ def parse_snarl_path_file(path_file:str) -> tuple[list, int]:
 
     return snarl_paths, snarl_number_analysis
 
-def parse_snarl_path_file_dict(path_file:str) -> tuple[dict, int]:
+# def parse_snarl_path_file_dict(path_file:str) -> tuple[dict, int]:
     
-    snarl_paths = {}
-    df = pd.read_csv(path_file, sep='\t', dtype=str)
-    df['paths'] = df['paths'].str.split(',')
-    for snarl, paths, type, chr, pos in zip(df['snarl'], df['paths'], df['type'], df['chr'], df['pos']):
-        snarl_paths[snarl] = (paths, type, chr, pos)
+#     snarl_paths = {}
+#     df = pd.read_csv(path_file, sep='\t', dtype=str)
+#     df['paths'] = df['paths'].str.split(',')
+#     for snarl, paths, type, chr, pos in zip(df['snarl'], df['paths'], df['type'], df['chr'], df['pos']):
+#         snarl_paths[snarl] = (paths, type, chr, pos)
 
-    return snarl_paths
-
+#     return snarl_paths
 
 def parse_plink_grm(prefix: str) -> pd.DataFrame:
     """ Parse PLINK GRM binary files and return the kinship matrix as a pandas DataFrame. """
@@ -143,23 +142,11 @@ def check_format_list_path(file_path:str) -> str:
     with open(file_path, 'r') as file:
         # Read and validate the header
         first_line = file.readline().strip()
-        expected_header = 'snarl\tpaths\ttype\tchr\tpos'
+        expected_header = 'chr\tpos\tsnarl\tpaths\ttype'
         if first_line != expected_header:
             raise argparse.ArgumentTypeError(
-                f"The file must start with the following header: '{expected_header}' and be split by tabulation"
+                f"The file must start with the following header: '{expected_header}' and not : '{first_line}' and be split by tabulation"
             )
-        
-        # Validate all other lines
-        for line_number, line in enumerate(file, start=2):  # Start at 2 for line number after header
-            columns = line.strip().split('\t')
-            if len(columns) != 5:
-                raise argparse.ArgumentTypeError(
-                    f"Line {line_number} must contain exactly 5 columns, but {len(columns)} columns were found."
-                )
-            if not all(isinstance(col, str) and col.strip() for col in columns):
-                raise argparse.ArgumentTypeError(
-                    f"Line {line_number} contains empty or non-string values: {columns}"
-                )
 
     return file_path
 
