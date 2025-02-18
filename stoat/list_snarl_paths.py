@@ -3,6 +3,7 @@ import argparse
 from stoat import utils
 import time 
 import os 
+from typing import List, Tuple
 
 # class to help make paths from BDSG objects
 # and deal with orientation, flipping, etc
@@ -66,26 +67,33 @@ class Path:
         # counts how many nodes are traversed in reverse
         return (sum(['<' == orient for orient in self.orients]))
 
-def calcul_type_variant(list_list_length_paths) :
-    """ 
-    Calcul type variant of a tested snarl
-    """
+def calcul_pos_type_variant(list_list_length_paths: List[List[str]]) -> Tuple[List[str], int]:
     list_type_variant = []
-    for path_lengths in list_list_length_paths :
-        
-        # Case snarl in snarl or 4 node snarl
-        if len(path_lengths) > 3 or path_lengths[1] == '-1' :
-            list_type_variant.append("COMPLEX")
+    padding = 0
+    just_snp = True
 
-        # Case simple path len 3
-        elif len(path_lengths) == 3 :
-            list_type_variant.append("SNP" if path_lengths[1] == "1" else "INS")
-
-        # length < 3 / Deletion
-        else :
+    for path_lengths in list_list_length_paths:
+        if len(path_lengths) > 3 or path_lengths[1] == "_":  # Case snarl in snarl / Indel
+            list_type_variant.append("CPX")  # COMPLEX
+            just_snp = False
+        elif len(path_lengths) == 3:  # Case simple path len 3
+            if len(path_lengths[1]) == 1:
+                list_type_variant.append(path_lengths[1])  # add node str snp
+            else:
+                ins_seq = "INS" if len(path_lengths[1]) > 3 else path_lengths[1][:4]
+                list_type_variant.append(ins_seq)
+                just_snp = False
+        elif len(path_lengths) == 2:  # Deletion
             list_type_variant.append("DEL")
+            just_snp = False
+        elif not path_lengths:  # Case path_lengths is empty
+            ValueError("path_lengths is empty")
 
-    return list_type_variant
+    # add +1 in pos for just SNP present in snarl
+    if just_snp:
+        padding = 1
+
+    return list_type_variant, padding
 
 def check_threshold(proportion) :
     proportion = float(proportion)
@@ -140,10 +148,10 @@ def save_snarls(stree, root, pg, ref_paths, ppo) :
 
         def step_callback(step_handle):
             path_handle = pg.get_path_handle_of_step(step_handle)
-
             path_name = pg.get_path_name(path_handle)
+
             if path_name in ref_paths:
-                position = ppo.get_position_of_step(step_handle)
+                position = int(ppo.get_position_of_step(step_handle) + stree.node_length(node))
                 ret_pos.append(path_name)
                 ret_pos.append(position)
                 return False
@@ -212,11 +220,11 @@ def parse_graph_tree(pg_file, dist_file) :
    
 def fill_pretty_paths(stree, pg, finished_paths) :
     pretty_paths = []
-    length_net_paths = []
+    seq_net_paths = []
 
     for path in finished_paths:
         ppath = Path()
-        length_net = []
+        seq_net = []
 
         for net in path :
             if stree.is_sentinel(net) :
@@ -225,7 +233,10 @@ def fill_pretty_paths(stree, pg, finished_paths) :
             # case node : get the node length
             if stree.is_node(net) :
                 ppath.addNodeHandle(net, stree)
-                length_net.append(str(stree.node_length(net)))
+                node_start_id = stree.node_id(net)
+                node_handle = pg.get_handle(node_start_id)
+                seq_node = pg.get_sequence(node_handle)
+                seq_net.append(seq_node)
 
             # case trivial_chain : get the first node length
             if stree.is_trivial_chain(net) :
@@ -233,7 +244,8 @@ def fill_pretty_paths(stree, pg, finished_paths) :
                 stn_start = stree.get_bound(net, False, True)
                 node_start_id = stree.node_id(stn_start)
                 net_trivial_chain = pg.get_handle(node_start_id)
-                length_net.append(str(pg.get_length(net_trivial_chain)))
+                seq_trivial_chain = pg.get_sequence(net_trivial_chain)
+                seq_net.append(seq_trivial_chain)
 
             elif stree.is_chain(net) :
                 # if it's a chain, we need to write someting like ">Nl>*>Nr"
@@ -246,22 +258,24 @@ def fill_pretty_paths(stree, pg, finished_paths) :
                 ppath.addNodeHandle(nodl, stree)
                 ppath.addNode('*', '>')
                 ppath.addNodeHandle(nodr, stree)
-                length_net.append("-1")
+                seq_net.append("_")
 
         # check if path is mostly traversing nodes in reverse orientation
         if ppath.nreversed() > ppath.size() / 2 :
             ppath.flip()
-        pretty_paths.append(ppath.print()) 
-        length_net_paths.append(length_net)
+            seq_net.reverse()
 
-    type_variants = calcul_type_variant(length_net_paths)
+        pretty_paths.append(ppath.print()) 
+        seq_net_paths.append(seq_net)
+
+    type_variants, length_first_variant = calcul_pos_type_variant(seq_net_paths)
     assert len(type_variants) == len(pretty_paths)
-    return pretty_paths, type_variants
+    return pretty_paths, type_variants, length_first_variant
 
 def loop_over_snarls_write(stree, snarls, pg, output_file, output_snarl_not_analyse, children_treshold=50, bool_return=True) :
 
     with open(output_file, 'w') as out_snarl, open(output_snarl_not_analyse, 'w') as out_fail:
-        out_snarl.write('snarl\tpaths\ttype\tchr\tpos\n')
+        out_snarl.write('chr\tpos\tsnarl\tpaths\ttype\n')
         out_fail.write('snarl\treason\n')
 
         snarl_paths = []
@@ -304,11 +318,11 @@ def loop_over_snarls_write(stree, snarls, pg, output_file, output_snarl_not_anal
             if not_break :
 
                 # prepare path list to output and write each path directly to the file
-                pretty_paths, type_variants = fill_pretty_paths(stree, pg, finished_paths)
-                out_snarl.write('{}\t{}\t{}\t{}\t{}\n'.format(snarl_id, ','.join(pretty_paths), ','.join(type_variants), snarl_path_pos[1], snarl_path_pos[2]))
+                pretty_paths, type_variants, padding = fill_pretty_paths(stree, pg, finished_paths)
+                out_snarl.write('{}\t{}\t{}\t{}\t{}\n'.format(snarl_path_pos[1], snarl_path_pos[2]+padding, snarl_id, ','.join(pretty_paths), ','.join(type_variants)))
 
                 if bool_return :
-                    snarl_paths.append((snarl_id, pretty_paths, ','.join(type_variants), snarl_path_pos[1], snarl_path_pos[2]))
+                    snarl_paths.append((snarl_path_pos[1], snarl_path_pos[2]+padding, snarl_id, pretty_paths, ','.join(type_variants)))
                 
                 paths_number_analysis += len(pretty_paths)
 

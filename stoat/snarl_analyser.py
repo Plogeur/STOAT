@@ -203,8 +203,8 @@ class SnarlProcessor:
                 snarl, list_snarl, type_var, chromosome, position = snarl_info
                 # Create the binary table, considering covariates if provided
                 df = self.create_binary_table(binary_groups, list_snarl)
-                if kinship_matrix and covar :
-                    p_value, beta, vcomp = lmm_pvalue = self.LMM_binary(df, kinship_matrix, covar)
+                # if kinship_matrix and covar :
+                #     p_value, beta, vcomp = lmm_pvalue = self.LMM_binary(df, kinship_matrix, covar)
                 ref = alt = 'NA'
                 # Perform statistical tests and compute descriptive statistics
                 fisher_p_value, chi2_p_value, allele_number, min_sample, numb_colum, inter_group, average, group_paths = self.binary_stat_test(df, gaf)
