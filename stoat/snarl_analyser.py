@@ -188,28 +188,27 @@ class SnarlProcessor:
         """
         
         common_headers = (
-            "CHR\tPOS\tSNARL\tTYPE\tREF\tALT\tP_FISHER\tP_CHI2\tALLELE_NUM\tMIN_ROW_INDEX\tNUM_COLUM\tINTER_GROUP\tAVERAGE"
+            "CHR\tPOS\tSNARL\tPATHS\tP_FISHER\tP_CHI2\tALLELE_NUM\tMIN_ROW_INDEX\tNUM_COLUM\tINTER_GROUP\tAVERAGE"
         )
         headers = f"{common_headers}\tGROUP_PATHS\n" if gaf else f"{common_headers}\n"
 
-        with open(output_gwas, 'wb') as outf: #, open(output_vcf, "wb") as outvcf:
+        with open(output_gwas, 'wb') as outf, open(output_vcf, "wb") as outvcf:
             outf.write(headers.encode('utf-8'))
-            # if make_vcf :
-            #     ALLELE = "\t".join(self.list_samples)
-            #     headers = f'ID\tINFO\t{ALLELE}\n'
-            #     outvcf.write(headers.encode('utf-8'))
+            if make_vcf :
+                ALLELE = "\t".join(self.list_samples)
+                headers = f'ID\tINFO\t{ALLELE}\n'
+                outvcf.write(headers.encode('utf-8'))
 
             for snarl_info in snarls:
-                snarl, list_snarl, type_var, chromosome, position = snarl_info
+                snarl, list_snarl, paths, chromosome, position = snarl_info
                 # Create the binary table, considering covariates if provided
                 df = self.create_binary_table(binary_groups, list_snarl)
                 # if kinship_matrix and covar :
                 #     p_value, beta, vcomp = lmm_pvalue = self.LMM_binary(df, kinship_matrix, covar)
-                ref = alt = 'NA'
                 # Perform statistical tests and compute descriptive statistics
                 fisher_p_value, chi2_p_value, allele_number, min_sample, numb_colum, inter_group, average, group_paths = self.binary_stat_test(df, gaf)
                 common_data = (
-                f"{chromosome}\t{position}\t{snarl}\t{type_var}\t{ref}\t{alt}\t"
+                f"{chromosome}\t{position}\t{snarl}\t{paths}\t"
                 f"{fisher_p_value}\t{chi2_p_value}\t{allele_number}\t{min_sample}\t"
                 f"{numb_colum}\t{inter_group}\t{average}")
                 data = f"{common_data}\t{group_paths}\n" if gaf else f"{common_data}\n"
@@ -218,7 +217,7 @@ class SnarlProcessor:
     def quantitative_table(self, snarls:list, quantitative_dict:dict, kinship_matrix:pd.DataFrame=None, covar:Optional[dict]=None, output_gwas:str="output/quantitative_output.tsv", output_vcf:str="output/vcf_from_stoat.vcf", make_vcf=False) :
 
         with open(output_gwas, 'wb') as outf, open(output_vcf, "wb") as outvcf:
-            headers = 'CHR\tPOS\tSNARL\tTYPE\tREF\tALT\tRSQUARED\tBETA\tSE\tP\tALLELE_NUM\n'
+            headers = 'CHR\tPOS\tSNARL\tPATHS\tRSQUARED\tBETA\tSE\tP\tALLELE_NUM\n'
             outf.write(headers.encode('utf-8'))
             if make_vcf :
                 ALLELE = "\t".join(self.list_samples)
@@ -226,12 +225,11 @@ class SnarlProcessor:
                 outvcf.write(headers.encode('utf-8'))
 
             for snarl_info in snarls:
-                snarl, list_snarl, type_var, chromosome, position = snarl_info
+                snarl, list_snarl, paths, chromosome, position = snarl_info
                 df, allele_number = self.create_quantitative_table(list_snarl)
                 
                 rsquared, beta, se, pvalue = self.linear_regression(df, quantitative_dict)
-                ref = alt = 'NA'
-                data = f"{chromosome}\t{position}\t{snarl}\t{type_var}\t{ref}\t{alt}\t{rsquared}\t{beta}\t{se}\t{pvalue}\t{allele_number}\n"
+                data = f"{chromosome}\t{position}\t{snarl}\t{paths}\t{rsquared}\t{beta}\t{se}\t{pvalue}\t{allele_number}\n"
                 if make_vcf :
                     vcf_data = self.make_vcf_q(df)
                     outvcf.write(vcf_data.encode('utf-8'))

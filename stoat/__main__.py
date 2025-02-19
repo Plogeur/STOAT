@@ -3,7 +3,7 @@ from stoat import list_snarl_paths
 from stoat import snarl_analyser
 from stoat import utils
 from stoat import p_value_analysis
-from stoat import write_position
+from stoat import write_ref_alt
 from stoat import gaf_creator
 import time
 import logging
@@ -106,7 +106,7 @@ def main() :
         output_snarl_path_not_analyse = os.path.join(output_dir, "snarl_not_analyse.tsv")
         output_snarl_path = os.path.join(output_dir, "snarl_paths.tsv")
         threshold = int(args.threshold) if args.threshold else 10 
-        snarl_paths, paths_number_analysis = list_snarl_paths.loop_over_snarls_write(stree, snarls, pg, output_snarl_path, output_snarl_path_not_analyse, threshold)
+        snarl_paths, paths_number_analysis = list_snarl_paths.loop_over_snarls_write(stree, snarls, pg, output_snarl_path, output_snarl_path_not_analyse, make_vcf, threshold)
         logger.info(f"Total of paths analyse : {paths_number_analysis}")
     else :
         if args.pg or args.dist : 
@@ -128,8 +128,8 @@ def main() :
         output_snarl = os.path.join(output_dir, "binary_analysis.tsv")
         logger.info("Binary table creation...")
         vcf_object.binary_table(snarl_paths, pheno, kinship_matrix, covar, gaf, output_snarl, make_vcf)
-        # logger.info("Writing position...")
-        # write_position.write_pos_snarl(reference_vcf, output_snarl, "binary")
+        # logger.info("Writing ref/alt...")
+        # write_ref_alt.write_info_snarl(reference_vcf, output_snarl, "binary")
 
         output_manh = os.path.join(output_dir, "manhattan_plot_binary.png")
         output_qq = os.path.join(output_dir, "qq_plot_binary.png")
@@ -148,8 +148,8 @@ def main() :
         output_file = os.path.join(output_dir, "quantitative_analysis.tsv")
         logger.info("Quantitative table creation...")
         vcf_object.quantitative_table(snarl_paths, pheno, kinship_matrix, covar, output_file, make_vcf)
-        # logger.info("Writing position...")
-        # write_position.write_pos_snarl(reference_vcf, output_file, "quantitatif")
+        # logger.info("Writing ref/alt...")
+        # write_ref_alt.write_info_snarl(reference_vcf, output_file, "quantitatif")
 
         output_manh = os.path.join(output_dir, "manhattan_plot_quantitative.png")
         output_qq = os.path.join(output_dir, "qq_plot_quantitative.png")

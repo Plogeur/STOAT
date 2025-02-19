@@ -2,7 +2,6 @@ import os
 import re
 
 def get_first_snarl(s):
-
     match = re.findall(r'\d+', s)
     if match:
         return str(match[0])
@@ -42,7 +41,7 @@ def classify_variant(ref, list_alt) :
     
     return list_type_var
     
-def write_pos_snarl(vcf_file, output_file, type):
+def write_info_snarl(vcf_file, output_file, type):
 
     vcf_dict = parse_vcf_to_dict(vcf_file)
     save_info = vcf_dict.get(1, ("NA", {"NA" : {"NA" : "NA"}}, "NA"))
