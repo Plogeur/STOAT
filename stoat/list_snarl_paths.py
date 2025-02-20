@@ -73,8 +73,8 @@ def vcf_calcul_pos_type_variant(list_list_length_paths: List[List[str]]) -> Tupl
     just_snp = True
 
     for path_lengths in list_list_length_paths:
-        if len(path_lengths) > 3 :  # Case snarl in snarl / Indel
-            list_type_variant.append(path_lengths[1])  # COMPLEX
+        if len(path_lengths) > 3 :  # Case snarl in snarl / Indel / del
+            list_type_variant.append("".join(path_lengths))  # COMPLEX
             just_snp = False
         elif len(path_lengths) == 3:  # Case simple path len 3
             if len(path_lengths[1]) == 1:
@@ -83,7 +83,7 @@ def vcf_calcul_pos_type_variant(list_list_length_paths: List[List[str]]) -> Tupl
                 list_type_variant.append(path_lengths[1])
                 just_snp = False
         elif len(path_lengths) == 2:  # Deletion
-            list_type_variant.append(path_lengths[0])
+            list_type_variant.append(path_lengths[0][-1])
             just_snp = False
         elif not path_lengths:  # Case path_lengths is empty
             ValueError("path_lengths is empty")
@@ -256,6 +256,27 @@ def fill_pretty_paths(stree, pg, finished_paths, make_vcf) :
     pretty_paths = []
     seq_net_paths = []
 
+    def chain_traversale(next_child) :
+
+        if stree.is_sentinel(next_child):
+            # If this is the bound of the snarl then we're done
+            # Because we only traverse in the netgraph, it can only be the
+            # bound of the parent snarl
+            finished_paths.append([])
+            for net in path:
+                finished_paths[-1].append(net)
+            finished_paths[-1].append(next_child)
+        else :
+            for i in path : 
+                # Case where we find a loop 
+                if stree.net_handle_as_string(i) == stree.net_handle_as_string(next_child) :
+                    return False
+            paths.append([])
+            for net in path:
+                paths[-1].append(net)
+            paths[-1].append(next_child)
+        return True
+
     for path in finished_paths:
         ppath = Path()
         seq_net = []
@@ -293,10 +314,10 @@ def fill_pretty_paths(stree, pg, finished_paths, make_vcf) :
                 ppath.addNode('*', '>')
                 ppath.addNodeHandle(nodr, stree)
                 if make_vcf :
-                    node_start_id = stree.node_id(nodr) # TODO : check if it's the right node or left node 
-                    node_handle = pg.get_handle(node_start_id)
-                    seq_node = pg.get_sequence(node_handle)
-                    seq_net.append(seq_node)
+                    seq_chain = []
+                    # traverse chain to get access to ref node in there
+                    stree.follow_net_edges(seq_chain, pg, False, lambda n: chain_traversale(n))
+                    seq_net.append(seq_chain)
                 else : 
                     seq_net.append("_")
 
