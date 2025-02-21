@@ -102,12 +102,13 @@ pair<vector<string>, size_t> calcul_pos_type_variant(const vector<vector<string>
                 list_type_variant.push_back(path_lengths[1]); // add node str snp 
             } else {
                 // vector string path_lengths
-                string ins_seq = (path_lengths[1].size() > 3) ? "INS" : path_lengths[1];
+                string ins_seq = (path_lengths[1].size() > 3) ? "INS" : path_lengths[1].substr(0, 4);
                 list_type_variant.push_back(ins_seq);
                 just_snp = false;
             }
         } else if (path_lengths.size() == 2) { // Deletion
-            list_type_variant.push_back("DEL");
+            std::string del_seq = "DEL";
+            list_type_variant.push_back(del_seq);
             just_snp = false;
         } else { // Case path_lengths is empty
             cerr << "path_lengths is empty" << endl;
@@ -306,7 +307,7 @@ tuple<vector<string>, vector<string>, size_t> fill_pretty_paths(
 
             else if (stree.is_trivial_chain(net)) {
                 ppath.addNodeHandle(net, stree);
-                auto stn_start = stree.starts_at_start(net) ? stree.get_bound(net, false, true) : stree.get_bound(net, true, true);
+                auto stn_start = stree.get_bound(net, false, true);
                 auto node_start_id = stree.node_id(stn_start);
                 auto net_trivial_chain = pg.get_handle(node_start_id);
                 string seq_trivial_chain = pg.get_sequence(net_trivial_chain);
