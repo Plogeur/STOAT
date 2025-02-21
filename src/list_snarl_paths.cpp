@@ -102,13 +102,12 @@ pair<vector<string>, size_t> calcul_pos_type_variant(const vector<vector<string>
                 list_type_variant.push_back(path_lengths[1]); // add node str snp 
             } else {
                 // vector string path_lengths
-                string ins_seq = (path_lengths[1].size() > 3) ? "INS" : path_lengths[1].substr(0, 4);
+                string ins_seq = (path_lengths[1].size() > 3) ? "INS" : path_lengths[1];
                 list_type_variant.push_back(ins_seq);
                 just_snp = false;
             }
         } else if (path_lengths.size() == 2) { // Deletion
-            std::string del_seq = {path_lengths[0].back(), '_', path_lengths[1].front()};
-            list_type_variant.push_back(del_seq);
+            list_type_variant.push_back("DEL");
             just_snp = false;
         } else { // Case path_lengths is empty
             cerr << "path_lengths is empty" << endl;

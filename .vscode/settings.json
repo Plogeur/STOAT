@@ -155,7 +155,9 @@
     "queue": "cpp",
     "ranges": "cpp",
     "span": "cpp",
-    "*.classfragment": "cpp"
+    "*.classfragment": "cpp",
+    "hash_map": "cpp",
+    "shared_mutex": "cpp"
   },
   "C_Cpp.errorSquiggles": "disabled"
 }

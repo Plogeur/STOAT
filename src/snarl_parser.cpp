@@ -235,7 +235,7 @@ void SnarlParser::binary_table(const unordered_map<string, tuple<vector<string>,
 
 // Quantitative Table Generation
 void SnarlParser::quantitative_table(const unordered_map<string, tuple<vector<string>, string, string, vector<string>>>& snarls,
-                                        const std::unordered_map<std::string, float>& quantitative_phenotype,
+                                        const std::unordered_map<std::string, double>& quantitative_phenotype,
                                         const std::string& output) 
 {
     std::ofstream outf(output, std::ios::binary);

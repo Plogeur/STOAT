@@ -136,4 +136,5 @@ int main(int argc, char* argv[]) {
     return EXIT_SUCCESS;
 }
 
-// ./stoat_cxx -p ../data/binary/pg.pg -d ../data/binary/pg.dist -v ../data/binary/binary.vcf.gz -b ../data/binary/phenotype.tsv -o output
+// ./stoat_cxx -p ../data/binary/pg.full.pg -d ../data/binary/pg.dist -v ../data/binary/binary.vcf.gz -b ../data/binary/phenotype.tsv -o ../output
+// ./stoat_cxx -p ../data/quantitative/pg.full.pg -d ../data/quantitative/pg.dist -v ../data/quantitative/binary.vcf.gz -b ../data/quantitative/phenotype.tsv -o ../output

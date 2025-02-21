@@ -20,7 +20,7 @@ using namespace std;
 std::unordered_map<std::string, bool> parse_binary_pheno(const std::string& binary_pheno);
 
 // Parses the phenotype file and returns a map with IID as keys and PHENO as float values.
-std::unordered_map<std::string, float> parse_quantitative_pheno(const std::string& qunatitative_pheno);
+std::unordered_map<std::string, double> parse_quantitative_pheno(const std::string& qunatitative_pheno);
 
 template <typename T>
 void check_match_samples(const std::unordered_map<std::string, T>& map, const std::vector<std::string>& keys);
