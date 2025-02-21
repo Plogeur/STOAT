@@ -67,32 +67,33 @@ class Path:
         # counts how many nodes are traversed in reverse
         return (sum(['<' == orient for orient in self.orients]))
 
-def vcf_calcul_pos_type_variant(list_list_length_paths: List[List[str]]) -> Tuple[List[str], int]:
-    list_type_variant = []
-    padding = 0
-    just_snp = True
+# def vcf_calcul_pos_type_variant(list_list_length_paths: List[List[str]]) -> Tuple[List[str], int]:
+#     list_type_variant = []
+#     padding = 0
+#     just_snp = True
 
-    for path_lengths in list_list_length_paths:
-        if len(path_lengths) > 3 :  # Case snarl in snarl / Indel / del
-            list_type_variant.append("".join(path_lengths))  # COMPLEX
-            just_snp = False
-        elif len(path_lengths) == 3:  # Case simple path len 3
-            if len(path_lengths[1]) == 1:
-                list_type_variant.append(path_lengths[1])  # add node str snp
-            else:
-                list_type_variant.append(path_lengths[1])
-                just_snp = False
-        elif len(path_lengths) == 2:  # Deletion
-            list_type_variant.append(path_lengths[0][-1])
-            just_snp = False
-        elif not path_lengths:  # Case path_lengths is empty
-            ValueError("path_lengths is empty")
+#     for path_lengths in list_list_length_paths:
+#         if len(path_lengths) > 3 :  # Case snarl in snarl
+#             list_type_variant.append("CPX")  # COMPLEX
+#             just_snp = False
+#         elif len(path_lengths) == 3:  # Case simple path len 3 (SNP or INS)
+#             if len(path_lengths[1]) == 1:
+#                 list_type_variant.append(path_lengths[1])  # add node str snp
+#             else:
+#                 insertion = "INS" if len(path_lengths[1]) > 3 else path_lengths[1]
+#                 list_type_variant.append(insertion) # INS
+#                 just_snp = False
+#         elif len(path_lengths) == 2:  # Deletion
+#             list_type_variant.append("DEL")
+#             just_snp = False
+#         elif not path_lengths:  # Case path_lengths is empty
+#             ValueError("path_lengths is empty")
 
-    # add +1 in pos for just SNP present in snarl
-    if just_snp:
-        padding = 1
+#     # add +1 in pos for just SNP present in snarl
+#     if just_snp:
+#         padding = 1
 
-    return list_type_variant, padding
+#     return list_type_variant, padding
 
 def calcul_pos_type_variant(list_list_length_paths: List[List[str]]) -> Tuple[List[str], int]:
     list_type_variant = []
@@ -101,13 +102,14 @@ def calcul_pos_type_variant(list_list_length_paths: List[List[str]]) -> Tuple[Li
 
     for path_lengths in list_list_length_paths:
         if len(path_lengths) > 3 or path_lengths[1] == "_":  # Case snarl in snarl / Indel
+            print("path_lengths : ", path_lengths)
             list_type_variant.append("CPX")  # COMPLEX
             just_snp = False
         elif len(path_lengths) == 3:  # Case simple path len 3
             if len(path_lengths[1]) == 1:
                 list_type_variant.append(path_lengths[1])  # add node str snp
             else:
-                ins_seq = "INS" if len(path_lengths[1]) > 3 else path_lengths[1][:4]
+                ins_seq = "INS" if len(path_lengths[1]) > 3 else path_lengths[1]
                 list_type_variant.append(ins_seq)
                 just_snp = False
         elif len(path_lengths) == 2:  # Deletion
@@ -252,30 +254,9 @@ def parse_pg(pg_file) :
     pg.deserialize(pg_file)
     return pg
 
-def fill_pretty_paths(stree, pg, finished_paths, make_vcf) :
+def fill_pretty_paths(stree, pg, finished_paths) :
     pretty_paths = []
     seq_net_paths = []
-
-    def chain_traversale(next_child) :
-
-        if stree.is_sentinel(next_child):
-            # If this is the bound of the snarl then we're done
-            # Because we only traverse in the netgraph, it can only be the
-            # bound of the parent snarl
-            finished_paths.append([])
-            for net in path:
-                finished_paths[-1].append(net)
-            finished_paths[-1].append(next_child)
-        else :
-            for i in path : 
-                # Case where we find a loop 
-                if stree.net_handle_as_string(i) == stree.net_handle_as_string(next_child) :
-                    return False
-            paths.append([])
-            for net in path:
-                paths[-1].append(net)
-            paths[-1].append(next_child)
-        return True
 
     for path in finished_paths:
         ppath = Path()
@@ -313,13 +294,13 @@ def fill_pretty_paths(stree, pg, finished_paths, make_vcf) :
                 ppath.addNodeHandle(nodl, stree)
                 ppath.addNode('*', '>')
                 ppath.addNodeHandle(nodr, stree)
-                if make_vcf :
-                    seq_chain = []
-                    # traverse chain to get access to ref node in there
-                    stree.follow_net_edges(seq_chain, pg, False, lambda n: chain_traversale(n))
-                    seq_net.append(seq_chain)
-                else : 
-                    seq_net.append("_")
+                # if make_vcf :
+                #     seq_chain = []
+                #     # traverse chain to get access to ref node in there
+                #     stree.follow_net_edges(seq_chain, pg, False, lambda n: chain_traversale(n))
+                #     seq_net.append(seq_chain)
+                # else : 
+                seq_net.append("_")
 
         # check if path is mostly traversing nodes in reverse orientation
         if ppath.nreversed() > ppath.size() / 2 :
@@ -329,14 +310,14 @@ def fill_pretty_paths(stree, pg, finished_paths, make_vcf) :
         pretty_paths.append(ppath.print()) 
         seq_net_paths.append(seq_net)
 
-    if make_vcf :
-        type_variants, length_first_variant = vcf_calcul_pos_type_variant(seq_net_paths)
-    else : 
-        type_variants, length_first_variant = calcul_pos_type_variant(seq_net_paths)
+    # if make_vcf :
+    #     type_variants, length_first_variant = vcf_calcul_pos_type_variant(seq_net_paths)
+    # else : 
+    type_variants, length_first_variant = calcul_pos_type_variant(seq_net_paths)
     assert len(type_variants) == len(pretty_paths)
     return pretty_paths, type_variants, length_first_variant
 
-def loop_over_snarls_write(stree, snarls, pg, output_file, output_snarl_not_analyse, make_vcf=False, children_treshold=50, bool_return=True) :
+def loop_over_snarls_write(stree, snarls, pg, output_file, output_snarl_not_analyse, children_treshold=50, bool_return=True) :
 
     with open(output_file, 'w') as out_snarl, open(output_snarl_not_analyse, 'w') as out_fail:
         out_snarl.write('chr\tpos\tsnarl\tpaths\ttype\n')
@@ -382,7 +363,7 @@ def loop_over_snarls_write(stree, snarls, pg, output_file, output_snarl_not_anal
             if not_break :
 
                 # prepare path list to output and write each path directly to the file
-                pretty_paths, type_variants, padding = fill_pretty_paths(stree, pg, finished_paths, make_vcf)
+                pretty_paths, type_variants, padding = fill_pretty_paths(stree, pg, finished_paths)
                 out_snarl.write('{}\t{}\t{}\t{}\t{}\n'.format(snarl_path_pos[1], snarl_path_pos[2]+padding, snarl_id, ','.join(pretty_paths), ','.join(type_variants)))
 
                 if bool_return :
@@ -414,7 +395,7 @@ if __name__ == "__main__" :
     print("Saving snarl path decomposition...")
 
     threshold = args.t if args.t else 10
-    _, paths_number_analysis = loop_over_snarls_write(stree, snarls, pg, output, output_snarl_not_analyse, True, threshold, False)
+    _, paths_number_analysis = loop_over_snarls_write(stree, snarls, pg, output, output_snarl_not_analyse, threshold, False)
     print(f"Total of paths analyse : {paths_number_analysis}")
 
     # python3 stoat/list_snarl_paths.py -p /home/mbagarre/Bureau/droso_data/fly/fly.pg -d /home/mbagarre/Bureau/droso_data/fly/fly.dist -o output/test
