@@ -15,7 +15,14 @@ add_compile_options(-Wall -Wextra -O2)
 include_directories(/usr/include /usr/local/include)
 link_directories(/usr/include /usr/local/lib)  # libbdsg.dylib
 
-find_package(Boost)
+# Find Boost
+find_package(Boost REQUIRED)
+
+# Find HTSlib
+find_package(PkgConfig REQUIRED)
+pkg_check_modules(HTSLIB REQUIRED htslib)
+include_directories(${HTSLIB_INCLUDE_DIRS})
+link_directories(${HTSLIB_LIBRARY_DIRS})
 
 # Source files
 set(SRCS 
@@ -31,5 +38,14 @@ set(SRCS
 # Create the executable
 add_executable(${PROJECT_NAME} ${SRCS})
 
-# Link Boost libraries correctly
-target_link_libraries(${PROJECT_NAME} Boost::boost bdsg handlegraph libsdsl.so.3)
+# Link libraries
+target_link_libraries(${PROJECT_NAME} 
+    Boost::boost 
+    bdsg 
+    handlegraph 
+    libsdsl.so.3
+    ${HTSLIB_LIBRARIES}
+)
+
+# Ensure proper linking flags for HTSlib
+target_compile_options(${PROJECT_NAME} PRIVATE ${HTSLIB_CFLAGS_OTHER})

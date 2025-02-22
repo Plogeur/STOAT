@@ -24,7 +24,7 @@ void print_help() {
 
 int main(int argc, char* argv[]) {
     // Declare variables to hold argument values
-    std::string vcf_path, snarl_path, pg_path, dist_path, binary_path, quantitative_path, output_path;
+    std::string vcf_path, snarl_path, pg_path, dist_path, binary_path, quantitative_path, output_dir;
     bool show_help = false;
 
     // Parse arguments manually
@@ -43,16 +43,18 @@ int main(int argc, char* argv[]) {
         } else if ((arg == "-q" || arg == "--quantitative") && i + 1 < argc) {
             quantitative_path = argv[++i];
         } else if ((arg == "-o" || arg == "--output") && i + 1 < argc) {
-            output_path = argv[++i];
+            output_dir = argv[++i];
         } else if (arg == "-h" || arg == "--help") {
             show_help = true;
         }
     }
 
-    std::filesystem::path output_dir = "output";
+    if (output_dir.empty()) {
+        output_dir = "../output";
+    }
+
     std::filesystem::create_directory(output_dir);
     unordered_set<string> reference {"ref"};
-    output_path = (output_dir / output_path).string();
 
     if (show_help || vcf_path.empty() ||
         binary_path.empty() == quantitative_path.empty()) {
@@ -77,8 +79,8 @@ int main(int argc, char* argv[]) {
     } else if (!pg_path.empty() && !dist_path.empty()) {
         auto [stree, pg, root, pp_overlay] = parse_graph_tree(pg_path, dist_path);
         auto snarls = save_snarls(*stree, root, *pg, reference, *pp_overlay);
-        string output_snarl_not_analyse = output_path + "/snarl_not_analyse.tsv";
-        string output_file = output_path + "/snarl_analyse.tsv";
+        string output_snarl_not_analyse = output_dir + "/snarl_not_analyse.tsv";
+        string output_file = output_dir + "/snarl_analyse.tsv";
         int children_threshold = 50;
         snarl = loop_over_snarls_write(*stree, snarls, *pg, output_file, output_snarl_not_analyse, children_threshold, true);
     
@@ -89,7 +91,7 @@ int main(int argc, char* argv[]) {
 
     std::vector<std::string> list_samples = parseHeader(vcf_path);    
     std::unordered_map<std::string, bool> binary;
-    std::unordered_map<std::string, float> quantitative;
+    std::unordered_map<std::string, double> quantitative;
 
     if (!binary_path.empty()) {
         check_format_binary_phenotype(binary_path);
@@ -104,28 +106,24 @@ int main(int argc, char* argv[]) {
     }
 
     // Initialize the SnarlProcessor with the VCF path
+    std::cout << "Fill Matrix... " << std::endl;
     auto start_1 = std::chrono::high_resolution_clock::now();
-    SnarlParser vcf_object(vcf_path);
+    SnarlParser vcf_object = make_matrix(vcf_path);
     auto end_1 = std::chrono::high_resolution_clock::now();
     std::cout << "Time Matrix : " << std::chrono::duration<double>(end_1 - start_1).count() << " s" << std::endl;
     auto start_2 = std::chrono::high_resolution_clock::now();
+    std::cout << "Compute P-value... " << std::endl;
 
     // Process binary group file if provided
     if (!binary_path.empty()) {
-        if (!output_path.empty()) {
-            vcf_object.binary_table(snarl, binary, output_path);
-        } else {
-            vcf_object.binary_table(snarl, binary);
-        }
+        string binary_output = output_dir + "/binary_gwas.tsv";
+        vcf_object.binary_table(snarl, binary, binary_output);
     }
 
     // Process quantitative phenotype file if provided
     if (!quantitative_path.empty()) {
-        if (!output_path.empty()) {
-            vcf_object.quantitative_table(snarl, quantitative, output_path);
-        } else {
-            vcf_object.quantitative_table(snarl, quantitative);
-        }
+        string quantitive_output = output_dir + "/quantitative_gwas.tsv";
+        vcf_object.quantitative_table(snarl, quantitative, quantitive_output);
     }
 
     auto end_2 = std::chrono::high_resolution_clock::now();
@@ -135,5 +133,8 @@ int main(int argc, char* argv[]) {
     return EXIT_SUCCESS;
 }
 
-// ./stoat_cxx -p ../data/binary/pg.full.pg -d ../data/binary/pg.dist -v ../data/binary/binary.vcf.gz -b ../data/binary/phenotype.tsv -o ../output
-// ./stoat_cxx -p ../data/quantitative/pg.full.pg -d ../data/quantitative/pg.dist -v ../data/quantitative/binary.vcf.gz -b ../data/quantitative/phenotype.tsv -o ../output
+// BINARY
+// ./stoat_cxx -p ../data/binary/pg.pg -d ../data/binary/pg.dist -v ../data/binary/binary.vcf.gz -b ../data/binary/phenotype.tsv
+
+// QUANTITATIVE
+// ./stoat_cxx -p ../data/quantitative/pg.full.pg -d ../data/quantitative/pg.dist -v ../data/quantitative/quantitative.vcf.gz -b ../data/quantitative/phenotype.tsv
