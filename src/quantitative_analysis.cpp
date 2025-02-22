@@ -33,7 +33,7 @@ double covariance(const std::vector<double>& x, const std::vector<double>& y) {
 // Linear regression function returning a tuple of p_value, standard error (se), and beta
 std::tuple<std::string, std::string, std::string> linear_regression(
     const std::unordered_map<std::string, std::vector<int>>& df,
-    const std::unordered_map<std::string, float>& quantitative_phenotype) {
+    const std::unordered_map<std::string, double>& quantitative_phenotype) {
 
     // Ensure that we have matching keys in both maps
     std::vector<double> X;
@@ -59,20 +59,20 @@ std::tuple<std::string, std::string, std::string> linear_regression(
         }
     }
 
-    // Print X
-    std::cout << "X: ";
-    for (const double& value : X) {
-        std::cout << value << " ";
-    }
-    std::cout << std::endl;
+    // // Print X
+    // std::cout << "X: ";
+    // for (const double& value : X) {
+    //     std::cout << value << " ";
+    // }
+    // std::cout << std::endl;
 
-    // Print Y
-    std::cout << "Y: ";
-    for (const double& value : Y) {
-        std::cout << value << " ";
-    }
+    // // Print Y
+    // std::cout << "Y: ";
+    // for (const double& value : Y) {
+    //     std::cout << value << " ";
+    // }
+    // std::cout << std::endl;
 
-    std::cout << std::endl;
     if (X.size() < 2 || Y.size() < 2) {
         return std::make_tuple("NA", "NA", "NA");
     }
@@ -105,10 +105,10 @@ std::tuple<std::string, std::string, std::string> linear_regression(
     std::string string_se = std::to_string(se);
     std::string string_beta = std::to_string(beta);
     std::string string_p_value;
+
     std::ostringstream ss;
     ss << std::scientific << std::setprecision(4) << p_value;
     string_p_value = ss.str();
-
     return std::make_tuple(string_se, string_beta, string_p_value);
 }
 
@@ -122,7 +122,6 @@ std::unordered_map<std::string, std::vector<int>> create_quantitative_table(
     std::unordered_map<std::string, size_t> row_headers_dict = matrix.get_row_header();
     size_t length_sample = list_samples.size();
     size_t length_column = column_headers.size();
-
     std::vector<int> srr_save(length_sample);
 
     // Initialize a zero matrix for genotypes
@@ -138,13 +137,13 @@ std::unordered_map<std::string, std::vector<int>> create_quantitative_table(
         std::vector<int> idx_srr_save = identify_correct_path(decomposed_snarl, row_headers_dict, 
                                                               matrix, length_sample*2);
 
-        for (int idx : idx_srr_save) {
+        for (auto idx : idx_srr_save) {
             size_t srr_idx = idx / 2;  // Adjust index to correspond to the sample index
             std::cout << "idx : " << idx << std::endl;
             std::cout << "srr_idx : " << srr_idx << std::endl;
             genotypes[srr_idx][col_idx] += 1;
         }
-        std::cout << std::endl;
+        // std::cout << std::endl;
     }
 
     std::unordered_map<std::string, std::vector<int>> df;
@@ -152,12 +151,12 @@ std::unordered_map<std::string, std::vector<int>> create_quantitative_table(
         df[list_samples[i]] = genotypes[i];
     }
 
-    for (auto &vector_genotype : genotypes) {
-        for (auto &element : vector_genotype) {
-            std::cout << "element : " << element << std::endl;
-        }
-        std::cout << std::endl;
-    }
+    // for (auto &vector_genotype : genotypes) {
+    //     for (auto &element : vector_genotype) {
+    //         std::cout << "element : " << element << std::endl;
+    //     }
+    //     // std::cout << std::endl;
+    // }
     
     return df;
 }

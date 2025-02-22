@@ -15,14 +15,7 @@ add_compile_options(-Wall -Wextra -O2)
 include_directories(/usr/include /usr/local/include)
 link_directories(/usr/include /usr/local/lib)  # libbdsg.dylib
 
-# Define Boost dependency
-find_package(Boost REQUIRED COMPONENTS math)
-
-if (Boost_FOUND)
-    include_directories(${Boost_INCLUDE_DIRS})
-else()
-    message(FATAL_ERROR "Boost not found. Please install Boost and try again.")
-endif()
+find_package(Boost)
 
 # Source files
 set(SRCS 
@@ -38,14 +31,5 @@ set(SRCS
 # Create the executable
 add_executable(${PROJECT_NAME} ${SRCS})
 
-# Link Boost libraries
-target_link_libraries(${PROJECT_NAME} Boost::math bdsg handlegraph libsdsl.so.3)
-
-# Custom target for get-deps
-add_custom_target(get-deps
-    COMMAND ${CMAKE_COMMAND} -E echo "Fetching dependencies..."
-    COMMAND ${CMAKE_COMMAND} -E echo "Boost is required and should be pre-installed."
-    COMMAND ${CMAKE_COMMAND} -E echo "On Debian-based systems, run: sudo apt install libboost-all-dev"
-    COMMAND ${CMAKE_COMMAND} -E echo "On macOS, run: brew install boost"
-    COMMAND ${CMAKE_COMMAND} -E echo "For source installation, see: https://www.boost.org"
-)
+# Link Boost libraries correctly
+target_link_libraries(${PROJECT_NAME} Boost::boost bdsg handlegraph libsdsl.so.3)

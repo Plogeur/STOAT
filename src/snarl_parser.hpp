@@ -33,7 +33,7 @@ public:
                         const std::unordered_map<std::string, bool>& binary_groups,
                         const std::string& output = "output/binary_output.tsv");
     void quantitative_table(const unordered_map<string, tuple<vector<string>, string, string, vector<string>>>& snarls,
-                                const std::unordered_map<std::string, float>& quantitative,
+                                const std::unordered_map<std::string, double>& quantitative,
                                 const std::string& output = "output/quantitative_output.tsv");
 };
 

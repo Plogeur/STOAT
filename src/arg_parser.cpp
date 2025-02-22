@@ -27,8 +27,8 @@ std::unordered_map<std::string, bool> parse_binary_pheno(const std::string& file
 }
 
 // Function to parse the phenotype file
-std::unordered_map<std::string, float> parse_quantitative_pheno(const std::string& file_path) {
-    std::unordered_map<std::string, float> parsed_pheno;
+std::unordered_map<std::string, double> parse_quantitative_pheno(const std::string& file_path) {
+    std::unordered_map<std::string, double> parsed_pheno;
 
     std::ifstream file(file_path);
     std::string line;
@@ -37,12 +37,12 @@ std::unordered_map<std::string, float> parse_quantitative_pheno(const std::strin
     while (std::getline(file, line)) {
         std::istringstream iss(line);
         std::string col1, iid;
-        float pheno;
+        double pheno;
 
         // Read the first column, IID (second column), and PHENO (third column)
         std::getline(iss, col1, '\t');  // Skip the first column
         std::getline(iss, iid, '\t');   // Get the IID
-        iss >> pheno;                   // Read the PHENO as a float
+        iss >> pheno;                   // Read the PHENO as a double
 
         parsed_pheno[iid] = pheno;  // Add to map
     }
@@ -62,7 +62,7 @@ void check_match_samples(const std::unordered_map<std::string, T>& map, const st
 
 // Explicit instantiation for specific types
 template void check_match_samples<bool>(const std::unordered_map<std::string, bool>&, const std::vector<std::string>&);
-template void check_match_samples<float>(const std::unordered_map<std::string, float>&, const std::vector<std::string>&);
+template void check_match_samples<double>(const std::unordered_map<std::string, double>&, const std::vector<std::string>&);
 
 // Function to parse the snarl path file
 unordered_map<std::string, tuple<std::vector<std::string>, std::string, std::string, std::vector<std::string>>> parse_snarl_path(const std::string& file_path) {
