@@ -5,43 +5,15 @@
 
 using namespace std;
 
-SnarlParser::SnarlParser(const std::string& vcf_path) : filename(vcf_path), file(vcf_path), matrix(1000000, parseHeader().size() * 2) {
+SnarlParser::SnarlParser(const std::string& vcf_path) : filename(vcf_path), file(vcf_path) {
     sampleNames = parseHeader();
+    matrix = Matrix(1000000, sampleNames.size() * 2);
 }
 
 std::vector<std::string> SnarlParser::parseHeader() {
-    file.clear();                     // Clear any flags in the file stream
-    file.seekg(0, std::ios::beg);     // Move the file stream to the beginning
 
     std::vector<std::string> sampleNames;
-    std::string line;
-    while (std::getline(file, line)) {
-        if (line.empty()) {
-            continue;                 // Skip any empty lines
-        }
-
-        // Stop reading the header once we encounter a non-comment line
-        if (line[0] != '#') {
-            file.seekg(-static_cast<int>(line.size()) - 1, std::ios::cur);  // Go back to the start of this line
-            break;
-        }
-
-        // Process the header line that starts with "#CHROM"
-        if (line.substr(0, 6) == "#CHROM") {
-            std::istringstream headerStream(line);
-            std::string sampleName;
-
-            // Skip the mandatory VCF columns
-            for (int i = 0; i < 9; ++i) {
-                headerStream >> sampleName;
-            }
-
-            // Read remaining entries as sample names
-            while (headerStream >> sampleName) {
-                sampleNames.push_back(sampleName);
-            }
-        }
-    }
+    
     return sampleNames;
 }
 
@@ -113,42 +85,93 @@ void SnarlParser::pushMatrix(const std::string& decomposedSnarl, std::unordered_
     // Add data to the matrix
     matrix.set(idxSnarl, indexColumn);
 }
- 
-// Main function that parses the VCF file and fills the matrix
-void SnarlParser::fill_matrix() {
+ // Function to parse VCF and process genotypes
+void parse_vcf(const std::string &vcf_path, Matrix &matrix) {
+    htsFile *vcf_file = bcf_open(vcf_path.c_str(), "r");
+    if (!vcf_file) {
+        std::cerr << "Error: Could not open VCF file " << vcf_path << "\n";
+        return;
+    }
 
-    std::unordered_map<std::string, size_t> row_header_dict;
+    bcf_hdr_t *hdr = bcf_hdr_read(vcf_file);
+    if (!hdr) {
+        std::cerr << "Error: Could not read VCF header\n";
+        bcf_close(vcf_file);
+        return;
+    }
 
-    for (std::string line; std::getline(file, line);) {
+    bcf1_t *rec = bcf_init();
+    if (!rec) {
+        std::cerr << "Error: Failed to allocate memory for record\n";
+        bcf_hdr_destroy(hdr);
+        bcf_close(vcf_file);
+        return;
+    }
 
-        Variant variant(line, sampleNames);
-        const std::vector<std::vector<int>>& genotypes = variant.genotypes;
-        const std::vector<std::string>& path_list = variant.atInfo;
-        const std::vector<std::vector<std::string>> list_list_decomposed_snarl = decompose_snarl(path_list);
+    std::map<int, std::string> row_header_dict;
 
-        // Process genotypes and fill matrix
-        for (size_t index_column = 0; index_column < genotypes.size(); ++index_column) {
+    while (bcf_read(vcf_file, hdr, rec) >= 0) {
+        bcf_unpack(rec, BCF_UN_STR);
 
-            int allele_1 = genotypes[index_column][0];
-            int allele_2 = genotypes[index_column][1];
-            size_t col_idx = index_column * 2;
+        // Skip variant if LV != 0
+        int32_t *lv_value = NULL;
+        int n_lv = 0;
+        n_lv = bcf_get_info_int32(hdr, rec, "LV", &lv_value, &n_lv);
+        if (n_lv > 0 && lv_value[0] != 0) {
+            free(lv_value);
+            continue;
+        }
+        free(lv_value);
 
-            if (allele_1 != -1) { // Handle missing genotypes (.)
-
-                for (auto& decompose_allele_1 : list_list_decomposed_snarl[allele_1]) {
-                    pushMatrix(decompose_allele_1, row_header_dict, col_idx);
-                }
+        // Extract AT field and split by ','
+        int32_t *at_values = NULL;
+        int nat = 0;
+        nat = bcf_get_info_int32(hdr, rec, "AT", &at_values, &nat);
+        std::vector<std::string> snarl_list;
+        if (nat > 0 && at_values) {
+            for (int i = 0; i < nat; i++) {
+                snarl_list.push_back(std::to_string(at_values[i]));
             }
+        }
+        free(at_values);
 
-            if (allele_2 != -1) { // Handle missing genotypes (.)
+        // Decompose snarl list
+        std::vector<std::vector<sstring>> list_list_decomposed_snarl = decompose_snarl(snarl_list);
 
-                for (auto& decompose_allele_2 : list_list_decomposed_snarl[allele_2]) {
-                    pushMatrix(decompose_allele_2, row_header_dict, col_idx+1);
+        // Extract GT field
+        int ngt = 0;
+        int32_t *gt = NULL;
+        ngt = bcf_get_genotypes(hdr, rec, &gt, &ngt);
+
+        if (ngt > 0 && gt != NULL) {
+            for (int index_column = 0; index_column < rec->n_sample; index_column++) {
+                int allele_1 = bcf_gt_allele(gt[index_column * 2]);
+                int allele_2 = bcf_gt_allele(gt[index_column * 2 + 1]);
+                int col_idx = index_column * 2;
+
+                if (allele_1 != -1) {
+                    for (int decompose_allele_1 : list_list_decomposed_snarl[allele_1]) {
+                        matrix.push_matrix(allele_1, decompose_allele_1, row_header_dict, col_idx);
+                    }
+                }
+
+                if (allele_2 != -1) {
+                    for (int decompose_allele_2 : list_list_decomposed_snarl[allele_2]) {
+                        matrix.push_matrix(allele_2, decompose_allele_2, row_header_dict, col_idx + 1);
+                    }
                 }
             }
         }
-        matrix.set_row_header(row_header_dict);
+        free(gt);
     }
+
+    // Set row headers
+    matrix.set_row_header(row_header_dict);
+
+    // Cleanup
+    bcf_destroy(rec);
+    bcf_hdr_destroy(hdr);
+    bcf_close(vcf_file);
 }
 
 std::vector<int> identify_correct_path(
@@ -261,32 +284,6 @@ void SnarlParser::quantitative_table(const unordered_map<string, tuple<vector<st
 
         outf.write(data.str().c_str(), data.str().size());
     }
-}
-
-// Parses a variant line from the VCF file and extracts genotype and AT field
-Variant::Variant(std::string& line, std::vector<std::string> sampleNames) {
-    std::istringstream variantStream(line);
-    std::string columnData;
-    std::string infoField;
-    std::string genotypeStr;
-
-    // Skip the first 9 columns (CHROM, POS, ID, REF, ALT, QUAL, FILTER, INFO, FORMAT)
-    for (int i = 0; i < 9; ++i) {
-        variantStream >> columnData;
-        if (i == 7) {
-            infoField = columnData; // Capture the INFO column for parsing
-        }
-    }
-
-    // Read the genotype data for each sample
-    for (const auto& sample : sampleNames) {
-        if (!(variantStream >> genotypeStr)) {
-            throw std::runtime_error("Error reading genotype for sample: " + sample);
-        }
-        genotypes.push_back(extractGenotype(genotypeStr));
-    }
-    // Extract AT field from the INFO column
-    atInfo = extractATField(infoField);
 }
 
 // Extracts the genotype from the genotype string

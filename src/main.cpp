@@ -104,9 +104,8 @@ int main(int argc, char* argv[]) {
     }
 
     // Initialize the SnarlProcessor with the VCF path
-    SnarlParser vcf_object(vcf_path);
     auto start_1 = std::chrono::high_resolution_clock::now();
-    vcf_object.fill_matrix();
+    SnarlParser vcf_object(vcf_path);
     auto end_1 = std::chrono::high_resolution_clock::now();
     std::cout << "Time Matrix : " << std::chrono::duration<double>(end_1 - start_1).count() << " s" << std::endl;
     auto start_2 = std::chrono::high_resolution_clock::now();

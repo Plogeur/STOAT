@@ -11,14 +11,11 @@
 #include <iostream>
 #include <chrono>
 #include <htslib/vcf.h>
+#include <htslib/hts.h>
+
 #include "matrix.hpp"
 
 using namespace std;
-struct Variant {
-    std::vector<std::string> atInfo;
-    std::vector<std::vector<int>> genotypes;
-    Variant(std::string& line, std::vector<std::string> sampleNames);
-};
 
 // SnarlParser class declaration
 class SnarlParser {
@@ -30,7 +27,7 @@ public:
     
     SnarlParser(const std::string& vcf_path);
     void pushMatrix(const std::string& decomposedSnarl, std::unordered_map<std::string, size_t>& rowHeaderDict, size_t indexColumn);
-    void fill_matrix();
+    void parse_vcf(const char* vcf_filename);
     std::vector<std::string> parseHeader();
     void binary_table(const unordered_map<string, tuple<vector<string>, string, string, vector<string>>>& snarls,
                         const std::unordered_map<std::string, bool>& binary_groups,
