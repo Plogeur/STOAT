@@ -16,7 +16,7 @@ include_directories(/usr/include /usr/local/include)
 link_directories(/usr/include /usr/local/lib)  # libbdsg.dylib
 
 # Find Boost
-find_package(Boost REQUIRED)
+find_package(Boost)
 
 # Find HTSlib
 find_package(PkgConfig REQUIRED)

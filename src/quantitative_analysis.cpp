@@ -31,7 +31,7 @@ double covariance(const std::vector<double>& x, const std::vector<double>& y) {
 }
 
 // Linear regression function returning a tuple of p_value, standard error (se), and beta
-std::tuple<std::string, std::string, std::string> linear_regression(
+std::tuple<double, double, std::string> linear_regression(
     const std::unordered_map<std::string, std::vector<int>>& df,
     const std::unordered_map<std::string, double>& quantitative_phenotype) {
 
@@ -44,7 +44,7 @@ std::tuple<std::string, std::string, std::string> linear_regression(
         const std::vector<int>& x_values = entry.second;
         const size_t number_paths = x_values.size();
 
-        std::cout << "key : " << key << std::endl;
+        // std::cout << "key : " << key << std::endl;
 
         // Check if the key exists in the phenotype map
         auto it = quantitative_phenotype.find(key);
@@ -74,7 +74,7 @@ std::tuple<std::string, std::string, std::string> linear_regression(
     // std::cout << std::endl;
 
     if (X.size() < 2 || Y.size() < 2) {
-        return std::make_tuple("NA", "NA", "NA");
+        return std::make_tuple(0.0, 0.0, "NA");
     }
     
     if (X.size() != Y.size()) {
@@ -102,14 +102,18 @@ std::tuple<std::string, std::string, std::string> linear_regression(
     double t_stat = beta / se;
     double p_value = 2 * (1.0 - std::erf(std::abs(t_stat) / std::sqrt(2)));  // Using the error function approximation
 
-    std::string string_se = std::to_string(se);
-    std::string string_beta = std::to_string(beta);
+    // Convert the results to strings
+    // trunc the values to 4 decimal places
+    se = static_cast<int>(se * 10000) / 10000.0;
+    beta = static_cast<int>(beta * 10000) / 10000.0;
+   
+    // Convert the p-value to scientific notation with 4 decimal places
     std::string string_p_value;
-
     std::ostringstream ss;
     ss << std::scientific << std::setprecision(4) << p_value;
     string_p_value = ss.str();
-    return std::make_tuple(string_se, string_beta, string_p_value);
+
+    return std::make_tuple(se, beta, string_p_value);
 }
 
 // Function to create the quantitative table
@@ -130,7 +134,7 @@ std::unordered_map<std::string, std::vector<int>> create_quantitative_table(
     // Genotype paths
     for (size_t col_idx = 0; col_idx < length_column; ++col_idx) {
         const std::string& path_snarl = column_headers[col_idx];
-        std::cout << "path_snarl : " << path_snarl << std::endl;
+        // std::cout << "path_snarl : " << path_snarl << std::endl;
         std::vector<std::string> decomposed_snarl = decompose_string(path_snarl);
 
         // Identify correct paths
@@ -139,8 +143,8 @@ std::unordered_map<std::string, std::vector<int>> create_quantitative_table(
 
         for (auto idx : idx_srr_save) {
             size_t srr_idx = idx / 2;  // Adjust index to correspond to the sample index
-            std::cout << "idx : " << idx << std::endl;
-            std::cout << "srr_idx : " << srr_idx << std::endl;
+            // std::cout << "idx : " << idx << std::endl;
+            // std::cout << "srr_idx : " << srr_idx << std::endl;
             genotypes[srr_idx][col_idx] += 1;
         }
         // std::cout << std::endl;
@@ -150,13 +154,6 @@ std::unordered_map<std::string, std::vector<int>> create_quantitative_table(
     for (size_t i = 0; i < list_samples.size(); ++i) {
         df[list_samples[i]] = genotypes[i];
     }
-
-    // for (auto &vector_genotype : genotypes) {
-    //     for (auto &element : vector_genotype) {
-    //         std::cout << "element : " << element << std::endl;
-    //     }
-    //     // std::cout << std::endl;
-    // }
     
     return df;
 }

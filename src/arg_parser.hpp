@@ -14,6 +14,9 @@
 #include <filesystem>
 #include <stdexcept>
 
+#include <htslib/vcf.h>
+#include <htslib/hts.h>
+
 using namespace std;
 
 // Parses the group file and fills the group_0 and group_1 maps with sample data.
@@ -22,18 +25,17 @@ std::unordered_map<std::string, bool> parse_binary_pheno(const std::string& bina
 // Parses the phenotype file and returns a map with IID as keys and PHENO as float values.
 std::unordered_map<std::string, double> parse_quantitative_pheno(const std::string& qunatitative_pheno);
 
+std::vector<std::string> parseHeader(const std::string& file_path);
+
 template <typename T>
 void check_match_samples(const std::unordered_map<std::string, T>& map, const std::vector<std::string>& keys);
 
 // Parses the snarl path file and returns a map with snarl as keys and paths as a list of strings.
-unordered_map<std::string, std::tuple<std::vector<std::string>, std::string, std::string, std::vector<std::string>>> parse_snarl_path(const std::string& path_file);
+std::vector<std::tuple<string, vector<string>, string, string, vector<string>>> parse_snarl_path(const std::string& path_file);
 
 void check_format_paths_snarl(const std::string& file_path);
 void check_format_quantitative_phenotype(const std::string& file_path);
 void check_format_binary_phenotype(const std::string& file_path);
-void check_format_vcf_file(const std::string& file_path);
 void check_file(const std::string& file_path);
-
-std::vector<std::string> parseHeader(const std::string& file_path);
 
 #endif

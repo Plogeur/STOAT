@@ -32,16 +32,22 @@ int main(int argc, char* argv[]) {
         std::string arg = argv[i];
         if ((arg == "-v" || arg == "--vcf_path") && i + 1 < argc) {
             vcf_path = argv[++i];
+            check_file(vcf_path);
         } else if ((arg == "-s" || arg == "--snarl") && i + 1 < argc) {
             snarl_path = argv[++i];
+            check_file(snarl_path);
         } else if ((arg == "-p" || arg == "--pg") && i + 1 < argc) {
             pg_path = argv[++i];
+            check_file(pg_path);
         } else if ((arg == "-d" || arg == "--dist") && i + 1 < argc) {
             dist_path = argv[++i];
+            check_file(dist_path);
         } else if ((arg == "-b" || arg == "--binary") && i + 1 < argc) {
             binary_path = argv[++i];
+            check_file(binary_path);
         } else if ((arg == "-q" || arg == "--quantitative") && i + 1 < argc) {
             quantitative_path = argv[++i];
+            check_file(quantitative_path);
         } else if ((arg == "-o" || arg == "--output") && i + 1 < argc) {
             output_dir = argv[++i];
         } else if (arg == "-h" || arg == "--help") {
@@ -70,10 +76,9 @@ int main(int argc, char* argv[]) {
     }
 
     // Check format of the VCF file
-    unordered_map<string, std::tuple<vector<string>, std::string, string, std::vector<string>>> snarl;
+    std::vector<std::tuple<string, vector<string>, string, string, vector<string>>> snarl;
 
     if (!snarl_path.empty()){
-        check_format_paths_snarl(snarl_path);
         snarl = parse_snarl_path(snarl_path);
 
     } else if (!pg_path.empty() && !dist_path.empty()) {
@@ -108,7 +113,7 @@ int main(int argc, char* argv[]) {
     // Initialize the SnarlProcessor with the VCF path
     std::cout << "Fill Matrix... " << std::endl;
     auto start_1 = std::chrono::high_resolution_clock::now();
-    SnarlParser vcf_object = make_matrix(vcf_path);
+    SnarlParser vcf_object = make_matrix(vcf_path, list_samples);
     auto end_1 = std::chrono::high_resolution_clock::now();
     std::cout << "Time Matrix : " << std::chrono::duration<double>(end_1 - start_1).count() << " s" << std::endl;
     auto start_2 = std::chrono::high_resolution_clock::now();
@@ -137,4 +142,4 @@ int main(int argc, char* argv[]) {
 // ./stoat_cxx -p ../data/binary/pg.pg -d ../data/binary/pg.dist -v ../data/binary/binary.vcf.gz -b ../data/binary/phenotype.tsv
 
 // QUANTITATIVE
-// ./stoat_cxx -p ../data/quantitative/pg.full.pg -d ../data/quantitative/pg.dist -v ../data/quantitative/quantitative.vcf.gz -b ../data/quantitative/phenotype.tsv
+// ./stoat_cxx -p ../data/quantitative/pg.pg -d ../data/quantitative/pg.dist -v ../data/quantitative/quantitative.vcf.gz -b ../data/quantitative/phenotype.tsv

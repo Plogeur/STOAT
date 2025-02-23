@@ -107,17 +107,10 @@ std::tuple<htsFile*, bcf_hdr_t*, bcf1_t*> parse_vcf(const std::string& vcf_path)
 }
 
 // Function to parse VCF and fill matrix genotypes
-SnarlParser make_matrix(const std::string &vcf_path) {
+SnarlParser make_matrix(const std::string &vcf_path, const std::vector<std::string> &sampleNames) {
 
     auto [vcf_file, hdr, rec] = parse_vcf(vcf_path);
     std::unordered_map<std::string, size_t> row_header_dict;
-    std::vector<std::string> sampleNames;
-
-    // Get the samples names
-    for (int i = 0; i < bcf_hdr_nsamples(hdr); i++) {
-        sampleNames.push_back(bcf_hdr_int2id(hdr, BCF_DT_SAMPLE, i));
-    }
-
     SnarlParser snarl_parser(vcf_path, sampleNames);
     
     // Read each variant from the VCF file
@@ -233,7 +226,7 @@ std::vector<int> identify_correct_path(
 }
 
 // Binary Table Generation
-void SnarlParser::binary_table(const unordered_map<string, tuple<vector<string>, string, string, vector<string>>>& snarls,
+void SnarlParser::binary_table(const std::vector<std::tuple<string, vector<string>, string, string, vector<string>>>& snarls,
                                   const std::unordered_map<std::string, bool>& binary_groups,
                                   const std::string& output) 
 {
@@ -244,14 +237,14 @@ void SnarlParser::binary_table(const unordered_map<string, tuple<vector<string>,
     outf.write(headers.c_str(), headers.size());
 
     // Iterate over each snarl
-    for (const auto& [snarl, tuple_snarl] : snarls) {
+    for (const auto& tuple_snarl : snarls) {
 
-        std::vector<std::string> list_snarl = std::get<0>(tuple_snarl);
+        std::vector<std::string> list_snarl = std::get<1>(tuple_snarl);
         std::vector<std::vector<int>> df = create_binary_table(binary_groups, list_snarl, sampleNames, matrix);
         std::vector<std::string> stats = binary_stat_test(df);
 
-        std::string chrom = std::get<1>(tuple_snarl), pos = std::get<2>(tuple_snarl);
-        std::vector<std::string> type_var = std::get<3>(tuple_snarl);
+        std::string snarl = std::get<0>(tuple_snarl), chrom = std::get<2>(tuple_snarl), pos = std::get<3>(tuple_snarl);
+        std::vector<std::string> type_var = std::get<4>(tuple_snarl);
 
         // make a string separated by , from a vector of string
         std::ostringstream oss;
@@ -273,28 +266,39 @@ void SnarlParser::binary_table(const unordered_map<string, tuple<vector<string>,
 }
 
 // Quantitative Table Generation
-void SnarlParser::quantitative_table(const unordered_map<string, tuple<vector<string>, string, string, vector<string>>>& snarls,
+void SnarlParser::quantitative_table(const std::vector<std::tuple<string, vector<string>, string, string, vector<string>>>& snarls,
                                         const std::unordered_map<std::string, double>& quantitative_phenotype,
                                         const std::string& output) 
 {
     std::ofstream outf(output, std::ios::binary);
     
     // Write headers
-    std::string headers = "CHR\tPOS\tSNARL\tTYPE\tREF\tALT\tSE\tBETA\tP\n";
+    std::string headers = "CHR\tPOS\tSNARL\tTYPE\tSE\tBETA\tP\n";
     outf.write(headers.c_str(), headers.size());
 
     // Iterate over each snarl
-    for (const auto& [snarl, tuple_snarl] : snarls) {
+    for (const auto& tuple_snarl : snarls) {
 
-        std::vector<std::string> list_snarl = std::get<0>(tuple_snarl);
+        std::vector<std::string> list_snarl = std::get<1>(tuple_snarl);
         std::unordered_map<std::string, std::vector<int>> df = create_quantitative_table(sampleNames, list_snarl, matrix);
 
         // std::make_tuple(se, beta, p_value)
-        std::tuple<std::string, std::string, std::string> tuple_info = linear_regression(df, quantitative_phenotype);
+        std::tuple<double, double, std::string> tuple_info = linear_regression(df, quantitative_phenotype);
 
-        std::string chrom = "NA", pos = "NA", type_var = "NA", ref = "NA", alt = "NA";
+        std::string snarl = std::get<0>(tuple_snarl), chrom = std::get<2>(tuple_snarl), pos = std::get<3>(tuple_snarl);
+        std::vector<std::string> type_var = std::get<4>(tuple_snarl);
+
+        // make a string separated by ',' from a vector of string
+        std::ostringstream oss;
+            for (size_t i = 0; i < type_var.size(); ++i) {
+                if (i != 0) oss << ","; // Add comma before all elements except the first
+                oss << type_var[i];
+            }
+
+        std::string type_var_str = oss.str();
+
         std::stringstream data;
-        data << chrom << "\t" << pos << "\t" << snarl << "\t" << type_var << "\t" << ref << "\t" << alt
+        data << chrom << "\t" << pos << "\t" << snarl << "\t" << type_var_str
             << "\t" << std::get<0>(tuple_info) << "\t" << std::get<1>(tuple_info) 
             << "\t" << std::get<2>(tuple_info) << "\n";
 

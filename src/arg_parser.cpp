@@ -51,12 +51,47 @@ std::unordered_map<std::string, double> parse_quantitative_pheno(const std::stri
     return parsed_pheno;
 }
 
+std::vector<std::string> parseHeader(const std::string& vcf_path) {
+
+    // Open the VCF file
+    htsFile *vcf_file = bcf_open(vcf_path.c_str(), "r");
+    if (!vcf_file) {
+        throw std::runtime_error("Error: Could not open VCF file: " + vcf_path);
+    }
+    
+    // Read the VCF header
+    bcf_hdr_t *hdr = bcf_hdr_read(vcf_file);
+    if (!hdr) {
+        bcf_close(vcf_file);
+        throw std::runtime_error("Error: Could not read VCF header");
+    }
+
+    std::vector<std::string> sampleNames;
+
+    // Get the samples names
+    for (int i = 0; i < bcf_hdr_nsamples(hdr); i++) {
+        sampleNames.push_back(bcf_hdr_int2id(hdr, BCF_DT_SAMPLE, i));
+    }
+
+    // Cleanup
+    bcf_hdr_destroy(hdr);
+    bcf_close(vcf_file);
+    return sampleNames;
+}
+
 template <typename T>
 void check_match_samples(const std::unordered_map<std::string, T>& map, const std::vector<std::string>& keys) {
     for (const auto& key : keys) {
         if (map.find(key) == map.end()) {
             throw std::runtime_error("Error: Key '" + key + "' not found in the phenotype file");
         }
+    }
+    if (map.size() != keys.size()) {
+        cerr << "Warning:  Number of samples found in VCF does not match the number of samples in the phenotype file" << endl;
+        cerr << "Number of samples found in VCF: " << keys.size() << endl;
+        cerr << "Number of samples in the phenotype file: " << map.size() << endl;
+    } else {
+        cout << "Starting the GWAS analyse on " << map.size() << " phenotypes" << endl;
     }
 }
 
@@ -65,13 +100,10 @@ template void check_match_samples<bool>(const std::unordered_map<std::string, bo
 template void check_match_samples<double>(const std::unordered_map<std::string, double>&, const std::vector<std::string>&);
 
 // Function to parse the snarl path file
-unordered_map<std::string, tuple<std::vector<std::string>, std::string, std::string, std::vector<std::string>>> parse_snarl_path(const std::string& file_path) {
-
-    // Check file
-    check_file(file_path);
+std::vector<std::tuple<string, vector<string>, string, string, vector<string>>> parse_snarl_path(const std::string& file_path) {
 
     std::string line, chr, pos, snarl, path_list, type_var;
-    unordered_map<std::string, std::tuple<std::vector<std::string>, std::string, std::string, std::vector<std::string>>> snarl_paths;
+    std::vector<std::tuple<string, vector<string>, string, string, vector<string>>> snarl_paths;
     std::ifstream file(file_path);
 
     // Read header
@@ -102,8 +134,8 @@ unordered_map<std::string, tuple<std::vector<std::string>, std::string, std::str
             type.push_back(type_var);
         }
 
-        // {snarl : (paths, chr, pos, type)} 
-        snarl_paths[snarl] = make_tuple(paths, chr, pos, type);
+        // {snarl, paths, chr, pos, type} 
+        snarl_paths.push_back(make_tuple(snarl, paths, chr, pos, type));
 
     }
 
@@ -111,71 +143,8 @@ unordered_map<std::string, tuple<std::vector<std::string>, std::string, std::str
     return snarl_paths;
 }
 
-void check_format_vcf_file(const std::string& file_path) {
-    
-    // Check file
-    check_file(file_path);
-
-    // Check if the file ends with .vcf
-    if (file_path.size() < 4 || 
-        (file_path.substr(file_path.size() - 4) != ".vcf")) {
-        throw std::invalid_argument("The file " + file_path + " is not a valid VCF file. It must have a .vcf");
-    }
-}
-
-std::vector<std::string> parseHeader(const std::string& file_path) {
-    std::ifstream file(file_path);
-    file.clear();                     // Clear any flags in the file stream
-    file.seekg(0, std::ios::beg);     // Move the file stream to the beginning
-
-    std::vector<std::string> sampleNames;
-    std::string line;
-    while (std::getline(file, line)) {
-        if (line.empty()) {
-            continue;                 // Skip any empty lines
-        }
-
-        // Stop reading the header once we encounter a non-comment line
-        if (line[0] != '#') {
-            file.seekg(-static_cast<int>(line.size()) - 1, std::ios::cur);  // Go back to the start of this line
-            break;
-        }
-
-        // Process the header line that starts with "#CHROM"
-        if (line.substr(0, 6) == "#CHROM") {
-            std::istringstream headerStream(line);
-            std::string sampleName;
-
-            // Skip the mandatory VCF columns
-            for (int i = 0; i < 9; ++i) {
-                headerStream >> sampleName;
-            }
-
-            // Read remaining entries as sample names
-            while (headerStream >> sampleName) {
-                sampleNames.push_back(sampleName);
-            }
-        }
-    }
-    return sampleNames;
-}
-
-void check_format_paths_snarl(const std::string& file_path) {
-
-    check_file(file_path);
-
-    // Check if the file ends with .txt or .tsv
-    if (file_path.size() < 4 || 
-        (file_path.substr(file_path.size() - 4) != ".txt" && file_path.substr(file_path.size() - 4) != ".tsv")) {
-        throw std::invalid_argument("The file " + file_path + " is not a valid group/snarl file. It must have a .txt extension or .tsv.");
-    }
-}
-
 void check_format_quantitative_phenotype(const std::string& file_path) {
     
-    // Check file
-    check_file(file_path);
-
     std::ifstream file(file_path);
     std::string first_line;
     std::getline(file, first_line);
@@ -222,9 +191,6 @@ void check_file(const std::string& file_path) {
 }
 
 void check_format_binary_phenotype(const std::string& file_path) {
-
-    // Check file
-    check_file(file_path);
 
     std::ifstream file(file_path);
 

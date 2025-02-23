@@ -27,17 +27,17 @@ public:
 
     SnarlParser(const std::string& vcf_path, const vector<string>& sample_names);
     void push_matrix(const std::string& decomposedSnarl, std::unordered_map<std::string, size_t>& rowHeaderDict, size_t indexColumn);
-    void binary_table(const unordered_map<string, tuple<vector<string>, string, string, vector<string>>>& snarls,
+    void binary_table(const std::vector<std::tuple<string, vector<string>, string, string, vector<string>>>& snarls,
                         const std::unordered_map<std::string, bool>& binary_groups,
                         const std::string& output = "output/binary_gwas.tsv");
-    void quantitative_table(const unordered_map<string, tuple<vector<string>, string, string, vector<string>>>& snarls,
+    void quantitative_table(const std::vector<std::tuple<string, vector<string>, string, string, vector<string>>>& snarls,
                                 const std::unordered_map<std::string, double>& quantitative,
                                 const std::string& output = "output/quantitative_gwas.tsv");
 };
 
 std::tuple<htsFile*, bcf_hdr_t*, bcf1_t*> parse_vcf(const std::string& vcf_path);
 
-SnarlParser make_matrix(const std::string& vcf_filename);
+SnarlParser make_matrix(const std::string& vcf_filename, const vector<string>& sample_names);
 
 // Retrieve the index of `key` if it exists in `ordered_map`. Otherwise, add it and return the new index.
 unsigned long long int getOrAddIndex(std::unordered_map<std::string, unsigned long long int>& orderedMap, const std::string& key, unsigned long long int lengthOrderedMap);
