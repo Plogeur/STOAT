@@ -117,6 +117,17 @@ SnarlParser make_matrix(const std::string &vcf_path, const std::vector<std::stri
     while (bcf_read(vcf_file, hdr, rec) >= 0) {
         bcf_unpack(rec, BCF_UN_STR);
 
+        // Check the INFO field for LV (Level Variant) and skip if LV != 0
+        int32_t *lv = nullptr;
+        int n_lv = 0;
+        if (bcf_get_info_int32(hdr, rec, "LV", &lv, &n_lv) > 0) {
+            if (lv[0] != 0) {
+                free(lv);
+                continue;
+            }
+        }
+        free(lv);
+
         // Extract genotypes (GT)
         int ngt = 0;
         int32_t *gt = nullptr;
