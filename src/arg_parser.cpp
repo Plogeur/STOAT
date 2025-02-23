@@ -10,6 +10,8 @@ std::unordered_map<std::string, bool> parse_binary_pheno(const std::string& file
 
     std::string line;
     std::getline(file, line);
+    int count_controls = 0;
+    int count_cases = 0;
 
     while (std::getline(file, line)) {
         std::istringstream iss(line);
@@ -19,9 +21,18 @@ std::unordered_map<std::string, bool> parse_binary_pheno(const std::string& file
             throw std::runtime_error("Malformed line: " + line);
         }
         int pheno = std::stoi(phenoStr);
+        if (pheno == 0) {
+            count_controls++;
+        } else if (pheno == 1) {
+            count_cases++;
+        } else {
+            throw std::runtime_error("Error: Phenotype must be 0 or 1");
+        }
         parsed_pheno[iid] = static_cast<bool>(pheno);
     }
-
+    cout << "Binary phenotypes founds : " << count_controls+count_cases
+    << " (Control : " << count_controls
+    << ", Case : " << count_cases << ")" << endl;
     file.close();
     return parsed_pheno;
 }
@@ -33,6 +44,7 @@ std::unordered_map<std::string, double> parse_quantitative_pheno(const std::stri
     std::ifstream file(file_path);
     std::string line;
     std::getline(file, line);  // Skip header line
+    int count_pheno = 0;
 
     while (std::getline(file, line)) {
         std::istringstream iss(line);
@@ -45,8 +57,10 @@ std::unordered_map<std::string, double> parse_quantitative_pheno(const std::stri
         iss >> pheno;                   // Read the PHENO as a double
 
         parsed_pheno[iid] = pheno;  // Add to map
+        count_pheno++;
     }
 
+    cout << "Quantitative phenotypes founds : " << count_pheno << endl;
     file.close();
     return parsed_pheno;
 }
@@ -90,8 +104,6 @@ void check_match_samples(const std::unordered_map<std::string, T>& map, const st
         cerr << "Warning:  Number of samples found in VCF does not match the number of samples in the phenotype file" << endl;
         cerr << "Number of samples found in VCF: " << keys.size() << endl;
         cerr << "Number of samples in the phenotype file: " << map.size() << endl;
-    } else {
-        cout << "Starting the GWAS analyse on " << map.size() << " phenotypes" << endl;
     }
 }
 

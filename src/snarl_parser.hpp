@@ -9,6 +9,8 @@
 #include <cstdlib>
 #include <utility>
 #include <iostream>
+#include <thread>
+#include <mutex>
 #include <chrono>
 #include <htslib/vcf.h>
 #include <htslib/hts.h>
@@ -37,7 +39,9 @@ public:
 
 std::tuple<htsFile*, bcf_hdr_t*, bcf1_t*> parse_vcf(const std::string& vcf_path);
 
-SnarlParser make_matrix(const std::string& vcf_filename, const vector<string>& sample_names);
+void process_vcf_batch(std::vector<bcf1_t*> records, bcf_hdr_t* hdr, SnarlParser& snarl_parser,
+    std::unordered_map<std::string, size_t>& row_header_dict, std::mutex& mutex);
+SnarlParser make_matrix(const std::string& vcf_filename, const vector<string>& sample_names, size_t threads);
 
 // Retrieve the index of `key` if it exists in `ordered_map`. Otherwise, add it and return the new index.
 unsigned long long int getOrAddIndex(std::unordered_map<std::string, unsigned long long int>& orderedMap, const std::string& key, unsigned long long int lengthOrderedMap);

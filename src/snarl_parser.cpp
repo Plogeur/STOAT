@@ -106,20 +106,14 @@ std::tuple<htsFile*, bcf_hdr_t*, bcf1_t*> parse_vcf(const std::string& vcf_path)
     return std::make_tuple(vcf_file, hdr, rec);
 }
 
-// Function to parse VCF and fill matrix genotypes
-SnarlParser make_matrix(const std::string &vcf_path, const std::vector<std::string> &sampleNames) {
-
-    auto [vcf_file, hdr, rec] = parse_vcf(vcf_path);
-    std::unordered_map<std::string, size_t> row_header_dict;
-    SnarlParser snarl_parser(vcf_path, sampleNames);
-    
-    // Read each variant from the VCF file
-    while (bcf_read(vcf_file, hdr, rec) >= 0) {
+// Function to process a batch of records
+void process_vcf_batch(std::vector<bcf1_t*> records, bcf_hdr_t* hdr, SnarlParser& snarl_parser,
+                       std::unordered_map<std::string, size_t>& row_header_dict, std::mutex& mutex) {
+    for (auto* rec : records) {
         bcf_unpack(rec, BCF_UN_STR);
 
         // Check the INFO field for LV (Level Variant) and skip if LV != 0
-        int32_t *lv = nullptr;
-        int n_lv = 0;
+        int32_t *lv = nullptr, n_lv = 0;
         if (bcf_get_info_int32(hdr, rec, "LV", &lv, &n_lv) > 0) {
             if (lv[0] != 0) {
                 free(lv);
@@ -132,8 +126,8 @@ SnarlParser make_matrix(const std::string &vcf_path, const std::vector<std::stri
         int ngt = 0;
         int32_t *gt = nullptr;
         ngt = bcf_get_genotypes(hdr, rec, &gt, &ngt);
-
         std::vector<int> genotypes;
+
         if (ngt > 0 && gt) {
             for (int i = 0; i < rec->n_sample; ++i) {
                 int allele_1 = bcf_gt_allele(gt[i * 2]);
@@ -165,10 +159,13 @@ SnarlParser make_matrix(const std::string &vcf_path, const std::vector<std::stri
         // Decompose snarl paths
         const std::vector<std::vector<std::string>> list_list_decomposed_snarl = decompose_snarl(path_list);
 
+        // Lock before modifying shared data
+        std::lock_guard<std::mutex> lock(mutex);
+
         // Process genotypes and fill the matrix
         for (size_t index_column = 0; index_column < genotypes.size(); index_column += 2) {
             int allele_1 = genotypes[index_column];
-            int allele_2 = genotypes[index_column+1];
+            int allele_2 = genotypes[index_column + 1];
             size_t col_idx = index_column * 2;
 
             if (allele_1 != -1) { // Handle non-missing genotypes
@@ -185,12 +182,46 @@ SnarlParser make_matrix(const std::string &vcf_path, const std::vector<std::stri
         }
         snarl_parser.matrix.set_row_header(row_header_dict);
     }
+}
+
+// Function to parse VCF and fill matrix genotypes with multi-threading
+SnarlParser make_matrix(const std::string &vcf_path, const std::vector<std::string> &sampleNames, size_t num_threads) {
+    auto [vcf_file, hdr, rec] = parse_vcf(vcf_path);
+    std::unordered_map<std::string, size_t> row_header_dict;
+    SnarlParser snarl_parser(vcf_path, sampleNames);
+    std::mutex mutex;
+
+    std::vector<std::thread> threads;
+    std::vector<std::vector<bcf1_t*>> record_batches(num_threads);  // Batches for each thread
+
+    // Read and distribute records among thread batches
+    size_t count = 0;
+    while (bcf_read(vcf_file, hdr, rec) >= 0) {
+        bcf1_t* new_rec = bcf_dup(rec);  // Duplicate record for thread safety
+        record_batches[count % num_threads].push_back(new_rec);
+        count++;
+    }
+
+    // Launch threads
+    for (size_t i = 0; i < num_threads; ++i) {
+        threads.emplace_back(process_vcf_batch, record_batches[i], hdr, std::ref(snarl_parser),
+                             std::ref(row_header_dict), std::ref(mutex));
+    }
+
+    // Wait for all threads to complete
+    for (auto& thread : threads) {
+        thread.join();
+    }
 
     // Cleanup
-    bcf_destroy(rec);
+    for (auto& batch : record_batches) {
+        for (auto* r : batch) {
+            bcf_destroy(r);
+        }
+    }
     bcf_hdr_destroy(hdr);
     bcf_close(vcf_file);
-    
+
     return snarl_parser;
 }
 

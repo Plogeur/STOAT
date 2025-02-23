@@ -19,12 +19,14 @@ void print_help() {
               << "  -b, --binary <path>         Path to the binary group file (.txt or .tsv)\n"
               << "  -q, --quantitative <path>   Path to the quantitative phenotype file (.txt or .tsv)\n"
               << "  -o, --output <name>         Output name\n"
+              << "  -t, --thread <int>          Number of threads\n"
               << "  -h, --help                  Print this help message\n";
 }
 
 int main(int argc, char* argv[]) {
     // Declare variables to hold argument values
     std::string vcf_path, snarl_path, pg_path, dist_path, binary_path, quantitative_path, output_dir;
+    size_t threads=1;
     bool show_help = false;
 
     // Parse arguments manually
@@ -48,6 +50,8 @@ int main(int argc, char* argv[]) {
         } else if ((arg == "-q" || arg == "--quantitative") && i + 1 < argc) {
             quantitative_path = argv[++i];
             check_file(quantitative_path);
+        } else if ((arg == "-t" || arg == "--threads") && i + 1 < argc) {
+            threads = argv[++i];
         } else if ((arg == "-o" || arg == "--output") && i + 1 < argc) {
             output_dir = argv[++i];
         } else if (arg == "-h" || arg == "--help") {
@@ -113,7 +117,7 @@ int main(int argc, char* argv[]) {
     // Initialize the SnarlProcessor with the VCF path
     std::cout << "Fill Matrix... " << std::endl;
     auto start_1 = std::chrono::high_resolution_clock::now();
-    SnarlParser vcf_object = make_matrix(vcf_path, list_samples);
+    SnarlParser vcf_object = make_matrix(vcf_path, list_samples, threads);
     auto end_1 = std::chrono::high_resolution_clock::now();
     std::cout << "Time Matrix : " << std::chrono::duration<double>(end_1 - start_1).count() << " s" << std::endl;
     auto start_2 = std::chrono::high_resolution_clock::now();
