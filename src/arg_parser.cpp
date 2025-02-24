@@ -3,6 +3,19 @@
 namespace fs = std::filesystem;
 using namespace std;
 
+unordered_set<string> parse_chromosome_reference(const string& file_path) {
+    unordered_set<string> reference;
+    ifstream file(file_path);
+    string line;
+
+    while (getline(file, line)) {
+        reference.insert(line);
+    }
+
+    file.close();
+    return reference;
+}
+
 std::unordered_map<std::string, bool> parse_binary_pheno(const std::string& file_path) {
     
     std::unordered_map<std::string, bool> parsed_pheno;
@@ -112,10 +125,11 @@ template void check_match_samples<bool>(const std::unordered_map<std::string, bo
 template void check_match_samples<double>(const std::unordered_map<std::string, double>&, const std::vector<std::string>&);
 
 // Function to parse the snarl path file
-std::vector<std::tuple<string, vector<string>, string, string, vector<string>>> parse_snarl_path(const std::string& file_path) {
+std::pair<std::vector<std::tuple<string, vector<string>, string, string, vector<string>>>,unordered_map<string, size_t>> parse_snarl_path(const std::string& file_path) {
 
     std::string line, chr, pos, snarl, path_list, type_var;
     std::vector<std::tuple<string, vector<string>, string, string, vector<string>>> snarl_paths;
+    unordered_map<string, size_t> num_paths_chr;
     std::ifstream file(file_path);
 
     // Read header
@@ -135,9 +149,11 @@ std::vector<std::tuple<string, vector<string>, string, string, vector<string>>> 
         std::istringstream type_stream(type_var);
         std::vector<std::string> paths;
         std::vector<std::string> type;
+        int size_paths = 0;
 
         // create a vector of paths
         while (std::getline(path_stream, path_list, ',')) {
+            size_paths++;
             paths.push_back(path_list);
         }
 
@@ -148,11 +164,15 @@ std::vector<std::tuple<string, vector<string>, string, string, vector<string>>> 
 
         // {snarl, paths, chr, pos, type} 
         snarl_paths.push_back(make_tuple(snarl, paths, chr, pos, type));
-
+        if (num_paths_chr.find(chr) == num_paths_chr.end()) {
+            num_paths_chr[chr] = size_paths;
+        } else {
+            num_paths_chr[chr] += size_paths;
+        }
     }
 
     file.close();
-    return snarl_paths;
+    return {snarl_paths, num_paths_chr};
 }
 
 void check_format_quantitative_phenotype(const std::string& file_path) {

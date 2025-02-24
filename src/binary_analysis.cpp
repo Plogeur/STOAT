@@ -132,6 +132,28 @@ std::vector<std::string> binary_stat_test(const std::vector<std::vector<int>>& d
     // Compute Fisher's exact test p-value
     long double fastfisher_p_value = fastFishersExactTest(df);
 
+    // Compute derived statistics
+    int allele_number = 0;
+    int inter_group = 0;
+    int numb_colum = df.empty() ? 0 : df[0].size();
+    int min_row_index = INT_MAX;
+    
+    for (const auto& row : df) {
+        int row_sum = std::accumulate(row.begin(), row.end(), 0);
+        allele_number += row_sum;
+        min_row_index = std::min(min_row_index, row_sum);
+    }
+    
+    for (size_t col = 0; col < numb_colum; ++col) {
+        int col_min = INT_MAX;
+        for (const auto& row : df) {
+            col_min = std::min(col_min, row[col]);
+        }
+        inter_group += col_min;
+    }
+    
+    double average = numb_colum > 0 ? static_cast<double>(allele_number) / numb_colum : 0.0;
+    
     // Compute Chi-squared test p-value
     std::string chi2_p_value = chi2Test(df);
 
@@ -144,8 +166,10 @@ std::vector<std::string> binary_stat_test(const std::vector<std::vector<int>>& d
     } else {
         stringFastfisher_p_value = "NA";
     }
+    
+    std::string group_paths = ""; // Placeholder for future implementation
 
-    return {stringFastfisher_p_value, chi2_p_value};
+    return {stringFastfisher_p_value, chi2_p_value, std::to_string(allele_number), std::to_string(min_row_index), std::to_string(numb_colum), std::to_string(inter_group), std::to_string(average), group_paths};
 }
 
 std::vector<std::vector<int>> create_binary_table(

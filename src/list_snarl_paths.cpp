@@ -344,7 +344,7 @@ tuple<vector<string>, vector<string>, size_t> fill_pretty_paths(
 
 // {snarl : (paths, chr, pos, type)} 
 // unordered_map<string, tuple<vector<string>, string, string, vector<string>>>
-std::vector<std::tuple<string, vector<string>, string, string, vector<string>>> loop_over_snarls_write(
+std::pair<std::vector<std::tuple<string, vector<string>, string, string, vector<string>>>,unordered_map<string, size_t>> loop_over_snarls_write(
         SnarlDistanceIndex& stree, 
         vector<tuple<net_handle_t, string, size_t>>& snarls,
         PackedGraph& pg, 
@@ -361,6 +361,7 @@ std::vector<std::tuple<string, vector<string>, string, string, vector<string>>> 
     
     std::vector<std::tuple<string, vector<string>, string, string, vector<string>>> snarl_paths;
     size_t paths_number_analysis = 0;
+    unordered_map<string, size_t> num_paths_chr;
     chrono::seconds time_threshold(2);
     
     std::vector<int> children = {0};
@@ -414,19 +415,26 @@ std::vector<std::tuple<string, vector<string>, string, string, vector<string>>> 
             }
 
             // chromosome   position    snarl_id    paths    type
-            out_snarl << std::get<1>(snarl_path_pos) 
-                    << "\t" << std::to_string(std::get<2>(snarl_path_pos)+padding) 
-                    << "\t" << snarl_id << "\t" << pretty_paths_stream.str() 
-                    << "\t" << type_variants_stream.str() << "\n";
+            string chr = std::get<1>(snarl_path_pos);
+            string pos = std::to_string(std::get<2>(snarl_path_pos)+padding);
+            out_snarl << chr << "\t" << pos
+                      << "\t" << snarl_id << "\t" << pretty_paths_stream.str() 
+                      << "\t" << type_variants_stream.str() << "\n";
 
             if (bool_return) {
                 // {snarl, paths, chr, pos, type} 
-                snarl_paths.push_back(std::make_tuple(snarl_id, pretty_paths, std::get<1>(snarl_path_pos),
-                  std::to_string(std::get<2>(snarl_path_pos) + padding), type_variants));
+                snarl_paths.push_back(std::make_tuple(snarl_id, pretty_paths, chr,
+                    pos, type_variants));
+
+                if (num_paths_chr.find(chr) == num_paths_chr.end()) {
+                    num_paths_chr[chr] = pretty_paths.size();
+                } else {
+                    num_paths_chr[chr] += pretty_paths.size();
+                }
             }
             paths_number_analysis += pretty_paths.size();
         }
     }
     cout << "Number of paths analysed : " << paths_number_analysis << endl;
-    return snarl_paths;
+    return {snarl_paths, num_paths_chr};
 }

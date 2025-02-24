@@ -5,9 +5,8 @@
 
 using namespace std;
 
-SnarlParser::SnarlParser(const std::string& vcf_path, const vector<string>& sample_names) : 
-    filename(vcf_path), file(vcf_path), 
-    sampleNames(sample_names), matrix(1000000, sample_names.size() * 2)
+SnarlParser::SnarlParser(const vector<string>& sample_names, size_t num_paths_chr) : 
+    sampleNames(sample_names), matrix(num_paths_chr, sample_names.size() * 2)
 {}
 
 // Function to extract an integer from a string starting at index `i`
@@ -106,14 +105,20 @@ std::tuple<htsFile*, bcf_hdr_t*, bcf1_t*> parse_vcf(const std::string& vcf_path)
     return std::make_tuple(vcf_file, hdr, rec);
 }
 
-// Function to process a batch of records
-void process_vcf_batch(std::vector<bcf1_t*> records, bcf_hdr_t* hdr, SnarlParser& snarl_parser,
-                       std::unordered_map<std::string, size_t>& row_header_dict, std::mutex& mutex) {
-    for (auto* rec : records) {
+// Function to parse VCF and fill matrix genotypes
+SnarlParser make_matrix(const std::string &vcf_path, htsFile *vcf_file, bcf_hdr_t *hdr, bcf1_t *rec, const std::vector<std::string> &sampleNames, string &chr, size_t &num_paths_chr) {
+
+    std::unordered_map<std::string, size_t> row_header_dict;
+    SnarlParser snarl_parser(sampleNames, num_paths_chr);
+    
+    // Read each variant from the VCF file
+    // loop over the VCF file for each line and stop where chr is different
+    while (bcf_read(vcf_file, hdr, rec) >= 0) || (chr == bcf_hdr_id2name(hdr, rec->rid)) {
         bcf_unpack(rec, BCF_UN_STR);
 
         // Check the INFO field for LV (Level Variant) and skip if LV != 0
-        int32_t *lv = nullptr, n_lv = 0;
+        int32_t *lv = nullptr;
+        int n_lv = 0;
         if (bcf_get_info_int32(hdr, rec, "LV", &lv, &n_lv) > 0) {
             if (lv[0] != 0) {
                 free(lv);
@@ -126,8 +131,8 @@ void process_vcf_batch(std::vector<bcf1_t*> records, bcf_hdr_t* hdr, SnarlParser
         int ngt = 0;
         int32_t *gt = nullptr;
         ngt = bcf_get_genotypes(hdr, rec, &gt, &ngt);
-        std::vector<int> genotypes;
 
+        std::vector<int> genotypes;
         if (ngt > 0 && gt) {
             for (int i = 0; i < rec->n_sample; ++i) {
                 int allele_1 = bcf_gt_allele(gt[i * 2]);
@@ -159,13 +164,10 @@ void process_vcf_batch(std::vector<bcf1_t*> records, bcf_hdr_t* hdr, SnarlParser
         // Decompose snarl paths
         const std::vector<std::vector<std::string>> list_list_decomposed_snarl = decompose_snarl(path_list);
 
-        // Lock before modifying shared data
-        std::lock_guard<std::mutex> lock(mutex);
-
         // Process genotypes and fill the matrix
         for (size_t index_column = 0; index_column < genotypes.size(); index_column += 2) {
             int allele_1 = genotypes[index_column];
-            int allele_2 = genotypes[index_column + 1];
+            int allele_2 = genotypes[index_column+1];
             size_t col_idx = index_column * 2;
 
             if (allele_1 != -1) { // Handle non-missing genotypes
@@ -181,47 +183,7 @@ void process_vcf_batch(std::vector<bcf1_t*> records, bcf_hdr_t* hdr, SnarlParser
             }
         }
         snarl_parser.matrix.set_row_header(row_header_dict);
-    }
-}
-
-// Function to parse VCF and fill matrix genotypes with multi-threading
-SnarlParser make_matrix(const std::string &vcf_path, const std::vector<std::string> &sampleNames, size_t num_threads) {
-    auto [vcf_file, hdr, rec] = parse_vcf(vcf_path);
-    std::unordered_map<std::string, size_t> row_header_dict;
-    SnarlParser snarl_parser(vcf_path, sampleNames);
-    std::mutex mutex;
-
-    std::vector<std::thread> threads;
-    std::vector<std::vector<bcf1_t*>> record_batches(num_threads);  // Batches for each thread
-
-    // Read and distribute records among thread batches
-    size_t count = 0;
-    while (bcf_read(vcf_file, hdr, rec) >= 0) {
-        bcf1_t* new_rec = bcf_dup(rec);  // Duplicate record for thread safety
-        record_batches[count % num_threads].push_back(new_rec);
-        count++;
-    }
-
-    // Launch threads
-    for (size_t i = 0; i < num_threads; ++i) {
-        threads.emplace_back(process_vcf_batch, record_batches[i], hdr, std::ref(snarl_parser),
-                             std::ref(row_header_dict), std::ref(mutex));
-    }
-
-    // Wait for all threads to complete
-    for (auto& thread : threads) {
-        thread.join();
-    }
-
-    // Cleanup
-    for (auto& batch : record_batches) {
-        for (auto* r : batch) {
-            bcf_destroy(r);
-        }
-    }
-    bcf_hdr_destroy(hdr);
-    bcf_close(vcf_file);
-
+    }    
     return snarl_parser;
 }
 
@@ -272,11 +234,6 @@ void SnarlParser::binary_table(const std::vector<std::tuple<string, vector<strin
                                   const std::unordered_map<std::string, bool>& binary_groups,
                                   const std::string& output) 
 {
-    std::ofstream outf(output, std::ios::binary);
-
-    // Write headers
-    std::string headers = "CHR\tPOS\tSNARL\tTYPE\tP_FISHER\tP_CHI2\n";
-    outf.write(headers.c_str(), headers.size());
 
     // Iterate over each snarl
     for (const auto& tuple_snarl : snarls) {
@@ -296,12 +253,13 @@ void SnarlParser::binary_table(const std::vector<std::tuple<string, vector<strin
             }
 
         std::string type_var_str = oss.str();
-        
-        // fisher_p_value, chi2_p_value 
-        // TODO : add other metrics 
+
+        // chr, pos, snarl, type variant
+        // fisher_p_value, chi2_p_value, allele_number, min_row_index, numb_colum, inter_group, average
         std::stringstream data;
         data << chrom << "\t" << pos << "\t" << snarl << "\t" << type_var_str << "\t"
-             << "\t" << stats[0] << "\t" << stats[1] << "\n";
+             << "\t" << stats[0] << "\t" << stats[1] << "\t" << stats[2] << "\t" << stats[3] 
+             << "\t" << stats[4]  << "\t" << stats[5] << "\t" << stats[6] << "\t" << stats[7] << "\n";
         
         outf.write(data.str().c_str(), data.str().size());
     }
@@ -312,11 +270,6 @@ void SnarlParser::quantitative_table(const std::vector<std::tuple<string, vector
                                         const std::unordered_map<std::string, double>& quantitative_phenotype,
                                         const std::string& output) 
 {
-    std::ofstream outf(output, std::ios::binary);
-    
-    // Write headers
-    std::string headers = "CHR\tPOS\tSNARL\tTYPE\tSE\tBETA\tP\n";
-    outf.write(headers.c_str(), headers.size());
 
     // Iterate over each snarl
     for (const auto& tuple_snarl : snarls) {
