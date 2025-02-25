@@ -12,7 +12,6 @@ from typing import Optional, List
 import subprocess
 import time
 import os
-import re
 
 class Matrix :
     def __init__(self, default_row_number:int=1_000_000, column_number:int=2):

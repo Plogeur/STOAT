@@ -102,7 +102,6 @@ def calcul_pos_type_variant(list_list_length_paths: List[List[str]]) -> Tuple[Li
 
     for path_lengths in list_list_length_paths:
         if len(path_lengths) > 3 or path_lengths[1] == "_":  # Case snarl in snarl / Indel
-            print("path_lengths : ", path_lengths)
             list_type_variant.append("CPX")  # COMPLEX
             just_snp = False
         elif len(path_lengths) == 3:  # Case simple path len 3

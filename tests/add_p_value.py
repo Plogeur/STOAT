@@ -23,13 +23,17 @@ with open(vcf_file, 'r') as vcf, open(output_vcf, 'w') as out_vcf:
             out_vcf.write(line)
         else:
             gwas_line = next(gwas_iter)
-            pval = gwas_line[-1] # Last column is the p-value
+            pval = gwas_line[-2] # Last last column... is the p-value
+            if pval == "NA":
+                pval = "1"
+
+            if float(pval) > 1 :
+                raise ValueError("P-value is greater than 1. Please check the GWAS file.")
             
             fields = line.strip().split("\t")
             info_field = fields[7]
             updated_info = info_field + ";PV=" + pval if info_field != "." else "PV=" + pval
             fields[7] = updated_info
-            
             out_vcf.write("\t".join(fields) + "\n")
 
 print("Annotated VCF file saved as", output_vcf)
