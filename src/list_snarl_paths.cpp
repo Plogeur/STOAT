@@ -350,7 +350,7 @@ std::pair<std::vector<std::tuple<string, vector<string>, string, string, vector<
         PackedGraph& pg, 
         const string& output_file,
         const string& output_snarl_not_analyse,
-        int children_threshold = 50, 
+        size_t children_threshold = 50, 
         bool bool_return = true) {
 
     ofstream out_snarl(output_file);

@@ -101,7 +101,7 @@ std::pair<std::vector<std::tuple<string, vector<string>, string, string, vector<
                             PackedGraph& pg, 
                             const string& output_file, 
                             const string& output_snarl_not_analyse, 
-                            int children_treshold, 
+                            size_t children_treshold, 
                             bool bool_return);
 
 #endif 

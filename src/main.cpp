@@ -16,9 +16,11 @@ void print_help() {
               << "  -s, --snarl <path>          Path to the snarl file (.txt or .tsv)\n"
               << "  -p, --pg <path>             Path to the pg file (.pg)\n"
               << "  -d, --dist <path>           Path to the dist file (.dist)\n"
-              << "  -c, --chr_ref <path>        Path to the chromosome reference file (.tsv)\n"
+              << "  -r, --chr_ref <path>        Path to the chromosome reference file (.tsv)\n"
               << "  -b, --binary <path>         Path to the binary group file (.txt or .tsv)\n"
+              << "  -g, --gaf                   Make GAF file from the N first significative snarl (default N=50)\n"
               << "  -q, --quantitative <path>   Path to the quantitative phenotype file (.txt or .tsv)\n"
+              << "  -e, --eqtl                  Expression quantitative trait loci\n"
               << "  -o, --output <name>         Output name\n"
               << "  -t, --thread <int>          Number of threads\n"
               << "  -h, --help                  Print this help message\n";
@@ -59,7 +61,8 @@ int main(int argc, char* argv[]) {
     // Declare variables to hold argument values
     std::string vcf_path, snarl_path, pg_path, dist_path, chromosome_path, binary_path, quantitative_path, output_dir;
     size_t threads=1;
-    bool show_help = false;
+    bool gfa, show_help, eqtl = false;
+    size_t children_threshold = 50;
 
     // Parse arguments manually
     for (int i = 1; i < argc; ++i) {
@@ -76,12 +79,22 @@ int main(int argc, char* argv[]) {
         } else if ((arg == "-d" || arg == "--dist") && i + 1 < argc) {
             dist_path = argv[++i];
             check_file(dist_path);
-        } else if ((arg == "-c" || arg == "--chr_ref") && i + 1 < argc) {
+        } else if ((arg == "-r" || arg == "--chr_ref") && i + 1 < argc) {
             chromosome_path = argv[++i];
             check_file(chromosome_path);
+        } else if ((arg == "-c" || arg == "--children_threshold") && i + 1 < argc) {
+            children_threshold = std::stoi(argv[++i]);
+            if (children_threshold < 1) {
+                std::cerr << "Error: Number of children must be a positive integer\n";
+                return EXIT_FAILURE;
+            }
         } else if ((arg == "-b" || arg == "--binary") && i + 1 < argc) {
             binary_path = argv[++i];
             check_file(binary_path);
+        } else if ((arg == "-g" || arg == "--gfa") && i + 1 < argc) {
+            gfa=true;
+        } else if ((arg == "-e" || arg == "--eqtl") && i + 1 < argc) {
+            eqtl=true;
         } else if ((arg == "-q" || arg == "--quantitative") && i + 1 < argc) {
             quantitative_path = argv[++i];
             check_file(quantitative_path);
@@ -121,6 +134,12 @@ int main(int argc, char* argv[]) {
         return 0;
     }
 
+    if (gfa == true && binary_path.empty()) || (gfa == true && pg_path.empty()) {
+        cerr << "GFA file can be generated only with binary phenotype AND with the pg graph";
+        print_help();
+        return 0;
+    }
+
     // Check format of the VCF file
     std::vector<std::tuple<string, vector<string>, string, string, vector<string>>> snarl;
 
@@ -134,7 +153,6 @@ int main(int argc, char* argv[]) {
         auto snarls = save_snarls(*stree, root, *pg, chromosomes, *pp_overlay);
         string output_snarl_not_analyse = output_dir + "/snarl_not_analyse.tsv";
         string output_file = output_dir + "/snarl_analyse.tsv";
-        int children_threshold = 50;
         auto& [snarl, num_paths_chr] = loop_over_snarls_write(*stree, snarls, *pg, output_file, output_snarl_not_analyse, children_threshold, true);
         auto end_0 = std::chrono::high_resolution_clock::now();
         std::cout << "Snarl analysis : " << std::chrono::duration<double>(end_0 - start_0).count() << " s" << std::endl;
