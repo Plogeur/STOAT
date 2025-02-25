@@ -6,6 +6,7 @@
 #include "matrix.hpp"
 #include "arg_parser.hpp"
 #include "list_snarl_paths.hpp"
+#include "gaf_creator.hpp"
 
 using namespace std;
 
@@ -86,7 +87,7 @@ int main(int argc, char* argv[]) {
     // Declare variables to hold argument values
     std::string vcf_path, snarl_path, pg_path, dist_path, chromosome_path, binary_path, quantitative_path, eqtl_path, output_dir;
     size_t threads=1;
-    bool gfa, show_help= false;
+    bool gaf, show_help= false;
     size_t children_threshold = 50;
 
     // Parse arguments manually
@@ -116,8 +117,8 @@ int main(int argc, char* argv[]) {
         } else if ((arg == "-b" || arg == "--binary") && i + 1 < argc) {
             binary_path = argv[++i];
             check_file(binary_path);
-        } else if ((arg == "-g" || arg == "--gfa") && i + 1 < argc) {
-            gfa=true;
+        } else if ((arg == "-g" || arg == "--gaf") && i + 1 < argc) {
+            gaf=true;
         } else if ((arg == "-q" || arg == "--quantitative") && i + 1 < argc) {
             quantitative_path = argv[++i];
             check_file(quantitative_path);
@@ -199,10 +200,16 @@ int main(int argc, char* argv[]) {
 
         string output_binary = output_dir + "/binary_gwas.tsv";
         std::ofstream outf(output_binary, std::ios::binary);
-        std::string headers = "CHR\tPOS\tSNARL\tTYPE\tP_FISHER\tP_CHI2\tALLELE_NUM\tMIN_ROW_INDEX\tNUM_COLUM\tINTER_GROUP\tAVERAGE\n";
+        std::string headers = "CHR\tPOS\tSNARL\tTYPE\tP_FISHER\tP_CHI2\tALLELE_NUM\tMIN_ROW_INDEX\tNUM_COLUM\tINTER_GROUP\tAVERAGE\tGROUP_PATHS\n";
         outf.write(headers.c_str(), headers.size());
 
         chromosome_chuck_binary(ptr_vcf, hdr, rec, list_samples, snarls_chr, binary, outf);
+        if (gaf) {
+            string output_gaf = output_dir + "/snarl.gfa";
+            std::ofstream out_gfa(output_gfa, std::ios::binary);
+            parse_input_file(output_binary, snarl_path, out_gfa);
+            out_gfa.close();
+        }
     }
 
     if (!quantitative_path.empty()) {

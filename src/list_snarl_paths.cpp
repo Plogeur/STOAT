@@ -364,7 +364,7 @@ std::unordered_map<std::string, std::vector<std::tuple<string, vector<string>, s
     chrono::seconds time_threshold(2);
     string save_chr = "";
 
-    std::vector<int> children = {0};
+    std::vector<size_t> children = {0};
     auto count_children = [&](net_handle_t net) {
         children[0] += 1;
         return true;
