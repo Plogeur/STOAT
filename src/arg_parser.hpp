@@ -4,10 +4,10 @@
 #include <iostream>
 #include <fstream>
 #include <unordered_map>
+#include <unordered_set>
 #include <string>
 #include <sstream>
 #include <vector>
-#include <unordered_map>
 #include <map>
 #include <algorithm>
 #include <limits>
@@ -27,11 +27,13 @@ std::unordered_map<std::string, double> parse_quantitative_pheno(const std::stri
 
 std::vector<std::string> parseHeader(const std::string& file_path);
 
+std::unordered_set<std::string> parse_chromosome_reference(const string& file_path);
+
 template <typename T>
 void check_match_samples(const std::unordered_map<std::string, T>& map, const std::vector<std::string>& keys);
 
 // Parses the snarl path file and returns a map with snarl as keys and paths as a list of strings.
-std::vector<std::tuple<string, vector<string>, string, string, vector<string>>> parse_snarl_path(const std::string& path_file);
+std::pair<std::vector<std::tuple<string, vector<string>, string, string, vector<string>>>,unordered_map<string, size_t>> parse_snarl_path(const std::string& path_file);
 
 void check_format_paths_snarl(const std::string& file_path);
 void check_format_quantitative_phenotype(const std::string& file_path);

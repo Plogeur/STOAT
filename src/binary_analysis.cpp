@@ -144,7 +144,7 @@ std::vector<std::string> binary_stat_test(const std::vector<std::vector<int>>& d
         min_row_index = std::min(min_row_index, row_sum);
     }
     
-    for (size_t col = 0; col < numb_colum; ++col) {
+    for (int col=0; col < numb_colum; ++col) {
         int col_min = INT_MAX;
         for (const auto& row : df) {
             col_min = std::min(col_min, row[col]);

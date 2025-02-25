@@ -344,7 +344,7 @@ tuple<vector<string>, vector<string>, size_t> fill_pretty_paths(
 
 // {snarl : (paths, chr, pos, type)} 
 // unordered_map<string, tuple<vector<string>, string, string, vector<string>>>
-std::pair<std::vector<std::tuple<string, vector<string>, string, string, vector<string>>>,unordered_map<string, size_t>> loop_over_snarls_write(
+std::pair<std::vector<std::tuple<string, vector<string>, string, string, vector<string>>>, unordered_map<string, size_t>> loop_over_snarls_write(
         SnarlDistanceIndex& stree, 
         vector<tuple<net_handle_t, string, size_t>>& snarls,
         PackedGraph& pg, 

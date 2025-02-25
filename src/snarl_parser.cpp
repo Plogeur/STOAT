@@ -78,42 +78,15 @@ void SnarlParser::push_matrix(const std::string& decomposedSnarl, std::unordered
     matrix.set(idxSnarl, indexColumn);
 }
 
-// Function to open a VCF file and return pointers to the file, header, and record
-std::tuple<htsFile*, bcf_hdr_t*, bcf1_t*> parse_vcf(const std::string& vcf_path) {
-    // Open the VCF file
-    htsFile *vcf_file = bcf_open(vcf_path.c_str(), "r");
-    if (!vcf_file) {
-        throw std::runtime_error("Error: Could not open VCF file: " + vcf_path);
-    }
-
-    // Read the VCF header
-    bcf_hdr_t *hdr = bcf_hdr_read(vcf_file);
-    if (!hdr) {
-        bcf_close(vcf_file);
-        throw std::runtime_error("Error: Could not read VCF header");
-    }
-
-    // Initialize a record
-    bcf1_t *rec = bcf_init();
-    if (!rec) {
-        bcf_hdr_destroy(hdr);
-        bcf_close(vcf_file);
-        throw std::runtime_error("Error: Failed to allocate memory for VCF record");
-    }
-
-    // Return the three initialized pointers
-    return std::make_tuple(vcf_file, hdr, rec);
-}
-
 // Function to parse VCF and fill matrix genotypes
-SnarlParser make_matrix(const std::string &vcf_path, htsFile *vcf_file, bcf_hdr_t *hdr, bcf1_t *rec, const std::vector<std::string> &sampleNames, string &chr, size_t &num_paths_chr) {
+SnarlParser make_matrix(htsFile *ptr_vcf, bcf_hdr_t *hdr, bcf1_t *rec, const std::vector<std::string> &sampleNames, string &chr, size_t &num_paths_chr) {
 
     std::unordered_map<std::string, size_t> row_header_dict;
     SnarlParser snarl_parser(sampleNames, num_paths_chr);
     
     // Read each variant from the VCF file
     // loop over the VCF file for each line and stop where chr is different
-    while (bcf_read(vcf_file, hdr, rec) >= 0) || (chr == bcf_hdr_id2name(hdr, rec->rid)) {
+    while ((bcf_read(ptr_vcf, hdr, rec) >= 0) || (chr == bcf_hdr_id2name(hdr, rec->rid))) {
         bcf_unpack(rec, BCF_UN_STR);
 
         // Check the INFO field for LV (Level Variant) and skip if LV != 0
@@ -231,8 +204,8 @@ std::vector<int> identify_correct_path(
 
 // Binary Table Generation
 void SnarlParser::binary_table(const std::vector<std::tuple<string, vector<string>, string, string, vector<string>>>& snarls,
-                                  const std::unordered_map<std::string, bool>& binary_groups,
-                                  const std::string& output) 
+                               const std::unordered_map<std::string, bool>& binary_groups,
+                               std::ofstream& outf) 
 {
 
     // Iterate over each snarl
@@ -268,7 +241,7 @@ void SnarlParser::binary_table(const std::vector<std::tuple<string, vector<strin
 // Quantitative Table Generation
 void SnarlParser::quantitative_table(const std::vector<std::tuple<string, vector<string>, string, string, vector<string>>>& snarls,
                                         const std::unordered_map<std::string, double>& quantitative_phenotype,
-                                        const std::string& output) 
+                                        std::ofstream& outf) 
 {
 
     // Iterate over each snarl

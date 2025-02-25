@@ -3,8 +3,8 @@
 namespace fs = std::filesystem;
 using namespace std;
 
-unordered_set<string> parse_chromosome_reference(const string& file_path) {
-    unordered_set<string> reference;
+std::unordered_set<std::string> parse_chromosome_reference(const string& file_path) {
+    std::unordered_set<std::string> reference;
     ifstream file(file_path);
     string line;
 
@@ -78,20 +78,36 @@ std::unordered_map<std::string, double> parse_quantitative_pheno(const std::stri
     return parsed_pheno;
 }
 
-std::vector<std::string> parseHeader(const std::string& vcf_path) {
 
+// Function to open a VCF file and return pointers to the file, header, and record
+std::tuple<htsFile*, bcf_hdr_t*, bcf1_t*> parse_vcf(const std::string& vcf_path) {
     // Open the VCF file
-    htsFile *vcf_file = bcf_open(vcf_path.c_str(), "r");
-    if (!vcf_file) {
+    htsFile *ptr_vcf = bcf_open(vcf_path.c_str(), "r");
+    if (!ptr_vcf) {
         throw std::runtime_error("Error: Could not open VCF file: " + vcf_path);
     }
-    
+
     // Read the VCF header
-    bcf_hdr_t *hdr = bcf_hdr_read(vcf_file);
+    bcf_hdr_t *hdr = bcf_hdr_read(ptr_vcf);
     if (!hdr) {
-        bcf_close(vcf_file);
+        bcf_close(ptr_vcf);
         throw std::runtime_error("Error: Could not read VCF header");
     }
+
+    // Initialize a record
+    bcf1_t *rec = bcf_init();
+    if (!rec) {
+        bcf_hdr_destroy(hdr);
+        bcf_close(ptr_vcf);
+        throw std::runtime_error("Error: Failed to allocate memory for VCF record");
+    }
+
+    // Return the three initialized pointers
+    return std::make_tuple(ptr_vcf, hdr, rec);
+}
+
+std::make_tuple<std::vector<std::string>, htsFile*, bcf_hdr_t*, bcf1_t*> parseHeader(const std::string& vcf_path) {
+    auto& [ptr_vcf, hdr, rec] = parse_vcf(vcf_path);
 
     std::vector<std::string> sampleNames;
 
@@ -99,11 +115,7 @@ std::vector<std::string> parseHeader(const std::string& vcf_path) {
     for (int i = 0; i < bcf_hdr_nsamples(hdr); i++) {
         sampleNames.push_back(bcf_hdr_int2id(hdr, BCF_DT_SAMPLE, i));
     }
-
-    // Cleanup
-    bcf_hdr_destroy(hdr);
-    bcf_close(vcf_file);
-    return sampleNames;
+    return std::make_tuple(sampleNames, ptr_vcf, hdr, rec);
 }
 
 template <typename T>

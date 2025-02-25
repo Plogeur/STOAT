@@ -27,25 +27,24 @@ void print_help() {
 }
 
 template <typename T>
-void chromosome_chuck(string& type, unordered_map<string, T>& pheno, std::ofstream& outf) {
-    auto& [vcf_file, hdr, rec] = parse_vcf(vcf_path);
-    while (bcf_read(vcf_file, hdr, rec) >= 0) {
+void chromosome_chuck(htsFile* ptr_vcf, bcf_hdr_t* hdr, bcf1_t* rec, string& type, unordered_map<string, size_t> num_paths_chr, unordered_map<string, T>& pheno, std::ofstream& outf) {
+    while (bcf_read(ptr_vcf, hdr, rec) >= 0) {
 
         string chr = bcf_hdr_id2name(hdr, rec->rid);
         size_t num_paths = num_paths_chr[chr];
         std::cout << "GWAS analysis for chromosome : " << chr << std::endl;
 
         // Initialize the SnarlProcessor with the VCF path
-        auto& [vcf_object, vcf_file, hdr, rec] = make_matrix(vcf_path, vcf_file, hdr, rec, list_samples, chr, num_paths);
+        auto& [vcf_object, ptr_vcf, hdr, rec] = make_matrix(ptr_vcf, hdr, rec, list_samples, chr, num_paths);
         
         switch (type)
         {
             case "binary":
-                vcf_object.binary_table(snarl, pheno, output);
+                vcf_object.binary_table(snarl, pheno, outf);
                 break;
 
             case "quantitative":
-                vcf_object.quantitative_table(snarl, pheno, output);
+                vcf_object.quantitative_table(snarl, pheno, outf);
                 break;
         }
     }
@@ -54,8 +53,8 @@ void chromosome_chuck(string& type, unordered_map<string, T>& pheno, std::ofstre
     bcf_hdr_destroy(hdr);
     bcf_close(vcf_file);
 }
-template void chromosome_chuck<bool>(string&, unordered_map<string, bool>&, std::ofstream&);
-template void chromosome_chuck<double>(string&,unordered_map<string, double>&, std::ofstream&);
+template void chromosome_chuck<bool>(htsFile*, bcf_hdr_t*, bcf1_t*, string&, unordered_map<string, size_t>, unordered_map<string, bool>&, std::ofstream&);
+template void chromosome_chuck<double>(htsFile*, bcf_hdr_t*, bcf1_t*, string&, unordered_map<string, size_t>, unordered_map<string, double>&, std::ofstream&);
 
 int main(int argc, char* argv[]) {
     // Declare variables to hold argument values
@@ -162,7 +161,7 @@ int main(int argc, char* argv[]) {
         return EXIT_FAILURE;
     }
 
-    std::vector<std::string> list_samples = parseHeader(vcf_path);    
+    auto& [sampleNames, ptr_vcf, hdr, rec] = parseHeader(vcf_path);    
     std::unordered_map<std::string, bool> binary;
     std::unordered_map<std::string, double> quantitative;
 
@@ -170,22 +169,26 @@ int main(int argc, char* argv[]) {
         check_format_binary_phenotype(binary_path);
         binary = parse_binary_pheno(binary_path);
         check_match_samples(binary, list_samples);
+
         string output_binary = output_dir + "/binary_gwas.tsv";
         std::ofstream outf(output_binary, std::ios::binary);
         std::string headers = "CHR\tPOS\tSNARL\tTYPE\tP_FISHER\tP_CHI2\tALLELE_NUM\tMIN_ROW_INDEX\tNUM_COLUM\tINTER_GROUP\tAVERAGE\n";
         outf.write(headers.c_str(), headers.size());
-        chromosome_chuck("binary", binary, outf);
+
+        chromosome_chuck(ptr_vcf, hdr, rec, "binary", num_paths_chr, binary, outf);
     }
 
     if (!quantitative_path.empty()) {
         check_format_quantitative_phenotype(quantitative_path);
         quantitative = parse_quantitative_pheno(quantitative_path);
         check_match_samples(quantitative, list_samples);
+
         string quantitive_output = output_dir + "/quantitative_gwas.tsv";
         std::ofstream outf(output, std::ios::binary);
         std::string headers = "CHR\tPOS\tSNARL\tTYPE\tSE\tBETA\tP\n";
         outf.write(headers.c_str(), headers.size());
-        chromosome_chuck("quantitative", quantitative, outf);
+
+        chromosome_chuck(ptr_vcf, hdr, rec, "quantitative", num_paths_chr, quantitative, outf);
     }
 
     auto end_1 = std::chrono::high_resolution_clock::now();
