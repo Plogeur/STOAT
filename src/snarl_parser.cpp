@@ -6,7 +6,7 @@
 using namespace std;
 
 SnarlParser::SnarlParser(const vector<string>& sample_names, size_t num_paths_chr) : 
-    sampleNames(sample_names), matrix(num_paths_chr, sample_names.size() * 2)
+    sampleNames(sample_names), matrix(num_paths_chr*4, sample_names.size() * 2)
 {}
 
 // Function to extract an integer from a string starting at index `i`
@@ -79,7 +79,7 @@ void SnarlParser::push_matrix(const std::string& decomposedSnarl, std::unordered
 }
 
 // Function to parse VCF and fill matrix genotypes
-SnarlParser make_matrix(htsFile *ptr_vcf, bcf_hdr_t *hdr, bcf1_t *rec, const std::vector<std::string> &sampleNames, string &chr, size_t &num_paths_chr) {
+std::tuple<SnarlParser, htsFile*, bcf_hdr_t*, bcf1_t*> make_matrix(htsFile *ptr_vcf, bcf_hdr_t *hdr, bcf1_t *rec, const std::vector<std::string> &sampleNames, string &chr, size_t &num_paths_chr) {
 
     std::unordered_map<std::string, size_t> row_header_dict;
     SnarlParser snarl_parser(sampleNames, num_paths_chr);
@@ -157,7 +157,7 @@ SnarlParser make_matrix(htsFile *ptr_vcf, bcf_hdr_t *hdr, bcf1_t *rec, const std
         }
         snarl_parser.matrix.set_row_header(row_header_dict);
     }    
-    return snarl_parser;
+    return std::make_tuple(snarl_parser, ptr_vcf, hdr, rec);
 }
 
 std::vector<int> identify_correct_path(
@@ -203,10 +203,9 @@ std::vector<int> identify_correct_path(
 }
 
 // Binary Table Generation
-void SnarlParser::binary_table(const std::vector<std::tuple<string, vector<string>, string, string, vector<string>>>& snarls,
-                               const std::unordered_map<std::string, bool>& binary_groups,
-                               std::ofstream& outf) 
-{
+void SnarlParser::binary_table(const std::vector<std::tuple<string, vector<string>, string, vector<string>>>& snarls,
+                               const std::unordered_map<std::string, bool>& binary_groups, const string &chr,
+                               std::ofstream& outf) {
 
     // Iterate over each snarl
     for (const auto& tuple_snarl : snarls) {
@@ -215,8 +214,8 @@ void SnarlParser::binary_table(const std::vector<std::tuple<string, vector<strin
         std::vector<std::vector<int>> df = create_binary_table(binary_groups, list_snarl, sampleNames, matrix);
         std::vector<std::string> stats = binary_stat_test(df);
 
-        std::string snarl = std::get<0>(tuple_snarl), chrom = std::get<2>(tuple_snarl), pos = std::get<3>(tuple_snarl);
-        std::vector<std::string> type_var = std::get<4>(tuple_snarl);
+        std::string snarl = std::get<0>(tuple_snarl), pos = std::get<2>(tuple_snarl);
+        std::vector<std::string> type_var = std::get<3>(tuple_snarl);
 
         // make a string separated by , from a vector of string
         std::ostringstream oss;
@@ -230,7 +229,7 @@ void SnarlParser::binary_table(const std::vector<std::tuple<string, vector<strin
         // chr, pos, snarl, type variant
         // fisher_p_value, chi2_p_value, allele_number, min_row_index, numb_colum, inter_group, average
         std::stringstream data;
-        data << chrom << "\t" << pos << "\t" << snarl << "\t" << type_var_str << "\t"
+        data << chr << "\t" << pos << "\t" << snarl << "\t" << type_var_str << "\t"
              << "\t" << stats[0] << "\t" << stats[1] << "\t" << stats[2] << "\t" << stats[3] 
              << "\t" << stats[4]  << "\t" << stats[5] << "\t" << stats[6] << "\t" << stats[7] << "\n";
         
@@ -239,8 +238,8 @@ void SnarlParser::binary_table(const std::vector<std::tuple<string, vector<strin
 }
 
 // Quantitative Table Generation
-void SnarlParser::quantitative_table(const std::vector<std::tuple<string, vector<string>, string, string, vector<string>>>& snarls,
-                                        const std::unordered_map<std::string, double>& quantitative_phenotype,
+void SnarlParser::quantitative_table(const std::vector<std::tuple<string, vector<string>, string, vector<string>>>& snarls,
+                                        const std::unordered_map<std::string, double>& quantitative_phenotype, const string &chr,
                                         std::ofstream& outf) 
 {
 
@@ -253,8 +252,8 @@ void SnarlParser::quantitative_table(const std::vector<std::tuple<string, vector
         // std::make_tuple(se, beta, p_value)
         std::tuple<double, double, std::string> tuple_info = linear_regression(df, quantitative_phenotype);
 
-        std::string snarl = std::get<0>(tuple_snarl), chrom = std::get<2>(tuple_snarl), pos = std::get<3>(tuple_snarl);
-        std::vector<std::string> type_var = std::get<4>(tuple_snarl);
+        std::string snarl = std::get<0>(tuple_snarl), pos = std::get<2>(tuple_snarl);
+        std::vector<std::string> type_var = std::get<3>(tuple_snarl);
 
         // make a string separated by ',' from a vector of string
         std::ostringstream oss;
@@ -266,7 +265,7 @@ void SnarlParser::quantitative_table(const std::vector<std::tuple<string, vector
         std::string type_var_str = oss.str();
 
         std::stringstream data;
-        data << chrom << "\t" << pos << "\t" << snarl << "\t" << type_var_str
+        data << chr << "\t" << pos << "\t" << snarl << "\t" << type_var_str
             << "\t" << std::get<0>(tuple_info) << "\t" << std::get<1>(tuple_info) 
             << "\t" << std::get<2>(tuple_info) << "\n";
 

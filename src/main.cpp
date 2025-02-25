@@ -20,47 +20,73 @@ void print_help() {
               << "  -b, --binary <path>         Path to the binary group file (.txt or .tsv)\n"
               << "  -g, --gaf                   Make GAF file from the N first significative snarl (default N=50)\n"
               << "  -q, --quantitative <path>   Path to the quantitative phenotype file (.txt or .tsv)\n"
-              << "  -e, --eqtl                  Expression quantitative trait loci\n"
+              << "  -e, --eqtl <path>           Path to the Expression Quantitative Trait Loci file (.txt or .tsv)\n"
               << "  -o, --output <name>         Output name\n"
               << "  -t, --thread <int>          Number of threads\n"
               << "  -h, --help                  Print this help message\n";
 }
 
-template <typename T>
-void chromosome_chuck(htsFile* ptr_vcf, bcf_hdr_t* hdr, bcf1_t* rec, string& type, unordered_map<string, size_t> num_paths_chr, unordered_map<string, T>& pheno, std::ofstream& outf) {
+void chromosome_chuck_quantitative(htsFile* &ptr_vcf, bcf_hdr_t* &hdr, bcf1_t* &rec, 
+                        const std::vector<std::string> &list_samples,
+                        unordered_map<string, std::vector<std::tuple<string, vector<string>, string, vector<string>>>> &snarl_chr,
+                        const unordered_map<string, double>& pheno, std::ofstream& outf) {
+
     while (bcf_read(ptr_vcf, hdr, rec) >= 0) {
 
         string chr = bcf_hdr_id2name(hdr, rec->rid);
-        size_t num_paths = num_paths_chr[chr];
         std::cout << "GWAS analysis for chromosome : " << chr << std::endl;
+        size_t size_chr = snarl_chr[chr].size();
 
-        // Initialize the SnarlProcessor with the VCF path
-        auto& [vcf_object, ptr_vcf, hdr, rec] = make_matrix(ptr_vcf, hdr, rec, list_samples, chr, num_paths);
-        
-        switch (type)
-        {
-            case "binary":
-                vcf_object.binary_table(snarl, pheno, outf);
-                break;
+        // Make genotype matrix by chromosome    
+        auto [vcf_object, ptr_vcf_new, hdr_new, rec_new] = make_matrix(ptr_vcf, hdr, rec, list_samples, chr, size_chr);
+        ptr_vcf = ptr_vcf_new;
+        hdr = hdr_new;
+        rec = rec_new;
 
-            case "quantitative":
-                vcf_object.quantitative_table(snarl, pheno, outf);
-                break;
-        }
+        auto snarl = snarl_chr[chr];
+
+        // Gwas analysis by chromosome
+        vcf_object.quantitative_table(snarl, pheno, chr, outf);
     }
     // Cleanup
     bcf_destroy(rec);
     bcf_hdr_destroy(hdr);
-    bcf_close(vcf_file);
+    bcf_close(ptr_vcf);
 }
-template void chromosome_chuck<bool>(htsFile*, bcf_hdr_t*, bcf1_t*, string&, unordered_map<string, size_t>, unordered_map<string, bool>&, std::ofstream&);
-template void chromosome_chuck<double>(htsFile*, bcf_hdr_t*, bcf1_t*, string&, unordered_map<string, size_t>, unordered_map<string, double>&, std::ofstream&);
+
+void chromosome_chuck_binary(htsFile* &ptr_vcf, bcf_hdr_t* &hdr, bcf1_t* &rec, 
+                        const std::vector<std::string> &list_samples, 
+                        unordered_map<string, std::vector<std::tuple<string, vector<string>, string, vector<string>>>> &snarl_chr,
+                        const unordered_map<string, bool>& pheno, std::ofstream& outf) {
+
+    while (bcf_read(ptr_vcf, hdr, rec) >= 0) {
+
+        string chr = bcf_hdr_id2name(hdr, rec->rid);
+        std::cout << "GWAS analysis for chromosome : " << chr << std::endl;
+        size_t size_chr = snarl_chr[chr].size();
+
+        // Make genotype matrix by chromosome    
+        auto [vcf_object, ptr_vcf_new, hdr_new, rec_new] = make_matrix(ptr_vcf, hdr, rec, list_samples, chr, size_chr);
+        ptr_vcf = ptr_vcf_new;
+        hdr = hdr_new;
+        rec = rec_new;
+
+        auto snarl = snarl_chr[chr];
+
+        // Gwas analysis by chromosome
+        vcf_object.binary_table(snarl, pheno, chr, outf);
+    }
+    // Cleanup
+    bcf_destroy(rec);
+    bcf_hdr_destroy(hdr);
+    bcf_close(ptr_vcf);
+}
 
 int main(int argc, char* argv[]) {
     // Declare variables to hold argument values
-    std::string vcf_path, snarl_path, pg_path, dist_path, chromosome_path, binary_path, quantitative_path, output_dir;
+    std::string vcf_path, snarl_path, pg_path, dist_path, chromosome_path, binary_path, quantitative_path, eqtl_path, output_dir;
     size_t threads=1;
-    bool gfa, show_help, eqtl = false;
+    bool gfa, show_help= false;
     size_t children_threshold = 50;
 
     // Parse arguments manually
@@ -92,11 +118,12 @@ int main(int argc, char* argv[]) {
             check_file(binary_path);
         } else if ((arg == "-g" || arg == "--gfa") && i + 1 < argc) {
             gfa=true;
-        } else if ((arg == "-e" || arg == "--eqtl") && i + 1 < argc) {
-            eqtl=true;
         } else if ((arg == "-q" || arg == "--quantitative") && i + 1 < argc) {
             quantitative_path = argv[++i];
             check_file(quantitative_path);
+        } else if ((arg == "-e" || arg == "--eqtl") && i + 1 < argc) {
+            eqtl_path = argv[++i];
+            check_file(eqtl_path);
         } else if ((arg == "-t" || arg == "--threads") && i + 1 < argc) {
             // convert str to int and verify that it is a positive number
             threads = std::stoi(argv[++i]);
@@ -124,26 +151,26 @@ int main(int argc, char* argv[]) {
         binary_path.empty() == quantitative_path.empty()) {
         cerr << "vcf_path or phenotype are missing";
         print_help();
-        return 0;
+        return EXIT_FAILURE;
     }
 
     if (snarl_path.empty() && (pg_path.empty() || dist_path.empty())) {
         cerr << "snarl or pg and dist files are missing";
         print_help();
-        return 0;
+        return EXIT_FAILURE;
     }
 
-    if (gfa == true && binary_path.empty()) || (gfa == true && pg_path.empty()) {
+    if ((gfa == true && binary_path.empty()) || (gfa == true && pg_path.empty())) {
         cerr << "GFA file can be generated only with binary phenotype AND with the pg graph";
         print_help();
-        return 0;
+        return EXIT_FAILURE;
     }
 
-    // Check format of the VCF file
-    std::vector<std::tuple<string, vector<string>, string, string, vector<string>>> snarl;
+    // scope declaration
+    std::unordered_map<std::string, std::vector<std::tuple<string, vector<string>, string, vector<string>>>> snarls_chr;
 
     if (!snarl_path.empty()){
-        auto& [snarl, num_paths_chr] = parse_snarl_path(snarl_path);
+        auto snarls_chr = parse_snarl_path(snarl_path);
 
     } else if (!pg_path.empty() && !dist_path.empty()) {
         std::cout << "Start snarl analysis... " << std::endl;
@@ -152,7 +179,7 @@ int main(int argc, char* argv[]) {
         auto snarls = save_snarls(*stree, root, *pg, chromosomes, *pp_overlay);
         string output_snarl_not_analyse = output_dir + "/snarl_not_analyse.tsv";
         string output_file = output_dir + "/snarl_analyse.tsv";
-        auto& [snarl, num_paths_chr] = loop_over_snarls_write(*stree, snarls, *pg, output_file, output_snarl_not_analyse, children_threshold, true);
+        auto snarls_chr = loop_over_snarls_write(*stree, snarls, *pg, output_file, output_snarl_not_analyse, children_threshold, true);
         auto end_0 = std::chrono::high_resolution_clock::now();
         std::cout << "Snarl analysis : " << std::chrono::duration<double>(end_0 - start_0).count() << " s" << std::endl;
 
@@ -161,7 +188,7 @@ int main(int argc, char* argv[]) {
         return EXIT_FAILURE;
     }
 
-    auto& [sampleNames, ptr_vcf, hdr, rec] = parseHeader(vcf_path);    
+    auto [list_samples, ptr_vcf, hdr, rec] = parseHeader(vcf_path);    
     std::unordered_map<std::string, bool> binary;
     std::unordered_map<std::string, double> quantitative;
 
@@ -175,7 +202,7 @@ int main(int argc, char* argv[]) {
         std::string headers = "CHR\tPOS\tSNARL\tTYPE\tP_FISHER\tP_CHI2\tALLELE_NUM\tMIN_ROW_INDEX\tNUM_COLUM\tINTER_GROUP\tAVERAGE\n";
         outf.write(headers.c_str(), headers.size());
 
-        chromosome_chuck(ptr_vcf, hdr, rec, "binary", num_paths_chr, binary, outf);
+        chromosome_chuck_binary(ptr_vcf, hdr, rec, list_samples, snarls_chr, binary, outf);
     }
 
     if (!quantitative_path.empty()) {
@@ -184,11 +211,11 @@ int main(int argc, char* argv[]) {
         check_match_samples(quantitative, list_samples);
 
         string quantitive_output = output_dir + "/quantitative_gwas.tsv";
-        std::ofstream outf(output, std::ios::binary);
+        std::ofstream outf(quantitive_output, std::ios::binary);
         std::string headers = "CHR\tPOS\tSNARL\tTYPE\tSE\tBETA\tP\n";
         outf.write(headers.c_str(), headers.size());
 
-        chromosome_chuck(ptr_vcf, hdr, rec, "quantitative", num_paths_chr, quantitative, outf);
+        chromosome_chuck_quantitative(ptr_vcf, hdr, rec, list_samples, snarls_chr, quantitative, outf);
     }
 
     auto end_1 = std::chrono::high_resolution_clock::now();

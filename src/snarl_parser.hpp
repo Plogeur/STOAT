@@ -27,19 +27,19 @@ public:
 
     SnarlParser(const vector<string>& sample_names, size_t num_paths_chr);
     void push_matrix(const std::string& decomposedSnarl, std::unordered_map<std::string, size_t>& rowHeaderDict, size_t indexColumn);
-    void binary_table(const std::vector<std::tuple<string, vector<string>, string, string, vector<string>>>& snarls,
-                        const std::unordered_map<std::string, bool>& binary_groups,
+    void binary_table(const std::vector<std::tuple<string, vector<string>, string, vector<string>>>& snarls,
+                        const std::unordered_map<std::string, bool>& binary_groups, const string &chr,
                         std::ofstream& outf);
-    void quantitative_table(const std::vector<std::tuple<string, vector<string>, string, string, vector<string>>>& snarls,
-                                const std::unordered_map<std::string, double>& quantitative,
+    void quantitative_table(const std::vector<std::tuple<string, vector<string>, string, vector<string>>>& snarls,
+                                const std::unordered_map<std::string, double>& quantitative, const string &chr,
                                 std::ofstream& outf);
 };
 
 std::tuple<htsFile*, bcf_hdr_t*, bcf1_t*> parse_vcf(const std::string& vcf_path);
 
-void process_vcf_batch(std::vector<bcf1_t*> records, bcf_hdr_t* hdr, SnarlParser& snarl_parser,
-    std::unordered_map<std::string, size_t>& row_header_dict, std::mutex& mutex);
-SnarlParser make_matrix(htsFile *ptr_vcf, bcf_hdr_t *hdr, bcf1_t *rec, const vector<string>& sample_names, string &chr, size_t &num_paths_ch);
+void process_vcf_batch(std::vector<bcf1_t*> records, bcf_hdr_t* hdr, SnarlParser& snarl_parser, std::unordered_map<std::string, size_t>& row_header_dict, std::mutex& mutex);
+
+std::tuple<SnarlParser, htsFile*, bcf_hdr_t*, bcf1_t*> make_matrix(htsFile *ptr_vcf, bcf_hdr_t *hdr, bcf1_t *rec, const vector<string>& sample_names, string &chr, size_t &num_paths_ch);
 
 // Retrieve the index of `key` if it exists in `ordered_map`. Otherwise, add it and return the new index.
 unsigned long long int getOrAddIndex(std::unordered_map<std::string, unsigned long long int>& orderedMap, const std::string& key, unsigned long long int lengthOrderedMap);

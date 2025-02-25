@@ -342,10 +342,9 @@ tuple<vector<string>, vector<string>, size_t> fill_pretty_paths(
     return std::make_tuple(pretty_paths, type_variants, length_first_variant);
 }
 
-// {snarl : (paths, chr, pos, type)} 
-// unordered_map<string, tuple<vector<string>, string, string, vector<string>>>
-std::pair<std::vector<std::tuple<string, vector<string>, string, string, vector<string>>>, unordered_map<string, size_t>> loop_over_snarls_write(
-        SnarlDistanceIndex& stree, 
+// {chr : matrix(snarl, paths, chr, pos, type)}
+std::unordered_map<std::string, std::vector<std::tuple<string, vector<string>, string, vector<string>>>> loop_over_snarls_write(
+        SnarlDistanceIndex& stree,
         vector<tuple<net_handle_t, string, size_t>>& snarls,
         PackedGraph& pg, 
         const string& output_file,
@@ -359,11 +358,12 @@ std::pair<std::vector<std::tuple<string, vector<string>, string, string, vector<
     out_snarl << "chr\tpos\tsnarl\tpaths\ttype\n";
     out_fail << "snarl\treason\n";
     
-    std::vector<std::tuple<string, vector<string>, string, string, vector<string>>> snarl_paths;
+    std::vector<std::tuple<string, vector<string>, string, vector<string>>> snarl_paths;
+    unordered_map<string, std::vector<std::tuple<string, vector<string>, string, vector<string>>>> chr_snarl_matrix;
     size_t paths_number_analysis = 0;
-    unordered_map<string, size_t> num_paths_chr;
     chrono::seconds time_threshold(2);
-    
+    string save_chr = "";
+
     std::vector<int> children = {0};
     auto count_children = [&](net_handle_t net) {
         children[0] += 1;
@@ -422,19 +422,23 @@ std::pair<std::vector<std::tuple<string, vector<string>, string, string, vector<
                       << "\t" << type_variants_stream.str() << "\n";
 
             if (bool_return) {
-                // {snarl, paths, chr, pos, type} 
-                snarl_paths.push_back(std::make_tuple(snarl_id, pretty_paths, chr,
-                    pos, type_variants));
-
-                if (num_paths_chr.find(chr) == num_paths_chr.end()) {
-                    num_paths_chr[chr] = pretty_paths.size();
-                } else {
-                    num_paths_chr[chr] += pretty_paths.size();
+                // case new chr
+                if (chr != save_chr && !save_chr.empty()) {
+                    chr_snarl_matrix[save_chr] = std::move(snarl_paths);
+                    snarl_paths.clear();
                 }
+                save_chr = chr;
+                // {snarl, paths, chr, pos, type}
+                snarl_paths.push_back(std::make_tuple(snarl_id, pretty_paths, pos, type_variants));
             }
+
             paths_number_analysis += pretty_paths.size();
         }
     }
+
+    // last chr adding
+    chr_snarl_matrix[save_chr] = std::move(snarl_paths);
+
     cout << "Number of paths analysed : " << paths_number_analysis << endl;
-    return {snarl_paths, num_paths_chr};
+    return chr_snarl_matrix;
 }

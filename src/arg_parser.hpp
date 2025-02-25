@@ -8,6 +8,7 @@
 #include <string>
 #include <sstream>
 #include <vector>
+#include <tuple>
 #include <map>
 #include <algorithm>
 #include <limits>
@@ -25,7 +26,7 @@ std::unordered_map<std::string, bool> parse_binary_pheno(const std::string& bina
 // Parses the phenotype file and returns a map with IID as keys and PHENO as float values.
 std::unordered_map<std::string, double> parse_quantitative_pheno(const std::string& qunatitative_pheno);
 
-std::vector<std::string> parseHeader(const std::string& file_path);
+std::tuple<std::vector<std::string>, htsFile*, bcf_hdr_t*, bcf1_t*> parseHeader(const std::string& file_path);
 
 std::unordered_set<std::string> parse_chromosome_reference(const string& file_path);
 
@@ -33,7 +34,7 @@ template <typename T>
 void check_match_samples(const std::unordered_map<std::string, T>& map, const std::vector<std::string>& keys);
 
 // Parses the snarl path file and returns a map with snarl as keys and paths as a list of strings.
-std::pair<std::vector<std::tuple<string, vector<string>, string, string, vector<string>>>,unordered_map<string, size_t>> parse_snarl_path(const std::string& path_file);
+std::unordered_map<std::string, std::vector<std::tuple<string, vector<string>, string, vector<string>>>> parse_snarl_path(const std::string& path_file);
 
 void check_format_paths_snarl(const std::string& file_path);
 void check_format_quantitative_phenotype(const std::string& file_path);

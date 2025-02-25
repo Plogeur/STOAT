@@ -106,16 +106,17 @@ std::tuple<htsFile*, bcf_hdr_t*, bcf1_t*> parse_vcf(const std::string& vcf_path)
     return std::make_tuple(ptr_vcf, hdr, rec);
 }
 
-std::make_tuple<std::vector<std::string>, htsFile*, bcf_hdr_t*, bcf1_t*> parseHeader(const std::string& vcf_path) {
-    auto& [ptr_vcf, hdr, rec] = parse_vcf(vcf_path);
+std::tuple<std::vector<std::string>, htsFile*, bcf_hdr_t*, bcf1_t*> parseHeader(const std::string& vcf_path) {
+    auto [ptr_vcf, hdr, rec] = parse_vcf(vcf_path);
 
-    std::vector<std::string> sampleNames;
+    std::vector<std::string> list_samples;
 
     // Get the samples names
     for (int i = 0; i < bcf_hdr_nsamples(hdr); i++) {
-        sampleNames.push_back(bcf_hdr_int2id(hdr, BCF_DT_SAMPLE, i));
+        list_samples.push_back(bcf_hdr_int2id(hdr, BCF_DT_SAMPLE, i));
     }
-    return std::make_tuple(sampleNames, ptr_vcf, hdr, rec);
+
+    return std::make_tuple(list_samples, ptr_vcf, hdr, rec);
 }
 
 template <typename T>
@@ -137,12 +138,13 @@ template void check_match_samples<bool>(const std::unordered_map<std::string, bo
 template void check_match_samples<double>(const std::unordered_map<std::string, double>&, const std::vector<std::string>&);
 
 // Function to parse the snarl path file
-std::pair<std::vector<std::tuple<string, vector<string>, string, string, vector<string>>>,unordered_map<string, size_t>> parse_snarl_path(const std::string& file_path) {
+std::unordered_map<std::string, std::vector<std::tuple<string, vector<string>, string, vector<string>>>> parse_snarl_path(const std::string& file_path) {
 
     std::string line, chr, pos, snarl, path_list, type_var;
-    std::vector<std::tuple<string, vector<string>, string, string, vector<string>>> snarl_paths;
-    unordered_map<string, size_t> num_paths_chr;
+    unordered_map<string, std::vector<std::tuple<string, vector<string>, string, vector<string>>>> chr_snarl_matrix;
+    std::vector<std::tuple<string, vector<string>, string, vector<string>>> snarl_paths;
     std::ifstream file(file_path);
+    std::string save_chr = "";
 
     // Read header
     std::getline(file, line);
@@ -174,17 +176,20 @@ std::pair<std::vector<std::tuple<string, vector<string>, string, string, vector<
             type.push_back(type_var);
         }
 
-        // {snarl, paths, chr, pos, type} 
-        snarl_paths.push_back(make_tuple(snarl, paths, chr, pos, type));
-        if (num_paths_chr.find(chr) == num_paths_chr.end()) {
-            num_paths_chr[chr] = size_paths;
-        } else {
-            num_paths_chr[chr] += size_paths;
+        if (chr != save_chr && !save_chr.empty()) {
+            chr_snarl_matrix[save_chr] = std::move(snarl_paths);
+            snarl_paths.clear();
         }
+        save_chr = chr;
+
+        // {snarl, paths, chr, pos, type} 
+        snarl_paths.push_back(make_tuple(snarl, paths, pos, type));
     }
+    // last chr adding
+    chr_snarl_matrix[save_chr] = std::move(snarl_paths);
 
     file.close();
-    return {snarl_paths, num_paths_chr};
+    return chr_snarl_matrix;
 }
 
 void check_format_quantitative_phenotype(const std::string& file_path) {
