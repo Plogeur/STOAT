@@ -40,7 +40,6 @@ def parse_file(file_path, threshold=1.0):
 
     return parsed, total_count, not_count
 
-
 def compare(file1_pairs, file2_pairs):
     not_found = []
     match_count = 0

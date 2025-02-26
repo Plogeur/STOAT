@@ -136,50 +136,6 @@ def match_snarl(freq_path_list, true_labels, list_diff, p_value_file, paths_file
 
     return predicted_labels_10_2, predicted_labels_10_5, predicted_labels_10_8, cleaned_true_labels, clean_list_diff, pvalue, num_sample
 
-def match_snarl_plink(freq_path_list:list, true_labels:list, list_diff:list, plink_file:str, snarl_paths_file:str):
-
-    plink_df = pd.read_csv(plink_file, sep='\t')
-    dict_node_pos = parse_snarl_path_file_dict(snarl_paths_file)
-
-    nan_pvalue = 0
-    type_ = []
-    num_samples = []
-    predicted_labels_10_2 = []
-    predicted_labels_10_5 = []
-    predicted_labels_10_8 = []
-    cleaned_true_labels = []
-    clean_list_diff = []
-    list_pvalue = []
-
-    for idx in range(0, len(freq_path_list) - 1, 2):  # Step by 2 to process pairs
-
-        start_node, next_node = map(int, freq_path_list[idx].split('_'))
-        #start_node_2, next_node_2 = map(int, path_list[idx+1].split('_'))
-
-        pos_node = dict_node_pos[next_node]
-
-        # correct matched_row get the row BP is matching with pos_node
-        matched_row = plink_df[plink_df['BP'] == int(pos_node)]
-
-        # Case where the snarl is found 
-        if not matched_row.empty:
-            for _, match in matched_row.iterrows():  # Unpack index and row (Series)
-                p_value = match.get("P")  # Access the 'P' value from the Series
-                if str(p_value) == "NA" or str(p_value) == "nan":
-                    nan_pvalue += 1
-                    continue
-                type_.append(match.get('TYPE'))
-                predicted_labels_10_2.append(0 if p_value < 0.01 else 1)
-                predicted_labels_10_5.append(0 if p_value < 0.00001 else 1)
-                predicted_labels_10_8.append(0 if p_value < 0.00000001 else 1)
-                cleaned_true_labels.append(true_labels[idx])
-                clean_list_diff.append(list_diff[idx])
-                list_pvalue.append(p_value)
-                num_samples.append(match.get("NUM_SAMPLE"))
-
-    print(f"Number of NA p-values: {nan_pvalue}")
-    return type_, predicted_labels_10_2, predicted_labels_10_5, predicted_labels_10_8, cleaned_true_labels, clean_list_diff, list_pvalue, num_samples
-
 def conf_mat_maker(p_val, predicted_labels, true_labels, output):
         
     # Calculate confusion matrix for p-value < p_val
@@ -450,7 +406,6 @@ if __name__ == "__main__":
     group = parser.add_mutually_exclusive_group(required=True)
     group.add_argument("-b", "--binary", action='store_true', help="binary test")
     group.add_argument("-q", "--quantitative", action='store_true', help="quantitative test")
-    group.add_argument("-p", "--plink", action='store_true', help="plink test")
 
     args = parser.parse_args()
 
@@ -464,11 +419,6 @@ if __name__ == "__main__":
         output_diff = f"{output}/quantitative_test"
         type_ = 'quantitative'
 
-    elif args.plink:
-        output = "tests/plink_tests_output/"
-        output_diff = f"{output}/plink_test"
-        type_ = 'plink'
-
     # THRESHOLD_FREQ : Threshold to define the truth label by comparing the frequence difference between both group
     THRESHOLD_FREQ = 0.2
 
@@ -476,10 +426,7 @@ if __name__ == "__main__":
     freq_test_path_list, test_true_labels, test_list_diff = process_file(args.freq, THRESHOLD_FREQ)
     assert len(freq_test_path_list) == len(test_true_labels) == len(test_list_diff)
 
-    if args.plink:
-        type_, test_predicted_labels_10_2, test_predicted_labels_10_5, test_predicted_labels_10_8, cleaned_true_labels, clean_list_diff, _, _ = match_snarl_plink(freq_test_path_list, test_true_labels, test_list_diff, args.p_value, args.paths)
-    else :
-        test_predicted_labels_10_2, test_predicted_labels_10_5, test_predicted_labels_10_8, cleaned_true_labels, clean_list_diff, _, _ = match_snarl(freq_test_path_list, test_true_labels, test_list_diff, args.p_value, args.paths, type_)
+    test_predicted_labels_10_2, test_predicted_labels_10_5, test_predicted_labels_10_8, cleaned_true_labels, clean_list_diff, _, _ = match_snarl(freq_test_path_list, test_true_labels, test_list_diff, args.p_value, args.paths, type_)
     
     # Plot confusion matrix
     print_confusion_matrix(test_predicted_labels_10_2, test_predicted_labels_10_5, test_predicted_labels_10_8, cleaned_true_labels, f"{output}/confusion_matrix_{THRESHOLD_FREQ}")
@@ -497,30 +444,10 @@ if __name__ == "__main__":
         plot_diff_distribution(test_predicted_labels_10_2, cleaned_true_labels, clean_list_diff, output_diff, "10^-2")
         p_value_distribution(test_predicted_labels_10_2, cleaned_true_labels, clean_list_diff, pvalue, num_sample, output_diff)
     
-    elif args.plink :
-        # THRESHOLD_FREQ = 0.0 : Case where just a difference between both group snarl is considered like Truth label
-        THRESHOLD_FREQ = 0.0
-        freq_test_path_list, test_true_labels, test_list_diff = process_file(args.freq, THRESHOLD_FREQ)
-        type_, test_predicted_labels_10_2, test_predicted_labels_10_5, test_predicted_labels_10_8, cleaned_true_labels, clean_list_diff, pvalue, num_sample = match_snarl_plink(freq_test_path_list, test_true_labels, test_list_diff, args.p_value, args.paths)
-        print_confusion_matrix(test_predicted_labels_10_2, test_predicted_labels_10_5, test_predicted_labels_10_8, cleaned_true_labels, f"{output}/confusion_matrix_{THRESHOLD_FREQ}")
-        assert len(cleaned_true_labels) == len(clean_list_diff)
-
-        print("Pourcentage of paths tested : ", (len(pvalue)/len(freq_test_path_list))*100*2)
-        # Plot distribution of p-values for false negatives and true positives
-        plot_diff_distribution(test_predicted_labels_10_2, cleaned_true_labels, clean_list_diff, output_diff, "10^-2")
-        p_value_distribution_plink(type_, test_predicted_labels_10_2, cleaned_true_labels, clean_list_diff, pvalue, num_sample, output_diff)
-
     """
     python3 tests/verify_truth.py --freq tests/simulation/quantitative_data/pg.snarls.freq.tsv \
     --p_value output/run_20250129_104641/quantitative_analysis.tsv --paths tests/simulation/quantitative_data/snarl_paths.tsv -q
 
     python3 tests/verify_truth.py --freq tests/simulation/binary_data/pg.snarls.freq.tsv \
     --p_value output/run_20250120_170153/binary_analysis.tsv --paths tests/simulation/binary_data/snarl_paths.tsv -b
-
-    # PLINK 
-    python3 tests/verify_truth.py --freq tests/simulation/quantitative_data/pg.snarls.freq.tsv \
-    --p_value tests/plink_tests_output/quantitative_plink_formatted.tsv -p --paths tests/simulation/quantitative_data/list_snarl_paths.tsv
-
-    python3 tests/verify_truth.py --freq tests/simulation/binary_data/pg.snarls.freq.tsv \
-    --p_value tests/plink_tests_output/binary.natif.tsv -p --paths tests/simulation/binary_data/list_snarl_paths.tsv
     """
