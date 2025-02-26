@@ -194,10 +194,6 @@ class SnarlProcessor:
 
         with open(output_gwas, 'wb') as outf, open(output_vcf, "wb") as outvcf:
             outf.write(headers.encode('utf-8'))
-            if make_vcf :
-                ALLELE = "\t".join(self.list_samples)
-                headers = f'ID\tINFO\t{ALLELE}\n'
-                outvcf.write(headers.encode('utf-8'))
 
             for snarl_info in snarls:
                 snarl, list_snarl, paths, chromosome, position = snarl_info
