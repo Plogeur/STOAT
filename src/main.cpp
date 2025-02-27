@@ -18,11 +18,12 @@ void print_help() {
               << "  -p, --pg <path>             Path to the pg file (.pg)\n"
               << "  -d, --dist <path>           Path to the dist file (.dist)\n"
               << "  -r, --chr_ref <path>        Path to the chromosome reference file (.tsv)\n"
+              << "  -c, --children <int>        Max number of children for a snarl in the snarl decomposition process\n"
               << "  -b, --binary <path>         Path to the binary group file (.txt or .tsv)\n"
-              << "  -g, --gaf                   Make GAF file from the N first significative snarl (default N=50)\n"
+              << "  -g, --gaf                   Make GAF file from the GWAS analysis\n"
               << "  -q, --quantitative <path>   Path to the quantitative phenotype file (.txt or .tsv)\n"
               << "  -e, --eqtl <path>           Path to the Expression Quantitative Trait Loci file (.txt or .tsv)\n"
-              << "  -o, --output <name>         Output name\n"
+              << "  -o, --output <name>         Output dir name\n"
               << "  -t, --thread <int>          Number of threads\n"
               << "  -h, --help                  Print this help message\n";
 }
@@ -108,7 +109,7 @@ int main(int argc, char* argv[]) {
         } else if ((arg == "-r" || arg == "--chr_ref") && i + 1 < argc) {
             chromosome_path = argv[++i];
             check_file(chromosome_path);
-        } else if ((arg == "-c" || arg == "--children_threshold") && i + 1 < argc) {
+        } else if ((arg == "-c" || arg == "--children") && i + 1 < argc) {
             children_threshold = std::stoi(argv[++i]);
             if (children_threshold < 1) {
                 std::cerr << "Error: Number of children must be a positive integer\n";
@@ -161,8 +162,8 @@ int main(int argc, char* argv[]) {
         return EXIT_FAILURE;
     }
 
-    if ((gfa == true && binary_path.empty()) || (gfa == true && pg_path.empty())) {
-        cerr << "GFA file can be generated only with binary phenotype AND with the pg graph";
+    if ((gaf == true && binary_path.empty()) || (gaf == true && pg_path.empty())) {
+        cerr << "GAF file can be generated only with binary phenotype AND with the pg graph";
         print_help();
         return EXIT_FAILURE;
     }
@@ -205,10 +206,10 @@ int main(int argc, char* argv[]) {
 
         chromosome_chuck_binary(ptr_vcf, hdr, rec, list_samples, snarls_chr, binary, outf);
         if (gaf) {
-            string output_gaf = output_dir + "/snarl.gfa";
-            std::ofstream out_gfa(output_gfa, std::ios::binary);
-            parse_input_file(output_binary, snarl_path, out_gfa);
-            out_gfa.close();
+            string output_gaf = output_dir + "/snarl.gaf";
+            std::ofstream out_gaf(output_gaf, std::ios::binary);
+            parse_input_file(output_binary, snarls_chr, out_gaf);
+            out_gaf.close();
         }
     }
 

@@ -5,10 +5,6 @@
 
 using namespace std;
 
-#include <iostream>
-#include <cmath>
-#include <algorithm>
-
 std::pair<int, int> calcul_proportion_signi(int number_ind_group0, int number_ind_group1, double p_value) {
     // Step 1: Calculate initial proportions based on a total of 60
     int total_ind = number_ind_group0 + number_ind_group1;
@@ -115,7 +111,7 @@ void write_gaf_lines(const string& sequence_name, const string& path, int length
 }
 
 // Parses the input file and processes data into two output files
-void parse_input_file(const string& input_file, const vector<pair<string, vector<string>>>& snarl_list,
+void parse_input_file(const string& input_file, std::unordered_map<std::string, std::vector<std::tuple<string, vector<string>, string, vector<string>>>>& snarl_chr,
                       PackedGraph& pg, const string& output_file) {
     string output_file_1 = add_suffix_to_filename(output_file, "_0");
     string output_file_2 = add_suffix_to_filename(output_file, "_1");
@@ -127,6 +123,7 @@ void parse_input_file(const string& input_file, const vector<pair<string, vector
     }
 
     string line;
+    size_t count_line = 0;
     getline(infile, line); // Skip header
 
     while (getline(infile, line)) {
@@ -139,17 +136,14 @@ void parse_input_file(const string& input_file, const vector<pair<string, vector
 
         if (columns.size() < 14) continue;
 
-        string snarl = columns[2];
+        const string& chr = columns[0];
+        string snarl_list = columns[2];
         double pfisher = stod(columns[6]);
         double pchi = stod(columns[7]);
         string group_paths = columns[13];
-
-        // Locate the snarl in the list
-        auto it = find_if(snarl_list.begin(), snarl_list.end(), [&snarl](const auto& p) { return p.first == snarl; });
-        if (it == snarl_list.end()) {
-            throw runtime_error(snarl + " not found in path list file");
-        }
-        const vector<string>& list_path = it->second;
+        auto it = snarl_chr.find(chr);
+        auto& data = it->second;  
+        vector<string>& list_path = std::get<1>(data[count_line]);
 
         // Split group paths by comma
         vector<string> decomposed_group_paths;
@@ -195,6 +189,7 @@ void parse_input_file(const string& input_file, const vector<pair<string, vector
                 write_gaf_lines(sequence_name_g1[idx], path, len, prop_g1, outfile2);
             }
         }
+        count_line += 1;
     }
 }
 
