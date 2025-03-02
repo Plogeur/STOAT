@@ -5,7 +5,7 @@
 
 using namespace std;
 
-std::pair<int, int> calcul_proportion_signi(int number_ind_group0, int number_ind_group1, double p_value) {
+std::pair<double, double> calcul_proportion_signi(int number_ind_group0, int number_ind_group1, double p_value) {
     // Step 1: Calculate initial proportions based on a total of 60
     int total_ind = number_ind_group0 + number_ind_group1;
     if (total_ind == 0) {
@@ -41,7 +41,7 @@ std::pair<int, int> calcul_proportion_signi(int number_ind_group0, int number_in
         adjusted_group1 *= scale_factor;
     }
 
-    return {static_cast<int>(std::round(adjusted_group0)), static_cast<int>(std::round(adjusted_group1))};
+    return {adjusted_group0, adjusted_group1};
 }
 
 std::string addSuffixToFilename(const std::string& filename, const std::string& suffix) {
@@ -100,11 +100,6 @@ int calcul_path_length(PackedGraph& pg, const string& snarl) {
     return length_node;
 }
 
-// Calculates a proportion significance score based on group values and Fisher's p-value
-double calcul_proportion_signi(int g0, int g1, double pfisher) {
-    return pfisher * (g0 + g1) / 2.0;  // Example calculation
-}
-
 // Writes a formatted line to the output file
 void write_gaf_lines(const string& sequence_name, const string& path, int length, double prop, ofstream& outfile) {
     outfile << sequence_name << "\t" << path << "\t" << length << "\t" << prop << "\n";
@@ -140,7 +135,7 @@ void parse_input_file(const string& input_file, std::unordered_map<std::string, 
         string snarl_list = columns[2];
         double pfisher = stod(columns[6]);
         double pchi = stod(columns[7]);
-        string group_paths = columns[13];
+        string group_paths = columns[11];
         auto it = snarl_chr.find(chr);
         auto& data = it->second;  
         vector<string>& list_path = std::get<1>(data[count_line]);
@@ -158,12 +153,14 @@ void parse_input_file(const string& input_file, std::unordered_map<std::string, 
             if (pos == string::npos) continue;
             group_0.push_back(path_group.substr(0, pos));
             group_1.push_back(path_group.substr(pos + 1));
-            sequence_name_g0.push_back(snarl + "_G0_" + group_0.back() + "_F" + to_string(pfisher) + "_C" + to_string(pchi));
-            sequence_name_g1.push_back(snarl + "_G1_" + group_1.back() + "_F" + to_string(pfisher) + "_C" + to_string(pchi));
+            sequence_name_g0.push_back(snarl_list + "_G0_" + group_0.back() + "_F" + to_string(pfisher) + "_C" + to_string(pchi));
+            sequence_name_g1.push_back(snarl_list + "_G1_" + group_1.back() + "_F" + to_string(pfisher) + "_C" + to_string(pchi));
         }
 
         for (size_t idx = 0; idx < list_path.size(); ++idx) {
             const string& path = list_path[idx];
+
+            // Case where "*" is in path
             if (path.find('*') != string::npos) {
                 // If the path contains '*', split it into two sub-paths
                 size_t star_pos = path.find('*');
@@ -172,19 +169,19 @@ void parse_input_file(const string& input_file, std::unordered_map<std::string, 
 
                 int len1 = calcul_path_length(pg, star_path_1);
                 int len2 = calcul_path_length(pg, star_path_2);
-                double prop_g0 = calcul_proportion_signi(stoi(group_0[idx]), stoi(group_1[idx]), pfisher);
-                double prop_g1 = calcul_proportion_signi(stoi(group_1[idx]), stoi(group_0[idx]), pfisher);
+                auto [prop_g0, prop_g1] = calcul_proportion_signi(stoi(group_0[idx]), stoi(group_1[idx]), pfisher);
 
-                // Write results for each sub-path
+                // Write lines for start_path_1
                 write_gaf_lines(sequence_name_g0[idx], star_path_1, len1, prop_g0, outfile1);
                 write_gaf_lines(sequence_name_g1[idx], star_path_1, len1, prop_g1, outfile2);
+                
+                // Write lines for start_path_2
                 write_gaf_lines(sequence_name_g0[idx], star_path_2, len2, prop_g0, outfile1);
                 write_gaf_lines(sequence_name_g1[idx], star_path_2, len2, prop_g1, outfile2);
             } else {
-                // If no '*', process normally
+                // Case where "*" is NOT in path
                 int len = calcul_path_length(pg, path);
-                double prop_g0 = calcul_proportion_signi(stoi(group_0[idx]), stoi(group_1[idx]), pfisher);
-                double prop_g1 = calcul_proportion_signi(stoi(group_1[idx]), stoi(group_0[idx]), pfisher);
+                auto [prop_g0, prop_g1] = calcul_proportion_signi(stoi(group_0[idx]), stoi(group_1[idx]), pfisher);
                 write_gaf_lines(sequence_name_g0[idx], path, len, prop_g0, outfile1);
                 write_gaf_lines(sequence_name_g1[idx], path, len, prop_g1, outfile2);
             }

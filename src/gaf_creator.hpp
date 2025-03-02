@@ -18,13 +18,13 @@
 using namespace std;
 using namespace bdsg;
 
-std::pair<int, int> calcul_proportion_signi(int number_ind_group0, int number_ind_group1, double p_value);
+std::pair<double, double> calcul_proportion_signi(int number_ind_group0, int number_ind_group1, double p_value);
 std::string addSuffixToFilename(const std::string& filename, const std::string& suffix);
 void writeGafLines(const std::string& sequenceName, const std::string& path, int length, double prop, std::ofstream& outfile);
 string add_suffix_to_filename(const string& filename, const string& suffix);
 
 vector<int> decompose_snarl(const string& snarl);
 int calcul_path_length(PackedGraph& pg, const string& snarl);
-double calcul_proportion_signi(int g0, int g1, double pfisher);
 void write_gaf_lines(const string& sequence_name, const string& path, int length, double prop, ofstream& outfile);
-void parse_input_file(const string& input_file, std::unordered_map<std::string, std::vector<std::tuple<string, vector<string>, string, vector<string>>>>& snarl_chr, PackedGraph& pg, const string& output_file);
+void parse_input_file(const string& input_file, std::unordered_map<std::string, std::vector<std::tuple<string, vector<string>, string, vector<string>>>>& snarl_chr,
+    PackedGraph& pg, const string& output_file);

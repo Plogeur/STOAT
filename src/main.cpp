@@ -170,6 +170,7 @@ int main(int argc, char* argv[]) {
 
     // scope declaration
     std::unordered_map<std::string, std::vector<std::tuple<string, vector<string>, string, vector<string>>>> snarls_chr;
+    std::unique_ptr<bdsg::PackedGraph> pg;
 
     if (!snarl_path.empty()){
         auto snarls_chr = parse_snarl_path(snarl_path);
@@ -207,9 +208,7 @@ int main(int argc, char* argv[]) {
         chromosome_chuck_binary(ptr_vcf, hdr, rec, list_samples, snarls_chr, binary, outf);
         if (gaf) {
             string output_gaf = output_dir + "/snarl.gaf";
-            std::ofstream out_gaf(output_gaf, std::ios::binary);
-            parse_input_file(output_binary, snarls_chr, out_gaf);
-            out_gaf.close();
+            parse_input_file(output_binary, snarls_chr, *pg, output_gaf);
         }
     }
 

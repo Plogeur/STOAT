@@ -139,7 +139,7 @@ std::string join(const std::vector<std::string>& elements, const std::string& de
     return oss.str();
 }
 
-std::string formatGroupPaths(const std::vector<std::vector<std::string>>& df) {
+std::string format_group_paths(const std::vector<std::vector<int>>& df) {
     if (df.empty() || df[0].empty()) return "";
     size_t numCols = df[0].size();
     size_t numRows = df.size();
@@ -195,7 +195,7 @@ std::vector<std::string> binary_stat_test(const std::vector<std::vector<int>>& d
         stringFastfisher_p_value = "NA";
     }
     
-    std::string group_paths = formatGroupPaths(df); // Placeholder for future implementation
+    std::string group_paths = format_group_paths(df); // Placeholder for future implementation
 
     return {stringFastfisher_p_value, chi2_p_value, std::to_string(allele_number), std::to_string(min_row_index), std::to_string(numb_colum), std::to_string(inter_group), std::to_string(average), group_paths};
 }

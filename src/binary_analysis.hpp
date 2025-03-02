@@ -39,7 +39,7 @@ long double fastFishersExactTest(const std::vector<std::vector<int>>& table);
 
 std::string join(const std::vector<std::string>& elements, const std::string& delimiter);
 
-std::string formatGroupPaths(const std::vector<std::vector<std::string>>& df);
+std::string format_group_paths(const std::vector<std::vector<int>>& df);
 
 std::vector<std::string> binary_stat_test(const std::vector<std::vector<int>>& df);
 
