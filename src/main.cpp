@@ -6,6 +6,7 @@
 #include "matrix.hpp"
 #include "arg_parser.hpp"
 #include "list_snarl_paths.hpp"
+#include "gaf_creator.hpp"
 
 using namespace std;
 
@@ -17,11 +18,12 @@ void print_help() {
               << "  -p, --pg <path>             Path to the pg file (.pg)\n"
               << "  -d, --dist <path>           Path to the dist file (.dist)\n"
               << "  -r, --chr_ref <path>        Path to the chromosome reference file (.tsv)\n"
+              << "  -c, --children <int>        Max number of children for a snarl in the snarl decomposition process\n"
               << "  -b, --binary <path>         Path to the binary group file (.txt or .tsv)\n"
-              << "  -g, --gaf                   Make GAF file from the N first significative snarl (default N=50)\n"
+              << "  -g, --gaf                   Make GAF file from the GWAS analysis\n"
               << "  -q, --quantitative <path>   Path to the quantitative phenotype file (.txt or .tsv)\n"
               << "  -e, --eqtl <path>           Path to the Expression Quantitative Trait Loci file (.txt or .tsv)\n"
-              << "  -o, --output <name>         Output name\n"
+              << "  -o, --output <name>         Output dir name\n"
               << "  -t, --thread <int>          Number of threads\n"
               << "  -h, --help                  Print this help message\n";
 }
@@ -86,7 +88,7 @@ int main(int argc, char* argv[]) {
     // Declare variables to hold argument values
     std::string vcf_path, snarl_path, pg_path, dist_path, chromosome_path, binary_path, quantitative_path, eqtl_path, output_dir;
     size_t threads=1;
-    bool gfa, show_help= false;
+    bool gaf, show_help= false;
     size_t children_threshold = 50;
 
     // Parse arguments manually
@@ -107,7 +109,7 @@ int main(int argc, char* argv[]) {
         } else if ((arg == "-r" || arg == "--chr_ref") && i + 1 < argc) {
             chromosome_path = argv[++i];
             check_file(chromosome_path);
-        } else if ((arg == "-c" || arg == "--children_threshold") && i + 1 < argc) {
+        } else if ((arg == "-c" || arg == "--children") && i + 1 < argc) {
             children_threshold = std::stoi(argv[++i]);
             if (children_threshold < 1) {
                 std::cerr << "Error: Number of children must be a positive integer\n";
@@ -116,8 +118,8 @@ int main(int argc, char* argv[]) {
         } else if ((arg == "-b" || arg == "--binary") && i + 1 < argc) {
             binary_path = argv[++i];
             check_file(binary_path);
-        } else if ((arg == "-g" || arg == "--gfa") && i + 1 < argc) {
-            gfa=true;
+        } else if ((arg == "-g" || arg == "--gaf") && i + 1 < argc) {
+            gaf=true;
         } else if ((arg == "-q" || arg == "--quantitative") && i + 1 < argc) {
             quantitative_path = argv[++i];
             check_file(quantitative_path);
@@ -160,14 +162,15 @@ int main(int argc, char* argv[]) {
         return EXIT_FAILURE;
     }
 
-    if ((gfa == true && binary_path.empty()) || (gfa == true && pg_path.empty())) {
-        cerr << "GFA file can be generated only with binary phenotype AND with the pg graph";
+    if ((gaf == true && binary_path.empty()) || (gaf == true && pg_path.empty())) {
+        cerr << "GAF file can be generated only with binary phenotype AND with the pg graph";
         print_help();
         return EXIT_FAILURE;
     }
 
     // scope declaration
     std::unordered_map<std::string, std::vector<std::tuple<string, vector<string>, string, vector<string>>>> snarls_chr;
+    std::unique_ptr<bdsg::PackedGraph> pg;
 
     if (!snarl_path.empty()){
         auto snarls_chr = parse_snarl_path(snarl_path);
@@ -199,10 +202,14 @@ int main(int argc, char* argv[]) {
 
         string output_binary = output_dir + "/binary_gwas.tsv";
         std::ofstream outf(output_binary, std::ios::binary);
-        std::string headers = "CHR\tPOS\tSNARL\tTYPE\tP_FISHER\tP_CHI2\tALLELE_NUM\tMIN_ROW_INDEX\tNUM_COLUM\tINTER_GROUP\tAVERAGE\n";
+        std::string headers = "CHR\tPOS\tSNARL\tTYPE\tP_FISHER\tP_CHI2\tALLELE_NUM\tMIN_ROW_INDEX\tNUM_COLUM\tINTER_GROUP\tAVERAGE\tGROUP_PATHS\n";
         outf.write(headers.c_str(), headers.size());
 
         chromosome_chuck_binary(ptr_vcf, hdr, rec, list_samples, snarls_chr, binary, outf);
+        if (gaf) {
+            string output_gaf = output_dir + "/snarl.gaf";
+            parse_input_file(output_binary, snarls_chr, *pg, output_gaf);
+        }
     }
 
     if (!quantitative_path.empty()) {

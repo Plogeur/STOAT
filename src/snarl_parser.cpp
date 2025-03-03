@@ -81,9 +81,9 @@ void SnarlParser::push_matrix(const std::string& decomposedSnarl, std::unordered
 // Function to parse VCF and fill matrix genotypes
 std::tuple<SnarlParser, htsFile*, bcf_hdr_t*, bcf1_t*> make_matrix(htsFile *ptr_vcf, bcf_hdr_t *hdr, bcf1_t *rec, const std::vector<std::string> &sampleNames, string &chr, size_t &num_paths_chr) {
 
-    std::unordered_map<std::string, size_t> row_header_dict;
     SnarlParser snarl_parser(sampleNames, num_paths_chr);
-    
+    std::unordered_map<std::string, size_t> row_header_dict;
+
     // Read each variant from the VCF file
     // loop over the VCF file for each line and stop where chr is different
     while ((bcf_read(ptr_vcf, hdr, rec) >= 0) || (chr == bcf_hdr_id2name(hdr, rec->rid))) {
@@ -156,7 +156,8 @@ std::tuple<SnarlParser, htsFile*, bcf_hdr_t*, bcf1_t*> make_matrix(htsFile *ptr_
             }
         }
         snarl_parser.matrix.set_row_header(row_header_dict);
-    }    
+        snarl_parser.matrix.shrink(row_header_dict.size());
+    }
     return std::make_tuple(snarl_parser, ptr_vcf, hdr, rec);
 }
 

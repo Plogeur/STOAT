@@ -128,6 +128,34 @@ long double fastFishersExactTest(const std::vector<std::vector<int>>& table) {
 
 // ------------------------ Binary table & stats ------------------------
 
+std::string join(const std::vector<std::string>& elements, const std::string& delimiter) {
+    std::ostringstream oss;
+    if (!elements.empty()) {
+        oss << elements.front();
+        for (size_t i = 1; i < elements.size(); ++i) {
+            oss << delimiter << elements[i];
+        }
+    }
+    return oss.str();
+}
+
+std::string format_group_paths(const std::vector<std::vector<int>>& df) {
+    if (df.empty() || df[0].empty()) return "";
+    size_t numCols = df[0].size();
+    size_t numRows = df.size();
+    std::vector<std::string> result(numCols);
+    
+    for (size_t col = 0; col < numCols; ++col) {
+        std::vector<std::string> columnValues(numRows);
+        for (size_t row = 0; row < numRows; ++row) {
+            columnValues[row] = df[row][col];
+        }
+        result[col] = join(columnValues, ":");
+    }
+    
+    return join(result, ",");
+}
+
 std::vector<std::string> binary_stat_test(const std::vector<std::vector<int>>& df) {
     // Compute Fisher's exact test p-value
     long double fastfisher_p_value = fastFishersExactTest(df);
@@ -167,7 +195,7 @@ std::vector<std::string> binary_stat_test(const std::vector<std::vector<int>>& d
         stringFastfisher_p_value = "NA";
     }
     
-    std::string group_paths = ""; // Placeholder for future implementation
+    std::string group_paths = format_group_paths(df); // Placeholder for future implementation
 
     return {stringFastfisher_p_value, chi2_p_value, std::to_string(allele_number), std::to_string(min_row_index), std::to_string(numb_colum), std::to_string(inter_group), std::to_string(average), group_paths};
 }

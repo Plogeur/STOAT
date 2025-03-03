@@ -1,29 +1,23 @@
 #ifndef QUANTITATIVE_ANALYSIS_HPP
 #define QUANTITATIVE_ANALYSIS_HPP
 
+#include <sstream>
 #include <vector>
 #include <cmath>
 #include <iostream>
 #include <string>
 #include <map>
-#include <unordered_map>
 #include <numeric>
 #include <stdexcept>
 #include <algorithm>
 #include <tuple>
 #include <iomanip>
 
+#include <boost/math/statistics/linear_regression.hpp>
+#include <boost/math/distributions/students_t.hpp>
+
 #include "matrix.hpp"
 #include "snarl_parser.hpp"
-
-// Function to calculate the mean of a vector
-double mean(const std::vector<double>& v);
-
-// Function to calculate the variance of a vector
-double variance(const std::vector<double>& v);
-
-// Function to calculate the covariance between two vectors
-double covariance(const std::vector<double>& x, const std::vector<double>& y);
 
 // Linear regression function that returns a tuple of p_value, standard error (se), and beta
 std::tuple<double, double, std::string> linear_regression(

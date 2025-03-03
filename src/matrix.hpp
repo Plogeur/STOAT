@@ -17,9 +17,9 @@ public:
     size_t getRows() const;
     void expandMatrix();
     void set_row_header(const std::unordered_map<std::string, size_t>& row_header);
+    void shrink(size_t current_rows);
 
 private:
-    size_t rows_;
     size_t cols_;
     size_t default_row_number;
     std::vector<uint8_t> matrix_1D;
