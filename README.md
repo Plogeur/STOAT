@@ -1,4 +1,4 @@
-# STOAT (Snarl Tree Orchestrated Association Test)
+# STOAT-NODE (Snarl Tree Orchestrated Association Test)
 
 <p align="center">
     <a href="https://www.python.org/downloads/release/python-3100/"><img src="https://img.shields.io/badge/Python-3.10-blue.svg"></a>
@@ -15,13 +15,13 @@ I will release one days, I will !!!
 
 ## Project Overview
 
-STOAT is a specialized tool developed for conducting Genome-Wide Association Studies (GWAS) with a unique focus on snarl structures within pangenome graphs. Unlike traditional GWAS tools that analyze linear genome variants, STOAT processes VCF files to extract and analyze snarl regions—complex structural variations that capture nested and overlapping variant patterns within a pangenome. This approach allows for a more nuanced understanding of genetic variations in diverse populations and complex traits.
+STOAT-NODE is a specialized tool developed for conducting Genome-Wide Association Studies (GWAS) with a unique focus on node within pangenome graphs. Unlike traditional GWAS tools that analyze linear genome variants, STOAT processes VCF files to extract and analyze node regions—complex structural variations that capture nested and overlapping variant patterns within a pangenome. This approach allows for a more nuanced understanding of genetic variations in diverse populations and complex traits.
 
 STOAT supports both binary and quantitative phenotypes:
 
-- For binary phenotypes (e.g., case vs control studies), it utilizes chi-squared tests and Fisher’s exact test to evaluate associations between phenotype groups and snarl variants, providing robust statistical validation even in cases of sparse data.
+- For binary phenotypes (e.g., case vs control studies), it utilizes chi-squared tests and Fisher’s exact test to evaluate associations between phenotype groups and variants, providing robust statistical validation even in cases of sparse data.
 
-- For quantitative phenotypes (e.g., traits measured on a continuous scale), the tool employs linear regression models to assess the association between snarl structures and phenotype values, allowing for continuous trait mapping with greater precision.
+- For quantitative phenotypes (e.g., traits measured on a continuous scale), the tool employs linear regression models to assess the association between node and phenotype values, allowing for continuous trait mapping with greater precision.
 
 ## Installation
 
@@ -38,7 +38,6 @@ pip install .
 - pandas
 - bdsg
 - ...
-
 
 ## Input format file
 
@@ -129,8 +128,8 @@ stoat -l <paths.txt> -v <vcf.vcf.gz> -r <ref.vcf.gz> -q <phenotype.txt> -o outpu
 | Column Name       | Description                                                                                   |
 |-------------------|-----------------------------------------------------------------------------------------------|
 | **CHR**           | Chromosome name where the variation occurs.                                                   |
-| **POS**           | Position of the snarl within the chromosome.                                                  |
-| **SNARL**         | Identifier for the variant, snarl name/id                                                     |
+| **POS**           | Position of the node within the chromosome.                                                   |
+| **NODE**          | Identifier for the variant, node name/id                                                      |
 | **TYPE**          | Type of genetic variation (e.g., SNP, INS, DEL).                                              |
 | **REF**           | Sequence of the reference allele.                                                             |
 | **ALT**           | Sequence of the alternate allele.                                                             |
@@ -151,20 +150,19 @@ stoat -l <paths.txt> -v <vcf.vcf.gz> -r <ref.vcf.gz> -q <phenotype.txt> -o outpu
 Below is an example of the output for a binary phenotype analysis:
 
 ```bash
-CHR POS SNARL           TYPE  REF ALT   P_FISHER  P_CHI2  ALLELE_NUM  MIN_ROW_INDEX NUM_COLUM INTER_GROUP AVERAGE
-1   12  5262721_5262719 SNP   A   T     0.4635    0.5182  286        2             137       46          143.0
-1   15  5262719_5262717 INS   A   ATT   0.8062    0.8747  286        2             141       34          143.0
-1   18  5262717_5262714 DEL   AA  T     0.2120    0.2363  286        2             134       32          143.0
+CHR POS NODE          TYPE  REF ALT   P_FISHER  P_CHI2  ALLELE_NUM  MIN_ROW_INDEX NUM_COLUM INTER_GROUP AVERAGE
+1   12  1             SNP   A   T     0.4635    0.5182  286        2             137       46          143.0
+1   15  2             INS   A   ATT   0.8062    0.8747  286        2             141       34          143.0
+1   18  3             DEL   AA  T     0.2120    0.2363  286        2             134       32          143.0
 ```
 
 Below is an example of the output for a quantitative phenotype analysis (-q option) :
 
 ```bash
-CHR	POS	SNARL	TYPE	REF	ALT	RSQUARED	BETA	SE	P
-1	12	5262721_5262719	SNP	A	T	8.3697e-01	1.3878e+01	6.5108e+00	4.0376e-01
-1	15	5262719_5262717	INS	A	ATT	4.4237e-01	1.3238e+01	6.5345e+00	4.6574e-01
-1	18	5262717_5262714	DEL	AA	T	6.3237e-01	1.6458e+01	6.6453e+00	4.7484e-01
-1	19	5262717_5262714	COMPLEX	C	NA	4.2342e-01	2.3242e+01	5.3251e+00	1.3245e-01
+CHR	POS	NODE	TYPE	REF	ALT	RSQUARED	BETA	SE	P
+1	12	1	SNP	A	T	8.3697e-01	1.3878e+01	6.5108e+00	4.0376e-01
+1	15	2	INS	A	ATT	4.4237e-01	1.3238e+01	6.5345e+00	4.6574e-01
+1	18	3	DEL	AA	T	6.3237e-01	1.6458e+01	6.6453e+00	4.7484e-01
 ```
 
 ## Visualization

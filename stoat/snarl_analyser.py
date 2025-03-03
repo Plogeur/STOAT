@@ -149,7 +149,7 @@ class SnarlProcessor:
 
         self.matrix.set_row_header(row_header_dict)
 
-    def binary_table(self, snarls:dict, binary_groups:tuple[dict, dict], kinship_matrix:pd.DataFrame=None, covar:Optional[dict]=None, gaf:bool=False, output:str="output/binary_output.tsv"):
+    def binary_table(self, snarls:dict, binary_groups:tuple[dict, dict], gaf:bool=False, output:str="output/binary_output.tsv"):
         """
         Generate a binary table with statistical results and write to a file.
         """
@@ -166,8 +166,6 @@ class SnarlProcessor:
                 chromosome, position = node_info
                 # Create the binary table, considering covariates if provided
                 df = self.create_binary_table(binary_groups, node)
-                # if kinship_matrix and covar :
-                #     p_value, beta, vcomp = lmm_pvalue = self.LMM_binary(df, kinship_matrix, covar)
                 ref = alt = 'NA'
                 # Perform statistical tests and compute descriptive statistics
                 fisher_p_value, chi2_p_value, allele_number, min_sample, numb_colum, inter_group, average, group_paths = self.binary_stat_test(df, gaf)
@@ -179,7 +177,7 @@ class SnarlProcessor:
             
                 outf.write(data.encode('utf-8'))
 
-    def quantitative_table(self, snarls:dict, quantitative_dict:dict, kinship_matrix:pd.DataFrame=None, covar:Optional[dict]=None, output:str="output/quantitative_output.tsv") :
+    def quantitative_table(self, snarls:dict, quantitative_dict:dict, output:str="output/quantitative_output.tsv") :
 
         with open(output, 'wb') as outf:
             headers = 'CHR\tPOS\tNODE\tREF\tALT\tRSQUARED\tBETA\tSE\tP\tALLELE_NUM\n'

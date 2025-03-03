@@ -3,6 +3,7 @@ import argparse
 from stoat import utils
 import time 
 import os 
+import re 
 
 # class to help make paths from BDSG objects
 # and deal with orientation, flipping, etc
@@ -65,6 +66,9 @@ class Path:
     def nreversed(self):
         # counts how many nodes are traversed in reverse
         return (sum(['<' == orient for orient in self.orients]))
+
+def get_nodes(s):
+    return list(map(int, re.findall(r'\d+', s)))
 
 def calcul_type_variant(list_list_length_paths) :
     """ 
@@ -259,8 +263,8 @@ def fill_pretty_paths(stree, pg, finished_paths) :
 def loop_over_snarls_write(stree, snarls, pg, output_file, output_snarl_not_analyse, children_treshold=50, bool_return=True) :
 
     with open(output_file, 'w') as out_snarl, open(output_snarl_not_analyse, 'w') as out_fail:
-        out_snarl.write('snarl\tpaths\ttype\tchr\tpos\n')
-        out_fail.write('snarl\treason\n')
+        out_snarl.write('chr\tpos\tnode\tpaths\ttype\n')
+        out_fail.write('node\treason\n')
 
         snarl_paths = []
         paths_number_analysis = 0
@@ -303,11 +307,19 @@ def loop_over_snarls_write(stree, snarls, pg, output_file, output_snarl_not_anal
 
                 # prepare path list to output and write each path directly to the file
                 pretty_paths, type_variants = fill_pretty_paths(stree, pg, finished_paths)
-                out_snarl.write('{}\t{}\t{}\t{}\t{}\n'.format(snarl_id, ','.join(pretty_paths), ','.join(type_variants), snarl_path_pos[1], snarl_path_pos[2]))
 
-                if bool_return :
-                    snarl_paths.append((snarl_id, pretty_paths, ','.join(type_variants), snarl_path_pos[1], snarl_path_pos[2]))
-                
+                # loop on every paths of the snarl and get the node that's interresting to analyse
+                for pretty_path in pretty_paths :
+                    nodes = get_nodes(pretty_path)
+                    if len(nodes) >= 3 :
+                        node = nodes[1]
+                    else :
+                        node = nodes[0]
+                    out_snarl.write('{}\t{}\t{}\t{}\t{}\n'.format(snarl_path_pos[1], snarl_path_pos[2], node, ','.join(pretty_paths), ','.join(type_variants)))
+
+                    if bool_return :
+                        snarl_paths.append((snarl_path_pos[1], snarl_path_pos[2], node, ','.join(pretty_paths), ','.join(type_variants)))
+                    
                 paths_number_analysis += len(pretty_paths)
 
     return snarl_paths, paths_number_analysis
