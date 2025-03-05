@@ -16,6 +16,36 @@ std::unordered_set<std::string> parse_chromosome_reference(const string& file_pa
     return reference;
 }
 
+std::vector<EQTL> parseEQTLFile(const std::string& filename) {
+    std::vector<EQTL> eqtl_data;
+    std::ifstream file(filename);
+
+    std::string line;
+    bool first_line = true;
+
+    while (std::getline(file, line)) {
+        std::istringstream ss(line);
+        std::string snp_id, gene_id, p_value_str, effect_size_str;
+
+        if (first_line) { 
+            first_line = false;  // Skip the header line
+            continue;
+        }
+
+        if (ss >> snp_id >> gene_id >> p_value_str >> effect_size_str) {
+            try {
+                double p_value = std::stod(p_value_str);
+                double effect_size = std::stod(effect_size_str);
+                eqtl_data.push_back({snp_id, gene_id, p_value, effect_size});
+            } catch (const std::exception& e) {
+                std::cerr << "Error parsing line: " << line << " (" << e.what() << ")" << std::endl;
+            }
+        }
+    }
+
+    return eqtl_data;
+}
+
 std::unordered_map<std::string, bool> parse_binary_pheno(const std::string& file_path) {
     
     std::unordered_map<std::string, bool> parsed_pheno;

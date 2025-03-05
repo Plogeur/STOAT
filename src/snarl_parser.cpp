@@ -64,17 +64,15 @@ size_t getOrAddIndex(std::unordered_map<std::string, size_t>& orderedMap, const 
 
 // Add True to the matrix if snarl is found
 void SnarlParser::push_matrix(const std::string& decomposedSnarl, std::unordered_map<std::string, size_t>& rowHeaderDict, size_t indexColumn) {
-    // Retrieve or add the index in one step and calculate length once
+    
     size_t lengthOrderedMap = rowHeaderDict.size();
     size_t idxSnarl = getOrAddIndex(rowHeaderDict, decomposedSnarl, lengthOrderedMap);
-
-    // Check if a new matrix chunk is needed
-    size_t currentRowsNumber = matrix.getRows();
+    size_t currentRowsNumber = matrix.getMaxElement();
+    
     if (lengthOrderedMap > currentRowsNumber - 1) {
         matrix.expandMatrix();
     }
 
-    // Add data to the matrix
     matrix.set(idxSnarl, indexColumn);
 }
 
@@ -84,9 +82,8 @@ std::tuple<SnarlParser, htsFile*, bcf_hdr_t*, bcf1_t*> make_matrix(htsFile *ptr_
     SnarlParser snarl_parser(sampleNames, num_paths_chr);
     std::unordered_map<std::string, size_t> row_header_dict;
 
-    // Read each variant from the VCF file
     // loop over the VCF file for each line and stop where chr is different
-    while ((bcf_read(ptr_vcf, hdr, rec) >= 0) || (chr == bcf_hdr_id2name(hdr, rec->rid))) {
+    while ((bcf_read(ptr_vcf, hdr, rec) >= 0) || (chr != bcf_hdr_id2name(hdr, rec->rid))) {
         bcf_unpack(rec, BCF_UN_STR);
 
         // Check the INFO field for LV (Level Variant) and skip if LV != 0
@@ -105,17 +102,6 @@ std::tuple<SnarlParser, htsFile*, bcf_hdr_t*, bcf1_t*> make_matrix(htsFile *ptr_
         int32_t *gt = nullptr;
         ngt = bcf_get_genotypes(hdr, rec, &gt, &ngt);
 
-        std::vector<int> genotypes;
-        if (ngt > 0 && gt) {
-            for (int i = 0; i < rec->n_sample; ++i) {
-                int allele_1 = bcf_gt_allele(gt[i * 2]);
-                int allele_2 = bcf_gt_allele(gt[i * 2 + 1]);
-                genotypes.push_back(allele_1);
-                genotypes.push_back(allele_2);
-            }
-        }
-        free(gt);
-
         // Extract AT field from INFO
         char *at_str = nullptr;
         int nat = 0;
@@ -132,32 +118,41 @@ std::tuple<SnarlParser, htsFile*, bcf_hdr_t*, bcf1_t*> make_matrix(htsFile *ptr_
             while (std::getline(ss, item, ',')) {
                 path_list.push_back(item);
             }
+
+        } else {
+            std::cerr << "No AT field found" << std::endl;
+            free(at_str);
         }
 
         // Decompose snarl paths
         const std::vector<std::vector<std::string>> list_list_decomposed_snarl = decompose_snarl(path_list);
+        
+        if (ngt > 0 && gt) {
+            // loop over the genotypes
+            for (int i = 0; i < rec->n_sample; ++i) {
+                int allele_1 = bcf_gt_allele(gt[i * 2]);
+                int allele_2 = bcf_gt_allele(gt[i * 2 + 1]);
+                size_t col_idx = i * 2;
 
-        // Process genotypes and fill the matrix
-        for (size_t index_column = 0; index_column < genotypes.size(); index_column += 2) {
-            int allele_1 = genotypes[index_column];
-            int allele_2 = genotypes[index_column+1];
-            size_t col_idx = index_column * 2;
-
-            if (allele_1 != -1) { // Handle non-missing genotypes
-                for (const auto &decompose_allele_1 : list_list_decomposed_snarl[allele_1]) {
-                    snarl_parser.push_matrix(decompose_allele_1, row_header_dict, col_idx);
+                if (allele_1 != -1) { // Handle non-missing genotypes
+                    for (const auto &decompose_allele_1 : list_list_decomposed_snarl[allele_1]) {
+                        snarl_parser.push_matrix(decompose_allele_1, row_header_dict, col_idx);
+                    }
+                }
+                if (allele_2 != -1) { // Handle non-missing genotypes
+                    for (const auto &decompose_allele_2 : list_list_decomposed_snarl[allele_2]) {
+                        snarl_parser.push_matrix(decompose_allele_2, row_header_dict, col_idx + 1);
+                    }
                 }
             }
-
-            if (allele_2 != -1) { // Handle non-missing genotypes
-                for (const auto &decompose_allele_2 : list_list_decomposed_snarl[allele_2]) {
-                    snarl_parser.push_matrix(decompose_allele_2, row_header_dict, col_idx + 1);
-                }
-            }
+        } else {
+            cerr << "No genotypes found" << std::endl;
         }
-        snarl_parser.matrix.set_row_header(row_header_dict);
-        snarl_parser.matrix.shrink(row_header_dict.size());
+        free(gt);
     }
+
+    snarl_parser.matrix.set_row_header(row_header_dict);
+    snarl_parser.matrix.shrink(row_header_dict.size());
     return std::make_tuple(snarl_parser, ptr_vcf, hdr, rec);
 }
 
@@ -250,8 +245,8 @@ void SnarlParser::quantitative_table(const std::vector<std::tuple<string, vector
         std::vector<std::string> list_snarl = std::get<1>(tuple_snarl);
         std::unordered_map<std::string, std::vector<int>> df = create_quantitative_table(sampleNames, list_snarl, matrix);
 
-        // std::make_tuple(se, beta, p_value)
-        std::tuple<double, double, std::string> tuple_info = linear_regression(df, quantitative_phenotype);
+        // std::make_tuple(beta, se, p_value)
+        std::tuple<double, double, double> tuple_info = linear_regression(df, quantitative_phenotype);
 
         std::string snarl = std::get<0>(tuple_snarl), pos = std::get<2>(tuple_snarl);
         std::vector<std::string> type_var = std::get<3>(tuple_snarl);

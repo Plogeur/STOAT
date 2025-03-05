@@ -157,7 +157,8 @@
     "span": "cpp",
     "*.classfragment": "cpp",
     "hash_map": "cpp",
-    "shared_mutex": "cpp"
+    "shared_mutex": "cpp",
+    "*.ipp": "cpp"
   },
   "C_Cpp.errorSquiggles": "disabled"
 }

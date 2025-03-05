@@ -14,14 +14,14 @@ public:
     void set(size_t row, size_t col);
     const std::vector<uint8_t>& get_matrix() const;
     const std::unordered_map<std::string, size_t>& get_row_header() const;
-    size_t getRows() const;
+    size_t getMaxElement() const;
     void expandMatrix();
     void set_row_header(const std::unordered_map<std::string, size_t>& row_header);
     void shrink(size_t current_rows);
 
 private:
     size_t cols_;
-    size_t default_row_number;
+    size_t MaxElement;
     std::vector<uint8_t> matrix_1D;
     std::unordered_map<std::string, size_t> row_header;
 };

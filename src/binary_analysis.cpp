@@ -115,7 +115,7 @@ long double fastFishersExactTest(const std::vector<std::vector<int>>& table) {
         int abx = a + b - x;
         int acx = a + c - x;
         int dax = d - a + x;
-        if ( abx >= 0 && acx >= 0 && dax >=0 ) { 
+        if (abx >= 0 && acx >= 0 && dax >=0) { 
             long double l = logHypergeometricProb(logFacs, x, abx, acx, dax);
             if (l <= logpCutoff) {pFraction += exp(l - logpCutoff);}
         }
@@ -128,32 +128,20 @@ long double fastFishersExactTest(const std::vector<std::vector<int>>& table) {
 
 // ------------------------ Binary table & stats ------------------------
 
-std::string join(const std::vector<std::string>& elements, const std::string& delimiter) {
-    std::ostringstream oss;
-    if (!elements.empty()) {
-        oss << elements.front();
-        for (size_t i = 1; i < elements.size(); ++i) {
-            oss << delimiter << elements[i];
-        }
-    }
-    return oss.str();
-}
 
-std::string format_group_paths(const std::vector<std::vector<int>>& df) {
-    if (df.empty() || df[0].empty()) return "";
-    size_t numCols = df[0].size();
-    size_t numRows = df.size();
-    std::vector<std::string> result(numCols);
-    
-    for (size_t col = 0; col < numCols; ++col) {
-        std::vector<std::string> columnValues(numRows);
-        for (size_t row = 0; row < numRows; ++row) {
-            columnValues[row] = df[row][col];
+std::string format_group_paths(const std::vector<std::vector<int>>& matrix) {
+
+    std::string result;
+    size_t rows = matrix.size();
+
+    for (size_t row = 0; row < rows; ++row) {
+        result += std::to_string(matrix[row][0]) + ":" + std::to_string(matrix[row][1]);
+        if (row < rows - 1) {
+            result += ","; // Separate row pairs with ','
         }
-        result[col] = join(columnValues, ":");
     }
-    
-    return join(result, ",");
+
+    return result;
 }
 
 std::vector<std::string> binary_stat_test(const std::vector<std::vector<int>>& df) {
@@ -165,7 +153,7 @@ std::vector<std::string> binary_stat_test(const std::vector<std::vector<int>>& d
     int inter_group = 0;
     int numb_colum = df.empty() ? 0 : df[0].size();
     int min_row_index = INT_MAX;
-    
+
     for (const auto& row : df) {
         int row_sum = std::accumulate(row.begin(), row.end(), 0);
         allele_number += row_sum;
@@ -180,8 +168,8 @@ std::vector<std::string> binary_stat_test(const std::vector<std::vector<int>>& d
         inter_group += col_min;
     }
     
-    double average = numb_colum > 0 ? static_cast<double>(allele_number) / numb_colum : 0.0;
-    
+    int average = static_cast<double>(allele_number) / numb_colum; // get 200 instead of 200.00000
+
     // Compute Chi-squared test p-value
     std::string chi2_p_value = chi2Test(df);
 

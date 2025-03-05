@@ -1,4 +1,4 @@
-#define CATCH_CONFIG_MAIN
+#define CATCH_CONFIG_MAIN unit_test::matrix_unit
 #include "catch.hpp"
 #include "matrix.hpp"
 

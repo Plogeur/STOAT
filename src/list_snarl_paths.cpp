@@ -417,28 +417,37 @@ std::unordered_map<std::string, std::vector<std::tuple<string, vector<string>, s
             // chromosome   position    snarl_id    paths    type
             string chr = std::get<1>(snarl_path_pos);
             string pos = std::to_string(std::get<2>(snarl_path_pos)+padding);
-            out_snarl << chr << "\t" << pos
-                      << "\t" << snarl_id << "\t" << pretty_paths_stream.str() 
-                      << "\t" << type_variants_stream.str() << "\n";
-
+            
             if (bool_return) {
-                // case new chr
-                if (chr != save_chr && !save_chr.empty()) {
-                    chr_snarl_matrix[save_chr] = std::move(snarl_paths);
-                    snarl_paths.clear();
-                }
-                save_chr = chr;
-                // {snarl, paths, chr, pos, type}
-                snarl_paths.push_back(std::make_tuple(snarl_id, pretty_paths, pos, type_variants));
+                out_snarl << chr << "\t" << pos
+                        << "\t" << snarl_id << "\t" << pretty_paths_stream.str() 
+                        << "\t" << type_variants_stream.str() << "\n";
             }
-
+            
+            // case new chr
+            if (chr != save_chr && !save_chr.empty()) {
+                cout << "cleaning" << endl; 
+                chr_snarl_matrix[save_chr] = std::move(snarl_paths);
+                snarl_paths.clear();
+            }
+            save_chr = chr;
+            snarl_paths.push_back(std::make_tuple(snarl_id, pretty_paths, pos, type_variants));
             paths_number_analysis += pretty_paths.size();
         }
     }
 
-    // last chr adding
-    chr_snarl_matrix[save_chr] = std::move(snarl_paths);
+    // last chr adding, but only if save_chr is not empty
+    if (!save_chr.empty()) {
+        chr_snarl_matrix[save_chr] = std::move(snarl_paths);
+    }
 
-    cout << "Number of paths analysed : " << paths_number_analysis << endl;
+    // Debugging: Print the size of snarl_paths
+    cout << "Final snarl_paths size: " << paths_number_analysis << endl;
+
+    // Print chr_snarl_matrix
+    for (const auto& chr_snarl : chr_snarl_matrix) {
+        cout << "chr : " << chr_snarl.first << ", size snarl : " << chr_snarl.second.size() << endl;
+    }
+
     return chr_snarl_matrix;
 }
