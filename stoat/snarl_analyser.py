@@ -185,6 +185,9 @@ class SnarlProcessor:
             for snarl_info in snarls:
                 snarl, list_snarl, paths, chromosome, position = snarl_info
                 df, allele_number = self.create_quantitative_table(list_snarl)
+                if snarl == "2751_2754" :
+                    print(df)
+                    exit
                 rsquared, beta, se, pvalue = self.linear_regression(df, quantitative_dict)
                 data = f"{chromosome}\t{position}\t{snarl}\t{paths}\t{rsquared}\t{beta}\t{se}\t{pvalue}\t{allele_number}\n"
                 outf.write(data.encode('utf-8'))

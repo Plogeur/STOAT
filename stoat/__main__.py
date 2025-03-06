@@ -169,5 +169,5 @@ Usage test:
     -b tests/simulation/binary_data/phenotype.tsv --gaf -o output
 
     stoat -p tests/simulation/quantitative_data/pg.pg -d tests/simulation/quantitative_data/pg.dist -v tests/simulation/quantitative_data/merged_output.vcf \
-    -q tests/simulation/quantitative_data/phenotype.tsv -o output --make-vcf
+    -q tests/simulation/quantitative_data/phenotype.tsv -o output
 """
