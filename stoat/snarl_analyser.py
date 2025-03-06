@@ -162,7 +162,7 @@ class SnarlProcessor:
             outf.write(headers.encode('utf-8'))
 
             for snarl_info in snarls:
-                snarl, list_snarl, paths, chromosome, position = snarl_info
+                chromosome, position, snarl, list_snarl, paths = snarl_info
                 # Create the binary table, considering covariates if provided
                 df = self.create_binary_table(binary_groups, list_snarl)
                 # if kinship_matrix and covar :
@@ -183,7 +183,7 @@ class SnarlProcessor:
             outf.write(headers.encode('utf-8'))
 
             for snarl_info in snarls:
-                snarl, list_snarl, paths, chromosome, position = snarl_info
+                chromosome, position, snarl, list_snarl, paths = snarl_info
                 df, allele_number = self.create_quantitative_table(list_snarl)
                 if snarl == "2751_2754" :
                     print(df)
