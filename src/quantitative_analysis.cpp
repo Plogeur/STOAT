@@ -1,84 +1,58 @@
 #include "quantitative_analysis.hpp"
 #include "snarl_parser.hpp"
 
-// Student's t-distribution approximation for p-value calculation
-double calculate_t_statistic(double beta, double se) {
-    return beta / se;
-}
-
-// Incomplete beta function approximation for p-value calculation
-double calculate_p_value(double t_statistic, int degrees_of_freedom) {
-    // Simple approximation using a standard approach
-    // This is a simplified p-value calculation
-    double t = std::abs(t_statistic);
-    double df = static_cast<double>(degrees_of_freedom);
-    
-    // Approximation formula for p-value
-    double p = std::pow(1.0 + (t * t / df), -df/2.0);
-    return 2.0 * (1.0 - p);
-}
-
 // Linear regression function
 std::tuple<double, double, double> linear_regression(
     const std::unordered_map<std::string, std::vector<int>>& df,
     const std::unordered_map<std::string, double>& quantitative_phenotype) {
-    
-    std::vector<double> X, Y;
-    
-    // Populate X and Y vectors
-    for (const auto& entry : df) {
-        const std::string& key = entry.first;
-        auto it = quantitative_phenotype.find(key);
-        if (it != quantitative_phenotype.end()) {
-            for (int val : entry.second) {
-                X.push_back(static_cast<double>(val));
-                Y.push_back(it->second);
-            }
+        
+    size_t num_samples = df.size();
+    size_t max_paths = 0;
+    for (const auto& [sample, paths] : df) {
+        if (paths.size() > max_paths) {
+            max_paths = paths.size();
         }
     }
     
-    // Validate input data
-    if (X.size() < 2 || Y.size() < 2 || X.size() != Y.size() || 
-        std::adjacent_find(X.begin(), X.end(), std::not_equal_to<>()) == X.end()) {
-        return std::make_tuple(0.0, 0.0, 1.0);
+    MatrixXd X(num_samples, max_paths);
+    X.setZero(); // Initialize matrix with zeros
+    VectorXd y(num_samples);
+    
+    int row = 0;
+    for (const auto& [sample, paths] : df) {
+        y(row) = quantitative_phenotype.at(sample);
+        for (size_t col = 0; col < paths.size(); ++col) {
+            X(row, col) = paths[col];
+        }
+        row++;
     }
     
-    // Calculate means
-    double x_mean = std::accumulate(X.begin(), X.end(), 0.0) / X.size();
-    double y_mean = std::accumulate(Y.begin(), Y.end(), 0.0) / Y.size();
+    VectorXd beta = (X.transpose() * X).ldlt().solve(X.transpose() * y);
     
-    // Calculate sum of squares
-    double ssxx = 0.0, ssxy = 0.0;
-    for (size_t i = 0; i < X.size(); ++i) {
-        double x_diff = X[i] - x_mean;
-        double y_diff = Y[i] - y_mean;
-        ssxx += x_diff * x_diff;
-        ssxy += x_diff * y_diff;
+    VectorXd y_pred = X * beta;
+    VectorXd residuals = y - y_pred;
+    
+    double rss = residuals.squaredNorm();
+    double tss = (y.array() - y.mean()).matrix().squaredNorm();
+    double r2 = 1 - (rss / tss);
+    
+    // Compute standard errors
+    MatrixXd cov_matrix = (X.transpose() * X).inverse();
+    VectorXd se = residuals.squaredNorm() / (num_samples - max_paths) * cov_matrix.diagonal().array().sqrt().matrix();
+    
+    // Compute F-statistic
+    int df_reg = max_paths - 1;
+    int df_res = num_samples - max_paths;
+    if (df_res <= 0) {
+        std::cerr << "Error: Degrees of freedom for residuals must be positive." << std::endl;
+        return;
     }
     
-    // Calculate beta (slope)
-    double beta = ssxy / ssxx;
+    double f_stat = (r2 / df_reg) / ((1 - r2) / df_res);
     
-    // Calculate standard error
-    double residual_sum_sq = 0.0;
-    for (size_t i = 0; i < X.size(); ++i) {
-        double predicted_y = x_mean + beta * (X[i] - x_mean);
-        double residual = Y[i] - predicted_y;
-        residual_sum_sq += residual * residual;
-    }
-    
-    // Degrees of freedom
-    int n = X.size();
-    int df_ = n - 2;
-    
-    // Standard error calculation
-    double se = std::sqrt(residual_sum_sq / df_) / std::sqrt(ssxx);
-    
-    // Calculate t-statistic and p-value
-    double t_statistic = calculate_t_statistic(beta, se);
-    double p_value = calculate_p_value(t_statistic, df_);
-    
-    return std::make_tuple(beta, se, p_value);
+    // Compute p-value using an approximation (F-distribution p-value calculation can be done using statistical libraries)
+    double p_value = std::exp(-0.5 * f_stat);
+    return std::make_tuple(beta.mean(), se.mean(), p_value);
 }
 
 // Function to create the quantitative table

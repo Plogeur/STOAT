@@ -21,6 +21,7 @@ link_directories(${HTSLIB_LIBRARY_DIRS})
 
 # Find Packages
 find_package(Boost REQUIRED)
+find_package(Eigen REQUIRED)
 
 # Add Executable
 add_executable(${PROJECT_NAME}
@@ -46,6 +47,7 @@ target_link_libraries(${PROJECT_NAME}
     Boost::boost
     bdsg
     handlegraph
+    Eigen
     libsdsl.so.3
     ${HTSLIB_LIBRARIES}
 )

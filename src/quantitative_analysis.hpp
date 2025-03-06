@@ -12,6 +12,7 @@
 #include <algorithm>
 #include <tuple>
 #include <iomanip>
+#include <Eigen/Dense>
 
 #include "matrix.hpp"
 #include "snarl_parser.hpp"
