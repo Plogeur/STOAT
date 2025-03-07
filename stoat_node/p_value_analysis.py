@@ -122,4 +122,4 @@ if __name__ == "__main__" :
     #qq_plot_binary(file_path)
     plot_manhattan_quantitatif(file_path, "output/run_20250106_112751/output_manhattan_plot.png")
 
-    # python3 stoat/p_value_analysis.py 
+    # python3 stoat_node/p_value_analysis.py 

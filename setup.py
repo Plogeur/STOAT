@@ -24,7 +24,7 @@ except ImportError:
     CustomInstallCommand.install_libbdsg()
 
 setup(
-    name="STOAT",
+    name="STOAT_NODE",
     version="0.1.0",
     author="Matis Alias-Bagarre",
     author_email="matis84700@gmail.com",
@@ -54,7 +54,7 @@ setup(
     ],
     entry_points={
         "console_scripts": [
-            "stoat=stoat:main",  # CLI entry point
+            "stoat_node=stoat_node:main",  # CLI entry point
         ]
     },
 )

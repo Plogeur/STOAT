@@ -3,10 +3,10 @@ from pathlib import Path
 from PIL import Image, ImageChops
 
 # Import necessary modules
-from stoat import snarl_analyser
-from stoat import list_snarl_paths
-from stoat import utils
-from stoat import p_value_analysis
+from stoat_node import snarl_analyser
+from stoat_node import list_snarl_paths
+from stoat_node import utils
+from stoat_node import p_value_analysis
 
 def test_snarl_simulation_analyser():
     vcf_file = "tests/simulation/quantitative_data/merged_output.vcf"

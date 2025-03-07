@@ -1,9 +1,7 @@
 import argparse
-from stoat import list_snarl_paths
-from stoat import snarl_analyser
-from stoat import utils
-from stoat import p_value_analysis
-from stoat import gaf_creator
+from stoat_node import snarl_analyser
+from stoat_node import utils
+from stoat_node import p_value_analysis
 import time
 import logging
 import os
@@ -15,7 +13,7 @@ def main() :
     # Argument Parsing
     parser = argparse.ArgumentParser(description="Run the Stoat GWAS analysis pipeline")
     parser.add_argument("-v", "--vcf",type=utils.check_format_vcf_file, help="Path to the merged VCF file (.vcf or .vcf.gz)", required=True)
-    parser.add_argument("-l", "--listpath", type=str, help="Path to the list paths", required=False)
+    parser.add_argument("-l", "--listpath", type=str, help="Path to the list paths", required=True)
 
     group = parser.add_mutually_exclusive_group(required=True)
     group.add_argument("-b", "--binary", type=utils.check_format_pheno, help="Path to the binary group file (.txt or .tsv)")
@@ -108,9 +106,9 @@ if __name__ == "__main__":
 
 """
 Usage test:
-    stoat -l tests/simulation/binary_data/snarl_paths.tsv -v tests/simulation/binary_data/merged_output.vcf \
+    stoat_node -l tests/simulation/binary_data/snarl_paths.tsv -v tests/simulation/binary_data/merged_output.vcf \
     -b tests/simulation/binary_data/phenotype.tsv -o output
 
-    stoat -l tests/simulation/quantitative_data/snarl_paths.tsv -v tests/simulation/quantitative_data/merged_output.vcf \
+    stoat_node -l tests/simulation/quantitative_data/snarl_paths.tsv -v tests/simulation/quantitative_data/merged_output.vcf \
     -q tests/simulation/quantitative_data/phenotype.tsv -o output
 """

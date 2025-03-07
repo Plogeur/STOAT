@@ -3,7 +3,7 @@ import pandas as pd # type: ignore
 import sys
 import os
 
-from stoat import snarl_analyser
+from stoat_node import snarl_analyser
 
 @pytest.fixture
 def snarl_instance():

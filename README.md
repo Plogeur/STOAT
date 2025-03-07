@@ -53,34 +53,26 @@ Optional file :
 
 ## Usage
 
-Use `stoat tool` if you want to launch the full tool at once, starting from snarl path identification (identifying the multiple paths that can be taken by a sample based on the pangenome graph) and ending with the results plots (Manhattan plot and QQ plot).
+Use `stoat_node tool` if you want to launch the full tool at once, starting from snarl path identification (identifying the multiple paths that can be taken by a sample based on the pangenome graph) and ending with the results plots (Manhattan plot and QQ plot).
 
 - Run full tool :
 ```bash
 # binary trait
-stoat -p <pg.pg> -d <dist.dist> -v <vcf.vcf.gz> -b <phenotype.txt> -o output
+stoat_node -l <snarl_paths> -v <vcf.vcf.gz> -b <phenotype.txt> -o output
 
 # quantative trait
-stoat -p <pg.pg> -d <dist.dist> -v <vcf.vcf.gz> -q <phenotype.txt> -o output
+stoat_node -l <snarl_paths> -v <vcf.vcf.gz> -q <phenotype.txt> -o output
 ```
 
 Explanation of all options:
 ```bash 
--p           Path to the input pangenome `.pg` file (mutually exclusive, required if `-l` not provided).
--d           Path to the input distance index `.dist` file (mutually exclusive, required if `-l` not provided).
--t           Specifies the children threshold (optional).
 -v           Path to the merged VCF file (`.vcf` or `.vcf.gz`) (required).
--r           Path to the VCF file referencing all snarl positions (`.vcf` or `.vcf.gz`) (mutually exclusive, required if `-p and -d` not provided).
 -l, --listpath  
-             Path to the list of paths file (optional).
+             Path to the list of paths file (required).
 -b, --binary  
              Path to the binary group file (`.txt` or `.tsv`) (mutually exclusive, required if `-q` not provided).
 -q, --quantitative  
              Path to the quantitative phenotype file (`.txt` or `.tsv`) (mutually exclusive, required if `-b` not provided).
--c, --covariate  (working progress)
-             Path to the covariate file (`.txt` or `.tsv`), LMM analysis (optional).
--g, --gaf    
-             Prepare binary GWAS output for a GAF file and create a GAF file with the top 10 significant paths (optional).
 -o, --output  
              Specifies the base path for the output directory (optional).
 ```
@@ -114,13 +106,13 @@ Alternatively, you can specify the script you want to launch, depending on your 
 
 ```bash
 # decompose pangenome
-python3 stoat/list_snarl_paths.py -p <pg.pg> -d <dist.dist> -o <paths.txt>
+python3 stoat_node/list_snarl_paths.py -p <pg.pg> -d <dist.dist> -o <paths.txt>
 
 # binary trait with list_path already computed and gaf creation 
-stoat -l <paths.txt> -v <vcf.vcf.gz> -r <ref.vcf.gz> -b <phenotype.txt> --gaf -o output.tsv
+stoat_node -l <paths.txt> -v <vcf.vcf.gz> -r <ref.vcf.gz> -b <phenotype.txt> --gaf -o output.tsv
 
 # quantitative trait with list_path already computed
-stoat -l <paths.txt> -v <vcf.vcf.gz> -r <ref.vcf.gz> -q <phenotype.txt> -o output.tsv
+stoat_node -l <paths.txt> -v <vcf.vcf.gz> -r <ref.vcf.gz> -q <phenotype.txt> -o output.tsv
 ```
 
 ## Output
@@ -173,10 +165,10 @@ STOAT will generated a manhattan and a QQ plot for binary and quantitatif analys
 
 ### SequenceTube
 
-Use `gaf_creator.py` or `stoat --gaf` to geneate a GAF file and [sequenceTubeMap](https://github.com/vgteam/sequenceTubeMap) tool to visualize your gwas binary region results.
+Use `gaf_creator.py` or `stoat_node --gaf` to geneate a GAF file and [sequenceTubeMap](https://github.com/vgteam/sequenceTubeMap) tool to visualize your gwas binary region results.
 
 ```bash 
-python3 stoat/gaf_creator.py -s <binary_gwas_stoat_output.tsv> -l <paths.tsv> -p <pg.pg>
+python3 stoat_node/gaf_creator.py -s <binary_gwas_stoat_output.tsv> -l <paths.tsv> -p <pg.pg>
 ```
 <p align="center">
 <img src="pictures/seqTube.png" width="600">

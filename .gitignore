@@ -1,11 +1,11 @@
 src/__pycache__
 output/*
-stoat.egg-info
+stoat_node.egg-info
 build
 .vscode
 .pytest_cache
 tests/.DS_Store
-stoat/.DS_Store
+stoat_node/.DS_Store
 STOAT.egg-info
 .DS_Store
 htmlcov
