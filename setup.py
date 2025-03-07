@@ -28,7 +28,7 @@ setup(
     version="0.1.0",
     author="Matis Alias-Bagarre",
     author_email="matis84700@gmail.com",
-    description="STOAT is a specialized tool developed for conducting Genome-Wide Association Studies (GWAS) with a unique focus on snarl structures within pangenome graphs.",
+    description="STOAT_NODE is a specialized tool developed for conducting Genome-Wide Association Studies (GWAS) with a unique focus on snarl structures within pangenome graphs.",
     long_description=open("README.md").read(),
     url="https://github.com/Plogeur/STOAT",
     packages=find_packages(),

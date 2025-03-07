@@ -15,9 +15,9 @@ I will release one days, I will !!!
 
 ## Project Overview
 
-STOAT-NODE is a specialized tool developed for conducting Genome-Wide Association Studies (GWAS) with a unique focus on node within pangenome graphs. Unlike traditional GWAS tools that analyze linear genome variants, STOAT processes VCF files to extract and analyze node regions—complex structural variations that capture nested and overlapping variant patterns within a pangenome. This approach allows for a more nuanced understanding of genetic variations in diverse populations and complex traits.
+STOAT-NODE is a specialized tool developed for conducting Genome-Wide Association Studies (GWAS) with a unique focus on node within pangenome graphs. Unlike traditional GWAS tools that analyze linear genome variants, STOAT-NODE processes VCF files to extract and analyze node regions—complex structural variations that capture nested and overlapping variant patterns within a pangenome. This approach allows for a more nuanced understanding of genetic variations in diverse populations and complex traits.
 
-STOAT supports both binary and quantitative phenotypes:
+STOAT-NODE supports both binary and quantitative phenotypes:
 
 - For binary phenotypes (e.g., case vs control studies), it utilizes chi-squared tests and Fisher’s exact test to evaluate associations between phenotype groups and variants, providing robust statistical validation even in cases of sparse data.
 
@@ -26,7 +26,7 @@ STOAT supports both binary and quantitative phenotypes:
 ## Installation
 
 ````bash
-git clone https://github.com/Plogeur/STOAT.git
+git clone --branch stoat2bin https://github.com/Plogeur/STOAT.git
 cd STOAT
 pip install .
 ````
@@ -161,7 +161,7 @@ CHR	POS	NODE	TYPE	REF	ALT	RSQUARED	BETA	SE	P
 
 ### Manhattan and QQ plots 
 
-STOAT will generated a manhattan and a QQ plot for binary and quantitatif analysis.
+STOAT-NODE will generated a manhattan and a QQ plot for binary and quantitatif analysis.
 
 ### SequenceTube
 
