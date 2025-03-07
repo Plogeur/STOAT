@@ -5,13 +5,11 @@
 std::tuple<double, double, double> linear_regression(
     const std::unordered_map<std::string, std::vector<int>>& df,
     const std::unordered_map<std::string, double>& quantitative_phenotype) {
-        
+    
     size_t num_samples = df.size();
     size_t max_paths = 0;
-    for (const auto& [sample, paths] : df) {
-        if (paths.size() > max_paths) {
-            max_paths = paths.size();
-        }
+    for (const auto& [_, paths] : df) {
+        max_paths = std::max(max_paths, paths.size());
     }
     
     Eigen::MatrixXd X(num_samples, max_paths);
@@ -24,10 +22,10 @@ std::tuple<double, double, double> linear_regression(
         for (size_t col = 0; col < paths.size(); ++col) {
             X(row, col) = paths[col];
         }
-        row++;
+        ++row;
     }
     
-    Eigen::VectorXd beta = (X.transpose() * X).inverse() * X.transpose() * y;
+    Eigen::VectorXd beta = (X.transpose() * X).ldlt().solve(X.transpose() * y);
     
     Eigen::VectorXd y_pred = X * beta;
     Eigen::VectorXd residuals = y - y_pred;
@@ -38,24 +36,20 @@ std::tuple<double, double, double> linear_regression(
     
     // Compute standard errors
     Eigen::MatrixXd cov_matrix = (X.transpose() * X).inverse();
-    Eigen::VectorXd se = residuals.squaredNorm() / (num_samples - max_paths) * cov_matrix.diagonal().array().sqrt().matrix();
+    Eigen::VectorXd se = (rss / (num_samples - max_paths)) * cov_matrix.diagonal().array().sqrt().matrix();
     
     // Compute F-statistic
     int df_reg = max_paths - 1;
     int df_res = num_samples - max_paths;
     double f_stat = (r2 / df_reg) / ((1 - r2) / df_res);
-    boost::math::fisher_f dist(df_reg, df_res);
-
-    // Compute metrics
-    // libc++abi: terminating with uncaught exception of type boost::wrapexcept<std::domain_error>: 
-    // Error in function boost::math::cdf(fisher_f_distribution<double> const&, double): 
-    // Random Variable parameter was -1.2141666413954346, but must be > 0 !
-
-    double p_value = boost::math::cdf(boost::math::complement(dist, f_stat));
-    double beta_double = beta.mean();
-    double se_double = se.mean();
-
-    return std::make_tuple(beta_double, se_double, p_value);
+    
+    double p_value = 1.0;
+    if (f_stat > 0) {
+        boost::math::fisher_f dist(df_reg, df_res);
+        p_value = boost::math::cdf(boost::math::complement(dist, f_stat));
+    }
+    
+    return {beta.mean(), se.mean(), p_value};
 }
 
 // Function to create the quantitative table
