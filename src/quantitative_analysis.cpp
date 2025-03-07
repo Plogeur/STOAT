@@ -14,9 +14,9 @@ std::tuple<double, double, double> linear_regression(
         }
     }
     
-    MatrixXd X(num_samples, max_paths);
+    Eigen::MatrixXd X(num_samples, max_paths);
     X.setZero(); // Initialize matrix with zeros
-    VectorXd y(num_samples);
+    Eigen::VectorXd y(num_samples);
     
     int row = 0;
     for (const auto& [sample, paths] : df) {
@@ -27,32 +27,35 @@ std::tuple<double, double, double> linear_regression(
         row++;
     }
     
-    VectorXd beta = (X.transpose() * X).ldlt().solve(X.transpose() * y);
+    Eigen::VectorXd beta = (X.transpose() * X).inverse() * X.transpose() * y;
     
-    VectorXd y_pred = X * beta;
-    VectorXd residuals = y - y_pred;
+    Eigen::VectorXd y_pred = X * beta;
+    Eigen::VectorXd residuals = y - y_pred;
     
     double rss = residuals.squaredNorm();
     double tss = (y.array() - y.mean()).matrix().squaredNorm();
     double r2 = 1 - (rss / tss);
     
     // Compute standard errors
-    MatrixXd cov_matrix = (X.transpose() * X).inverse();
-    VectorXd se = residuals.squaredNorm() / (num_samples - max_paths) * cov_matrix.diagonal().array().sqrt().matrix();
+    Eigen::MatrixXd cov_matrix = (X.transpose() * X).inverse();
+    Eigen::VectorXd se = residuals.squaredNorm() / (num_samples - max_paths) * cov_matrix.diagonal().array().sqrt().matrix();
     
     // Compute F-statistic
     int df_reg = max_paths - 1;
     int df_res = num_samples - max_paths;
-    if (df_res <= 0) {
-        std::cerr << "Error: Degrees of freedom for residuals must be positive." << std::endl;
-        return;
-    }
-    
     double f_stat = (r2 / df_reg) / ((1 - r2) / df_res);
-    
-    // Compute p-value using an approximation (F-distribution p-value calculation can be done using statistical libraries)
-    double p_value = std::exp(-0.5 * f_stat);
-    return std::make_tuple(beta.mean(), se.mean(), p_value);
+    boost::math::fisher_f dist(df_reg, df_res);
+
+    // Compute metrics
+    // libc++abi: terminating with uncaught exception of type boost::wrapexcept<std::domain_error>: 
+    // Error in function boost::math::cdf(fisher_f_distribution<double> const&, double): 
+    // Random Variable parameter was -1.2141666413954346, but must be > 0 !
+
+    double p_value = boost::math::cdf(boost::math::complement(dist, f_stat));
+    double beta_double = beta.mean();
+    double se_double = se.mean();
+
+    return std::make_tuple(beta_double, se_double, p_value);
 }
 
 // Function to create the quantitative table
