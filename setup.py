@@ -1,11 +1,5 @@
 from setuptools import setup, find_packages
 
-# Check if libbdsg is already installed
-try:
-    import bdsg
-except ImportError:
-   raise ImportError("ERROR bdsg not found")
-
 setup(
     name="STOAT",
     version="0.1.0",
