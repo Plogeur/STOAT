@@ -3,7 +3,6 @@ from stoat import list_snarl_paths
 from stoat import snarl_analyser
 from stoat import utils
 from stoat import p_value_analysis
-from stoat import write_ref_alt
 from stoat import gaf_creator
 import time
 import logging
@@ -20,7 +19,6 @@ def main() :
     parser.add_argument("-n", "--name",type=utils.check_file, help='The input chromosome prefix reference file', required=False)
     parser.add_argument("-t", "--threshold",type=list_snarl_paths.check_threshold, help='Children threshold', required=False)
     parser.add_argument("-v", "--vcf",type=utils.check_format_vcf_file, help="Path to the merged VCF file (.vcf or .vcf.gz)", required=True)
-    parser.add_argument("-r", "--reference", type=utils.check_format_vcf_file, help="Path to the VCF file referencing all snarl positions (only .vcf)", required=False)
     parser.add_argument("-l", "--listpath", type=utils.check_format_list_path, help="Path to the list paths", required=False)
 
     group = parser.add_mutually_exclusive_group(required=True)
@@ -118,7 +116,6 @@ def main() :
     vcf_object = snarl_analyser.SnarlProcessor(args.vcf, list_samples)
     logger.info("Starting fill matrix...")
     vcf_object.fill_matrix()
-    reference_vcf = args.reference if args.reference else args.vcf
 
     # Handle Binary Analysis
     if args.binary:
@@ -165,9 +162,9 @@ Usage example:
     -r ../droso_data/fly/fly.deconstruct.vcf -q ../droso_data/pangenome_phenotype.tsv -o output
  
 Usage test:
-    stoat -p tests/simulation/binary_data/pg.pg -d tests/simulation/binary_data/pg.dist -v tests/simulation/binary_data/merged_output.vcf \
-    -b tests/simulation/binary_data/phenotype.tsv --gaf -o output
+    stoat -p tests/simulation/binary_data/pg.full.pg -d tests/simulation/binary_data/pg.dist -v tests/simulation/binary_data/merged_output.vcf \
+    -b tests/simulation/binary_data/phenotype.tsv -o output
 
-    stoat -p tests/simulation/quantitative_data/pg.pg -d tests/simulation/quantitative_data/pg.dist -v tests/simulation/quantitative_data/merged_output.vcf \
-    -q tests/simulation/quantitative_data/phenotype.tsv -o output --make-vcf
+    stoat -p tests/simulation/quantitative_data/pg.full.pg -d tests/simulation/quantitative_data/pg.dist -v tests/simulation/quantitative_data/merged_output.vcf \
+    -q tests/simulation/quantitative_data/phenotype.tsv -o output
 """

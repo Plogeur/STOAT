@@ -401,7 +401,7 @@ if __name__ == "__main__" :
     # vg find -x ../snarl_data/fly.gbz -r 5176878:5176884 -c 10 | vg view -dp - | dot -Tsvg -o ../snarl_data/subgraph.svg
 
     # binary 
-    # python3 stoat/list_snarl_paths.py -p tests/simulation/binary_data/pg.pg -d tests/simulation/binary_data/pg.dist -c tests/simulation/binary_data/pg.chromosome -o output/test
+    # python3 stoat/list_snarl_paths.py -p tests/simulation/binary_data/pg.full.pg -d tests/simulation/binary_data/pg.dist -c tests/simulation/binary_data/pg.chromosome -o output/test
     
     # quantitative
-    # python3 stoat/list_snarl_paths.py -p tests/simulation/quantitative_data/pg.pg -d tests/simulation/quantitative_data/pg.dist -c tests/simulation/quantitative_data/pg.chromosome -o output/test
+    # python3 stoat/list_snarl_paths.py -p tests/simulation/quantitative_data/pg.full.pg -d tests/simulation/quantitative_data/pg.dist -c tests/simulation/quantitative_data/pg.chromosome -o output/test

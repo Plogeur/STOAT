@@ -10,8 +10,8 @@ class CustomInstallCommand:
             # Clone the repository with --recursive
             subprocess.check_call(["git", "clone", "--recursive", "https://github.com/vgteam/libbdsg.git"])
             os.chdir("libbdsg")
-            # Install using pip
-            subprocess.check_call(["pip", "install", "."])
+            # Install using pip3
+            subprocess.check_call(["pip3", "install", "."])
             os.chdir("..")  # Return to the original directory
         except subprocess.CalledProcessError as e:
             print(f"Failed to install libbdsg: {e}")

@@ -2,28 +2,28 @@ PLINK v1.90b7.2 64-bit (11 Dec 2023)
 Options in effect:
   --allow-extra-chr
   --allow-no-sex
-  --assoc
-  --bfile tests/genotype
-  --out tests/plink
-  --pheno tests/simulation/binary_data/binary.plink.phenotype.tsv
+  --bfile genotype
+  --linear
+  --out plink
+  --pheno simulation/quantitative_data/quantitative.plink.phenotype.tsv
   --pheno-name PHENO
 
 Hostname: irsd0440
-Working directory: /home/mbagarre/Bureau/STOAT
-Start time: Mon Feb 24 15:25:39 2025
+Working directory: /home/mbagarre/Bureau/STOAT/tests
+Start time: Thu Feb 27 14:41:38 2025
 
-Random number seed: 1740407139
-15770 MB RAM detected; reserving 7885 MB for main workspace.
-1242 variants loaded from .bim file.
+Random number seed: 1740663698
+15769 MB RAM detected; reserving 7884 MB for main workspace.
+1263 variants loaded from .bim file.
 200 people (0 males, 0 females, 200 ambiguous) loaded from .fam.
-Ambiguous sex IDs written to tests/plink.nosex .
+Ambiguous sex IDs written to plink.nosex .
 200 phenotype values present after --pheno.
 Using 1 thread (no multithreaded calculations invoked).
 Before main variant filters, 200 founders and 0 nonfounders present.
 Calculating allele frequencies... done.
-Total genotyping rate is 0.788684.
-1242 variants and 200 people pass filters and QC.
-Among remaining phenotypes, 100 are cases and 100 are controls.
-Writing C/C --assoc report to tests/plink.assoc ... done.
+Total genotyping rate is 0.781069.
+1263 variants and 200 people pass filters and QC.
+Phenotype data is quantitative.
+Writing linear model association results to plink.assoc.linear ... done.
 
-End time: Mon Feb 24 15:25:39 2025
+End time: Thu Feb 27 14:41:38 2025

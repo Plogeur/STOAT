@@ -178,4 +178,4 @@ if __name__ == "__main__":
     
     main(args.vcf_truth, args.vcf_plink)
 
-# python3 tests/compare_truth_vcf.py tests/truth.deconstruct.norm.vcf tests/plink_vcf.vcf.norm.vcf
+# python3 tests/compare_truth_vcf.py tests/quantitative.truth.deconstruct.norm.vcf tests/quantitative.plink_vcf.vcf

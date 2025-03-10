@@ -174,87 +174,6 @@ def print_confusion_matrix(predicted_labels_10_2, predicted_labels_10_5, predict
     conf_mat_maker(p_val_10_5, predicted_labels_10_5, true_labels, output)
     conf_mat_maker(p_val_10_8, predicted_labels_10_8, true_labels, output)
 
-def p_value_distribution_plink(Type, test_predicted_labels, cleaned_true_labels, cleaned_list_diff, p_value, num_sample, output) :
-
-    false_positive_indices = [
-        i for i, (pred, true) in enumerate(zip(test_predicted_labels, cleaned_true_labels)) 
-        if pred == 0 and true == 1]
-
-    print("len(false_positive_indices) : " , len(false_positive_indices))
-
-    true_positive_indices = [
-        i for i, (pred, true) in enumerate(zip(test_predicted_labels, cleaned_true_labels)) 
-        if pred == 0 and true == 0]
-    
-    print("len(true_positive_indices) : " , len(true_positive_indices))
-
-    false_negative_indices = [
-        i for i, (pred, true) in enumerate(zip(test_predicted_labels, cleaned_true_labels)) 
-        if pred == 1 and true == 0]
-
-    print("len(false_negative_indices) : " , len(false_negative_indices))
-
-    diff_false_positive = [cleaned_list_diff[i] for i in false_positive_indices]
-    pvalue_false_positive = [p_value[i] for i in false_positive_indices]
-    Type_false_positive = [Type[i] for i in false_positive_indices]
-    minsample_false_positive = [num_sample[i] for i in false_positive_indices]
-
-    diff_true_positives = [cleaned_list_diff[i] for i in true_positive_indices]
-    pvalue_true_positives = [p_value[i] for i in true_positive_indices]
-    Type_true_positives = [Type[i] for i in true_positive_indices]
-    minsample_true_positives = [num_sample[i] for i in true_positive_indices]
-
-    diff_false_negative = [cleaned_list_diff[i] for i in false_negative_indices]
-    pvalue_false_negative = [p_value[i] for i in false_negative_indices]
-    Type_false_negative = [Type[i] for i in false_negative_indices]
-    minsample_false_negative = [num_sample[i] for i in false_negative_indices]
-
-    # Create a DataFrame for easy plotting
-    data = {
-        'P-Value': pvalue_false_positive + pvalue_true_positives + pvalue_false_negative,
-        'Difference': diff_false_positive + diff_true_positives + diff_false_negative,
-        'Min Sample': minsample_false_positive + minsample_true_positives + minsample_false_negative,
-        'Type_' : Type_false_positive + Type_true_positives + Type_false_negative,
-        'Type': ['False Positives'] * len(pvalue_false_positive) + ['True Positives'] * len(pvalue_true_positives) + ['False Negatives'] * len(pvalue_false_negative)
-    }
-
-    df = pd.DataFrame(data)
-
-    # Create the interactive scatter plot
-    fig = px.scatter(
-        df, 
-        x='P-Value', 
-        y='Difference',
-        size='Min Sample',
-        color='Type',
-        hover_name=df.index,
-        hover_data={
-        "Type_": True,  # Include Reference in hover box
-        "P-Value": True,  # Include P-Value in hover box
-        "Difference": True,  # Include Difference in hover box
-        'Min Sample': True, # Include Min Sample in hover box
-        },
-        title="Distribution of P-Values for False Positives and True Positives",
-        labels={"Type_": "Type_", "P-Value": "P-Value", "Difference": "Simulated Effect (Difference in Probabilities)"}
-    )
-
-    fig.update_layout(
-        xaxis_title="P-Value",
-        yaxis_title="Simulated Effect (Difference in Probabilities)",
-        legend_title="Type",
-        template="plotly_white",
-        xaxis_title_font=dict(size=30),  # Increase font size for x-axis title
-        yaxis_title_font=dict(size=30),  # Increase font size for y-axis title
-        xaxis=dict(tickfont=dict(size=25)),  # Increase font size for x-axis ticks
-        yaxis=dict(tickfont=dict(size=25)),  # Increase font size for y-axis ticks
-    )
-
-    # Show the interactive plot
-    fig.show()
-
-    # Optionally, save the plot as an HTML file
-    fig.write_html(f'{output}_pvalue_interactive.html')
-
 def p_value_distribution(test_predicted_labels, cleaned_true_labels, list_diff, p_value, num_sample, output):
     
     false_positive_indices = [
@@ -308,7 +227,7 @@ def p_value_distribution(test_predicted_labels, cleaned_true_labels, list_diff, 
         hover_data={
             "P-Value": True,  # Include P-Value in hover box
             "Difference": True,  # Include Difference in hover box
-            "Min Sample": False,  # Optionally hide Min Sample (size is already shown)
+            "Min Sample": True,  # Optionally hide Min Sample (size is already shown)
         },
         title="Distribution of P-Values for False Positives and True Positives",
         labels={"P-Value": "P-Value", "Difference": "Simulated Effect (Difference in Probabilities)"},
@@ -319,7 +238,11 @@ def p_value_distribution(test_predicted_labels, cleaned_true_labels, list_diff, 
         xaxis_title="P-Value",
         yaxis_title="Simulated Effect (Difference in Probabilities)",
         legend_title="Type",
-        template="plotly_white"
+        template="plotly_white",
+        xaxis_title_font=dict(size=30),  # Increase font size for x-axis title
+        yaxis_title_font=dict(size=30),  # Increase font size for y-axis title
+        xaxis=dict(tickfont=dict(size=25)),  # Increase font size for x-axis ticks
+        yaxis=dict(tickfont=dict(size=25)),  # Increase font size for y-axis ticks
     )
 
     # Show the interactive plot
@@ -446,8 +369,8 @@ if __name__ == "__main__":
     
     """
     python3 tests/verify_truth.py --freq tests/simulation/quantitative_data/pg.snarls.freq.tsv \
-    --p_value output/run_20250129_104641/quantitative_analysis.tsv --paths tests/simulation/quantitative_data/snarl_paths.tsv -q
+    --p_value output/quantitative.stoat.gwas/quantitative_analysis.tsv --paths tests/simulation/quantitative_data/snarl_paths.tsv -q
 
     python3 tests/verify_truth.py --freq tests/simulation/binary_data/pg.snarls.freq.tsv \
-    --p_value output/run_20250120_170153/binary_analysis.tsv --paths tests/simulation/binary_data/snarl_paths.tsv -b
+    --p_value output/binary.stoat.gwas/binary_analysis.tsv --paths tests/simulation/binary_data/snarl_paths.tsv -b
     """

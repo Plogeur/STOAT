@@ -28,7 +28,7 @@ STOAT supports both binary and quantitative phenotypes:
 ````bash
 git clone https://github.com/Plogeur/STOAT.git
 cd STOAT
-pip install .
+pip3 install .
 ````
 
 ## Dependencies
