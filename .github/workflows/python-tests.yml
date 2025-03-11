@@ -23,19 +23,19 @@ jobs:
 
     - name: Install requirements dependencies
       run: |
-        pip install cyvcf2==0.31.1
-        pip install numpy==2.0.1
-        pip install pandas==2.2.2
-        pip install statsmodels==0.14.4
-        pip install qmplot==0.3.3
-        pip install scipy==1.14.1
-        pip install setuptools==75.6.0
-        pip install scikit-learn==1.6.0
-        pip install matplotlib==3.9.4
-        pip install seaborn==0.13.2
-        pip install plotly==5.24.1
-        pip install pytest==8.3.4
-        pip install pybind11-global 
+        pip3 install cyvcf2==0.31.1
+        pip3 install numpy==2.0.1
+        pip3 install pandas==2.2.2
+        pip3 install statsmodels==0.14.4
+        pip3 install qmplot==0.3.3
+        pip3 install scipy==1.14.1
+        pip3 install setuptools==75.6.0
+        pip3 install scikit-learn==1.6.0
+        pip3 install matplotlib==3.9.4
+        pip3 install seaborn==0.13.2
+        pip3 install plotly==5.24.1
+        pip3 install pytest==8.3.4
+        pip3 install pybind11-global 
 
     - name: Clean up existing libbdsg directory
       run: |
@@ -45,7 +45,7 @@ jobs:
       run: |
         sudo apt-get install -y --no-install-recommends libjansson-dev doxygen
         git clone --recursive https://github.com/vgteam/libbdsg.git
-        pip install ./libbdsg
+        pip3 install ./libbdsg
 
     - name: Run pytest tests
       run: python3 -m pytest

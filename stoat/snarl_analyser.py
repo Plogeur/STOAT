@@ -162,15 +162,15 @@ class SnarlProcessor:
             outf.write(headers.encode('utf-8'))
 
             for snarl_info in snarls:
-                chromosome, position, snarl, list_snarl, paths = snarl_info
+                chromosome, position, snarl, list_paths, types = snarl_info
                 # Create the binary table, considering covariates if provided
-                df = self.create_binary_table(binary_groups, list_snarl)
+                df = self.create_binary_table(binary_groups, list_paths)
                 # if kinship_matrix and covar :
                 #     p_value, beta, vcomp = lmm_pvalue = self.LMM_binary(df, kinship_matrix, covar)
                 # Perform statistical tests and compute descriptive statistics
                 fisher_p_value, chi2_p_value, allele_number, min_sample, numb_colum, inter_group, average, group_paths = self.binary_stat_test(df, gaf)
                 common_data = (
-                f"{chromosome}\t{position}\t{snarl}\t{paths}\t"
+                f"{chromosome}\t{position}\t{snarl}\t{types}\t"
                 f"{fisher_p_value}\t{chi2_p_value}\t{allele_number}\t{min_sample}\t"
                 f"{numb_colum}\t{inter_group}\t{average}")
                 data = f"{common_data}\t{group_paths}\n" if gaf else f"{common_data}\n"
@@ -186,7 +186,7 @@ class SnarlProcessor:
                 chromosome, position, snarl, list_snarl, paths = snarl_info
                 df, allele_number = self.create_quantitative_table(list_snarl)
                 rsquared, beta, se, pvalue = self.linear_regression(df, quantitative_dict)
-                data = f"{chromosome}\t{position}\t{snarl}\t{paths}\t{rsquared}\t{beta}\t{se}\t{pvalue}\t{allele_number}\n"
+                data = f"{chromosome}\t{position}\t{snarl}\t{types}\t{rsquared}\t{beta}\t{se}\t{pvalue}\t{allele_number}\n"
                 outf.write(data.encode('utf-8'))
 
     def identify_correct_path(self, decomposed_snarl:list, idx_srr_save:list) -> list:

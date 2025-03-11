@@ -79,7 +79,7 @@ def parse_input_file(input_file, snarl_list, pg, output_file):
             #CHR POS SNARL TYPE	REF	ALT	P_Fisher P_Chi2 ALLELE_NUM MIN_ROW_INDEX NUM_COLUM INTER_GROUP AVERAGE GROUP_PATHS
             snarl = columns[2]
             pfisher, pchi = columns[6:8]
-            group_paths = columns[13]
+            group_paths = columns[11]
             decomposed_group_paths = group_paths.split(',')
 
             try :
