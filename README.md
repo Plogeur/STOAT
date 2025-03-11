@@ -23,22 +23,20 @@ STOAT supports both binary and quantitative phenotypes:
 
 - For quantitative phenotypes (e.g., traits measured on a continuous scale), the tool employs linear regression models to assess the association between snarl structures and phenotype values, allowing for continuous trait mapping with greater precision.
 
+## Dependencies
+- Python version >= 3.10
+- bdsg (aka libbdsg) > 3.0
+
+Other will be installed using `pip3 install .`
+Or you can use the DockerFile on the repo.
+
 ## Installation
 
 ````bash
 git clone https://github.com/Plogeur/STOAT.git
 cd STOAT
-pip install .
+pip3 install .
 ````
-
-## Dependencies
-- Python version 3.10
-- cyvcf2
-- numpy
-- pandas
-- bdsg
-- ...
-
 
 ## Input format file
 
