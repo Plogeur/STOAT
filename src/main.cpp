@@ -151,7 +151,7 @@ int main(int argc, char* argv[]) {
     auto start_1 = std::chrono::high_resolution_clock::now();
 
     std::filesystem::create_directory(output_dir);
-    std::unordered_set<std::string> chromosomes = (!chromosome_path.empty()) ? parse_chromosome_reference(chromosome_path) : std::unordered_set<std::string>{"ref"};
+    std::unordered_set<std::string> ref_chr = (!chromosome_path.empty()) ? parse_chromosome_reference(chromosome_path) : std::unordered_set<std::string>{"ref"};
 
     if (show_help) {
         print_help();
@@ -199,7 +199,7 @@ int main(int argc, char* argv[]) {
         std::cout << "Start snarl analysis... " << std::endl;
         auto start_0 = std::chrono::high_resolution_clock::now();
         auto [stree, pg, root, pp_overlay] = parse_graph_tree(pg_path, dist_path);
-        auto snarls = save_snarls(*stree, root, *pg, chromosomes, *pp_overlay);
+        auto snarls = save_snarls(*stree, root, *pg, ref_chr, *pp_overlay);
         string output_snarl_not_analyse = output_dir + "/snarl_not_analyse.tsv";
         string output_file = output_dir + "/snarl_analyse.tsv";
         snarls_chr = loop_over_snarls_write(*stree, snarls, *pg, output_file, output_snarl_not_analyse, children_threshold, true);
@@ -234,7 +234,7 @@ int main(int argc, char* argv[]) {
 
         string quantitive_output = output_dir + "/quantitative_gwas.tsv";
         std::ofstream outf(quantitive_output, std::ios::binary);
-        std::string headers = "CHR\tPOS\tSNARL\tTYPE\tBETA\tSE\tP\n";
+        std::string headers = "CHR\tPOS\tSNARL\tTYPE\tBETA\tSE\tP\tALLELE_NUM\n";
         outf.write(headers.c_str(), headers.size());
 
         chromosome_chuck_quantitative(ptr_vcf, hdr, rec, list_samples, snarls_chr, quantitative, outf);

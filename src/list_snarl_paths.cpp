@@ -204,26 +204,27 @@ vector<tuple<net_handle_t, string, size_t>> save_snarls(
                                 SnarlDistanceIndex& stree, 
                                 net_handle_t& root,
                                 PackedGraph& pg, 
-                                unordered_set<string>& ref_paths,
+                                unordered_set<string>& ref_chr,
                                 PackedPositionOverlay& ppo) {
 
     vector<tuple<net_handle_t, string, size_t>> snarls;
     unordered_map<string, pair<string, size_t>> snarls_pos;
 
-    // Given a node handle (dist index), return a position on a reference path
+    // Given a node handle (dist index), return a position on a chr reference path
     auto get_node_position = [&](net_handle_t node) -> pair<string, size_t> { // node : net_handle_t
         handle_t node_h = stree.get_handle(node, &pg);
         pair<string, size_t> ret_pos; // pair<string, size_t> path_name, position
 
         auto step_callback = [&](const step_handle_t& step_handle) {
             path_handle_t path_handle = pg.get_path_handle_of_step(step_handle);
-            string path_name = pg.get_path_name(path_handle);
-
-            if (ref_paths.count(path_name)) {
-                ret_pos.first = path_name;
+            string chr_path = pg.get_path_name(path_handle);
+            
+            // check if chr_path is in ref_chr
+            if (ref_chr.find(chr_path) != ref_chr.end()) {
+                ret_pos.first = chr_path;
                 ret_pos.second = ppo.get_position_of_step(step_handle) + stree.node_length(node); // position + length_node
                 // cout << stree.net_handle_as_string(node) << " : " << pg.get_sequence(stree.get_handle(node, &pg)) << endl;
-                return (false); // Stop iteration once a reference path is found
+                return (false); // Stop iteration once a reference chr is found
             }
             return (true); // Continue iteration
         };

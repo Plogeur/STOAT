@@ -1,6 +1,8 @@
 #include "quantitative_analysis.hpp"
 #include "snarl_parser.hpp"
 
+using namespace std;
+
 // Linear regression function
 std::tuple<double, double, double> linear_regression(
     const std::unordered_map<std::string, std::vector<int>>& df,
@@ -53,13 +55,14 @@ std::tuple<double, double, double> linear_regression(
 }
 
 // Function to create the quantitative table
-std::unordered_map<std::string, std::vector<int>> create_quantitative_table(
+std::pair<std::unordered_map<std::string, std::vector<int>>, size_t> create_quantitative_table(
     const std::vector<std::string>& list_samples, 
     const std::vector<std::string>& column_headers,
     Matrix& matrix) {
 
     // Retrieve row headers dictionary
     std::unordered_map<std::string, size_t> row_headers_dict = matrix.get_row_header();
+    size_t allele_number = 0;
     size_t length_sample = list_samples.size();
     size_t length_column = column_headers.size();
     std::vector<int> srr_save(length_sample);
@@ -79,6 +82,7 @@ std::unordered_map<std::string, std::vector<int>> create_quantitative_table(
         for (auto idx : idx_srr_save) {
             size_t srr_idx = idx / 2;  // Adjust index to correspond to the sample index
             genotypes[srr_idx][col_idx] += 1;
+            allele_number++;
         }
     }
 
@@ -87,5 +91,5 @@ std::unordered_map<std::string, std::vector<int>> create_quantitative_table(
         df[list_samples[i]] = genotypes[i];
     }
     
-    return df;
+    return {df, allele_number};
 }
