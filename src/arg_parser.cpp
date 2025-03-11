@@ -308,7 +308,7 @@ void check_format_binary_phenotype(const std::string& file_path) {
 
         // Check if PHENO is 0 or 1
         if (pheno != "0" && pheno != "1") {
-            throw std::invalid_argument("Invalid PHENO value: " + pheno + " in line: " + line);
+            throw std::invalid_argument("For a Binary analysis only phenotype 0 or 1 is supported but find an invalid PHENO value: " + pheno + " in line: " + line);
         }
     }
 

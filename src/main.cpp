@@ -32,11 +32,12 @@ void chromosome_chuck_quantitative(htsFile* &ptr_vcf, bcf_hdr_t* &hdr, bcf1_t* &
                         const std::vector<std::string> &list_samples,
                         unordered_map<string, std::vector<std::tuple<string, vector<string>, string, vector<string>>>> &snarl_chr,
                         const unordered_map<string, double>& pheno, std::ofstream& outf) {
-
+                            
+    std::cout << "GWAS analysis for chromosome : " << std::endl;
     while (bcf_read(ptr_vcf, hdr, rec) >= 0) {
 
         string chr = bcf_hdr_id2name(hdr, rec->rid);
-        std::cout << "GWAS analysis for chromosome : " << chr << std::endl;
+        std::cout << chr << std::endl;
         size_t size_chr = snarl_chr[chr].size();
 
         // Make genotype matrix by chromosome    
@@ -61,10 +62,11 @@ void chromosome_chuck_binary(htsFile* &ptr_vcf, bcf_hdr_t* &hdr, bcf1_t* &rec,
                         unordered_map<string, std::vector<std::tuple<string, vector<string>, string, vector<string>>>> &snarl_chr,
                         const unordered_map<string, bool>& pheno, std::ofstream& outf) {
 
+    std::cout << "GWAS analysis for chromosome : " << std::endl;
     while (bcf_read(ptr_vcf, hdr, rec) >= 0) {
 
         string chr = bcf_hdr_id2name(hdr, rec->rid);
-        std::cout << "GWAS analysis for chromosome : " << chr << std::endl;
+        std::cout << chr << std::endl;
         size_t size_chr = snarl_chr[chr].size();
 
         // Make genotype matrix by chromosome    
@@ -188,6 +190,16 @@ int main(int argc, char* argv[]) {
         return EXIT_FAILURE;
     }
 
+    // Check phenotypes 
+    if (!binary_path.empty()) {
+        check_format_binary_phenotype(binary_path);
+    } else if (!quantitative_path.empty()) {
+        check_format_quantitative_phenotype(quantitative_path);
+    }
+    // } else if (!eqtl_path.empty()) {
+    //     continue;
+    // }
+
     // scope declaration
     std::unordered_map<std::string, std::vector<std::tuple<string, vector<string>, string, vector<string>>>> snarls_chr;
     std::unique_ptr<bdsg::PackedGraph> pg;
@@ -212,7 +224,6 @@ int main(int argc, char* argv[]) {
     std::unordered_map<std::string, double> quantitative;
 
     if (!binary_path.empty()) {
-        check_format_binary_phenotype(binary_path);
         binary = parse_binary_pheno(binary_path);
         check_match_samples(binary, list_samples);
 
@@ -228,7 +239,6 @@ int main(int argc, char* argv[]) {
         }
 
     } else if (!quantitative_path.empty()) {
-        check_format_quantitative_phenotype(quantitative_path);
         quantitative = parse_quantitative_pheno(quantitative_path);
         check_match_samples(quantitative, list_samples);
 
@@ -262,4 +272,4 @@ int main(int argc, char* argv[]) {
 // ./stoat_cxx -p ../data/binary/pg.pg -d ../data/binary/pg.dist -v ../data/binary/binary.vcf.gz -b ../data/binary/phenotype.tsv
 
 // QUANTITATIVE
-// ./stoat_cxx -p ../data/quantitative/pg.pg -d ../data/quantitative/pg.dist -v ../data/quantitative/quantitative.vcf.gz -b ../data/quantitative/phenotype.tsv
+// ./stoat_cxx -p ../data/quantitative/pg.pg -d ../data/quantitative/pg.dist -v ../data/quantitative/quantitative.vcf.gz -q ../data/quantitative/phenotype.tsv
