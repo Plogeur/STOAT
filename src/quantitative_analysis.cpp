@@ -3,7 +3,7 @@
 
 using namespace std;
 
-// Linear regression function
+// Linear regression function OLS
 std::tuple<double, double, double> linear_regression(
     const std::unordered_map<std::string, std::vector<int>>& df,
     const std::unordered_map<std::string, double>& quantitative_phenotype) {

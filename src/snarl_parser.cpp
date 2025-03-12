@@ -225,7 +225,7 @@ void SnarlParser::binary_table(const std::vector<std::tuple<string, vector<strin
         // chr, pos, snarl, type variant
         // fisher_p_value, chi2_p_value, allele_number, min_row_index, numb_colum, inter_group, average
         std::stringstream data;
-        data << chr << "\t" << pos << "\t" << snarl << "\t" << type_var_str << "\t"
+        data << chr << "\t" << pos << "\t" << snarl << "\t" << type_var_str
              << "\t" << stats[0] << "\t" << stats[1] << "\t" << stats[2] << "\t" << stats[3] 
              << "\t" << stats[4]  << "\t" << stats[5] << "\t" << stats[6] << "\t" << stats[7] << "\n";
         

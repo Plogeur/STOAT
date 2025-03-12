@@ -17,17 +17,16 @@ void print_help() {
               << "  -s, --snarl <path>          Path to the snarl file (.txt or .tsv)\n"
               << "  -p, --pg <path>             Path to the pg file (.pg)\n"
               << "  -d, --dist <path>           Path to the dist file (.dist)\n"
-              << "  -r, --chr_ref <path>        Path to the chromosome reference file (.tsv)\n"
-              << "  -c, --children <int>        Max number of children for a snarl in the snarl decomposition process\n"
+              << "  -r, --chr_ref <path>        Path to the chromosome reference file (.txt)\n"
+              << "  -c, --children <int>        Max number of children for a snarl in the snarl decomposition process (default = 50)\n"
               << "  -b, --binary <path>         Path to the binary group file (.txt or .tsv)\n"
-              << "  -g, --gaf                   Make GAF file from the GWAS analysis\n"
+              << "  -g, --gaf                   Make a GAF file from the GWAS analysis\n"
               << "  -q, --quantitative <path>   Path to the quantitative phenotype file (.txt or .tsv)\n"
               << "  -e, --eqtl <path>           Path to the Expression Quantitative Trait Loci file (.txt or .tsv)\n"
               << "  -o, --output <name>         Output dir name\n"
               << "  -t, --thread <int>          Number of threads\n"
               << "  -h, --help                  Print this help message\n";
 }
-
 void chromosome_chuck_quantitative(htsFile* &ptr_vcf, bcf_hdr_t* &hdr, bcf1_t* &rec, 
                         const std::vector<std::string> &list_samples,
                         unordered_map<string, std::vector<std::tuple<string, vector<string>, string, vector<string>>>> &snarl_chr,
@@ -227,7 +226,7 @@ int main(int argc, char* argv[]) {
         binary = parse_binary_pheno(binary_path);
         check_match_samples(binary, list_samples);
 
-        string output_binary = output_dir + "/binary_gwas.tsv";
+        string output_binary = output_dir + "/binary_analysis.tsv";
         std::ofstream outf(output_binary, std::ios::binary);
         std::string headers = "CHR\tPOS\tSNARL\tTYPE\tP_FISHER\tP_CHI2\tALLELE_NUM\tMIN_ROW_INDEX\tNUM_COLUM\tINTER_GROUP\tAVERAGE\tGROUP_PATHS\n";
         outf.write(headers.c_str(), headers.size());
@@ -242,7 +241,7 @@ int main(int argc, char* argv[]) {
         quantitative = parse_quantitative_pheno(quantitative_path);
         check_match_samples(quantitative, list_samples);
 
-        string quantitive_output = output_dir + "/quantitative_gwas.tsv";
+        string quantitive_output = output_dir + "/quantitative_analysis.tsv";
         std::ofstream outf(quantitive_output, std::ios::binary);
         std::string headers = "CHR\tPOS\tSNARL\tTYPE\tBETA\tSE\tP\tALLELE_NUM\n";
         outf.write(headers.c_str(), headers.size());
