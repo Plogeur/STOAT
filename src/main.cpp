@@ -243,7 +243,7 @@ int main(int argc, char* argv[]) {
 
         string quantitive_output = output_dir + "/quantitative_analysis.tsv";
         std::ofstream outf(quantitive_output, std::ios::binary);
-        std::string headers = "CHR\tPOS\tSNARL\tTYPE\tBETA\tSE\tP\tALLELE_NUM\n";
+        std::string headers = "CHR\tPOS\tSNARL\tTYPE\tRSQUARED\tBETA\tSE\tP\tALLELE_NUM\n";
         outf.write(headers.c_str(), headers.size());
 
         chromosome_chuck_quantitative(ptr_vcf, hdr, rec, list_samples, snarls_chr, quantitative, outf);

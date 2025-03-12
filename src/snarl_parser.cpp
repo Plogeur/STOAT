@@ -246,7 +246,7 @@ void SnarlParser::quantitative_table(const std::vector<std::tuple<string, vector
         auto [df, allele_number] = create_quantitative_table(sampleNames, list_snarl, matrix);
 
         // std::make_tuple(beta, se, p_value)
-        std::tuple<double, double, double> tuple_info = linear_regression(df, quantitative_phenotype);
+        std::tuple<string, string, string, string> tuple_info = linear_regression(df, quantitative_phenotype);
 
         std::string snarl = std::get<0>(tuple_snarl), pos = std::get<2>(tuple_snarl);
         std::vector<std::string> type_var = std::get<3>(tuple_snarl);
@@ -263,7 +263,8 @@ void SnarlParser::quantitative_table(const std::vector<std::tuple<string, vector
         std::stringstream data;
         data << chr << "\t" << pos << "\t" << snarl << "\t" << type_var_str
             << "\t" << std::get<0>(tuple_info) << "\t" << std::get<1>(tuple_info) 
-            << "\t" << std::get<2>(tuple_info) << "\t" << allele_number << "\n";
+            << "\t" << std::get<2>(tuple_info) << "\t" << std::get<3>(tuple_info) 
+            << "\t" << allele_number << "\n";
 
         outf.write(data.str().c_str(), data.str().size());
     }

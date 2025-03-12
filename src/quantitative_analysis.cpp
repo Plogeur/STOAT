@@ -3,8 +3,18 @@
 
 using namespace std;
 
+std::string set_precision(double value) {
+    std::ostringstream oss;
+    if (value < 0.0001) {
+        oss << std::scientific << std::setprecision(4) << value; // Scientific notation with 4 decimals
+    } else {
+        oss << std::fixed << std::setprecision(4) << value; // Fixed-point notation with 4 decimals
+    }
+    return oss.str();
+}
+
 // Linear regression function OLS
-std::tuple<double, double, double> linear_regression(
+std::tuple<string, string, string, string> linear_regression(
     const std::unordered_map<std::string, std::vector<int>>& df,
     const std::unordered_map<std::string, double>& quantitative_phenotype) {
     
@@ -28,7 +38,6 @@ std::tuple<double, double, double> linear_regression(
     }
     
     Eigen::VectorXd beta = (X.transpose() * X).ldlt().solve(X.transpose() * y);
-    
     Eigen::VectorXd y_pred = X * beta;
     Eigen::VectorXd residuals = y - y_pred;
     
@@ -50,8 +59,14 @@ std::tuple<double, double, double> linear_regression(
         boost::math::fisher_f dist(df_reg, df_res);
         p_value = boost::math::cdf(boost::math::complement(dist, f_stat));
     }
-    
-    return {beta.mean(), se.mean(), p_value};
+
+    // set precision : 4 digit
+    string r2_str = set_precision(r2);
+    string bete_mean_str = set_precision(beta.mean());
+    string se_mean_str = set_precision(se.mean());
+    string p_value_str = set_precision(p_value);
+
+    return {r2_str, bete_mean_str, se_mean_str, p_value_str};
 }
 
 // Function to create the quantitative table
