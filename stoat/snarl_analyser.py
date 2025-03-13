@@ -186,7 +186,7 @@ class SnarlProcessor:
                 chromosome, position, snarl, list_snarl, paths = snarl_info
                 df, allele_number = self.create_quantitative_table(list_snarl)
                 rsquared, beta, se, pvalue = self.linear_regression(df, quantitative_dict)
-                data = f"{chromosome}\t{position}\t{snarl}\t{types}\t{rsquared}\t{beta}\t{se}\t{pvalue}\t{allele_number}\n"
+                data = f"{chromosome}\t{position}\t{snarl}\t{paths}\t{rsquared}\t{beta}\t{se}\t{pvalue}\t{allele_number}\n"
                 outf.write(data.encode('utf-8'))
 
     def identify_correct_path(self, decomposed_snarl:list, idx_srr_save:list) -> list:
