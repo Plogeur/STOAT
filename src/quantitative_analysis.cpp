@@ -44,17 +44,18 @@ std::tuple<string, string, string, string> linear_regression(
     double rss = residuals.squaredNorm();
     double tss = (y.array() - y.mean()).matrix().squaredNorm();
     double r2 = 1 - (rss / tss);
-    
-    // Compute standard errors
-    Eigen::MatrixXd cov_matrix = (X.transpose() * X).inverse();
-    Eigen::VectorXd se = (rss / (num_samples - max_paths)) * cov_matrix.diagonal().array().sqrt().matrix();
-    
-    // Compute F-statistic
+
     int df_reg = max_paths - 1;
     int df_res = num_samples - max_paths;
+    double mse = rss / df_res;  // Mean Squared Error (MSE)
+    
+    Eigen::MatrixXd cov_matrix = (X.transpose() * X).inverse();
+    Eigen::VectorXd se = (cov_matrix.diagonal() * mse).array().sqrt().matrix();
+
+    // Compute F-statistic
     double f_stat = (r2 / df_reg) / ((1 - r2) / df_res);
     
-    double p_value = 1.0;
+    double p_value = 1.0f;
     if (f_stat > 0) {
         boost::math::fisher_f dist(df_reg, df_res);
         p_value = boost::math::cdf(boost::math::complement(dist, f_stat));
