@@ -42,9 +42,7 @@ def main() :
     if args.gaf and not args.pg:
         parser.error("The '--gaf' argument cannot be used without the '--pg' ('-p') argument.")
 
-    # Generate unique output directory based on timestamp
-    timestamp = datetime.now().strftime("%Y%m%d_%H%M%S")
-    output_dir = os.path.join(args.output or "output", f"run_{timestamp}")
+    output_dir = args.output or "output"
     os.makedirs(output_dir, exist_ok=True)
 
     # Configure logging with both console and file handlers
