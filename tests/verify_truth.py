@@ -85,12 +85,11 @@ def check_valid_snarl(start_node_1, next_node_1, start_node_2, next_node_2, snar
     # Return true only if both pairs are satisfied
     return contains_first_pair and contains_second_pair
 
-def match_snarl(freq_path_list, true_labels, list_diff, p_value_file, paths_file, type_):
+def match_snarl(freq_path_list, true_labels, list_diff, p_value_file, paths_file):
 
     p_value_df = pd.read_csv(p_value_file, sep='\t')
     paths_df = pd.read_csv(paths_file, sep='\t')['paths']
-    if type_ == 'binary' or type_ == 'quantitative':
-        split = p_value_df['SNARL'].str.split('_')
+    split = p_value_df['SNARL'].str.split('_')
 
     # To store predicted labels
     predicted_labels_10_2 = []
@@ -349,7 +348,7 @@ if __name__ == "__main__":
     freq_test_path_list, test_true_labels, test_list_diff = process_file(args.freq, THRESHOLD_FREQ)
     assert len(freq_test_path_list) == len(test_true_labels) == len(test_list_diff)
 
-    test_predicted_labels_10_2, test_predicted_labels_10_5, test_predicted_labels_10_8, cleaned_true_labels, clean_list_diff, _, _ = match_snarl(freq_test_path_list, test_true_labels, test_list_diff, args.p_value, args.paths, type_)
+    test_predicted_labels_10_2, test_predicted_labels_10_5, test_predicted_labels_10_8, cleaned_true_labels, clean_list_diff, _, _ = match_snarl(freq_test_path_list, test_true_labels, test_list_diff, args.p_value, args.paths)
     
     # Plot confusion matrix
     print_confusion_matrix(test_predicted_labels_10_2, test_predicted_labels_10_5, test_predicted_labels_10_8, cleaned_true_labels, f"{output}/confusion_matrix_{THRESHOLD_FREQ}")
@@ -358,7 +357,7 @@ if __name__ == "__main__":
         # THRESHOLD_FREQ = 0.0 : Case where just a difference between both group snarl is considered like Truth label
         THRESHOLD_FREQ = 0.0
         freq_test_path_list, test_true_labels, test_list_diff = process_file(args.freq, THRESHOLD_FREQ)
-        test_predicted_labels_10_2, test_predicted_labels_10_5, test_predicted_labels_10_8, cleaned_true_labels, clean_list_diff, pvalue, num_sample = match_snarl(freq_test_path_list, test_true_labels, test_list_diff, args.p_value, args.paths, type_)
+        test_predicted_labels_10_2, test_predicted_labels_10_5, test_predicted_labels_10_8, cleaned_true_labels, clean_list_diff, pvalue, num_sample = match_snarl(freq_test_path_list, test_true_labels, test_list_diff, args.p_value, args.paths)
         print_confusion_matrix(test_predicted_labels_10_2, test_predicted_labels_10_5, test_predicted_labels_10_8, cleaned_true_labels, f"{output}/confusion_matrix_{THRESHOLD_FREQ}")
         assert len(cleaned_true_labels) == len(clean_list_diff)
 
@@ -369,8 +368,8 @@ if __name__ == "__main__":
     
     """
     python3 tests/verify_truth.py --freq tests/simulation/quantitative_data/pg.snarls.freq.tsv \
-    --p_value output/quantitative.stoat.gwas/quantitative_analysis.tsv --paths tests/simulation/quantitative_data/snarl_paths.tsv -q
+    --p_value output/cpp.quantitative_analysis.tsv --paths tests/simulation/quantitative_data/snarl_paths.tsv -q
 
     python3 tests/verify_truth.py --freq tests/simulation/binary_data/pg.snarls.freq.tsv \
-    --p_value output/binary.stoat.gwas/binary_analysis.tsv --paths tests/simulation/binary_data/snarl_paths.tsv -b
+    --p_value output/binary_analysis.tsv --paths tests/simulation/binary_data/snarl_paths.tsv -b
     """

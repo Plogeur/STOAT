@@ -67,34 +67,6 @@ class Path:
         # counts how many nodes are traversed in reverse
         return (sum(['<' == orient for orient in self.orients]))
 
-# def vcf_calcul_pos_type_variant(list_list_length_paths: List[List[str]]) -> Tuple[List[str], int]:
-#     list_type_variant = []
-#     padding = 0
-#     just_snp = True
-
-#     for path_lengths in list_list_length_paths:
-#         if len(path_lengths) > 3 :  # Case snarl in snarl
-#             list_type_variant.append("CPX")  # COMPLEX
-#             just_snp = False
-#         elif len(path_lengths) == 3:  # Case simple path len 3 (SNP or INS)
-#             if len(path_lengths[1]) == 1:
-#                 list_type_variant.append(path_lengths[1])  # add node str snp
-#             else:
-#                 insertion = "INS" if len(path_lengths[1]) > 3 else path_lengths[1]
-#                 list_type_variant.append(insertion) # INS
-#                 just_snp = False
-#         elif len(path_lengths) == 2:  # Deletion
-#             list_type_variant.append("DEL")
-#             just_snp = False
-#         elif not path_lengths:  # Case path_lengths is empty
-#             ValueError("path_lengths is empty")
-
-#     # add +1 in pos for just SNP present in snarl
-#     if just_snp:
-#         padding = 1
-
-#     return list_type_variant, padding
-
 def calcul_pos_type_variant(list_list_length_paths: List[List[str]]) -> Tuple[List[str], int]:
     list_type_variant = []
     padding = 0
@@ -293,12 +265,6 @@ def fill_pretty_paths(stree, pg, finished_paths) :
                 ppath.addNodeHandle(nodl, stree)
                 ppath.addNode('*', '>')
                 ppath.addNodeHandle(nodr, stree)
-                # if make_vcf :
-                #     seq_chain = []
-                #     # traverse chain to get access to ref node in there
-                #     stree.follow_net_edges(seq_chain, pg, False, lambda n: chain_traversale(n))
-                #     seq_net.append(seq_chain)
-                # else : 
                 seq_net.append("_")
 
         # check if path is mostly traversing nodes in reverse orientation
@@ -309,9 +275,6 @@ def fill_pretty_paths(stree, pg, finished_paths) :
         pretty_paths.append(ppath.print()) 
         seq_net_paths.append(seq_net)
 
-    # if make_vcf :
-    #     type_variants, length_first_variant = vcf_calcul_pos_type_variant(seq_net_paths)
-    # else : 
     type_variants, length_first_variant = calcul_pos_type_variant(seq_net_paths)
     assert len(type_variants) == len(pretty_paths)
     return pretty_paths, type_variants, length_first_variant
