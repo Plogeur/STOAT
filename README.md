@@ -43,12 +43,14 @@ pip3 install .
 Required files :
 - pg : Pangenome graph file, formats accepted: .pg or .xg.
 - dist : Distance file generated with vg dist, format: .dist.
-- vcf : Merged VCF file, created using bcftools merge, formats: .vcf or .vcf.gz. (ex : `bcftools merge -m none -Oz -o test`)
+- vcf pangenomique : Merged VCF file, created using `vg pipeline` and bcftools merge, formats: .vcf or .vcf.gz. (ex : `bcftools merge -m none -Oz -o test`)
 - phenotype : phenotype file organise in three-column with FID (family/sample name), IID (sample name), and PHENO (integer/float). Format: .txt or .tsv (tab-separated).
+- chromosome : Txt file that containt the reference chromosome haplotype name in the pangenome graph.
 
 Optional file : 
 - paths : Two-column file containing snarl names and the list of paths through the snarl's netgraph, separated by tabs. Format: .txt or .tsv.
-- ref : VCF referenting chromosomes and positions in the pangenome graph generated with vg deconstruct, formats: .vcf (only).
+
+The VCF pangenomique is a VCF merged from a pangenomique mapping+calling, we recommand to use the [vg pipeline](https://github.com/vgteam/vg_snakemake)
 
 ## Usage
 
@@ -69,7 +71,7 @@ Explanation of all options:
 -d           Path to the input distance index `.dist` file (mutually exclusive, required if `-l` not provided).
 -t           Specifies the children threshold (optional).
 -v           Path to the merged VCF file (`.vcf` or `.vcf.gz`) (required).
--r           Path to the VCF file referencing all snarl positions (`.vcf` or `.vcf.gz`) (mutually exclusive, required if `-p and -d` not provided).
+-n           Path to the chromosome referencing file (`.txt` or `.tsv`) (required).
 -l, --listpath  
              Path to the list of paths file (optional).
 -b, --binary  
@@ -130,8 +132,6 @@ stoat -l <paths.txt> -v <vcf.vcf.gz> -r <ref.vcf.gz> -q <phenotype.txt> -o outpu
 | **POS**           | Position of the snarl within the chromosome.                                                  |
 | **SNARL**         | Identifier for the variant, snarl name/id                                                     |
 | **TYPE**          | Type of genetic variation (e.g., SNP, INS, DEL).                                              |
-| **REF**           | Sequence of the reference allele.                                                             |
-| **ALT**           | Sequence of the alternate allele.                                                             |
 | **P_FISHER**      | P-value calculated using Fisher's exact test (binary analysis).                               |
 | **P_CHI2**        | P-value calculated using the Chi-squared test (binary analysis).                              |
 | **ALLELE_NUM**    | Total number of alleles that pass in this snarl.                                              |
@@ -186,9 +186,5 @@ Description : Color represente the different paths group (red : group 1 & blue :
 
 ### TODO 
 
-- [ ] Implement LMM (Linear Mixed Models).
-
 - [ ] Correct GitHub Actions.
-
-- [ ] Add c++ code 
 
