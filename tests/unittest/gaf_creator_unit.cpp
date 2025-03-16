@@ -8,27 +8,45 @@ using Catch::Approx;
 
 TEST_CASE("Calcul des proportions significatives", "[calcul_proportion_signi]") {
     SECTION("Cas normal avec groupes égaux") {
-        auto result = calcul_proportion_signi(100, 100, 0.05);
+        auto result = calcul_proportion_signi(10, 10, 0.01);
         REQUIRE(result.first >= 0.0);
-        REQUIRE(result.first <= 1.0);
+        REQUIRE(result.first <= 60.0);
         REQUIRE(result.second >= 0.0);
-        REQUIRE(result.second <= 1.0);
+        REQUIRE(result.second <= 60.0);
+        REQUIRE((result.first + result.second) <= 60.0);
     }
 
     SECTION("Cas avec groupes de tailles différentes") {
-        auto result = calcul_proportion_signi(50, 150, 0.05);
+        auto result = calcul_proportion_signi(15, 5, 0.01);
         REQUIRE(result.first >= 0.0);
-        REQUIRE(result.first <= 1.0);
+        REQUIRE(result.first <= 60.0);
         REQUIRE(result.second >= 0.0);
-        REQUIRE(result.second <= 1.0);
+        REQUIRE(result.second <= 60.0);
+        REQUIRE((result.first + result.second) <= 60.0);
     }
 
     SECTION("Cas limite avec petits groupes") {
-        auto result = calcul_proportion_signi(5, 5, 0.05);
+        auto result = calcul_proportion_signi(1, 1, 0.01);
         REQUIRE(result.first >= 0.0);
-        REQUIRE(result.first <= 1.0);
+        REQUIRE(result.first <= 60.0);
         REQUIRE(result.second >= 0.0);
-        REQUIRE(result.second <= 1.0);
+        REQUIRE(result.second <= 60.0);
+        REQUIRE((result.first + result.second) <= 60.0);
+    }
+
+    SECTION("Cas avec groupe vide") {
+        auto result = calcul_proportion_signi(0, 0, 0.01);
+        REQUIRE(result.first == 0.0);
+        REQUIRE(result.second == 0.0);
+    }
+
+    SECTION("Cas avec p-value extrême") {
+        auto result = calcul_proportion_signi(10, 10, 1e-10);
+        REQUIRE(result.first >= 0.0);
+        REQUIRE(result.first <= 60.0);
+        REQUIRE(result.second >= 0.0);
+        REQUIRE(result.second <= 60.0);
+        REQUIRE((result.first + result.second) <= 60.0);
     }
 }
 

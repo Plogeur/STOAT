@@ -131,7 +131,7 @@ pair<vector<string>, size_t> calcul_pos_type_variant(const vector<vector<string>
         padding = 1;
     }
 
-    return {list_type_variant, padding};
+    return {list_type_variant, list_type_variant.size()};
 }
 
 // Function to check threshold
