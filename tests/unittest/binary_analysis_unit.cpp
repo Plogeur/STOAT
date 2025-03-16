@@ -1,4 +1,8 @@
+#include <catch2/catch_test_macros.hpp>
+#include <catch2/catch_approx.hpp>
 #include "binary_analysis.hpp"
+
+using Catch::Approx;
 
 TEST_CASE("Check observed matrix validity", "[check_observed]") {
     SECTION("Valid matrix (no zero rows or columns)") {
