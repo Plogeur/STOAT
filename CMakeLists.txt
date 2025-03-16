@@ -53,69 +53,47 @@ target_link_libraries(${PROJECT_NAME}
 )
 
 # Enable testing
-# enable_testing()
-# add_subdirectory(tests/unittest)
+enable_testing()
 
-# include(CTest)
-# include(lib/Catch/Catch.cmake)
+# Find Catch2
+find_package(Catch2 3 REQUIRED)
+include(CTest)
+include(Catch)
 
-# # Include directories
-# include_directories(/usr/include /usr/local/include)
-# link_directories(/usr/include /usr/local/lib)  # libbdsg.dylib
+# Add test executable
+add_executable(unit_tests
+    tests/unittest/binary_analysis_unit.cpp
+    tests/unittest/gaf_creator_unit.cpp
+    tests/unittest/list_snarl_paths_unit.cpp
+    tests/unittest/matrix_unit.cpp
+    tests/unittest/quantitative_analysis_unit.cpp
+    
+    src/arg_parser.cpp
+    src/binary_analysis.cpp
+    src/gaf_creator.cpp
+    src/list_snarl_paths.cpp
+    src/matrix.cpp
+    src/quantitative_analysis.cpp
+    src/snarl_parser.cpp
+)
 
-# # Find HTSlib
-# find_package(PkgConfig REQUIRED)
-# pkg_check_modules(HTSLIB REQUIRED htslib)
+# Add include directories for tests
+target_include_directories(unit_tests PRIVATE
+    ${CMAKE_SOURCE_DIR}/src
+    ${Boost_INCLUDE_DIRS}
+    ${HTSLIB_INCLUDE_DIRS}
+)
 
-# include_directories(${HTSLIB_INCLUDE_DIRS})
-# link_directories(${HTSLIB_LIBRARY_DIRS})
+# Link test executable with Catch2 and project libraries
+target_link_libraries(unit_tests PRIVATE
+    Catch2::Catch2WithMain
+    Boost::boost
+    bdsg
+    handlegraph
+    Eigen3::Eigen
+    libsdsl.so.3
+    ${HTSLIB_LIBRARIES}
+)
 
-# include_directories ("${PROJECT_SOURCE_DIR}/lib/Catch")
-# include_directories(BEFORE SYSTEM "${PROJECT_SOURCE_DIR}")
-
-# # Add the executable
-# add_executable(${PROJECT_NAME} 
-#     src/main.cpp
-#     src/arg_parser.cpp
-#     src/binary_analysis.cpp
-#     src/gaf_creator.cpp
-#     src/list_snarl_paths.cpp
-#     src/matrix.cpp
-#     src/quantitative_analysis.cpp
-#     src/snarl_parser.cpp             
-# )
-
-# # Link libraries
-# target_link_libraries(${PROJECT_NAME} 
-#     Boost::boost 
-#     bdsg 
-#     handlegraph 
-#     libsdsl.so.3
-#     ${HTSLIB_LIBRARIES}
-# )
-
-# # Add the test executable
-# add_executable(TestRunner 
-#     tests/unittest/binary_analysis_unit.cpp
-#     # tests/unittest/gaf_creator_unit.cpp
-#     # tests/unittest/list_snarl_paths_unit.cpp
-#     tests/unittest/matrix_unit.cpp
-#     tests/unittest/quantitative_analysis_unit.cpp
-
-#     src/arg_parser.cpp
-#     src/binary_analysis.cpp
-#     src/gaf_creator.cpp
-#     src/list_snarl_paths.cpp
-#     src/matrix.cpp
-#     src/quantitative_analysis.cpp
-#     src/snarl_parser.cpp   
-# )
-
-# # Ensure it finds the headers from src/
-# target_include_directories(TestRunner PRIVATE "${CMAKE_SOURCE_DIR}/src")
-
-# # Link necessary libraries
-# target_link_libraries(TestRunner PRIVATE Boost::boost bdsg handlegraph libsdsl.so.3 Catch2 ${HTSLIB_LIBRARIES})
-
-# # Register the test with CTest
-# add_test(NAME MyTests COMMAND TestRunner)
+# Add the test
+add_test(NAME unit_tests COMMAND unit_tests)

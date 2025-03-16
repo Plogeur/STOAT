@@ -11,3 +11,7 @@ src/CMakeFiles/*
 src/output/*
 src/cmake_install.cmake
 src/CMakeCache.txt
+
+# Docker
+.docker/
+docker-compose.override.yml
