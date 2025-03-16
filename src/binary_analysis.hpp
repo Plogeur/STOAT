@@ -16,6 +16,11 @@
 #include "matrix.hpp"
 #include "snarl_parser.hpp"
 
+// ------------------------ String utilities ------------------------
+
+// Function to join strings with a delimiter
+std::string join(const std::vector<std::string>& elements, const std::string& delimiter);
+
 // ------------------------ Chi2 test ------------------------
 
 // Function to check if matrix is valid (no zero rows/columns)

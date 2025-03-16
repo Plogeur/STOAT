@@ -12,8 +12,8 @@ std::pair<double, double> calcul_proportion_signi(int number_ind_group0, int num
         return {0, 0};
     }
 
-    double proportion_group0 = (static_cast<double>(number_ind_group1) / total_ind) * 60.0;
-    double proportion_group1 = 60.0 - proportion_group0;
+    double proportion_group0 = (static_cast<double>(number_ind_group0) / total_ind) * 60.0;
+    double proportion_group1 = (static_cast<double>(number_ind_group1) / total_ind) * 60.0;
 
     // Step 2: Calculate the adjustment factor based on a logarithmic scale of p_value
     constexpr double epsilon = 1e-10;  // Small value to avoid log(0)
@@ -21,21 +21,21 @@ std::pair<double, double> calcul_proportion_signi(int number_ind_group0, int num
 
     // Step 3: Apply the adjustment to the group with the higher initial proportion
     double adjusted_group0, adjusted_group1;
-    if (proportion_group0 > proportion_group1) {
+    if (proportion_group0 >= proportion_group1) {
         adjusted_group0 = proportion_group0 + adjustment_factor;
-        adjusted_group1 = proportion_group1 - adjustment_factor;
+        adjusted_group1 = proportion_group1;
     } else {
-        adjusted_group0 = proportion_group0 - adjustment_factor;
+        adjusted_group0 = proportion_group0;
         adjusted_group1 = proportion_group1 + adjustment_factor;
     }
 
-    // Step 4: Ensure values remain within bounds [0, 60] and maintain a sum of 60
+    // Step 4: Ensure values remain within bounds [0, 60]
     adjusted_group0 = std::clamp(adjusted_group0, 0.0, 60.0);
     adjusted_group1 = std::clamp(adjusted_group1, 0.0, 60.0);
 
-    // Rescale if needed to ensure the total sum is exactly 60
+    // Step 5: Rescale to ensure sum is 60
     double total = adjusted_group0 + adjusted_group1;
-    if (total != 60.0) {
+    if (total > 60.0) {
         double scale_factor = 60.0 / total;
         adjusted_group0 *= scale_factor;
         adjusted_group1 *= scale_factor;

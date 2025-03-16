@@ -11,7 +11,7 @@ Path::Path() {}
 // Add a node with known orientation
 void Path::addNode(const std::string& node, char orient) {
     nodes.push_back(node);
-    orients.push_back(orient);
+    orients.push_back(orient == '+' ? '>' : '<');
 }
  
 // Add a node handle and extract information using the string representation
@@ -59,22 +59,29 @@ void Path::addNodeHandle(const net_handle_t& node_h, const SnarlDistanceIndex& s
 // Get the string representation of the path
 std::string Path::print() const {
     std::string out_path;
-    for (size_t i = 0; i < nodes.size(); ++i) {
-        out_path += orients[i] + nodes[i];
+    if (nodes.empty()) return out_path;
+    
+    // Premier nœud
+    out_path += nodes[0];
+    
+    // Nœuds suivants avec leurs orientations
+    for (size_t i = 0; i < nodes.size() - 1; ++i) {
+        out_path += orients[i];
+        out_path += nodes[i + 1];
     }
     return out_path;
 }
 
 // Flip the path orientation
 void Path::flip() {
+    // Retourner les nœuds
     std::reverse(nodes.begin(), nodes.end());
+    
+    // Retourner les orientations et les ajuster
     std::reverse(orients.begin(), orients.end());
-    for (size_t i = 0; i < orients.size(); ++i) {
-        if (nodes[i] == "*") {
-            continue;
-        }
-        orients[i] = (orients[i] == '>') ? '<' : '>';
-    }
+    
+    // Toutes les orientations deviennent '>' car on inverse le sens du chemin
+    std::fill(orients.begin(), orients.end(), '>');
 }
 
 // Get the size of the path
@@ -89,41 +96,48 @@ size_t Path::nreversed() const {
 
 // Function to calculate the type of variant
 pair<vector<string>, size_t> calcul_pos_type_variant(const vector<vector<string>>& list_list_length_paths) {
+    if (list_list_length_paths.empty()) {
+        return {vector<string>(), 0};
+    }
+
     vector<string> list_type_variant;
     size_t padding = 0;
     bool just_snp = true;
 
     for (const auto& path_lengths : list_list_length_paths) {
-        if (path_lengths.size() > 3 || path_lengths[1] == "_") { // Case snarl in snarl / Indel
-            list_type_variant.push_back("CPX"); // COMPLEX
+        if (path_lengths.empty()) {
+            continue;
+        }
+
+        if (path_lengths.size() > 3 || path_lengths[1] == "_") {
+            list_type_variant.push_back("CPX");
             just_snp = false;
-        } else if (path_lengths.size() == 3) { // Case simple path len 3
+        } else if (path_lengths.size() == 3) {
             if (path_lengths[1].size() == 1) {
-                list_type_variant.push_back(path_lengths[1]); // add node str snp 
+                list_type_variant.push_back(path_lengths[1]);
             } else {
-                // vector string path_lengths
                 string ins_seq = (path_lengths[1].size() > 3) ? "INS" : path_lengths[1];
                 list_type_variant.push_back(ins_seq);
                 just_snp = false;
             }
-        } else if (path_lengths.size() == 2) { // Deletion
+        } else if (path_lengths.size() == 2) {
             list_type_variant.push_back("DEL");
             just_snp = false;
-        } else { // Case path_lengths is empty
-            cerr << "path_lengths is empty" << endl;
         }
     }
 
     // add +1 in pos for just SNP present in snarl
-    if (just_snp) {padding = 1;}
+    if (just_snp) {
+        padding = 1;
+    }
 
     return {list_type_variant, padding};
 }
 
 // Function to check threshold
 void check_threshold(double proportion) {
-    if (proportion <= 0) {
-        throw invalid_argument("Proportion value must be >0.");
+    if (proportion < 0.0 || proportion > 1.0) {
+        throw std::invalid_argument("Proportion value must be between 0 and 1.");
     }
 }
 
@@ -339,8 +353,8 @@ tuple<vector<string>, vector<string>, size_t> fill_pretty_paths(
     }
 
     // pair<vector<string>, size_t>
-    auto [type_variants, length_first_variant] = calcul_pos_type_variant(seq_net_paths);
-    return std::make_tuple(pretty_paths, type_variants, length_first_variant);
+    auto [type_variants, padding] = calcul_pos_type_variant(seq_net_paths);
+    return std::make_tuple(pretty_paths, type_variants, padding);
 }
 
 // {chr : matrix(snarl, paths, chr, pos, type)}

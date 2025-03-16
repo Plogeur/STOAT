@@ -2,10 +2,9 @@
 
 // Constructor implementation
 Matrix::Matrix(size_t rows, size_t cols) 
-    : cols_(cols)
+    : cols_(cols), MaxElement(0)
 {
     size_t length_matrix = (rows * cols + 7) / 8;
-    MaxElement = (length_matrix * 8) / cols_; // get the number of element in the matrix
     row_header.rehash(rows);
     matrix_1D.reserve(length_matrix);  // Reserve capacity to avoid frequent reallocations
     matrix_1D.resize(length_matrix, 0); // Initialize with zeros
@@ -54,6 +53,7 @@ void Matrix::set(size_t row, size_t col) {
     size_t bitPosition = bitIndex % 8;
     if (byteIndex >= matrix_1D.size()) return; // Bounds check to avoid out-of-range access
     matrix_1D[byteIndex] |= (1U << bitPosition);
+    MaxElement = std::max(MaxElement, row + 1);  // Update MaxElement
 }
 
 void Matrix::shrink(size_t current_rows) {
