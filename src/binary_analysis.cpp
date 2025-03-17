@@ -7,6 +7,8 @@
 bool check_observed(const std::vector<std::vector<int>>& observed, size_t rows, size_t cols) {
     std::vector<int> col_sums(cols, 0);
 
+    if (observed.size() == 0) return false;
+    
     for (size_t i = 0; i < rows; ++i) {
         int row_sum = 0;
         for (size_t j = 0; j < cols; ++j) {

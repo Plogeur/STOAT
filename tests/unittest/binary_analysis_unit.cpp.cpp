@@ -1,7 +1,6 @@
 #include <catch2/catch_test_macros.hpp>
 #include "../../src/binary_analysis.hpp"
 
-
 TEST_CASE("Check observed matrix validity", "[check_observed]") {
     SECTION("Valid matrix (no zero rows or columns)") {
         std::vector<std::vector<int>> valid_matrix = {

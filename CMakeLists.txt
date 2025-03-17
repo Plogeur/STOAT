@@ -85,3 +85,4 @@ target_link_libraries(unit_tests PRIVATE
     Eigen3::Eigen
     libsdsl.so.3
     ${HTSLIB_LIBRARIES})
+    

@@ -13,7 +13,7 @@ void Path::addNode(const std::string& node, char orient) {
     nodes.push_back(node);
     orients.push_back(orient);
 }
- 
+
 // Add a node handle and extract information using the string representation
 void Path::addNodeHandle(const net_handle_t& node_h, const SnarlDistanceIndex& stree) {
     std::string node_s = stree.net_handle_as_string(node_h);
@@ -118,13 +118,6 @@ pair<vector<string>, size_t> calcul_pos_type_variant(const vector<vector<string>
     if (just_snp) {padding = 1;}
 
     return {list_type_variant, padding};
-}
-
-// Function to check threshold
-void check_threshold(double proportion) {
-    if (proportion <= 0) {
-        throw invalid_argument("Proportion value must be >0.");
-    }
 }
 
 string find_snarl_id(SnarlDistanceIndex& stree, net_handle_t& snarl) {

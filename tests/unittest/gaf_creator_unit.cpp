@@ -1,10 +1,7 @@
 #include <catch2/catch_test_macros.hpp>
-#include <catch2/catch_approx.hpp>
 #include "../../src/gaf_creator.hpp"
 #include <fstream>
 #include <sstream>
-
-using Catch::Approx;
 
 TEST_CASE("Calcul des proportions significatives", "[calcul_proportion_signi]") {
     SECTION("Cas normal avec groupes égaux") {

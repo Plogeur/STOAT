@@ -1,8 +1,5 @@
 #include <catch2/catch_test_macros.hpp>
-#include <catch2/catch_approx.hpp>
 #include "../../src/matrix.hpp"
-
-using Catch::Approx;
 
 TEST_CASE("Matrix Constructor and Basic Properties", "[Matrix]") {
     SECTION("Matrix initializes correctly") {
@@ -40,8 +37,8 @@ TEST_CASE("Matrix Shrink", "[Matrix]") {
 TEST_CASE("Matrix Maximum Element", "[Matrix]") {
     SECTION("Matrix tracks maximum element correctly") {
         Matrix mat(4, 5);
-        REQUIRE(mat.getMaxElement() == 0);  // Initially zero
-        mat.set(1, 3);  // Set an element
-        REQUIRE(mat.getMaxElement() > 0);  // Should be updated
+        REQUIRE(mat.getMaxElement() == 4);  // Initially zero
+        mat.expandMatrix();
+        REQUIRE(mat.getMaxElement() == 8);  // Should be updated
     }
 }

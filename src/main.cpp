@@ -113,8 +113,8 @@ int main(int argc, char* argv[]) {
             check_file(chromosome_path);
         } else if ((arg == "-c" || arg == "--children") && i + 1 < argc) {
             children_threshold = std::stoi(argv[++i]);
-            if (children_threshold < 1) {
-                std::cerr << "Error: Number of children must be a positive integer\n";
+            if (children_threshold < 2) {
+                std::cerr << "Error: Number of children must be a positive integer > 1\n";
                 return EXIT_FAILURE;
             }
         } else if ((arg == "-b" || arg == "--binary") && i + 1 < argc) {
