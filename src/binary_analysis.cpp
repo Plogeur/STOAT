@@ -79,51 +79,37 @@ std::string chi2Test(const std::vector<std::vector<int>>& observed) {
 
 // ------------------------ Fisher exact test ------------------------
 
-// Function to initialize the log factorials array
-void initLogFacs(long double* logFacs, int n) {
-    logFacs[0] = 0; 
-    for (int i = 1; i < n+1; ++i) {
-        logFacs[i] = logFacs[i - 1] + log((double)i);
-    }
-}
-
-long double logHypergeometricProb(long double* logFacs , int a, int b, int c, int d) {
-    return logFacs[a+b] + logFacs[c+d] + logFacs[a+c] + logFacs[b+d]
-    - logFacs[a] - logFacs[b] - logFacs[c] - logFacs[d] - logFacs[a+b+c+d];
-}
-
-long double fastFishersExactTest(const std::vector<std::vector<int>>& table) {
+long double fisher_exact_test(const std::vector<std::vector<int>>& table) {
     // Ensure the table is 2x2
     if (table.size() != 2 || table[0].size() != 2 || table[1].size() != 2) {
-        return -1;
+        return -1.0L;  // Return -1 to indicate an error
     }
 
     // Extract values from the table
-    int a = table[0][0];
-    int b = table[0][1];
-    int c = table[1][0];
-    int d = table[1][1];
+    int a = table[0][0], b = table[0][1];
+    int c = table[1][0], d = table[1][1];
 
-    // Total sum of the table
+    // Total elements
     int n = a + b + c + d;
-    long double* logFacs = new long double[n+1]; // *** dynamically allocate memory logFacs[0..n] ***
-    initLogFacs(logFacs , n);
+    int row1 = a + b, row2 = c + d;
+    int col1 = a + c, col2 = b + d;
 
-    long double logpCutoff = logHypergeometricProb(logFacs,a,b,c,d);
-    long double pFraction = 0;
-    for(int x=0; x <= n; ++x) { // among all possible x
-        int abx = a + b - x;
-        int acx = a + c - x;
-        int dax = d - a + x;
-        if ( abx >= 0 && acx >= 0 && dax >=0 ) { 
-            long double l = logHypergeometricProb(logFacs, x, abx, acx, dax);
-            if (l <= logpCutoff) {pFraction += exp(l - logpCutoff);}
+    // Define hypergeometric distribution using long double
+    boost::math::hypergeometric_distribution<long double> hg(row1, col1, n);
+
+    // Compute the observed probability
+    long double p_cutoff = pdf(hg, a);
+    long double p_value = 0.0L;
+
+    // Two-tailed test: sum probabilities ≤ observed probability
+    for (int x = 0; x <= std::min(row1, col1); ++x) {
+        long double prob = pdf(hg, x);
+        if (prob <= p_cutoff) {
+            p_value += prob;
         }
     }
 
-    long double logpValue = exp(logpCutoff + log(pFraction));
-    delete [] logFacs;
-    return logpValue;
+    return p_value;
 }
 
 // ------------------------ Binary table & stats ------------------------

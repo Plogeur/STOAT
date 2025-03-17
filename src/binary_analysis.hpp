@@ -12,6 +12,7 @@
 #include <iomanip>
 #include <sstream>
 #include <boost/math/distributions/chi_squared.hpp>
+#include <boost/math/distributions/hypergeometric.hpp>
 
 #include "matrix.hpp"
 #include "snarl_parser.hpp"
@@ -26,14 +27,8 @@ std::string chi2Test(const std::vector<std::vector<int>>& observed);
 
 // ------------------------ Fisher exact test ------------------------
 
-// Function to initialize the log factorials array
-void initLogFacs(long double* logFacs, int n);
-
-// Function to calculate the log probability of the hypergeometric distribution
-long double logHypergeometricProb(long double* logFacs , int a, int b, int c, int d);
-
 // Function to perform Fisher's exact test
-long double fastFishersExactTest(const std::vector<std::vector<int>>& table);
+long double fisher_exact_test(const std::vector<std::vector<int>>& table);
 
 // ------------------------ Binary table ------------------------
 
