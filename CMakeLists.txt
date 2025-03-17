@@ -7,9 +7,6 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 
-# Optional: Set runtime output directory
-# set(CMAKE_RUNTIME_OUTPUT_DIRECTORY "${CMAKE_SOURCE_DIR}/bin")
-
 include_directories(/usr/include /usr/local/include)
 link_directories(/usr/include /usr/local/lib)  # libbdsg.dylib
 
@@ -53,69 +50,26 @@ target_link_libraries(${PROJECT_NAME}
 )
 
 # Enable testing
-# enable_testing()
-# add_subdirectory(tests/unittest)
+enable_testing()
 
-# include(CTest)
-# include(lib/Catch/Catch.cmake)
+# Find Catch2
+find_package(Catch2 3 REQUIRED)
+include(CTest)
+include(Catch)
 
-# # Include directories
-# include_directories(/usr/include /usr/local/include)
-# link_directories(/usr/include /usr/local/lib)  # libbdsg.dylib
+# Add test executable
+add_executable(unit_tests
+    tests/unittest/binary_analysis_unit.cpp
+    tests/unittest/gaf_creator_unit.cpp
+    tests/unittest/list_snarl_paths_unit.cpp
+    tests/unittest/matrix_unit.cpp
+    tests/unittest/quantitative_analysis_unit.cpp
 
-# # Find HTSlib
-# find_package(PkgConfig REQUIRED)
-# pkg_check_modules(HTSLIB REQUIRED htslib)
-
-# include_directories(${HTSLIB_INCLUDE_DIRS})
-# link_directories(${HTSLIB_LIBRARY_DIRS})
-
-# include_directories ("${PROJECT_SOURCE_DIR}/lib/Catch")
-# include_directories(BEFORE SYSTEM "${PROJECT_SOURCE_DIR}")
-
-# # Add the executable
-# add_executable(${PROJECT_NAME} 
-#     src/main.cpp
-#     src/arg_parser.cpp
-#     src/binary_analysis.cpp
-#     src/gaf_creator.cpp
-#     src/list_snarl_paths.cpp
-#     src/matrix.cpp
-#     src/quantitative_analysis.cpp
-#     src/snarl_parser.cpp             
-# )
-
-# # Link libraries
-# target_link_libraries(${PROJECT_NAME} 
-#     Boost::boost 
-#     bdsg 
-#     handlegraph 
-#     libsdsl.so.3
-#     ${HTSLIB_LIBRARIES}
-# )
-
-# # Add the test executable
-# add_executable(TestRunner 
-#     tests/unittest/binary_analysis_unit.cpp
-#     # tests/unittest/gaf_creator_unit.cpp
-#     # tests/unittest/list_snarl_paths_unit.cpp
-#     tests/unittest/matrix_unit.cpp
-#     tests/unittest/quantitative_analysis_unit.cpp
-
-#     src/arg_parser.cpp
-#     src/binary_analysis.cpp
-#     src/gaf_creator.cpp
-#     src/list_snarl_paths.cpp
-#     src/matrix.cpp
-#     src/quantitative_analysis.cpp
-#     src/snarl_parser.cpp   
-# )
-
-# # Ensure it finds the headers from src/
-# target_include_directories(TestRunner PRIVATE "${CMAKE_SOURCE_DIR}/src")
-
-# # Link necessary libraries
-# target_link_libraries(TestRunner PRIVATE Boost::boost bdsg handlegraph libsdsl.so.3 Catch2 ${HTSLIB_LIBRARIES})
-
-# # Register the test with CTest
-# add_test(NAME MyTests COMMAND TestRunner)
+    src/arg_parser.cpp
+    src/binary_analysis.cpp
+    src/gaf_creator.cpp
+    src/list_snarl_paths.cpp
+    src/matrix.cpp
+    src/quantitative_analysis.cpp
+    src/snarl_parser.cpp
+)

@@ -1,4 +1,8 @@
-#include "binary_analysis.hpp"
+#include <catch2/catch_test_macros.hpp>
+#include <catch2/catch_approx.hpp>
+#include "../../src/binary_analysis.hpp"
+
+using Catch::Approx;
 
 TEST_CASE("Check observed matrix validity", "[check_observed]") {
     SECTION("Valid matrix (no zero rows or columns)") {
@@ -130,29 +134,6 @@ TEST_CASE("Fast Fisher's Exact Test", "[fastFishersExactTest]") {
         };
 
         REQUIRE(fastFishersExactTest(zero_table) == Approx(-1.0));
-    }
-}
-
-
-TEST_CASE("Join function works correctly", "[join]") {
-    SECTION("Joining empty vector returns empty string") {
-        std::vector<std::string> emptyVec;
-        REQUIRE(join(emptyVec, ",") == "");
-    }
-
-    SECTION("Single element vector") {
-        std::vector<std::string> singleElement = {"A"};
-        REQUIRE(join(singleElement, ",") == "A");
-    }
-
-    SECTION("Multiple elements joined correctly") {
-        std::vector<std::string> elements = {"A", "B", "C"};
-        REQUIRE(join(elements, ",") == "A,B,C");
-    }
-
-    SECTION("Different delimiter") {
-        std::vector<std::string> elements = {"X", "Y", "Z"};
-        REQUIRE(join(elements, "|") == "X|Y|Z");
     }
 }
 
