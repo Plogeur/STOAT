@@ -8,7 +8,6 @@ import time
 import logging
 import os
 import sys
-from datetime import datetime
 
 def main() : 
 
@@ -16,7 +15,7 @@ def main() :
     parser = argparse.ArgumentParser(description="Run the Stoat GWAS analysis pipeline")
     parser.add_argument("-p", "--pg",type=utils.check_file, help='The input pangenome .pg file', required=False)
     parser.add_argument("-d", "--dist",type=utils.check_file, help='The input distance index .dist file', required=False)
-    parser.add_argument("-n", "--name",type=utils.check_file, help='The input chromosome prefix reference file', required=False)
+    parser.add_argument("-n", "--name_chr",type=utils.check_file, help='The input chromosome prefix reference file', required=False)
     parser.add_argument("-t", "--threshold",type=list_snarl_paths.check_threshold, help='Children threshold', required=False)
     parser.add_argument("-v", "--vcf",type=utils.check_format_vcf_file, help="Path to the merged VCF file (.vcf or .vcf.gz)", required=True)
     parser.add_argument("-l", "--listpath", type=utils.check_format_list_path, help="Path to the list paths", required=False)
@@ -87,8 +86,8 @@ def main() :
 
     if not args.listpath :
         
-        if args.name :
-            reference_chr = utils.parse_chr_reference(args.chr)
+        if args.name_chr :
+            reference_chr = utils.parse_chr_reference(args.name_chr)
         else :
             reference_chr = {"ref":0}
             
