@@ -28,6 +28,7 @@ STOAT supports both binary and quantitative phenotypes:
 - bdsg (aka libbdsg) > 3.0
 
 Other will be installed using `pip3 install .`
+
 Or you can use the DockerFile on the repo.
 
 ## Installation
