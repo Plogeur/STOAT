@@ -4,34 +4,27 @@ Stoat_cxx is a C++ implementation of the Stoat tool, designed specifically for a
 
 ## Dependency
 
-You need to install libbdsg using : 
+Manual installation : 
 
-```bash
-# jansson 
-wget --no-check-certificate https://github.com/akheron/jansson/releases/download/v2.14/jansson-2.14.tar.bz2 && \
-tar -xjf jansson-2.14.tar.bz2
+- jansson 
+- libbdsg
+- htslib
+- eigen3
+- boost
+- Catch2 v3
 
-cd jansson-2.14 && ./configure && make  -j 4 && make install && \
-cd .. && rm -rf jansson-2.14 jansson-2.14.tar.bz2
-
-## libbdsg
-git clone --recursive https://github.com/vgteam/libbdsg.git && \
-    cd libbdsg && \
-    mkdir build && \
-    cd build && \
-    cmake .. && \
-    make -j 4
-```
+Or you can use the Dockerfile provided [here](Dockerfile)
 
 ## Building
 
 ```bash
 git clone --branch stoat_cxx https://github.com/Plogeur/STOAT.git
 cd stoat_cxx
-mkdir build 
-cd build
-cmake ..
-make -j 4
+
+mkdir build && cd build
+cmake .. && make -j 4
+
+# ./unit_tests
 ```
 
 ## Benchmarking

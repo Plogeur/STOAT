@@ -28,7 +28,7 @@ std::string chi2Test(const std::vector<std::vector<int>>& observed);
 // ------------------------ Fisher exact test ------------------------
 
 // Function to perform Fisher's exact test
-long double fisher_exact_test(const std::vector<std::vector<int>>& table);
+long double fastFishersExactTest(const std::vector<std::vector<int>>& table);
 
 // ------------------------ Binary table ------------------------
 

@@ -79,7 +79,7 @@ std::string chi2Test(const std::vector<std::vector<int>>& observed) {
 
 // ------------------------ Fisher exact test ------------------------
 
-long double fisher_exact_test(const std::vector<std::vector<int>>& table) {
+long double fastFishersExactTest(const std::vector<std::vector<int>>& table) {
     // Ensure the table is 2x2
     if (table.size() != 2 || table[0].size() != 2 || table[1].size() != 2) {
         return -1.0L;  // Return -1 to indicate an error

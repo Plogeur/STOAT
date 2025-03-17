@@ -52,8 +52,10 @@ target_link_libraries(${PROJECT_NAME}
 # Enable testing
 enable_testing()
 
-# Find Catch2
+# Find Catch2 v3
 find_package(Catch2 3 REQUIRED)
+list(APPEND CMAKE_MODULE_PATH ${Catch2_CMAKE_DIR})
+
 include(CTest)
 include(Catch)
 
@@ -73,3 +75,13 @@ add_executable(unit_tests
     src/quantitative_analysis.cpp
     src/snarl_parser.cpp
 )
+
+# add src target lib + Catch2 lib 
+target_link_libraries(unit_tests PRIVATE 
+    Catch2::Catch2WithMain     
+    Boost::boost
+    bdsg
+    handlegraph
+    Eigen3::Eigen
+    libsdsl.so.3
+    ${HTSLIB_LIBRARIES})

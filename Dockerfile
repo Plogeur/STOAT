@@ -1,4 +1,3 @@
-# Utiliser Ubuntu comme image de base
 FROM ubuntu:22.04
 
 # Éviter les interactions pendant l'installation
@@ -43,15 +42,13 @@ RUN git clone https://github.com/catchorg/Catch2.git \
     && cd / \
     && rm -rf /tmp/Catch2
 
+# Clone the STOAT-NODE repository and set it as the working directory
+RUN git clone https://github.com/Plogeur/STOAT --branch stoat_cxx \
+    && cd STOAT \ 
+    && mkdir build \
+    && cd build \
+    && cmake .. \
+    && make -j 4
+
 # Définir le répertoire de travail
-WORKDIR /app
-
-# Copier les fichiers du projet
-COPY . .
-
-# Compiler le projet
-RUN cmake -B build . \
-    && cmake --build build
-
-# Commande par défaut
-CMD ["./build/stoat_cxx"] 
+WORKDIR /home
