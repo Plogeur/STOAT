@@ -1,61 +1,84 @@
 #include "quantitative_analysis.hpp"
 #include "snarl_parser.hpp"
 
-// Function to perform linear regression using Boost
-std::tuple<double, double, std::string> linear_regression(
+using namespace std;
+
+std::string set_precision(double value) {
+    std::ostringstream oss;
+    if (value < 0.0001) {
+        oss << std::scientific << std::setprecision(4) << value; // Scientific notation with 4 decimals
+    } else {
+        oss << std::fixed << std::setprecision(4) << value; // Fixed-point notation with 4 decimals
+    }
+    return oss.str();
+}
+
+// Linear regression function OLS
+std::tuple<string, string, string, string> linear_regression(
     const std::unordered_map<std::string, std::vector<int>>& df,
     const std::unordered_map<std::string, double>& quantitative_phenotype) {
     
-    std::vector<double> X, Y;
+    size_t num_samples = df.size();
+    size_t max_paths = 0;
+    for (const auto& [_, paths] : df) {
+        max_paths = std::max(max_paths, paths.size());
+    }
     
-    for (const auto& entry : df) {
-        const std::string& key = entry.first;
-        auto it = quantitative_phenotype.find(key);
-        if (it != quantitative_phenotype.end()) {
-            for (int val : entry.second) {
-                X.push_back(static_cast<double>(val));
-                Y.push_back(it->second);
-            }
+    Eigen::MatrixXd X(num_samples, max_paths);
+    X.setZero(); // Initialize matrix with zeros
+    Eigen::VectorXd y(num_samples);
+    
+    int row = 0;
+    for (const auto& [sample, paths] : df) {
+        y(row) = quantitative_phenotype.at(sample);
+        for (size_t col = 0; col < paths.size(); ++col) {
+            X(row, col) = paths[col];
         }
+        ++row;
     }
     
-    if (X.size() < 2 || Y.size() < 2 || X.size() != Y.size()) {
-        return std::make_tuple(0.0, 0.0, "NA");
+    Eigen::VectorXd beta = (X.transpose() * X).ldlt().solve(X.transpose() * y);
+    Eigen::VectorXd y_pred = X * beta;
+    Eigen::VectorXd residuals = y - y_pred;
+    
+    double rss = residuals.squaredNorm();
+    double tss = (y.array() - y.mean()).matrix().squaredNorm();
+    double r2 = 1 - (rss / tss);
+
+    int df_reg = max_paths - 1;
+    int df_res = num_samples - max_paths;
+    double mse = rss / df_res;  // Mean Squared Error (MSE)
+    
+    Eigen::MatrixXd cov_matrix = (X.transpose() * X).inverse();
+    Eigen::VectorXd se = (cov_matrix.diagonal() * mse).array().sqrt().matrix();
+
+    // Compute F-statistic
+    double f_stat = (r2 / df_reg) / ((1 - r2) / df_res);
+    
+    double p_value = 1.0f;
+    if (f_stat > 0) {
+        boost::math::fisher_f dist(df_reg, df_res);
+        p_value = boost::math::cdf(boost::math::complement(dist, f_stat));
     }
-    
-    auto [beta, alpha] = boost::math::statistics::simple_ordinary_least_squares(X, Y);
-    
-    // Compute residuals and standard error
-    double sum_errors_squared = 0.0;
-    for (size_t i = 0; i < X.size(); ++i) {
-        double predicted_y = alpha + beta * X[i];
-        double error = Y[i] - predicted_y;
-        sum_errors_squared += error * error;
-    }
-    
-    double variance_x = boost::math::statistics::variance(X);
-    double se = std::sqrt(sum_errors_squared / (X.size() - 2)) / std::sqrt(variance_x * (X.size() - 1));
-    
-    // Compute t-statistic and p-value
-    double t_stat = beta / se;
-    boost::math::students_t dist(X.size() - 2);
-    double p_value = 2 * (1 - boost::math::cdf(dist, std::abs(t_stat)));
-    
-    // Format output values
-    std::ostringstream ss;
-    ss << std::scientific << std::setprecision(4) << p_value;
-    
-    return std::make_tuple(se, beta, ss.str());
+
+    // set precision : 4 digit
+    string r2_str = set_precision(r2);
+    string bete_mean_str = set_precision(beta.mean());
+    string se_mean_str = set_precision(se.mean());
+    string p_value_str = set_precision(p_value);
+
+    return {r2_str, bete_mean_str, se_mean_str, p_value_str};
 }
 
 // Function to create the quantitative table
-std::unordered_map<std::string, std::vector<int>> create_quantitative_table(
+std::pair<std::unordered_map<std::string, std::vector<int>>, size_t> create_quantitative_table(
     const std::vector<std::string>& list_samples, 
     const std::vector<std::string>& column_headers,
     Matrix& matrix) {
 
     // Retrieve row headers dictionary
     std::unordered_map<std::string, size_t> row_headers_dict = matrix.get_row_header();
+    size_t allele_number = 0;
     size_t length_sample = list_samples.size();
     size_t length_column = column_headers.size();
     std::vector<int> srr_save(length_sample);
@@ -66,7 +89,6 @@ std::unordered_map<std::string, std::vector<int>> create_quantitative_table(
     // Genotype paths
     for (size_t col_idx = 0; col_idx < length_column; ++col_idx) {
         const std::string& path_snarl = column_headers[col_idx];
-        // std::cout << "path_snarl : " << path_snarl << std::endl;
         std::vector<std::string> decomposed_snarl = decompose_string(path_snarl);
 
         // Identify correct paths
@@ -75,11 +97,9 @@ std::unordered_map<std::string, std::vector<int>> create_quantitative_table(
 
         for (auto idx : idx_srr_save) {
             size_t srr_idx = idx / 2;  // Adjust index to correspond to the sample index
-            // std::cout << "idx : " << idx << std::endl;
-            // std::cout << "srr_idx : " << srr_idx << std::endl;
             genotypes[srr_idx][col_idx] += 1;
+            allele_number++;
         }
-        // std::cout << std::endl;
     }
 
     std::unordered_map<std::string, std::vector<int>> df;
@@ -87,5 +107,5 @@ std::unordered_map<std::string, std::vector<int>> create_quantitative_table(
         df[list_samples[i]] = genotypes[i];
     }
     
-    return df;
+    return {df, allele_number};
 }

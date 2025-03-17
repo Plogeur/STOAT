@@ -2,12 +2,13 @@
 
 // Constructor implementation
 Matrix::Matrix(size_t rows, size_t cols) 
-    : cols_(cols), default_row_number(rows)
+    : cols_(cols)
 {
-    size_t length_matrix = default_row_number * cols_;
-    row_header.rehash(rows); 
-    matrix_1D.reserve((length_matrix + 7) / 8);  // Round up to account for any leftover bits
-    matrix_1D.resize((length_matrix + 7) / 8, 0);
+    size_t length_matrix = (rows * cols + 7) / 8;
+    MaxElement = (length_matrix * 8) / cols_; // get the number of element in the matrix
+    row_header.rehash(rows);
+    matrix_1D.reserve(length_matrix);  // Reserve capacity to avoid frequent reallocations
+    matrix_1D.resize(length_matrix, 0); // Initialize with zeros
 }
 
 // Getter for matrix
@@ -21,21 +22,20 @@ const std::unordered_map<std::string, size_t>& Matrix::get_row_header() const {
 }
 
 // Getter row number
-size_t Matrix::getRows() const {
-    return matrix_1D.size() * 8;
+size_t Matrix::getMaxElement() const {
+    return MaxElement;  // Convert bits back to rows
 }
 
 // Setter for row header
-void Matrix::set_row_header(const std::unordered_map<std::string, size_t>& row_header) {
-    this->row_header = row_header;
+void Matrix::set_row_header(const std::unordered_map<std::string, size_t>& new_row_header) {
+    row_header = std::move(new_row_header);
 }
 
 void Matrix::expandMatrix() {
-    size_t current_elements = matrix_1D.size() * 8;  // Number of booleans (since each uint8_t stores 8 booleans)
-    size_t new_elements = (current_elements / 8) + (default_row_number * cols_); // double capacity 
-    size_t new_matrix_size = (new_elements + 7) / 8;
-    matrix_1D.reserve(new_matrix_size);
-    matrix_1D.resize(new_matrix_size, 0);
+    MaxElement *= 2;  // Double the number of elements in the matrix
+    size_t new_length = matrix_1D.size() * 2;
+    matrix_1D.reserve(new_length);
+    matrix_1D.resize(new_length, 0); // Initialize new memory with zeros
 }
 
 // Overloaded operator() to access elements as matrix(row, col)
@@ -43,22 +43,22 @@ bool Matrix::operator()(size_t row, size_t col) const {
     size_t bitIndex = row * cols_ + col;
     size_t byteIndex = bitIndex / 8;
     size_t bitPosition = bitIndex % 8;
-    return (matrix_1D[byteIndex] >> bitPosition) & 1;
+    if (byteIndex >= matrix_1D.size()) return false; // Bounds check to avoid out-of-range access
+    return (matrix_1D[byteIndex] >> bitPosition) & 1U;
 }
 
-// Function to set a specific element (row, col) modify false to true (only this ways)
+// Function to set a specific element (row, col) to true
 void Matrix::set(size_t row, size_t col) {
     size_t bitIndex = row * cols_ + col;
     size_t byteIndex = bitIndex / 8;
     size_t bitPosition = bitIndex % 8;
+    if (byteIndex >= matrix_1D.size()) return; // Bounds check to avoid out-of-range access
     matrix_1D[byteIndex] |= (1U << bitPosition);
 }
 
 void Matrix::shrink(size_t current_rows) {
-
-    size_t new_bits = current_rows * cols_; 
+    size_t new_bits = current_rows * cols_;
     size_t new_bytes = (new_bits + 7) / 8; // Compute required bytes (round up)
-
-    matrix_1D.resize(new_bytes);
-    matrix_1D.shrink_to_fit(); // Shrink to fit the new size
+    matrix_1D.resize(new_bytes); // Resize
+    matrix_1D.shrink_to_fit(); // Free unused capacity
 }

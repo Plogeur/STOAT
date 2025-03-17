@@ -20,6 +20,17 @@
 
 using namespace std;
 
+// Struct to store parsed eQTL data
+struct EQTL {
+    std::string snp_id;
+    std::string gene_id;
+    double p_value;
+    double effect_size;
+};
+
+// Function to parse an eQTL file
+std::vector<EQTL> parseEQTLFile(const std::string& filename);
+
 // Parses the group file and fills the group_0 and group_1 maps with sample data.
 std::unordered_map<std::string, bool> parse_binary_pheno(const std::string& binary_pheno);
 
