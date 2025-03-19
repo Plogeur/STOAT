@@ -16,6 +16,7 @@
 
 #include "matrix.hpp"
 #include "snarl_parser.hpp"
+#include "utils.hpp"
 
 // ------------------------ Chi2 test ------------------------
 
@@ -28,7 +29,7 @@ std::string chi2Test(const std::vector<std::vector<int>>& observed);
 // ------------------------ Fisher exact test ------------------------
 
 // Function to perform Fisher's exact test
-long double fastFishersExactTest(const std::vector<std::vector<int>>& table);
+std::string fastFishersExactTest(const std::vector<std::vector<int>>& table);
 
 // ------------------------ Binary table ------------------------
 

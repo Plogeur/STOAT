@@ -17,8 +17,7 @@
 
 #include "matrix.hpp"
 #include "snarl_parser.hpp"
-
-std::string set_precision(double value);
+#include "utils.hpp"
 
 // Linear regression function that returns a tuple of p_value, standard error (se), and beta
 std::tuple<string, string, string, string> linear_regression(

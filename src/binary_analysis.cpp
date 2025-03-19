@@ -1,5 +1,6 @@
 #include "binary_analysis.hpp"
 #include "snarl_parser.hpp"
+#include "utils.hpp"
 
 // ------------------------ Chi2 test ------------------------
 
@@ -73,18 +74,15 @@ std::string chi2Test(const std::vector<std::vector<int>>& observed) {
     boost::math::chi_squared chi_squared_dist(degrees_of_freedom);
     double p_value = boost::math::cdf(boost::math::complement(chi_squared_dist, chi_squared_stat));
 
-    // Format p-value as a string
-    std::ostringstream ss;
-    ss << std::scientific << std::setprecision(4) << p_value;
-    return ss.str();
+    return set_precision(p_value);
 }
 
 // ------------------------ Fisher exact test ------------------------
 
-long double fastFishersExactTest(const std::vector<std::vector<int>>& table) {
+std::string fastFishersExactTest(const std::vector<std::vector<int>>& table) {
     // Ensure the table is 2x2
     if (table.size() != 2 || table[0].size() != 2 || table[1].size() != 2) {
-        return -1.0L;  // Return -1 to indicate an error
+        return "NA";  // Return -1 to indicate an error
     }
 
     // Extract values from the table
@@ -110,8 +108,7 @@ long double fastFishersExactTest(const std::vector<std::vector<int>>& table) {
             p_value += prob;
         }
     }
-
-    return p_value;
+    return set_precision(p_value);
 }
 
 // ------------------------ Binary table & stats ------------------------
@@ -133,8 +130,6 @@ std::string format_group_paths(const std::vector<std::vector<int>>& matrix) {
 }
 
 std::vector<std::string> binary_stat_test(const std::vector<std::vector<int>>& df) {
-    // Compute Fisher's exact test p-value
-    long double fastfisher_p_value = fastFishersExactTest(df);
 
     // Compute derived statistics
     int allele_number = 0;
@@ -158,22 +153,12 @@ std::vector<std::string> binary_stat_test(const std::vector<std::vector<int>>& d
     
     int average = static_cast<double>(allele_number) / numb_colum; // get 200 instead of 200.00000
 
-    // Compute Chi-squared test p-value
+    // Compute  Fisher's exact & Chi-squared test p-value
     std::string chi2_p_value = chi2Test(df);
-
-    // Prepare Fisher's p-value string with 4 decimal places precision
-    std::string stringFastfisher_p_value;
-    if (fastfisher_p_value != -1.0L) { // Check if Fisher's test is computable
-        std::ostringstream ss;
-        ss << std::scientific << std::setprecision(4) << fastfisher_p_value;
-        stringFastfisher_p_value = ss.str();
-    } else {
-        stringFastfisher_p_value = "NA";
-    }
-    
+    std::string fastfisher_p_value = fastFishersExactTest(df);
     std::string group_paths = format_group_paths(df); // Placeholder for future implementation
 
-    return {stringFastfisher_p_value, chi2_p_value, std::to_string(allele_number), std::to_string(min_row_index), std::to_string(numb_colum), std::to_string(inter_group), std::to_string(average), group_paths};
+    return {fastfisher_p_value, chi2_p_value, std::to_string(allele_number), std::to_string(min_row_index), std::to_string(numb_colum), std::to_string(inter_group), std::to_string(average), group_paths};
 }
 
 std::vector<std::vector<int>> create_binary_table(

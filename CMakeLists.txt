@@ -23,6 +23,7 @@ find_package(Eigen3 REQUIRED)
 # Add Executable
 add_executable(${PROJECT_NAME}
     src/main.cpp
+    src/utils.cpp
     src/arg_parser.cpp
     src/binary_analysis.cpp
     src/gaf_creator.cpp
@@ -67,6 +68,7 @@ add_executable(unit_tests
     tests/unittest/matrix_unit.cpp
     tests/unittest/quantitative_analysis_unit.cpp
 
+    src/utils.cpp
     src/arg_parser.cpp
     src/binary_analysis.cpp
     src/gaf_creator.cpp

@@ -16,36 +16,6 @@ std::unordered_set<std::string> parse_chromosome_reference(const string& file_pa
     return reference;
 }
 
-std::vector<EQTL> parseEQTLFile(const std::string& filename) {
-    std::vector<EQTL> eqtl_data;
-    std::ifstream file(filename);
-
-    std::string line;
-    bool first_line = true;
-
-    while (std::getline(file, line)) {
-        std::istringstream ss(line);
-        std::string snp_id, gene_id, p_value_str, effect_size_str;
-
-        if (first_line) { 
-            first_line = false;  // Skip the header line
-            continue;
-        }
-
-        if (ss >> snp_id >> gene_id >> p_value_str >> effect_size_str) {
-            try {
-                double p_value = std::stod(p_value_str);
-                double effect_size = std::stod(effect_size_str);
-                eqtl_data.push_back({snp_id, gene_id, p_value, effect_size});
-            } catch (const std::exception& e) {
-                std::cerr << "Error parsing line: " << line << " (" << e.what() << ")" << std::endl;
-            }
-        }
-    }
-
-    return eqtl_data;
-}
-
 std::unordered_map<std::string, bool> parse_binary_pheno(const std::string& file_path) {
     
     std::unordered_map<std::string, bool> parsed_pheno;
@@ -107,7 +77,6 @@ std::unordered_map<std::string, double> parse_quantitative_pheno(const std::stri
     file.close();
     return parsed_pheno;
 }
-
 
 // Function to open a VCF file and return pointers to the file, header, and record
 std::tuple<htsFile*, bcf_hdr_t*, bcf1_t*> parse_vcf(const std::string& vcf_path) {
@@ -220,6 +189,125 @@ std::unordered_map<std::string, std::vector<std::tuple<string, vector<string>, s
 
     file.close();
     return chr_snarl_matrix;
+}
+
+// Function to check if a line follows the expected QTL format
+bool isValidQTLFormat(const std::string& line) {
+    std::regex qtlPattern(R"(^\S+\t\d+\t\d+(\.\d+)?\t\d+(\.\d+)?\t\d+(\.\d+)?\t\S+$)");
+    return std::regex_match(line, qtlPattern);
+}
+
+// Function to parse a QTL file and extract data
+std::vector<QTLRecord> parseQTLFile(const std::string& filename) {
+    std::vector<QTLRecord> qtlData;
+    std::ifstream file(filename);
+
+    if (!file.is_open()) {
+        std::cerr << "Error: Unable to open file " << filename << std::endl;
+        return qtlData;
+    }
+
+    std::string line;
+    std::getline(file, line); // Skip header
+
+    while (std::getline(file, line)) {
+        if (!isValidQTLFormat(line)) {
+            std::cerr << "Invalid QTL format: " << line << std::endl;
+            continue;
+        }
+
+        std::istringstream iss(line);
+        QTLRecord record;
+        std::string chromosome, position, lod, p_value;
+
+        std::getline(iss, record.marker, '\t');
+        std::getline(iss, chromosome, '\t');
+        std::getline(iss, position, '\t');
+        std::getline(iss, lod, '\t');
+        std::getline(iss, p_value, '\t');
+        std::getline(iss, record.trait, '\t');
+
+        // Convert data to appropriate types
+        record.chromosome = std::stoi(chromosome);
+        record.position = std::stod(position);
+        record.lod = std::stod(lod);
+        record.p_value = std::stod(p_value);
+
+        qtlData.push_back(record);
+    }
+
+    file.close();
+    return qtlData;
+}
+
+// Function to check covariate format
+bool check_format_covariate(const std::string& filename) {
+    std::ifstream file(filename);
+    if (!file.is_open()) {
+        std::cerr << "Error: Cannot open file " << filename << std::endl;
+        return false;
+    }
+
+    std::string line;
+    int numCols = -1; // Store column count
+    int lineCount = 0;
+
+    while (std::getline(file, line)) {
+        std::stringstream ss(line);
+        std::string token;
+        int colCount = 0;
+
+        while (ss >> token) colCount++; // Count columns in this line
+
+        if (numCols == -1) {
+            numCols = colCount; // Set number of columns from first line
+        } else if (colCount != numCols) {
+            std::cerr << "Error: Inconsistent column count in row " << lineCount + 1 << std::endl;
+            return false;
+        }
+        lineCount++;
+    }
+
+    file.close();
+    return true;
+}
+
+// Function to parse covariates into an Eigen matrix
+Eigen::MatrixXd parseCovariate(const std::string& filename) {
+    std::ifstream file(filename);
+    if (!file.is_open()) {
+        std::cerr << "Error: Cannot open file " << filename << std::endl;
+        return Eigen::MatrixXd(0, 0);
+    }
+
+    std::vector<std::vector<double>> data;
+    std::string line;
+
+    while (std::getline(file, line)) {
+        std::stringstream ss(line);
+        std::vector<double> row;
+        double value;
+
+        while (ss >> value) {
+            row.push_back(value);
+        }
+
+        data.push_back(row);
+    }
+
+    file.close();
+
+    if (data.empty()) return Eigen::MatrixXd(0, 0);
+
+    int rows = data.size();
+    int cols = data[0].size();
+    Eigen::MatrixXd covariates(rows, cols);
+
+    for (int i = 0; i < rows; i++)
+        for (int j = 0; j < cols; j++)
+            covariates(i, j) = data[i][j];
+
+    return covariates;
 }
 
 void check_format_quantitative_phenotype(const std::string& file_path) {

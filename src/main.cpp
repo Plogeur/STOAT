@@ -2,6 +2,8 @@
 #include <string>
 #include <unordered_map>
 #include <chrono>
+#include <Eigen/Dense>
+
 #include "snarl_parser.hpp"     
 #include "matrix.hpp"
 #include "arg_parser.hpp"
@@ -27,6 +29,7 @@ void print_help() {
               << "  -t, --thread <int>          Number of threads\n"
               << "  -h, --help                  Print this help message\n";
 }
+
 void chromosome_chuck_quantitative(htsFile* &ptr_vcf, bcf_hdr_t* &hdr, bcf1_t* &rec, 
                         const std::vector<std::string> &list_samples,
                         unordered_map<string, std::vector<std::tuple<string, vector<string>, string, vector<string>>>> &snarl_chr,
@@ -49,6 +52,35 @@ void chromosome_chuck_quantitative(htsFile* &ptr_vcf, bcf_hdr_t* &hdr, bcf1_t* &
 
         // Gwas analysis by chromosome
         vcf_object.quantitative_table(snarl, pheno, chr, outf);
+    }
+    // Cleanup
+    bcf_destroy(rec);
+    bcf_hdr_destroy(hdr);
+    bcf_close(ptr_vcf);
+}
+
+void chromosome_chuck_eqtl(htsFile* &ptr_vcf, bcf_hdr_t* &hdr, bcf1_t* &rec, 
+    const std::vector<std::string> &list_samples,
+    unordered_map<string, std::vector<std::tuple<string, vector<string>, string, vector<string>>>> &snarl_chr,
+    const vector<QTLRecord> pheno, std::ofstream& outf) {
+
+    std::cout << "GWAS analysis for chromosome : " << std::endl;
+    while (bcf_read(ptr_vcf, hdr, rec) >= 0) {
+
+        string chr = bcf_hdr_id2name(hdr, rec->rid);
+        std::cout << chr << std::endl;
+        size_t size_chr = snarl_chr[chr].size();
+
+        // Make genotype matrix by chromosome    
+        auto [vcf_object, ptr_vcf_new, hdr_new, rec_new] = make_matrix(ptr_vcf, hdr, rec, list_samples, chr, size_chr);
+        ptr_vcf = ptr_vcf_new;
+        hdr = hdr_new;
+        rec = rec_new;
+
+        auto snarl = snarl_chr[chr];
+
+        // Gwas analysis by chromosome
+        // vcf_object.eqtl_table(snarl, pheno, chr, outf);
     }
     // Cleanup
     bcf_destroy(rec);
@@ -87,7 +119,10 @@ void chromosome_chuck_binary(htsFile* &ptr_vcf, bcf_hdr_t* &hdr, bcf1_t* &rec,
 
 int main(int argc, char* argv[]) {
     // Declare variables to hold argument values
-    std::string vcf_path, snarl_path, pg_path, dist_path, chromosome_path, binary_path, quantitative_path, eqtl_path, output_dir;
+    std::string vcf_path, snarl_path, pg_path, dist_path, 
+        chromosome_path, binary_path, quantitative_path, 
+        eqtl_path, covariate_path, output_dir;
+
     size_t threads=1;
     size_t phenotype=0;
     bool gaf, show_help= false;
@@ -123,6 +158,9 @@ int main(int argc, char* argv[]) {
             check_file(binary_path);
         } else if ((arg == "-g" || arg == "--gaf") && i + 1 < argc) {
             gaf=true;
+        } else if ((arg == "-cov" || arg == "--covariate") && i + 1 < argc) {
+            covariate_path = argv[++i];
+            check_file(covariate_path);
         } else if ((arg == "-q" || arg == "--quantitative") && i + 1 < argc) {
             quantitative_path = argv[++i];
             phenotype ++;
@@ -189,15 +227,21 @@ int main(int argc, char* argv[]) {
         return EXIT_FAILURE;
     }
 
-    // Check phenotypes 
+    // Check phenotypes
+    std::vector<QTLRecord> eqtl;
     if (!binary_path.empty()) {
         check_format_binary_phenotype(binary_path);
     } else if (!quantitative_path.empty()) {
         check_format_quantitative_phenotype(quantitative_path);
+    } else if (!eqtl_path.empty()) {
+        eqtl = parseQTLFile(eqtl_path);
     }
-    // } else if (!eqtl_path.empty()) {
-    //     continue;
-    // }
+
+    Eigen::MatrixXd covariate;
+    if (!covariate_path.empty()) {
+        check_format_covariate(covariate_path);
+        covariate = parseCovariate(covariate_path);
+    }
 
     // scope declaration
     std::unordered_map<std::string, std::vector<std::tuple<string, vector<string>, string, vector<string>>>> snarls_chr;
@@ -249,16 +293,13 @@ int main(int argc, char* argv[]) {
         chromosome_chuck_quantitative(ptr_vcf, hdr, rec, list_samples, snarls_chr, quantitative, outf);
 
     } else if (!eqtl_path.empty()) {
-        // check_format_eqtl_phenotype(eqtl_path);
-        auto eqtl = parseEQTLFile(eqtl_path);
-        // check_match_samples(eqtl, list_samples);
+    
+        string eqtl_output = output_dir + "/eqtl_gwas.tsv";
+        std::ofstream outf(eqtl_output, std::ios::binary);
+        std::string headers = "CHR\tPOS\tSNARL\tTYPE\tSE\tBETA\tP\n";
+        outf.write(headers.c_str(), headers.size());
 
-        // string eqtl_output = output_dir + "/eqtl_gwas.tsv";
-        // std::ofstream outf(eqtl_output, std::ios::binary);
-        // std::string headers = "CHR\tPOS\tSNARL\tTYPE\tSE\tBETA\tP\n";
-        // outf.write(headers.c_str(), headers.size());
-
-        // chromosome_chuck_quantitative(ptr_vcf, hdr, rec, list_samples, snarls_chr, eqtl, outf);
+        chromosome_chuck_eqtl(ptr_vcf, hdr, rec, list_samples, snarls_chr, eqtl, outf);
     }
 
     auto end_1 = std::chrono::high_resolution_clock::now();
