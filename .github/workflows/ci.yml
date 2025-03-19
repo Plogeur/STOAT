@@ -27,20 +27,20 @@ jobs:
 
       - name: Clone and build dependencies
         run: |
-          git clone --recursive https://github.com/vgteam/libbdsg.git /tmp/libbdsg
-          cd /tmp/libbdsg && mkdir build && cd build
+          git clone --recursive https://github.com/vgteam/libbdsg.git ~/libbdsg
+          cd ~/libbdsg && mkdir build && cd build
           cmake -DRUN_DOXYGEN=OFF .. && make -j$(nproc) && sudo make install
 
-          git clone https://github.com/catchorg/Catch2.git /tmp/Catch2
-          cd /tmp/Catch2 && cmake -Bbuild -H. -DBUILD_TESTING=OFF
+          git clone https://github.com/catchorg/Catch2.git ~/Catch2
+          cd ~/Catch2 && cmake -Bbuild -H. -DBUILD_TESTING=OFF
           cmake --build build/ && sudo cmake --install build/
 
       - name: Build STOAT C++
         run: |
-          git clone https://github.com/Plogeur/STOAT --branch stoat_cxx /STOAT
-          cd /STOAT && mkdir build && cd build
+          git clone https://github.com/Plogeur/STOAT --branch stoat_cxx ~/STOAT
+          cd ~/STOAT && mkdir build && cd build
           cmake .. && make -j$(nproc)
 
       - name: Run unit tests
         run: |
-          cd /STOAT/build && ./unit_tests
+          cd ~/STOAT/build && ./unit_tests
