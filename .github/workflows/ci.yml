@@ -18,51 +18,29 @@ jobs:
       - name: Checkout repository
         uses: actions/checkout@v4
 
-      - name: Set up Docker Buildx
-        uses: docker/setup-buildx-action@v3
-
-      - name: Build Docker image
-        uses: docker/build-push-action@v5
-        with:
-          context: .
-          file: ./Dockerfile
-          tags: stoat:latest
-          cache-from: type=gha
-          cache-to: type=gha,mode=max
-
-      - name: Run container and install dependencies
+      - name: Install dependencies
         run: |
-          docker run --name stoat-container -d stoat:latest tail -f /dev/null
-          docker exec stoat-container bash -c "\
-            apt-get update && apt-get install -y \
+          sudo apt-get update && sudo apt-get install -y \
             build-essential cmake git pkg-config wget \
             libhts-dev libeigen3-dev libboost-all-dev \
-            zlib1g-dev libbz2-dev liblzma-dev libsdsl-dev libjansson-dev"
+            zlib1g-dev libbz2-dev liblzma-dev libsdsl-dev libjansson-dev
 
       - name: Clone and build dependencies
         run: |
-          docker exec stoat-container bash -c "\
-            git clone --recursive https://github.com/vgteam/libbdsg.git /tmp/libbdsg && \
-            cd /tmp/libbdsg && mkdir build && cd build && \
-            cmake -DRUN_DOXYGEN=OFF .. && make -j$(nproc) && make install"
-          docker exec stoat-container bash -c "\
-            git clone https://github.com/catchorg/Catch2.git /tmp/Catch2 && \
-            cd /tmp/Catch2 && cmake -Bbuild -H. -DBUILD_TESTING=OFF && \
-            cmake --build build/ && cmake --install build/"
+          git clone --recursive https://github.com/vgteam/libbdsg.git /tmp/libbdsg
+          cd /tmp/libbdsg && mkdir build && cd build
+          cmake -DRUN_DOXYGEN=OFF .. && make -j$(nproc) && sudo make install
+
+          git clone https://github.com/catchorg/Catch2.git /tmp/Catch2
+          cd /tmp/Catch2 && cmake -Bbuild -H. -DBUILD_TESTING=OFF
+          cmake --build build/ && sudo cmake --install build/
 
       - name: Build STOAT C++
         run: |
-          docker exec stoat-container bash -c "\
-            git clone https://github.com/Plogeur/STOAT --branch stoat_cxx /STOAT && \
-            cd /STOAT && mkdir build && cd build && \
-            cmake .. && make -j$(nproc)"
+          git clone https://github.com/Plogeur/STOAT --branch stoat_cxx /STOAT
+          cd /STOAT && mkdir build && cd build
+          cmake .. && make -j$(nproc)
 
       - name: Run unit tests
         run: |
-          docker exec stoat-container bash -c "cd /STOAT/build && ./unit_tests"
-
-      - name: Cleanup
-        run: |
-          docker stop stoat-container
-          docker rm stoat-container
-
+          cd /STOAT/build && ./unit_tests
