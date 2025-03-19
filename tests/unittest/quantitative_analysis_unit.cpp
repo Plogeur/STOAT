@@ -72,42 +72,33 @@ using Catch::Approx;
 //     }
 // }
 
-// TEST_CASE("Création de table quantitative", "[create_quantitative_table]") {
-//     SECTION("Table simple") {
-//         std::vector<std::string> list_samples = {"Sample1", "Sample2", "Sample3"};
-//         std::vector<std::string> column_headers = {"Path1", "Path2"};
+TEST_CASE("Création de table quantitative", "[create_quantitative_table]") {
+    SECTION("Table simple") {
+        std::vector<std::string> list_samples = {"Sample1", "Sample2", "Sample3"};
+        std::vector<std::string> column_headers = {"Path1", "Path2"};
 
-//         Matrix matrix(3, 2);  // 3 échantillons, 2 chemins
-//         matrix.set(0, 0);  // Sample1, Path1
-//         matrix.set(1, 1);  // Sample2, Path2
+        Matrix matrix(3, 2);  // 3 échantillons, 2 chemins
+        matrix.set(0, 0);  // Sample1, Path1
+        matrix.set(1, 1);  // Sample2, Path2
 
-//         auto [table, size] = create_quantitative_table(list_samples, column_headers, matrix);
+        auto [table, size] = create_quantitative_table(list_samples, column_headers, matrix);
 
-//         REQUIRE(table.size() == list_samples.size());
-//         for (const auto& [sample, values] : table) {
-//             REQUIRE(values.size() == column_headers.size());
-//         }
-//     }
+        REQUIRE(table.size() == list_samples.size());
+        for (const auto& [sample, values] : table) {
+            REQUIRE(values.size() == column_headers.size());
+        }
+    }
+}
 
-//     SECTION("Table vide") {
-//         std::vector<std::string> list_samples;
-//         std::vector<std::string> column_headers;
-//         Matrix matrix(0, 0);
+TEST_CASE("Test de set_precision", "[set_precision]") {
+    SECTION("Valeurs normales") {
+        REQUIRE(set_precision(3.14159) == "3.1416");
+        REQUIRE(set_precision(0.0) == "0.0000e+00");
+        REQUIRE(set_precision(100.0) == "100.0000");
+    }
 
-//         auto [table, size] = create_quantitative_table(list_samples, column_headers, matrix);
-//         REQUIRE(table.empty());
-//     }
-// }
-
-// TEST_CASE("Test de set_precision", "[set_precision]") {
-//     SECTION("Valeurs normales") {
-//         REQUIRE(set_precision(3.14159) == "3.142");
-//         REQUIRE(set_precision(0.0) == "0.000");
-//         REQUIRE(set_precision(100.0) == "100.000");
-//     }
-
-//     SECTION("Valeurs extrêmes") {
-//         REQUIRE(set_precision(1e-10) == "0.000");
-//         REQUIRE(set_precision(1e10) == "10000000000.000");
-//     }
-// }
+    SECTION("Valeurs extrêmes") {
+        REQUIRE(set_precision(1e-10) == "1.0000e-10");
+        REQUIRE(set_precision(1e10) == "10000000000.0000");
+    }
+}
