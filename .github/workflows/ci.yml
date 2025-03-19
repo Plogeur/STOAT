@@ -30,14 +30,39 @@ jobs:
           cache-from: type=gha
           cache-to: type=gha,mode=max
 
-      - name: Run container and compile STOAT
+      - name: Run container and install dependencies
         run: |
-          docker run --rm --name stoat-container stoat:latest bash -c "
-            cd /STOAT/build && make -j$(nproc)
-          "
+          docker run --name stoat-container -d stoat:latest tail -f /dev/null
+          docker exec stoat-container bash -c "\
+            apt-get update && apt-get install -y \
+            build-essential cmake git pkg-config wget \
+            libhts-dev libeigen3-dev libboost-all-dev \
+            zlib1g-dev libbz2-dev liblzma-dev libsdsl-dev libjansson-dev"
+
+      - name: Clone and build dependencies
+        run: |
+          docker exec stoat-container bash -c "\
+            git clone --recursive https://github.com/vgteam/libbdsg.git /tmp/libbdsg && \
+            cd /tmp/libbdsg && mkdir build && cd build && \
+            cmake -DRUN_DOXYGEN=OFF .. && make -j$(nproc) && make install"
+          docker exec stoat-container bash -c "\
+            git clone https://github.com/catchorg/Catch2.git /tmp/Catch2 && \
+            cd /tmp/Catch2 && cmake -Bbuild -H. -DBUILD_TESTING=OFF && \
+            cmake --build build/ && cmake --install build/"
+
+      - name: Build STOAT C++
+        run: |
+          docker exec stoat-container bash -c "\
+            git clone https://github.com/Plogeur/STOAT --branch stoat_cxx /STOAT && \
+            cd /STOAT && mkdir build && cd build && \
+            cmake .. && make -j$(nproc)"
 
       - name: Run unit tests
         run: |
-          docker run --rm --name stoat-test-container stoat:latest bash -c "
-            cd /STOAT/build && ./unit_tests
-          "
+          docker exec stoat-container bash -c "cd /STOAT/build && ./unit_tests"
+
+      - name: Cleanup
+        run: |
+          docker stop stoat-container
+          docker rm stoat-container
+

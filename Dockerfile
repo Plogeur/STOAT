@@ -42,7 +42,7 @@ RUN git clone https://github.com/catchorg/Catch2.git \
     && cd / \
     && rm -rf /tmp/Catch2
 
-# Clone the STOAT-NODE repository and set it as the working directory
+# Clone the STOAT C++ repository and set it as the working directory
 RUN git clone https://github.com/Plogeur/STOAT --branch stoat_cxx \
     && cd STOAT \ 
     && mkdir build \
