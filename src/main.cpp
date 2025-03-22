@@ -125,8 +125,7 @@ int main(int argc, char* argv[]) {
 
     size_t threads=1;
     size_t phenotype=0;
-    bool gaf, snarl_parsing, show_help = false;
-    bool full_gwas = true;
+    bool gaf, snarl_parsing, only_snarl_parsing, show_help = false;
     size_t children_threshold = 50;
 
     // Parse arguments manually
@@ -227,7 +226,7 @@ int main(int argc, char* argv[]) {
         // Case 2: pg_path + dist_path + vcf_path + phenotype
     } else if (!pg_path.empty() && !dist_path.empty() && vcf_path.empty() && snarl_path.empty() && phenotype == 0) {
         // Case 3: Only pg_path + dist_path
-        full_gwas = false;
+        only_snarl_parsing = false;
     } else {
         std::cerr << "Invalid argument combination provided.\n";
         std::cerr << "There are 3 ways to lauch stoat : " << endl;
@@ -274,10 +273,10 @@ int main(int argc, char* argv[]) {
         auto snarls = save_snarls(*stree, root, *pg, ref_chr, *pp_overlay);
         string output_snarl_not_analyse = output_dir + "/snarl_not_analyse.tsv";
         string output_file = output_dir + "/snarl_analyse.tsv";
-        snarls_chr = loop_over_snarls_write(*stree, snarls, *pg, output_file, output_snarl_not_analyse, children_threshold, full_gwas);
+        snarls_chr = loop_over_snarls_write(*stree, snarls, *pg, output_file, output_snarl_not_analyse, children_threshold, only_snarl_parsing);
         auto end_0 = std::chrono::high_resolution_clock::now();
         std::cout << "Snarl analysis : " << std::chrono::duration<double>(end_0 - start_0).count() << " s" << std::endl;
-        if (full_gwas == false) {
+        if (only_snarl_parsing == true) {
             return EXIT_SUCCESS
         }
     }
