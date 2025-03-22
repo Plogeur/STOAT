@@ -125,7 +125,7 @@ int main(int argc, char* argv[]) {
 
     size_t threads=1;
     size_t phenotype=0;
-    bool gaf, show_help= false;
+    bool gaf, snarl_parsing, show_help= false;
     size_t children_threshold = 50;
 
     // Parse arguments manually
@@ -192,25 +192,35 @@ int main(int argc, char* argv[]) {
     std::filesystem::create_directory(output_dir);
     std::unordered_set<std::string> ref_chr = (!chromosome_path.empty()) ? parse_chromosome_reference(chromosome_path) : std::unordered_set<std::string>{"ref"};
 
+    if (!pg_path.empty() && !dist_path.empty()) {
+        snarl_parsing = true;
+    }
+
     if (show_help) {
         print_help();
         return EXIT_FAILURE;    
     }
 
-    if (vcf_path.empty()) {
-        cerr << "vcf_path are missing";
+    if (vcf_path.empty() && snarl_parsing == false) {
+        cerr << "vcf file are missing";
         print_help();
         return EXIT_FAILURE;
     }
 
-    if (phenotype == 0) {
-        cerr << "phenotype are missing (use -b or -q or -eqtl)";
+    if (phenotype == 0 && snarl_parsing == false) {
+        cerr << "phenotype file are missing (use -b or -q or -eqtl)";
         print_help();
         return EXIT_FAILURE;
     }
 
-    if (snarl_path.empty() && (pg_path.empty() || dist_path.empty())) {
+    if (snarl_path.empty() && snarl_parsing == false) {
         cerr << "snarl paths file OR pg & dist files are missing";
+        print_help();
+        return EXIT_FAILURE;
+    }
+
+    if (snarl_parsing == true && (phenotype == 0)) {
+        cerr << "vcf file are missing";
         print_help();
         return EXIT_FAILURE;
     }
@@ -222,7 +232,7 @@ int main(int argc, char* argv[]) {
     }
 
     if (phenotype > 1) {
-        cerr << "Only one kind of analysis/phenotype is allowed";
+        cerr << "Only one kind of analysis/phenotype is allowed at the same time";
         print_help();
         return EXIT_FAILURE;
     }
@@ -249,14 +259,15 @@ int main(int argc, char* argv[]) {
 
     if (!snarl_path.empty()){
         snarls_chr = parse_snarl_path(snarl_path);
-
-    } else if (!pg_path.empty() && !dist_path.empty()) {
+    } else {
         std::cout << "Start snarl analysis... " << std::endl;
         auto start_0 = std::chrono::high_resolution_clock::now();
         auto [stree, pg, root, pp_overlay] = parse_graph_tree(pg_path, dist_path);
         auto snarls = save_snarls(*stree, root, *pg, ref_chr, *pp_overlay);
         string output_snarl_not_analyse = output_dir + "/snarl_not_analyse.tsv";
         string output_file = output_dir + "/snarl_analyse.tsv";
+
+        if 
         snarls_chr = loop_over_snarls_write(*stree, snarls, *pg, output_file, output_snarl_not_analyse, children_threshold, true);
         auto end_0 = std::chrono::high_resolution_clock::now();
         std::cout << "Snarl analysis : " << std::chrono::duration<double>(end_0 - start_0).count() << " s" << std::endl;
