@@ -277,7 +277,7 @@ int main(int argc, char* argv[]) {
         auto end_0 = std::chrono::high_resolution_clock::now();
         std::cout << "Snarl analysis : " << std::chrono::duration<double>(end_0 - start_0).count() << " s" << std::endl;
         if (only_snarl_parsing == true) {
-            return EXIT_SUCCESS
+            return EXIT_SUCCESS;
         }
     }
 
