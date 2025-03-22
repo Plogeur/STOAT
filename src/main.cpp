@@ -125,7 +125,8 @@ int main(int argc, char* argv[]) {
 
     size_t threads=1;
     size_t phenotype=0;
-    bool gaf, snarl_parsing, show_help= false;
+    bool gaf, snarl_parsing, show_help = false;
+    bool full_gwas = true;
     size_t children_threshold = 50;
 
     // Parse arguments manually
@@ -219,20 +220,27 @@ int main(int argc, char* argv[]) {
         return EXIT_FAILURE;
     }
 
-    if (snarl_parsing == true && (phenotype == 0)) {
-        cerr << "vcf file are missing";
+    // Enforce valid argument combinations
+    if (!snarl_path.empty() && !vcf_path.empty() && phenotype == 1) {
+        // Case 1: snarl_path + vcf_path + phenotype
+    } else if (!pg_path.empty() && !dist_path.empty() && !vcf_path.empty() && phenotype == 1) {
+        // Case 2: pg_path + dist_path + vcf_path + phenotype
+    } else if (!pg_path.empty() && !dist_path.empty() && vcf_path.empty() && snarl_path.empty() && phenotype == 0) {
+        // Case 3: Only pg_path + dist_path
+        full_gwas = false;
+    } else {
+        std::cerr << "Invalid argument combination provided.\n";
+        std::cerr << "There are 3 ways to lauch stoat : " << endl;
+        std::cerr << "Case 1: snarl_path + vcf_path + phenotype (+ optional file)" << endl;
+        std::cerr << "Case 2: pg_path + dist_path + vcf_path + phenotype (+ optional file)" << endl;
+        std::cerr << "Case 3: Only pg_path + dist_path" << endl;
+
         print_help();
         return EXIT_FAILURE;
     }
 
     if ((gaf == true && binary_path.empty()) || (gaf == true && pg_path.empty())) {
         cerr << "GAF file can be generated only with binary phenotype AND with the pg graph";
-        print_help();
-        return EXIT_FAILURE;
-    }
-
-    if (phenotype > 1) {
-        cerr << "Only one kind of analysis/phenotype is allowed at the same time";
         print_help();
         return EXIT_FAILURE;
     }
@@ -266,11 +274,12 @@ int main(int argc, char* argv[]) {
         auto snarls = save_snarls(*stree, root, *pg, ref_chr, *pp_overlay);
         string output_snarl_not_analyse = output_dir + "/snarl_not_analyse.tsv";
         string output_file = output_dir + "/snarl_analyse.tsv";
-
-        if 
-        snarls_chr = loop_over_snarls_write(*stree, snarls, *pg, output_file, output_snarl_not_analyse, children_threshold, true);
+        snarls_chr = loop_over_snarls_write(*stree, snarls, *pg, output_file, output_snarl_not_analyse, children_threshold, full_gwas);
         auto end_0 = std::chrono::high_resolution_clock::now();
         std::cout << "Snarl analysis : " << std::chrono::duration<double>(end_0 - start_0).count() << " s" << std::endl;
+        if (full_gwas == false) {
+            return EXIT_SUCCESS
+        }
     }
 
     auto [list_samples, ptr_vcf, hdr, rec] = parseHeader(vcf_path);    
