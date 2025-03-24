@@ -20,6 +20,7 @@ void print_help() {
               << "  -p, --pg <path>             Path to the pg file (.pg)\n"
               << "  -d, --dist <path>           Path to the dist file (.dist)\n"
               << "  -r, --chr_ref <path>        Path to the chromosome reference file (.txt)\n"
+              << "  --make-bed                  Create a plink format files (.bed, .bim, bed)\n"
               << "  -c, --children <int>        Max number of children for a snarl in the snarl decomposition process (default = 50)\n"
               << "  -b, --binary <path>         Path to the binary group file (.txt or .tsv)\n"
               << "  -g, --gaf                   Make a GAF file from the GWAS analysis\n"
@@ -30,93 +31,6 @@ void print_help() {
               << "  -h, --help                  Print this help message\n";
 }
 
-void chromosome_chuck_quantitative(htsFile* &ptr_vcf, bcf_hdr_t* &hdr, bcf1_t* &rec, 
-                        const std::vector<std::string> &list_samples,
-                        unordered_map<string, std::vector<std::tuple<string, vector<string>, string, vector<string>>>> &snarl_chr,
-                        const unordered_map<string, double>& pheno, std::ofstream& outf) {
-                            
-    std::cout << "GWAS analysis for chromosome : " << std::endl;
-    while (bcf_read(ptr_vcf, hdr, rec) >= 0) {
-
-        string chr = bcf_hdr_id2name(hdr, rec->rid);
-        std::cout << chr << std::endl;
-        size_t size_chr = snarl_chr[chr].size();
-
-        // Make genotype matrix by chromosome    
-        auto [vcf_object, ptr_vcf_new, hdr_new, rec_new] = make_matrix(ptr_vcf, hdr, rec, list_samples, chr, size_chr);
-        ptr_vcf = ptr_vcf_new;
-        hdr = hdr_new;
-        rec = rec_new;
-
-        auto snarl = snarl_chr[chr];
-
-        // Gwas analysis by chromosome
-        vcf_object.quantitative_table(snarl, pheno, chr, outf);
-    }
-    // Cleanup
-    bcf_destroy(rec);
-    bcf_hdr_destroy(hdr);
-    bcf_close(ptr_vcf);
-}
-
-void chromosome_chuck_eqtl(htsFile* &ptr_vcf, bcf_hdr_t* &hdr, bcf1_t* &rec, 
-    const std::vector<std::string> &list_samples,
-    unordered_map<string, std::vector<std::tuple<string, vector<string>, string, vector<string>>>> &snarl_chr,
-    const vector<QTLRecord> pheno, std::ofstream& outf) {
-
-    std::cout << "GWAS analysis for chromosome : " << std::endl;
-    while (bcf_read(ptr_vcf, hdr, rec) >= 0) {
-
-        string chr = bcf_hdr_id2name(hdr, rec->rid);
-        std::cout << chr << std::endl;
-        size_t size_chr = snarl_chr[chr].size();
-
-        // Make genotype matrix by chromosome    
-        auto [vcf_object, ptr_vcf_new, hdr_new, rec_new] = make_matrix(ptr_vcf, hdr, rec, list_samples, chr, size_chr);
-        ptr_vcf = ptr_vcf_new;
-        hdr = hdr_new;
-        rec = rec_new;
-
-        auto snarl = snarl_chr[chr];
-
-        // Gwas analysis by chromosome
-        // vcf_object.eqtl_table(snarl, pheno, chr, outf);
-    }
-    // Cleanup
-    bcf_destroy(rec);
-    bcf_hdr_destroy(hdr);
-    bcf_close(ptr_vcf);
-}
-
-void chromosome_chuck_binary(htsFile* &ptr_vcf, bcf_hdr_t* &hdr, bcf1_t* &rec, 
-                        const std::vector<std::string> &list_samples, 
-                        unordered_map<string, std::vector<std::tuple<string, vector<string>, string, vector<string>>>> &snarl_chr,
-                        const unordered_map<string, bool>& pheno, std::ofstream& outf) {
-
-    std::cout << "GWAS analysis for chromosome : " << std::endl;
-    while (bcf_read(ptr_vcf, hdr, rec) >= 0) {
-
-        string chr = bcf_hdr_id2name(hdr, rec->rid);
-        std::cout << chr << std::endl;
-        size_t size_chr = snarl_chr[chr].size();
-
-        // Make genotype matrix by chromosome    
-        auto [vcf_object, ptr_vcf_new, hdr_new, rec_new] = make_matrix(ptr_vcf, hdr, rec, list_samples, chr, size_chr);
-        ptr_vcf = ptr_vcf_new;
-        hdr = hdr_new;
-        rec = rec_new;
-
-        auto snarl = snarl_chr[chr];
-
-        // Gwas analysis by chromosome
-        vcf_object.binary_table(snarl, pheno, chr, outf);
-    }
-    // Cleanup
-    bcf_destroy(rec);
-    bcf_hdr_destroy(hdr);
-    bcf_close(ptr_vcf);
-}
-
 int main(int argc, char* argv[]) {
     // Declare variables to hold argument values
     std::string vcf_path, snarl_path, pg_path, dist_path, 
@@ -125,8 +39,8 @@ int main(int argc, char* argv[]) {
 
     size_t threads=1;
     size_t phenotype=0;
-    bool gaf, snarl_parsing, only_snarl_parsing, show_help = false;
     size_t children_threshold = 50;
+    bool gaf, only_snarl_parsing, make_bed, show_help = false;
 
     // Parse arguments manually
     for (int i = 1; i < argc; ++i) {
@@ -146,6 +60,8 @@ int main(int argc, char* argv[]) {
         } else if ((arg == "-r" || arg == "--chr_ref") && i + 1 < argc) {
             chromosome_path = argv[++i];
             check_file(chromosome_path);
+        } else if ((arg == "--make-bed") && i + 1 < argc) {
+            make_bed=true;
         } else if ((arg == "-c" || arg == "--children") && i + 1 < argc) {
             children_threshold = std::stoi(argv[++i]);
             if (children_threshold < 2) {
@@ -192,47 +108,29 @@ int main(int argc, char* argv[]) {
     std::filesystem::create_directory(output_dir);
     std::unordered_set<std::string> ref_chr = (!chromosome_path.empty()) ? parse_chromosome_reference(chromosome_path) : std::unordered_set<std::string>{"ref"};
 
-    if (!pg_path.empty() && !dist_path.empty()) {
-        snarl_parsing = true;
-    }
-
     if (show_help) {
         print_help();
         return EXIT_FAILURE;    
     }
 
-    if (vcf_path.empty() && snarl_parsing == false) {
-        cerr << "vcf file are missing";
-        print_help();
-        return EXIT_FAILURE;
-    }
-
-    if (phenotype == 0 && snarl_parsing == false) {
-        cerr << "phenotype file are missing (use -b or -q or -eqtl)";
-        print_help();
-        return EXIT_FAILURE;
-    }
-
-    if (snarl_path.empty() && snarl_parsing == false) {
-        cerr << "snarl paths file OR pg & dist files are missing";
-        print_help();
-        return EXIT_FAILURE;
-    }
-
     // Enforce valid argument combinations
-    if (!snarl_path.empty() && !vcf_path.empty() && phenotype == 1) {
+    if ((!snarl_path.empty() || (!pg_path.empty() && !dist_path.empty())) && !vcf_path.empty() && phenotype == 1) {
         // Case 1: snarl_path + vcf_path + phenotype
-    } else if (!pg_path.empty() && !dist_path.empty() && !vcf_path.empty() && phenotype == 1) {
         // Case 2: pg_path + dist_path + vcf_path + phenotype
     } else if (!pg_path.empty() && !dist_path.empty() && vcf_path.empty() && snarl_path.empty() && phenotype == 0) {
         // Case 3: Only pg_path + dist_path
         only_snarl_parsing = false;
+    } else if (((!pg_path.empty() && !dist_path.empty()) || (!snarl_path.empty())) && !vcf_path.empty() && make_bed == true) {
+        // Case 4: Only pg_path + dist_path + vcf_path + make_bed activated
+        // Case 5: snarl_path + vcf_path + --make-bed
     } else {
         std::cerr << "Invalid argument combination provided.\n";
-        std::cerr << "There are 3 ways to lauch stoat : " << endl;
+        std::cerr << "There are 5 ways to lauch stoat : " << endl;
         std::cerr << "Case 1: snarl_path + vcf_path + phenotype (+ optional file)" << endl;
         std::cerr << "Case 2: pg_path + dist_path + vcf_path + phenotype (+ optional file)" << endl;
-        std::cerr << "Case 3: Only pg_path + dist_path" << endl;
+        std::cerr << "Case 3: pg_path + dist_path" << endl;
+        std::cerr << "Case 4: pg_path + dist_path + vcf_path + --make-bed" << endl;
+        std::cerr << "Case 5: snarl_path + vcf_path + --make-bed" << endl;
 
         print_help();
         return EXIT_FAILURE;
@@ -261,6 +159,7 @@ int main(int argc, char* argv[]) {
     }
 
     // scope declaration
+    // chr : <snarl, paths, pos, type>
     std::unordered_map<std::string, std::vector<std::tuple<string, vector<string>, string, vector<string>>>> snarls_chr;
     std::unique_ptr<bdsg::PackedGraph> pg;
 
@@ -285,7 +184,24 @@ int main(int argc, char* argv[]) {
     std::unordered_map<std::string, bool> binary;
     std::unordered_map<std::string, double> quantitative;
 
-    if (!binary_path.empty()) {
+    if (make_bed) {
+        std::unordered_map<std::string, int> pheno;
+        std::unordered_map<std::string, int> sex;
+        
+        for (const auto& sample : list_samples) {
+            pheno[sample] = -9;
+            sex[sample] = 0;
+        }
+
+        const std::string output_fam = output_dir + "genotype.fam";
+        create_fam(sex, pheno, output_fam);
+        chromosome_chuck_make_bed(ptr_vcf, hdr, rec, snarls_chr, output_dir);
+
+        end_1 = std::chrono::high_resolution_clock::now();
+        std::cout << "Time plink files creations : " << std::chrono::duration<double>(end_1 - start_1).count() << " s" << std::endl;
+        return EXIT_SUCCESS;
+
+    } else if (!binary_path.empty()) {
         binary = parse_binary_pheno(binary_path);
         check_match_samples(binary, list_samples);
 
@@ -312,7 +228,6 @@ int main(int argc, char* argv[]) {
         chromosome_chuck_quantitative(ptr_vcf, hdr, rec, list_samples, snarls_chr, quantitative, outf);
 
     } else if (!eqtl_path.empty()) {
-    
         string eqtl_output = output_dir + "/eqtl_gwas.tsv";
         std::ofstream outf(eqtl_output, std::ios::binary);
         std::string headers = "CHR\tPOS\tSNARL\tTYPE\tSE\tBETA\tP\n";

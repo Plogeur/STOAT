@@ -33,9 +33,16 @@ public:
     void quantitative_table(const std::vector<std::tuple<string, vector<string>, string, vector<string>>>& snarls,
                                 const std::unordered_map<std::string, double>& quantitative, const string &chr,
                                 std::ofstream& outf);
+    void create_bim_bed(const std::vector<std::tuple<string, vector<string>, string, vector<string>>>& snarls,
+                                    const std::string& output_bim, const std::string& output_bed);
+    std::vector<int> create_table_short_path(const std::string& list_path_snarl);
 };
 
 std::tuple<htsFile*, bcf_hdr_t*, bcf1_t*> parse_vcf(const std::string& vcf_path);
+
+void create_fam(const std::unordered_map<std::string, int>& sex, 
+    const std::unordered_map<std::string, int>& pheno, 
+    const std::string& output_path);
 
 void process_vcf_batch(std::vector<bcf1_t*> records, bcf_hdr_t* hdr, SnarlParser& snarl_parser, std::unordered_map<std::string, size_t>& row_header_dict, std::mutex& mutex);
 
