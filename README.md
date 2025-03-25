@@ -15,6 +15,9 @@ I will release one days, I will !!!
 
 ## Project Overview
 
+<img src="pictures/stoat_rep.png">
+  
+
 STOAT is a specialized tool developed for conducting Genome-Wide Association Studies (GWAS) with a unique focus on snarl structures within pangenome graphs. Unlike traditional GWAS tools that analyze linear genome variants, STOAT processes VCF files to extract and analyze snarl regions—complex structural variations that capture nested and overlapping variant patterns within a pangenome. This approach allows for a more nuanced understanding of genetic variations in diverse populations and complex traits.
 
 STOAT supports both binary and quantitative phenotypes:
