@@ -367,9 +367,9 @@ if __name__ == "__main__":
         p_value_distribution(test_predicted_labels_10_2, cleaned_true_labels, clean_list_diff, pvalue, num_sample, output_diff)
     
     """
-    python3 tests/verify_truth.py --freq tests/simulation/quantitative_data/pg.snarls.freq.tsv \
-    --p_value output/cpp.quantitative_analysis.tsv --paths tests/simulation/quantitative_data/snarl_paths.tsv -q
+    python3 tests/verify_truth.py --freq tests/simulation/quantitative/pg.snarls.freq.tsv \
+    --p_value output/cpp.quantitative_analysis.tsv --paths tests/simulation/quantitative/snarl_paths.tsv -q
 
-    python3 tests/verify_truth.py --freq tests/simulation/binary_data/pg.snarls.freq.tsv \
-    --p_value output/binary_analysis.tsv --paths tests/simulation/binary_data/snarl_paths.tsv -b
+    python3 tests/verify_truth.py --freq tests/simulation/binary/pg.snarls.freq.tsv \
+    --p_value output/binary_analysis.tsv --paths tests/simulation/binary/snarl_paths.tsv -b
     """

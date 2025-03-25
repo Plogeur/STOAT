@@ -22,7 +22,7 @@ setup(
         "statsmodels==0.14.4",
         "qmplot==0.3.3",
         "scipy==1.14.1",
-        "setuptools==75.6.0",
+        "setuptools==78.0.2",
         "scikit-learn==1.6.0",
         "matplotlib==3.9.4",
         "seaborn==0.13.2",

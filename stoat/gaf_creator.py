@@ -167,4 +167,4 @@ if __name__ == "__main__":
     snarl_list = utils.parse_snarl_path_file(args.pathlist)
     parse_input_file(args.gwas, snarl_list, pg, output)
 
-# python3 src/gaf_creator.py -g tests/simulation/expected_binary/binary_analysis_pos.assoc.tsv -l tests/simulation/binary_data/snarl_paths.tsv -p tests/simulation/binary_data/pg.full.pg 
+# python3 src/gaf_creator.py -g tests/simulation/expected_binary/binary_analysis_pos.assoc.tsv -l tests/simulation/binary/snarl_paths.tsv -p tests/simulation/binary/pg.full.pg 
