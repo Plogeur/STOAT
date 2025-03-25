@@ -51,11 +51,11 @@ RUN git clone https://github.com/Plogeur/STOAT && \
     pip3 install . && \  
     cd .. && rm -rf STOAT
 
-# Clone the STOAT-NODE repository and set it as the working directory
-RUN git clone https://github.com/Plogeur/STOAT --branch stoat2bin && \
-    cd STOAT && \ 
-    pip3 install . && \
-    cd .. && rm -rf STOAT
+# # Clone the STOAT-NODE repository and set it as the working directory
+# RUN git clone https://github.com/Plogeur/STOAT --branch stoat2bin && \
+#     cd STOAT && \ 
+#     pip3 install . && \
+#     cd .. && rm -rf STOAT
 
 # init home
 WORKDIR /home
