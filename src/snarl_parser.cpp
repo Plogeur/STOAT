@@ -5,27 +5,9 @@ SnarlParser::SnarlParser(const std::string& vcf_path) : filename(vcf_path), file
     sampleNames = parseHeader();
 }
 
-std::vector<std::vector<int>> SnarlParser::create_table(
-    const std::vector<std::string>& list_path_snarl)
-{
-    std::vector<std::vector<int>> small_grm;
-    std::unordered_map<std::string, size_t> row_headers_dict = matrix.get_row_header();
-
-    // Iterate over each path_snarl in column_headers
-    for (size_t idx_g = 0; idx_g < list_path_snarl.size(); ++idx_g) {
-        const std::string& path_snarl = list_path_snarl[idx_g];
-        const size_t number_sample = sampleNames.size();
-        std::vector<std::string> decomposed_snarl = decompose_string(path_snarl);
-        std::vector<int> alleles = identify_correct_path(decomposed_snarl, row_headers_dict, matrix, number_sample*2);
-        small_grm.push_back(alleles);
-    }
-    return small_grm;
-}
-
 std::vector<int> SnarlParser::create_table_short_path(
     const std::string& list_path_snarl)
 {
-    std::vector<int> small_grm;
     std::unordered_map<std::string, size_t> row_headers_dict = matrix.get_row_header();
 
     // Iterate over each path_snarl in column_headers
@@ -120,7 +102,7 @@ std::vector<std::string> SnarlParser::parseHeader() {
     std::string line;
     while (std::getline(file, line)) {
         if (line.empty()) {
-            continue;                 // Skip any empty lines
+            continue; // Skip any empty lines
         }
 
         // Stop reading the header once we encounter a non-comment line
@@ -240,7 +222,6 @@ void SnarlParser::fill_matrix() {
                 continue;
             }
 
-            // Measure the time taken to push each allele into the matrix
             for (auto& decompose_allele_1 : list_list_decomposed_snarl[allele_1]) {
                 pushMatrix(decompose_allele_1, row_header_dict, col_idx);
             }
@@ -257,8 +238,8 @@ std::vector<int> identify_correct_path(
     const std::vector<std::string>& decomposed_snarl,
     const std::unordered_map<std::string, size_t>& row_headers_dict,
     const Matrix& matrix,
-    const size_t num_cols
-) {
+    const size_t num_cols) {
+
     std::vector<int> rows_to_check;
 
     for (const auto& snarl : decomposed_snarl) {
@@ -365,8 +346,7 @@ std::vector<std::string> split(const std::string& s, char delimiter) {
     return tokens;
 }
 
-void create_fam(const std::unordered_map<std::string, int>& sex, 
-                const std::unordered_map<std::string, int>& pheno, 
+void create_fam(const std::vector<std::string> list_samples, 
                 const std::string& output_path)
 
 {
@@ -375,14 +355,12 @@ void create_fam(const std::unordered_map<std::string, int>& sex,
         throw std::runtime_error("Unable to open output file: " + output_path);
     }
 
-    for (const auto& [sample, sex_code] : sex) {
-        int phenotype = pheno.at(sample); // Assume pheno contains all samples.
+    for (const auto& sample : list_samples) {
 
         outfile << sample << " "       // FID (default to sample ID)
                 << sample << " "       // IID (sample ID)
-                << "0 0 "              // PID and MID (unknown)
-                << sex_code << " "     // SEX (0 = unknown, 1 = male, 2 = female)
-                << phenotype << "\n";  // PHENOTYPE (-9 = missing)
+                << "0 0 0 "            // PID, MID, SEX (unknown)
+                << -9 << "\n";         // PHENOTYPE (-9 = missing)
     }
 
     outfile.close();

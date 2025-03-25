@@ -29,10 +29,6 @@ int main(int argc, char* argv[]) {
             vcf_path = argv[++i];
         } else if ((arg == "-s" || arg == "--snarl") && i + 1 < argc) {
             snarl_path = argv[++i];
-        } else if (arg == "--pheno" && i + 1 < argc) {
-            pheno_path = argv[++i];
-        } else if (arg == "--sex" && i + 1 < argc) {
-            sex_path = argv[++i];
         } else if ((arg == "-o" || arg == "--output") && i + 1 < argc) {
             prefix_name = argv[++i];
         } else if (arg == "-h" || arg == "--help") {
@@ -56,31 +52,8 @@ int main(int argc, char* argv[]) {
     // Check format of the snarl paths file
     check_format_paths_snarl(snarl_path);
 
-    std::vector<std::string> list_samples = parseHeader(vcf_path);    
-    std::unordered_map<std::string, int> pheno;
-    if (!pheno_path.empty()) {
-        check_format_phenotype(pheno_path);
-        parse_pheno(pheno_path, pheno);
-        check_match_samples(pheno, list_samples);
-    } else {
-        for (const auto& sample : list_samples) {
-            pheno[sample] = -9;
-        }   
-    }
-
-    std::unordered_map<std::string, int> sex;
-    if (!sex_path.empty()) {
-        parse_sex(pheno_path, sex); // check also the sex format
-        check_match_samples(sex, list_samples);
-    } else {
-        for (const auto& sample : list_samples) {
-            sex[sample] = 0;
-        }   
-    }
-
-    const std::string output_fam = output_name + ".fam";
-    create_fam(sex, pheno, output_fam);
-
+    std::vector<std::string> list_samples = parseHeader(vcf_path);
+ 
     // Parse the snarl file
     auto snarl = parse_snarl_path(snarl_path);
 
@@ -94,7 +67,9 @@ int main(int argc, char* argv[]) {
     // create the bim/bed plink format
     const std::string output_bim = output_name + ".bim";
     const std::string output_bed = output_name + ".bed";
-
+    const std::string output_fam = output_name + ".fam";
+    
+    create_fam(list_samples, output_fam);
     vcf_object.create_bim_bed(snarl, output_bim, output_bed);
 
     end_1 = std::chrono::high_resolution_clock::now();
@@ -103,4 +78,4 @@ int main(int argc, char* argv[]) {
     return EXIT_SUCCESS;
 }
 
-// ./slink --vcf_path /home/mbagarre/Bureau/snarl_data/simulation_1000vars_100samps/calls/merged_output.vcf --snarl /home/mbagarre/Bureau/snarl_data/simulation_1000vars_100samps/pg.snarl_netgraph.paths.tsv --pheno /home/mbagarre/Bureau/snarl_data/simulation_1000vars_100samps/phenotype_simulation_1000.plink_format.tsv -o genotype_simulation_1000
+// ./slink --vcf_path ../data/binary/merged_output.vcf --snarl ../data/binary/snarl_paths.tsv --pheno ../data/binary/phenotype.tsv -o genotype

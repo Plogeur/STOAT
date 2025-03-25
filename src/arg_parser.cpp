@@ -56,7 +56,7 @@ std::unordered_map<std::string, std::vector<std::string>> parse_snarl_path(const
         return snarl_paths;
     }
 
-    std::string line, snarl, path_list;
+    std::string line, chr, pos, snarl, path_list, type;
     
     // Read header
     std::getline(file, line);
@@ -64,9 +64,12 @@ std::unordered_map<std::string, std::vector<std::string>> parse_snarl_path(const
     // Process each line
     while (std::getline(file, line)) {
         std::istringstream ss(line);
+        std::getline(ss, chr, '\t');   // snarl column
+        std::getline(ss, pos, '\t');   // snarl column
         std::getline(ss, snarl, '\t');   // snarl column
         std::getline(ss, path_list, '\t'); // paths column
-        
+        std::getline(ss, type, '\t'); // paths column
+
         if (!path_list.empty()) {
             std::istringstream path_stream(path_list);
             std::string path;
