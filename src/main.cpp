@@ -41,7 +41,10 @@ int main(int argc, char* argv[]) {
     size_t threads=1;
     size_t phenotype=0;
     size_t children_threshold = 50;
-    bool gaf, only_snarl_parsing, make_bed, show_help = false;
+    bool gaf = false;
+    bool only_snarl_parsing = false;
+    bool show_help = false;
+    bool make_bed = false;
 
     // Parse arguments manually
     for (int i = 1; i < argc; ++i) {
@@ -190,7 +193,7 @@ int main(int argc, char* argv[]) {
         }
     }
 
-    if (make_bed == false) { // bug here but why ???
+    if (make_bed) {
         std::vector<std::pair<std::string, int>> pheno;
         
         for (const auto& sample : list_samples) {
@@ -222,11 +225,12 @@ int main(int argc, char* argv[]) {
             parse_input_file(output_binary, snarls_chr, *pg, output_gaf);
         }
 
-        std::string python_cmd = "python3 p_value_analysis.py "
-        "--binary " + output_binary + 
+        std::string python_cmd = "python3 ../src/p_value_analysis.py "
+        " --pvalue " + output_binary + 
         " --significative " + output_significative + 
         " --qq " + output_qq + 
-        " --manh " + output_manh;
+        " --manh " + output_manh +
+        " --binary";
         system(python_cmd.c_str());
 
     } else if (!quantitative_path.empty()) {
@@ -242,11 +246,12 @@ int main(int argc, char* argv[]) {
 
         chromosome_chuck_quantitative(ptr_vcf, hdr, rec, list_samples, snarls_chr, quantitative, outf);
 
-        std::string python_cmd = "python3 p_value_analysis.py "
-        "--quantitative " + output_quantitive + 
+        std::string python_cmd = "python3 ../src/p_value_analysis.py "
+        " --pvalue " + output_quantitive + 
         " --significative " + output_significative + 
         " --qq " + output_qq + 
-        " --manh " + output_manh;
+        " --manh " + output_manh +
+        " --quantitative";
         system(python_cmd.c_str());
 
     } else if (!eqtl_path.empty()) {
