@@ -3,6 +3,7 @@
 #include <unordered_map>
 #include <chrono>
 #include <Eigen/Dense>
+#include <cstdlib>
 
 #include "snarl_parser.hpp"     
 #include "matrix.hpp"
@@ -143,13 +144,22 @@ int main(int argc, char* argv[]) {
     }
 
     // Check phenotypes
+    auto [list_samples, ptr_vcf, hdr, rec] = parseHeader(vcf_path);    
+    std::unordered_map<std::string, bool> binary;
+    std::unordered_map<std::string, double> quantitative;
     std::vector<QTLRecord> eqtl;
+
     if (!binary_path.empty()) {
         check_format_binary_phenotype(binary_path);
+        binary = parse_binary_pheno(binary_path);
+        check_match_samples(binary, list_samples);
     } else if (!quantitative_path.empty()) {
         check_format_quantitative_phenotype(quantitative_path);
+        quantitative = parse_quantitative_pheno(quantitative_path);
+        check_match_samples(quantitative, list_samples);
     } else if (!eqtl_path.empty()) {
         eqtl = parseQTLFile(eqtl_path);
+        //check_match_samples_eqtl(eqtl, list_samples);
     }
 
     Eigen::MatrixXd covariate;
@@ -180,33 +190,29 @@ int main(int argc, char* argv[]) {
         }
     }
 
-    auto [list_samples, ptr_vcf, hdr, rec] = parseHeader(vcf_path);    
-    std::unordered_map<std::string, bool> binary;
-    std::unordered_map<std::string, double> quantitative;
-
-    if (make_bed) {
-        std::unordered_map<std::string, int> pheno;
-        std::unordered_map<std::string, int> sex;
+    if (make_bed == false) { // bug here but why ???
+        std::vector<std::pair<std::string, int>> pheno;
         
         for (const auto& sample : list_samples) {
-            pheno[sample] = -9;
-            sex[sample] = 0;
+            pheno.push_back({sample, -9}); // initilize all phenotypes to -9
         }
 
         const std::string output_fam = output_dir + "genotype.fam";
-        create_fam(sex, pheno, output_fam);
-        chromosome_chuck_make_bed(ptr_vcf, hdr, rec, snarls_chr, output_dir);
+        create_fam(pheno, output_fam);
+        //chromosome_chuck_make_bed(ptr_vcf, hdr, rec, snarls_chr, output_dir);
 
-        end_1 = std::chrono::high_resolution_clock::now();
+        auto end_1 = std::chrono::high_resolution_clock::now();
         std::cout << "Time plink files creations : " << std::chrono::duration<double>(end_1 - start_1).count() << " s" << std::endl;
         return EXIT_SUCCESS;
 
     } else if (!binary_path.empty()) {
-        binary = parse_binary_pheno(binary_path);
-        check_match_samples(binary, list_samples);
 
         string output_binary = output_dir + "/binary_analysis.tsv";
+        string output_manh = output_dir + "/manhattan_plot_binary.png";
+        string output_qq = output_dir + "/qq_plot_binary.png";
+        string output_significative = output_dir + "/top_variant_binary.tsv";
         std::ofstream outf(output_binary, std::ios::binary);
+
         std::string headers = "CHR\tPOS\tSNARL\tTYPE\tP_FISHER\tP_CHI2\tALLELE_NUM\tMIN_ROW_INDEX\tNUM_COLUM\tINTER_GROUP\tAVERAGE\tGROUP_PATHS\n";
         outf.write(headers.c_str(), headers.size());
 
@@ -216,16 +222,32 @@ int main(int argc, char* argv[]) {
             parse_input_file(output_binary, snarls_chr, *pg, output_gaf);
         }
 
-    } else if (!quantitative_path.empty()) {
-        quantitative = parse_quantitative_pheno(quantitative_path);
-        check_match_samples(quantitative, list_samples);
+        std::string python_cmd = "python3 p_value_analysis.py "
+        "--binary " + output_binary + 
+        " --significative " + output_significative + 
+        " --qq " + output_qq + 
+        " --manh " + output_manh;
+        system(python_cmd.c_str());
 
-        string quantitive_output = output_dir + "/quantitative_analysis.tsv";
-        std::ofstream outf(quantitive_output, std::ios::binary);
+    } else if (!quantitative_path.empty()) {
+
+        string output_quantitive = output_dir + "/quantitative_analysis.tsv";
+        string output_manh = output_dir + "/manhattan_plot_quantitative.png";
+        string output_qq = output_dir + "/qq_plot_quantitative.png";
+        string output_significative = output_dir + "/top_variant_quantitative.tsv";
+
+        std::ofstream outf(output_quantitive, std::ios::binary);
         std::string headers = "CHR\tPOS\tSNARL\tTYPE\tRSQUARED\tBETA\tSE\tP\tALLELE_NUM\n";
         outf.write(headers.c_str(), headers.size());
 
         chromosome_chuck_quantitative(ptr_vcf, hdr, rec, list_samples, snarls_chr, quantitative, outf);
+
+        std::string python_cmd = "python3 p_value_analysis.py "
+        "--quantitative " + output_quantitive + 
+        " --significative " + output_significative + 
+        " --qq " + output_qq + 
+        " --manh " + output_manh;
+        system(python_cmd.c_str());
 
     } else if (!eqtl_path.empty()) {
         string eqtl_output = output_dir + "/eqtl_gwas.tsv";
@@ -235,7 +257,7 @@ int main(int argc, char* argv[]) {
 
         chromosome_chuck_eqtl(ptr_vcf, hdr, rec, list_samples, snarls_chr, eqtl, outf);
     }
-
+    
     auto end_1 = std::chrono::high_resolution_clock::now();
     std::cout << "Time Gwas analysis : " << std::chrono::duration<double>(end_1 - start_1).count() << " s" << std::endl;
 
@@ -243,7 +265,7 @@ int main(int argc, char* argv[]) {
 }
 
 // BINARY
-// ./stoat_cxx -p ../data/binary/pg.pg -d ../data/binary/pg.dist -v ../data/binary/binary.vcf.gz -b ../data/binary/phenotype.tsv
+// ./stoat_cxx -p ../data/binary/pg.pg -d ../data/binary/pg.dist -v ../data/binary/merged_output.vcf.gz -b ../data/binary/phenotype.tsv
 
 // QUANTITATIVE
-// ./stoat_cxx -p ../data/quantitative/pg.pg -d ../data/quantitative/pg.dist -v ../data/quantitative/quantitative.vcf.gz -q ../data/quantitative/phenotype.tsv
+// ./stoat_cxx -p ../data/quantitative/pg.pg -d ../data/quantitative/pg.dist -v ../data/quantitative/merged_output.vcf.gz -q ../data/quantitative/phenotype.tsv

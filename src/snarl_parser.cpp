@@ -93,8 +93,7 @@ void SnarlParser::create_bim_bed(const std::vector<std::tuple<string, vector<str
     outbed.close();
 }
 
-void create_fam(const std::unordered_map<std::string, int>& sex, 
-    const std::unordered_map<std::string, int>& pheno, 
+void create_fam(const std::vector<std::pair<std::string, int>> &pheno, 
     const std::string& output_path) {
 
     std::ofstream outfile(output_path);
@@ -102,14 +101,12 @@ void create_fam(const std::unordered_map<std::string, int>& sex,
         throw std::runtime_error("Unable to open output file: " + output_path);
     }
 
-    for (const auto& [sample, sex_code] : sex) {
-        int phenotype = pheno.at(sample); // Assume pheno contains all samples.
+    for (const auto& [sample, phenotype] : pheno) {
 
-        outfile << sample << " "       // FID (default to sample ID)
-            << sample << " "       // IID (sample ID)
-            << "0 0 "              // PID and MID (unknown)
-            << sex_code << " "     // SEX (0 = unknown, 1 = male, 2 = female)
-            << phenotype << "\n";  // PHENOTYPE (-9 = missing)
+        outfile << sample << " "           // FID (default to sample ID)
+                << sample << " "           // IID (sample ID)
+                << "0 0 0 "                // PID and MID (unknown)
+                << phenotype << "\n";      // PHENOTYPE (-9 = missing)
     }
     outfile.close();
 }
