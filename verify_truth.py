@@ -99,7 +99,8 @@ def match_snarl(freq_path_list, true_labels, list_diff, p_value_file, paths_file
     cleaned_true_labels = []
     clean_list_diff = []
     pvalue = []
-    num_sample =[]
+    num_sample = []
+    removed_snarl = 0
 
     for idx in range(0, len(freq_path_list) - 1, 2):  # Step by 2 to process pairs
 
@@ -114,8 +115,6 @@ def match_snarl(freq_path_list, true_labels, list_diff, p_value_file, paths_file
         if not matched_row.empty:
 
             indices = matched_row.index
-            # indices_path = paths_file_df[paths_file_df['snarl'] == matched_row['SNARL'].values[0]].index
-            # split_paths = [paths_df[idx] for idx in indices_path]
             split_paths = [paths_df[idx] for idx in indices]
 
             # Check if at least one path in the snarl contains the start node followed by the next node
@@ -149,7 +148,7 @@ def match_snarl(freq_path_list, true_labels, list_diff, p_value_file, paths_file
                     except :
                         allele_num = 200
                     num_sample.append(allele_num)
-    
+                
     return predicted_labels_10_2, predicted_labels_10_5, predicted_labels_10_8, cleaned_true_labels, clean_list_diff, pvalue, num_sample
 
 def conf_mat_maker(p_val, predicted_labels, true_labels, output):
