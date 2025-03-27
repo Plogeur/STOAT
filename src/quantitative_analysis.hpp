@@ -14,6 +14,7 @@
 #include <iomanip>
 #include <Eigen/Dense>
 #include <boost/math/distributions/fisher_f.hpp>
+#include <boost/math/distributions/students_t.hpp>  // For t-distribution
 
 #include "matrix.hpp"
 #include "snarl_parser.hpp"

@@ -5,12 +5,14 @@
 using namespace std;
 
 // Linear regression function OLS
-std::tuple<string, string, string, string> linear_regression(
+std::tuple<std::string, std::string, std::string, std::string> linear_regression(
     const std::unordered_map<std::string, std::vector<int>>& df,
     const std::unordered_map<std::string, double>& quantitative_phenotype) {
     
     size_t num_samples = df.size();
     size_t max_paths = 0;
+    
+    // Determine the maximum number of predictors (columns)
     for (const auto& [_, paths] : df) {
         max_paths = std::max(max_paths, paths.size());
     }
@@ -28,6 +30,7 @@ std::tuple<string, string, string, string> linear_regression(
         ++row;
     }
     
+    // Perform OLS: β = (X^T X)^(-1) X^T y
     Eigen::VectorXd beta = (X.transpose() * X).ldlt().solve(X.transpose() * y);
     Eigen::VectorXd y_pred = X * beta;
     Eigen::VectorXd residuals = y - y_pred;
@@ -54,11 +57,11 @@ std::tuple<string, string, string, string> linear_regression(
 
     // set precision : 4 digit
     string r2_str = set_precision(r2);
-    string bete_mean_str = set_precision(beta.mean());
+    string beta_mean_str = set_precision(beta.mean());
     string se_mean_str = set_precision(se.mean());
     string p_value_str = set_precision(p_value);
 
-    return {r2_str, bete_mean_str, se_mean_str, p_value_str};
+    return {r2_str, beta_mean_str, se_mean_str, p_value_str};
 }
 
 // Function to create the quantitative table
