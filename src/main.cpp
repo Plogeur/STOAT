@@ -21,12 +21,13 @@ void print_help() {
               << "  -p, --pg <path>             Path to the pg file (.pg)\n"
               << "  -d, --dist <path>           Path to the dist file (.dist)\n"
               << "  -r, --chr_ref <path>        Path to the chromosome reference file (.txt)\n"
-              << "  --make-bed                  Create a plink format files (.bed, .bim, bed)\n"
               << "  -c, --children <int>        Max number of children for a snarl in the snarl decomposition process (default = 50)\n"
               << "  -b, --binary <path>         Path to the binary group file (.txt or .tsv)\n"
               << "  -g, --gaf                   Make a GAF file from the GWAS analysis\n"
               << "  -q, --quantitative <path>   Path to the quantitative phenotype file (.txt or .tsv)\n"
               << "  -e, --eqtl <path>           Path to the Expression Quantitative Trait Loci file (.txt or .tsv)\n"
+              << "  --make-bed                  Create a plink format files (.bed, .bim, bed)\n"
+              << "  --plot                      Create Manhatthan plot and QQ plot\n"
               << "  -o, --output <name>         Output dir name\n"
               << "  -t, --thread <int>          Number of threads\n"
               << "  -h, --help                  Print this help message\n";
@@ -45,6 +46,7 @@ int main(int argc, char* argv[]) {
     bool only_snarl_parsing = false;
     bool show_help = false;
     bool make_bed = false;
+    bool make_plot = false;
 
     // Parse arguments manually
     for (int i = 1; i < argc; ++i) {
@@ -66,6 +68,8 @@ int main(int argc, char* argv[]) {
             check_file(chromosome_path);
         } else if ((arg == "--make-bed") && i + 1 < argc) {
             make_bed=true;
+        } else if ((arg == "--plot") && i + 1 < argc) {
+            make_plot=true;
         } else if ((arg == "-c" || arg == "--children") && i + 1 < argc) {
             children_threshold = std::stoi(argv[++i]);
             if (children_threshold < 2) {
@@ -188,7 +192,7 @@ int main(int argc, char* argv[]) {
         snarls_chr = loop_over_snarls_write(*stree, snarls, *pg, output_file, output_snarl_not_analyse, children_threshold, only_snarl_parsing);
         auto end_0 = std::chrono::high_resolution_clock::now();
         std::cout << "Snarl analysis : " << std::chrono::duration<double>(end_0 - start_0).count() << " s" << std::endl;
-        if (only_snarl_parsing == true) {
+        if (only_snarl_parsing) {
             return EXIT_SUCCESS;
         }
     }
@@ -200,7 +204,7 @@ int main(int argc, char* argv[]) {
             pheno.push_back({sample, -9}); // initilize all phenotypes to -9
         }
 
-        const std::string output_fam = output_dir + "genotype.fam";
+        const std::string output_fam = output_dir + "/genotype.fam";
         create_fam(pheno, output_fam);
         //chromosome_chuck_make_bed(ptr_vcf, hdr, rec, snarls_chr, output_dir);
 
@@ -225,13 +229,15 @@ int main(int argc, char* argv[]) {
             parse_input_file(output_binary, snarls_chr, *pg, output_gaf);
         }
 
-        std::string python_cmd = "python3 ../src/p_value_analysis.py "
-        " --pvalue " + output_binary + 
-        " --significative " + output_significative + 
-        " --qq " + output_qq + 
-        " --manh " + output_manh +
-        " --binary";
-        system(python_cmd.c_str());
+        if (make_plot) {
+            std::string python_cmd = "python3 ../src/p_value_analysis.py "
+            " --pvalue " + output_binary + 
+            " --significative " + output_significative + 
+            " --qq " + output_qq + 
+            " --manh " + output_manh +
+            " --binary";
+            system(python_cmd.c_str());
+        }
 
     } else if (!quantitative_path.empty()) {
 
@@ -246,13 +252,15 @@ int main(int argc, char* argv[]) {
 
         chromosome_chuck_quantitative(ptr_vcf, hdr, rec, list_samples, snarls_chr, quantitative, outf);
 
-        std::string python_cmd = "python3 ../src/p_value_analysis.py "
-        " --pvalue " + output_quantitive + 
-        " --significative " + output_significative + 
-        " --qq " + output_qq + 
-        " --manh " + output_manh +
-        " --quantitative";
-        system(python_cmd.c_str());
+        if (make_plot) {
+            std::string python_cmd = "python3 ../src/p_value_analysis.py "
+            " --pvalue " + output_quantitive + 
+            " --significative " + output_significative + 
+            " --qq " + output_qq + 
+            " --manh " + output_manh +
+            " --quantitative";
+            system(python_cmd.c_str());
+        }
 
     } else if (!eqtl_path.empty()) {
         string eqtl_output = output_dir + "/eqtl_gwas.tsv";
@@ -270,7 +278,7 @@ int main(int argc, char* argv[]) {
 }
 
 // BINARY
-// ./stoat_cxx -p ../data/binary/pg.pg -d ../data/binary/pg.dist -v ../data/binary/binary.vcf.gz -b ../data/binary/phenotype.tsv
+// ./stoat_cxx -p ../data/binary/pg.pg -d ../data/binary/pg.dist -v ../data/binary/merged_output.vcf.gz -b ../data/binary/phenotype.tsv
 
 // QUANTITATIVE
-// ./stoat_cxx -p ../data/quantitative/pg.full.pg -d ../data/quantitative/pg.dist -v ../data/quantitative/merged_output.vcf.gz -q ../data/quantitative/phenotype.tsv
+// ./stoat_cxx -p ../data/quantitative/pg.pg -d ../data/quantitative/pg.dist -v ../data/quantitative/merged_output.vcf.gz -q ../data/quantitative/phenotype.tsv
