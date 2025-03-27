@@ -1,5 +1,6 @@
 #include "binary_analysis.hpp"
 #include "snarl_parser.hpp"
+#include "utils.hpp"
 
 // ------------------------ Chi2 test ------------------------
 
@@ -73,45 +74,56 @@ std::string chi2Test(const std::vector<std::vector<int>>& observed) {
     boost::math::chi_squared chi_squared_dist(degrees_of_freedom);
     double p_value = boost::math::cdf(boost::math::complement(chi_squared_dist, chi_squared_stat));
 
-    // Format p-value as a string
-    std::ostringstream ss;
-    ss << std::scientific << std::setprecision(4) << p_value;
-    return ss.str();
+    return set_precision(p_value);
 }
 
 // ------------------------ Fisher exact test ------------------------
 
-long double fastFishersExactTest(const std::vector<std::vector<int>>& table) {
+// Function to initialize the log factorials array
+void initLogFacs(long double* logFacs, int n) {
+    logFacs[0] = 0; 
+    for (int i = 1; i < n+1; ++i) {
+        logFacs[i] = logFacs[i - 1] + log((double)i);
+    }
+}
+
+long double logHypergeometricProb(long double* logFacs , int a, int b, int c, int d) {
+    return logFacs[a+b] + logFacs[c+d] + logFacs[a+c] + logFacs[b+d]
+    - logFacs[a] - logFacs[b] - logFacs[c] - logFacs[d] - logFacs[a+b+c+d];
+}
+
+std::string fastFishersExactTest(const std::vector<std::vector<int>>& table) {
     // Ensure the table is 2x2
     if (table.size() != 2 || table[0].size() != 2 || table[1].size() != 2) {
-        return -1.0L;  // Return -1 to indicate an error
+        return "NA";
     }
 
     // Extract values from the table
-    int a = table[0][0], b = table[0][1];
-    int c = table[1][0], d = table[1][1];
+    int a = table[0][0];
+    int b = table[0][1];
+    int c = table[1][0];
+    int d = table[1][1];
 
-    // Total elements
+    // Total sum of the table
     int n = a + b + c + d;
-    int row1 = a + b, row2 = c + d;
-    int col1 = a + c, col2 = b + d;
+    long double* logFacs = new long double[n+1]; // *** dynamically allocate memory logFacs[0..n] ***
+    initLogFacs(logFacs , n);
 
-    // Define hypergeometric distribution using long double
-    boost::math::hypergeometric_distribution<long double> hg(row1, col1, n);
-
-    // Compute the observed probability
-    long double p_cutoff = pdf(hg, a);
-    long double p_value = 0.0L;
-
-    // Two-tailed test: sum probabilities ≤ observed probability
-    for (int x = 0; x <= std::min(row1, col1); ++x) {
-        long double prob = pdf(hg, x);
-        if (prob <= p_cutoff) {
-            p_value += prob;
+    long double logpCutoff = logHypergeometricProb(logFacs,a,b,c,d);
+    long double pFraction = 0;
+    for(int x=0; x <= n; ++x) { // among all possible x
+        int abx = a + b - x;
+        int acx = a + c - x;
+        int dax = d - a + x;
+        if (abx >= 0 && acx >= 0 && dax >=0) { 
+            long double l = logHypergeometricProb(logFacs, x, abx, acx, dax);
+            if (l <= logpCutoff) {pFraction += exp(l - logpCutoff);}
         }
     }
 
-    return p_value;
+    long double logpValue = exp(logpCutoff + log(pFraction));
+    delete [] logFacs;
+    return set_precision(logpValue);
 }
 
 // ------------------------ Binary table & stats ------------------------
@@ -133,8 +145,6 @@ std::string format_group_paths(const std::vector<std::vector<int>>& matrix) {
 }
 
 std::vector<std::string> binary_stat_test(const std::vector<std::vector<int>>& df) {
-    // Compute Fisher's exact test p-value
-    long double fastfisher_p_value = fastFishersExactTest(df);
 
     // Compute derived statistics
     int allele_number = 0;
@@ -158,22 +168,12 @@ std::vector<std::string> binary_stat_test(const std::vector<std::vector<int>>& d
     
     int average = static_cast<double>(allele_number) / numb_colum; // get 200 instead of 200.00000
 
-    // Compute Chi-squared test p-value
+    // Compute  Fisher's exact & Chi-squared test p-value
     std::string chi2_p_value = chi2Test(df);
-
-    // Prepare Fisher's p-value string with 4 decimal places precision
-    std::string stringFastfisher_p_value;
-    if (fastfisher_p_value != -1.0L) { // Check if Fisher's test is computable
-        std::ostringstream ss;
-        ss << std::scientific << std::setprecision(4) << fastfisher_p_value;
-        stringFastfisher_p_value = ss.str();
-    } else {
-        stringFastfisher_p_value = "NA";
-    }
-    
+    std::string fastfisher_p_value = fastFishersExactTest(df);
     std::string group_paths = format_group_paths(df); // Placeholder for future implementation
 
-    return {stringFastfisher_p_value, chi2_p_value, std::to_string(allele_number), std::to_string(min_row_index), std::to_string(numb_colum), std::to_string(inter_group), std::to_string(average), group_paths};
+    return {fastfisher_p_value, chi2_p_value, std::to_string(allele_number), std::to_string(min_row_index), std::to_string(numb_colum), std::to_string(inter_group), std::to_string(average), group_paths};
 }
 
 std::vector<std::vector<int>> create_binary_table(

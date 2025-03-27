@@ -1,17 +1,8 @@
 #include "quantitative_analysis.hpp"
 #include "snarl_parser.hpp"
+#include "utils.hpp"
 
 using namespace std;
-
-std::string set_precision(double value) {
-    std::ostringstream oss;
-    if (value < 0.0001) {
-        oss << std::scientific << std::setprecision(4) << value; // Scientific notation with 4 decimals
-    } else {
-        oss << std::fixed << std::setprecision(4) << value; // Fixed-point notation with 4 decimals
-    }
-    return oss.str();
-}
 
 // Linear regression function OLS
 std::tuple<string, string, string, string> linear_regression(

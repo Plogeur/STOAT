@@ -20,9 +20,20 @@ link_directories(${HTSLIB_LIBRARY_DIRS})
 find_package(Boost REQUIRED)
 find_package(Eigen3 REQUIRED)
 
+# Find Python
+find_package(Python3 COMPONENTS Interpreter REQUIRED)
+
+# Ensure dependencies are installed
+add_custom_target(install_python_dependencies ALL
+    COMMAND ${Python3_EXECUTABLE} -m pip install --upgrade pip
+    COMMAND ${Python3_EXECUTABLE} -m pip install pandas matplotlib qmplot
+    WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
+)
+
 # Add Executable
 add_executable(${PROJECT_NAME}
     src/main.cpp
+    src/utils.cpp
     src/arg_parser.cpp
     src/binary_analysis.cpp
     src/gaf_creator.cpp
@@ -32,6 +43,8 @@ add_executable(${PROJECT_NAME}
     src/snarl_parser.cpp
     ${ALGLIB_SOURCES}
 )
+
+add_dependencies(${PROJECT_NAME} install_python_dependencies)
 
 # Include Directories
 target_include_directories(${PROJECT_NAME} PRIVATE
@@ -67,6 +80,7 @@ add_executable(unit_tests
     tests/unittest/matrix_unit.cpp
     tests/unittest/quantitative_analysis_unit.cpp
 
+    src/utils.cpp
     src/arg_parser.cpp
     src/binary_analysis.cpp
     src/gaf_creator.cpp

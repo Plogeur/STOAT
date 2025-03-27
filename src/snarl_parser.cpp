@@ -9,6 +9,108 @@ SnarlParser::SnarlParser(const vector<string>& sample_names, size_t num_paths_ch
     sampleNames(sample_names), matrix(num_paths_chr*4, sample_names.size() * 2)
 {}
 
+std::vector<int> SnarlParser::create_table_short_path(const std::string& list_path_snarl) {
+    std::unordered_map<std::string, size_t> row_headers_dict = matrix.get_row_header();
+
+    // Iterate over each path_snarl in column_headers
+    const std::string& path_snarl = list_path_snarl;
+    const size_t number_sample = sampleNames.size();
+    std::vector<std::string> decomposed_snarl = decompose_string(path_snarl);
+    return identify_correct_path(decomposed_snarl, row_headers_dict, matrix, number_sample*2);
+}
+
+void SnarlParser::create_bim_bed(const std::vector<std::tuple<string, vector<string>, string, vector<string>>>& snarls, 
+                                string chromosome, const std::string& output_bim, const std::string& output_bed) {
+
+    std::ofstream outbim(output_bim);
+    std::ofstream outbed(output_bed, std::ios::binary);  // Open BED file as binary
+    
+    const size_t allele_number = sampleNames.size();  // Number of individuals
+
+    if (!outbim.is_open() || !outbed.is_open()) {
+        std::cerr << "Error opening output files!" << std::endl;
+        return;
+    }
+
+    // Write the 3-byte 'BED' header for the BED file
+    char bed_magic[] = {0x6C, 0x1B, 0x01};  // PLINK header: 0x6C ('l'), 0x1B, 0x01 (snp-major mode)
+    outbed.write(bed_magic, 3);
+    
+    // Iterate over each snarl
+    // <snarl, paths, pos, type>
+    for (const auto& [snarl, list_snarl, position, type] : snarls) {
+
+        if (list_snarl.size() > 2) {continue;} // avoid multiallelic var
+
+        // Generate a genotype table for this snarl
+        std::vector<int> table = create_table_short_path(list_snarl[0]);  // 2D vector, each row = SNP, each col = sample alleles
+
+        std::string allele1 = "A";  // Placeholder for allele 1
+        std::string allele2 = "T";  // Placeholder for allele 2
+
+        // Write the BIM file line for the SNP
+        outbim << chromosome << "\t" << snarl << "\t0\t" << position
+                << "\t" << allele1 << "\t" << allele2 << "\n";
+        
+        // Write the genotypes for this SNP to the BED file
+        unsigned char packed_byte = 0;  // A byte to store genotypes of 4 individuals
+        int bit_pos = 0;
+
+        // Loop through each sample (pair of alleles per individual)
+        for (size_t snarl_list_idx = 0; snarl_list_idx < allele_number; ++snarl_list_idx) {
+            int allele1 = table[2 * snarl_list_idx];      // First allele for the individual for the first paths
+            int allele2 = table[2 * snarl_list_idx + 1];  // Second allele for the individual at SNP
+
+            // Encode the genotype as a 2-bit value based on the alleles
+            unsigned char encoded_genotype = 0;
+
+            if (allele1 == allele2) {
+                // Homozygous genotype (AA or aa)
+                encoded_genotype = (allele1 == 0) ? 0b00 : 0b11;  // Example: 0 = AA, 1 = aa
+            } else {
+                // Heterozygous genotype (Aa)
+                encoded_genotype = 0b01;
+            }
+
+            // Shift the encoded genotype into the correct position in the byte
+            packed_byte |= (encoded_genotype << (bit_pos * 2));
+            bit_pos++;
+
+            // After 4 individuals, write the byte and reset the byte and bit position
+            if (bit_pos == 4) {
+                outbed.write(reinterpret_cast<char*>(&packed_byte), sizeof(unsigned char));
+                packed_byte = 0;  // Reset the byte
+                bit_pos = 0;      // Reset the bit position
+            }
+        }
+
+        // If there are fewer than 4 individuals, write the remaining packed byte
+        if (bit_pos > 0) {
+            outbed.write(reinterpret_cast<char*>(&packed_byte), sizeof(unsigned char));
+        }
+    }
+    outbim.close();
+    outbed.close();
+}
+
+void create_fam(const std::vector<std::pair<std::string, int>> &pheno, 
+    const std::string& output_path) {
+
+    std::ofstream outfile(output_path);
+    if (!outfile.is_open()) {
+        throw std::runtime_error("Unable to open output file: " + output_path);
+    }
+
+    for (const auto& [sample, phenotype] : pheno) {
+
+        outfile << sample << " "           // FID (default to sample ID)
+                << sample << " "           // IID (sample ID)
+                << "0 0 0 "                // PID and MID (unknown)
+                << phenotype << "\n";      // PHENOTYPE (-9 = missing)
+    }
+    outfile.close();
+}
+
 // Function to extract an integer from a string starting at index `i`
 std::pair<int, std::string> determine_str(const std::string& s, int length_s, int i) {
     int start_idx = i;
