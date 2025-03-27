@@ -12,7 +12,6 @@ def split_snarl(input_str):
     return [str(num) for num in re.split(r'[><]', input_str) if num]
 
 def parse_snarl_path_file_dict(path_file:str) -> dict :
-    
     snarl_paths = {}
     df = pd.read_csv(path_file, sep='\t', dtype=str)
     df['paths'] = df['paths'].str.split(',')
