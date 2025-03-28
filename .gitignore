@@ -4,7 +4,6 @@ stoat.egg-info/*
 build/*
 tests/vcf_test.vcf
 vcf_test.normalized.vcf
-data/*
 tests/build/*
 tests/src/CMakeFiles/*
 src/CMakeFiles/*

@@ -5,36 +5,32 @@
 using namespace std;
 
 // Linear regression function OLS
-std::tuple<string, string, string, string> linear_regression(
+std::tuple<std::string, std::string, std::string, std::string> linear_regression(
     const std::unordered_map<std::string, std::vector<int>>& df,
     const std::unordered_map<std::string, double>& quantitative_phenotype) {
     
-    if (df.empty() || quantitative_phenotype.empty()) {
-        return {"Error", "Empty dataframe or phenotype", "", ""};
+    size_t num_samples = df.size();
+    size_t max_paths = 0;
+    
+    // Determine the maximum number of predictors (columns)
+    for (const auto& [_, paths] : df) {
+        max_paths = std::max(max_paths, paths.size());
     }
     
-    int n = df.begin()->second.size(); // Number of samples
-    int p = df.size(); // Number of SNPs
+    Eigen::MatrixXd X(num_samples, max_paths);
+    X.setZero(); // Initialize matrix with zeros
+    Eigen::VectorXd y(num_samples);
     
-    Eigen::MatrixXd X(n, p); // No intercept column
-    Eigen::VectorXd y(n);
-    
-    int col_idx = 0;
-    for (const auto& [snp, values] : df) {
-        for (int i = 0; i < n; ++i) {
-            X(i, col_idx) = values[i];
+    int row = 0;
+    for (const auto& [sample, paths] : df) {
+        y(row) = quantitative_phenotype.at(sample);
+        for (size_t col = 0; col < paths.size(); ++col) {
+            X(row, col) = paths[col];
         }
-        col_idx++;
+        ++row;
     }
     
-    // Fill phenotype vector
-    int row_idx = 0;
-    for (const auto& [sample, phenotype_value] : quantitative_phenotype) {
-        y(row_idx) = phenotype_value;
-        row_idx++;
-    }
-    
-    // Compute OLS: beta = (X'X)^(-1) X'Y
+    // Perform OLS: β = (X^T X)^(-1) X^T y
     Eigen::VectorXd beta = (X.transpose() * X).ldlt().solve(X.transpose() * y);
     
     // Compute residuals
@@ -49,20 +45,16 @@ std::tuple<string, string, string, string> linear_regression(
     double r_squared = 1 - (ss_res / ss_tot);
     
     // Compute F-statistic
-    double ms_model = (ss_tot - ss_res) / p;
-    double ms_residual = ss_res / (n - p);
-    double f_stat = ms_model / ms_residual;
+    double f_stat = (r2 / df_reg) / ((1 - r2) / df_res);
     
-    // Compute global p-value using Fisher's F-distribution
-    boost::math::fisher_f dist(p, n - p);
-    double global_p_value = 1 - boost::math::cdf(dist, f_stat);
-    
-    // Compute standard error
-    Eigen::MatrixXd XtX_inv = (X.transpose() * X).inverse();
-    Eigen::VectorXd se = XtX_inv.diagonal().array().sqrt();
-    
-    // Set precision to 4 digits
-    string r2_str = set_precision(r_squared);
+    double p_value = 1.0f;
+    if (f_stat > 0) {
+        boost::math::fisher_f dist(df_reg, df_res);
+        p_value = boost::math::cdf(boost::math::complement(dist, f_stat));
+    }
+
+    // set precision : 4 digit
+    string r2_str = set_precision(r2);
     string beta_mean_str = set_precision(beta.mean());
     string se_mean_str = set_precision(se.mean());
     string p_value_str = set_precision(global_p_value);
