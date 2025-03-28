@@ -116,6 +116,7 @@ def match_snarl(freq_path_list, true_labels, list_diff, p_value_file, paths_file
 
             # Check if at least one path in the snarl contains the start node followed by the next node
             for idx_paths, list_path in enumerate(split_paths):
+
                 if check_valid_snarl(start_node_1, next_node_1, start_node_2, next_node_2, list_path.split(',')) : 
                     matched_p_value = matched_row.loc[indices[idx_paths]]
                     if type_ == 'binary':  
@@ -125,13 +126,25 @@ def match_snarl(freq_path_list, true_labels, list_diff, p_value_file, paths_file
                     else :
                         raise ValueError("type_ must be binary or quantitative")
 
+                    try:
+                        p_value = float(p_value)  # Try converting p_value to a float
+                        if p_value != p_value:  # Check if it's NaN
+                            raise ValueError("p_value is NaN")
+                    except (ValueError, TypeError):  # Catch invalid float or type errors
+                        # Continue or handle the case where p_value is not a valid float
+                        continue
+
                     predicted_labels_10_2.append(0 if p_value < 0.01 else 1)
                     predicted_labels_10_5.append(0 if p_value < 0.00001 else 1)
                     predicted_labels_10_8.append(0 if p_value < 0.00000001 else 1)
                     cleaned_true_labels.append(true_labels[idx])
                     clean_list_diff.append(list_diff[idx])
                     pvalue.append(p_value)
-                    num_sample.append(matched_row.loc[indices[idx_paths]]['ALLELE_NUM'])
+                    try :
+                        allele_num = matched_row.loc[indices[idx_paths]]['ALLELE_NUM']
+                    except :
+                        allele_num = 200
+                    num_sample.append(allele_num)
 
     return predicted_labels_10_2, predicted_labels_10_5, predicted_labels_10_8, cleaned_true_labels, clean_list_diff, pvalue, num_sample
 
