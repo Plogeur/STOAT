@@ -158,7 +158,8 @@
     "*.classfragment": "cpp",
     "hash_map": "cpp",
     "shared_mutex": "cpp",
-    "*.ipp": "cpp"
+    "*.ipp": "cpp",
+    "core": "cpp"
   },
   "C_Cpp.errorSquiggles": "disabled",
   "C_Cpp.default.compilerPath": "/usr/bin/clang++"
