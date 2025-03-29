@@ -393,42 +393,46 @@ bool check_format_covariate(const std::string& filename) {
     return true;
 }
 
-// Function to parse covariates into an Eigen matrix
-Eigen::MatrixXd parseCovariate(const std::string& filename) {
+// Function to parse covariates into an unordered_map
+std::unordered_map<std::string, std::vector<double>> parseCovariate(const std::string& filename) {
     std::ifstream file(filename);
     if (!file.is_open()) {
         std::cerr << "Error: Cannot open file " << filename << std::endl;
-        return Eigen::MatrixXd(0, 0);
+        return {};
     }
 
-    std::vector<std::vector<double>> data;
+    std::unordered_map<std::string, std::vector<double>> covariates;
     std::string line;
-
+    
     while (std::getline(file, line)) {
         std::stringstream ss(line);
-        std::vector<double> row;
-        double value;
+        std::string sample_id;
+        ss >> sample_id;
 
+        std::vector<double> values;
+        double value;
         while (ss >> value) {
-            row.push_back(value);
+            values.push_back(value);
         }
 
-        data.push_back(row);
+        covariates[sample_id] = values;
     }
-
+    
     file.close();
-
-    if (data.empty()) return Eigen::MatrixXd(0, 0);
-
-    int rows = data.size();
-    int cols = data[0].size();
-    Eigen::MatrixXd covariates(rows, cols);
-
-    for (int i = 0; i < rows; i++)
-        for (int j = 0; j < cols; j++)
-            covariates(i, j) = data[i][j];
-
     return covariates;
+}
+
+// Function to check if phenotype and covariate files match
+void check_covariate(const std::unordered_map<std::string, double>& phenotype, 
+    const std::unordered_map<std::string, std::vector<double>>& covariates) {
+
+        // Check if all phenotype samples are present in covariates
+        for (const auto& pair : phenotype) {
+        if (covariates.find(pair.first) == covariates.end()) {
+            std::cerr << "Error: Missing covariate data for sample " << pair.first << std::endl;
+            EXIT_FAILURE;
+        }
+    }
 }
 
 void check_format_quantitative_phenotype(const std::string& file_path) {

@@ -18,6 +18,13 @@
 #include "snarl_parser.hpp"
 #include "utils.hpp"
 
+// ------------------------ LMM ------------------------
+
+void LMM_binary(
+    const std::unordered_map<std::string, std::vector<int>>& df,
+    const std::unordered_map<std::string, int>& binary_phenotype,
+    const std::unordered_map<std::string, std::vector<double>>& covariate);
+
 // ------------------------ Chi2 test ------------------------
 
 // Function to check if matrix is valid (no zero rows/columns)

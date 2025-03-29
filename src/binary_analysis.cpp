@@ -2,6 +2,61 @@
 #include "snarl_parser.hpp"
 #include "utils.hpp"
 
+// ------------------------ LMM LOGISTIC REGRESSION ------------------------
+
+// Function to fit a Linear Mixed Model (LMM) for binary GWAS
+void LMM_binary(
+    const std::unordered_map<std::string, std::vector<int>>& df,
+    const std::unordered_map<std::string, int>& binary_phenotype,
+    const std::unordered_map<std::string, std::vector<double>>& covariate) {
+        
+    // Convert phenotype data into an Eigen vector
+    Eigen::VectorXd y(binary_phenotype.size());
+    Eigen::MatrixXd covariate_matrix(binary_phenotype.size(), covariate.begin()->second.size());
+    int index = 0;
+    std::vector<std::string> sample_ids;
+
+    for (const auto& pair : binary_phenotype) {
+        y(index) = pair.second;
+        sample_ids.push_back(pair.first);
+        for (int j = 0; j < covariate.at(pair.first).size(); j++) {
+            covariate_matrix(index, j) = covariate.at(pair.first)[j];
+        }
+        index++;
+    }
+
+    // Construct the genotype matrix X
+    Eigen::MatrixXd X(sample_ids.size(), df.size());
+    int col = 0;
+    for (const auto& snp : df) {
+        for (int row = 0; row < sample_ids.size(); row++) {
+            X(row, col) = snp.second[row];
+        }
+        col++;
+    }
+
+    // Combine genotype matrix with covariates
+    Eigen::MatrixXd design_matrix(sample_ids.size(), X.cols() + covariate_matrix.cols());
+    design_matrix << X, covariate_matrix;
+
+    // Estimate beta using logistic regression approximation
+    Eigen::VectorXd beta = Eigen::VectorXd::Zero(design_matrix.cols());
+    Eigen::VectorXd p = (1.0 / (1.0 + (-design_matrix * beta).array().exp())).matrix();
+    Eigen::VectorXd W = p.array() * (1 - p.array());
+    Eigen::MatrixXd XtWX = design_matrix.transpose() * W.asDiagonal() * design_matrix;
+    Eigen::VectorXd XtWz = design_matrix.transpose() * (W.asDiagonal() * (design_matrix * beta + (y - p).array()).matrix());
+    beta = XtWX.ldlt().solve(XtWz);
+
+    // Compute residuals
+    Eigen::VectorXd residuals = y - (1.0 / (1.0 + (-design_matrix * beta).array().exp())).matrix();
+    double residual_variance = (residuals.transpose() * residuals).value() / residuals.size();
+
+    // Output estimated coefficients
+    std::cout << "Estimated coefficients (Binary LMM):" << std::endl;
+    std::cout << beta << std::endl;
+    std::cout << "Residual variance: " << residual_variance << std::endl;
+}
+
 // ------------------------ Chi2 test ------------------------
 
 // Check if the observed matrix is valid (no zero rows/columns)

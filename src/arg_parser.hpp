@@ -57,9 +57,10 @@ std::vector<QTLRecord> parseQTLFile(const std::string& filename);
 
 bool isValidQTLFormat(const std::string& line);
 
-Eigen::MatrixXd parseCovariate(const std::string& filename);
+void check_covariate(const std::unordered_map<std::string, double>& phenotype, 
+    const std::unordered_map<std::string, std::vector<double>>& covariates);
 
-bool check_format_covariate(const std::string& filename);
+std::unordered_map<std::string, std::vector<double>> parseCovariate(const std::string& filename);
 
 // Parses the group file and fills the group_0 and group_1 maps with sample data.
 std::unordered_map<std::string, bool> parse_binary_pheno(const std::string& binary_pheno);

@@ -25,6 +25,7 @@ void print_help() {
               << "  -b, --binary <path>         Path to the binary group file (.txt or .tsv)\n"
               << "  -g, --gaf                   Make a GAF file from the GWAS analysis\n"
               << "  -q, --quantitative <path>   Path to the quantitative phenotype file (.txt or .tsv)\n"
+              << "  --covariate <path>          Path to the covariate file (.txt or .tsv)\n"
               << "  -e, --eqtl <path>           Path to the Expression Quantitative Trait Loci file (.txt or .tsv)\n"
               << "  --make-bed                  Create a plink format files (.bed, .bim, bed)\n"
               << "  --plot                      Create Manhatthan plot and QQ plot\n"
@@ -82,7 +83,7 @@ int main(int argc, char* argv[]) {
             check_file(binary_path);
         } else if ((arg == "-g" || arg == "--gaf") && i + 1 < argc) {
             gaf=true;
-        } else if ((arg == "-cov" || arg == "--covariate") && i + 1 < argc) {
+        } else if ((arg == "--covariate") && i + 1 < argc) {
             covariate_path = argv[++i];
             check_file(covariate_path);
         } else if ((arg == "-q" || arg == "--quantitative") && i + 1 < argc) {

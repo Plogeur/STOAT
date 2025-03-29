@@ -8,7 +8,7 @@ using namespace std;
 std::tuple<std::string, std::string, std::string, std::string> linear_regression(
     const std::unordered_map<std::string, std::vector<int>>& df,
     const std::unordered_map<std::string, double>& quantitative_phenotype) {
-    
+
     size_t num_samples = df.size();
     size_t max_paths = 0;
     
@@ -60,6 +60,56 @@ std::tuple<std::string, std::string, std::string, std::string> linear_regression
     string p_value_str = set_precision(global_p_value);
 
     return {r2_str, beta_mean_str, se_mean_str, p_value_str};
+}
+
+// Function to fit a Linear Mixed Model (LMM) for GWAS
+void LMM_quantitative(
+    const std::unordered_map<std::string, std::vector<int>>& df,
+    const std::unordered_map<std::string, double>& quantitative_phenotype,
+    const std::unordered_map<std::string, std::vector<double>>& covariate) {
+
+    // Convert phenotype data into an Eigen vector
+    Eigen::VectorXd y(quantitative_phenotype.size());
+    Eigen::MatrixXd covariate_matrix(quantitative_phenotype.size(), covariate.begin()->second.size());
+    int index = 0;
+    std::vector<std::string> sample_ids;
+
+    for (const auto& pair : quantitative_phenotype) {
+        y(index) = pair.second;
+        sample_ids.push_back(pair.first);
+        for (int j = 0; j < covariate.at(pair.first).size(); j++) {
+            covariate_matrix(index, j) = covariate.at(pair.first)[j];
+        }
+        index++;
+    }
+
+    // Construct the genotype matrix X
+    Eigen::MatrixXd X(sample_ids.size(), df.size());
+    int col = 0;
+    for (const auto& snp : df) {
+        for (int row = 0; row < sample_ids.size(); row++) {
+            X(row, col) = snp.second[row];
+        }
+        col++;
+    }
+
+    // Combine genotype matrix with covariates
+    Eigen::MatrixXd design_matrix(sample_ids.size(), X.cols() + covariate_matrix.cols());
+    design_matrix << X, covariate_matrix;
+
+    // Estimate beta using OLS (beta = (X'X)^-1 X'Y)
+    Eigen::MatrixXd XtX = design_matrix.transpose() * design_matrix;
+    Eigen::VectorXd Xty = design_matrix.transpose() * y;
+    Eigen::VectorXd beta = XtX.ldlt().solve(Xty);
+
+    // Compute residuals
+    Eigen::VectorXd residuals = y - design_matrix * beta;
+    double residual_variance = (residuals.transpose() * residuals).value() / residuals.size();
+
+    // Output estimated coefficients
+    std::cout << "Estimated coefficients:" << std::endl;
+    std::cout << beta << std::endl;
+    std::cout << "Residual variance: " << residual_variance << std::endl;
 }
 
 // Function to create the quantitative table
