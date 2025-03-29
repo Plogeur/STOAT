@@ -303,6 +303,7 @@ std::vector<int> identify_correct_path(
 // Binary Table Generation
 void SnarlParser::binary_table(const std::vector<std::tuple<string, vector<string>, string, vector<string>>>& snarls,
                                const std::unordered_map<std::string, bool>& binary_groups, const string &chr,
+                               const std::unordered_map<std::string, std::vector<double>>& covar,
                                std::ofstream& outf) {
 
     // Iterate over each snarl
@@ -310,7 +311,11 @@ void SnarlParser::binary_table(const std::vector<std::tuple<string, vector<strin
 
         std::vector<std::string> list_snarl = std::get<1>(tuple_snarl);
         std::vector<std::vector<int>> df = create_binary_table(binary_groups, list_snarl, sampleNames, matrix);
-        std::vector<std::string> stats = binary_stat_test(df);
+        if (covar.size() > 0) {
+            std::vector<std::string> stats = LMM_binary(df, covar);
+        } else {
+            std::vector<std::string> stats = binary_stat_test(df);
+        }
 
         std::string snarl = std::get<0>(tuple_snarl), pos = std::get<2>(tuple_snarl);
         std::vector<std::string> type_var = std::get<3>(tuple_snarl);
@@ -338,6 +343,7 @@ void SnarlParser::binary_table(const std::vector<std::tuple<string, vector<strin
 // Quantitative Table Generation
 void SnarlParser::quantitative_table(const std::vector<std::tuple<string, vector<string>, string, vector<string>>>& snarls,
                                         const std::unordered_map<std::string, double>& quantitative_phenotype, const string &chr,
+                                        const std::unordered_map<std::string, std::vector<double>>& covar,
                                         std::ofstream& outf) 
 {
 
@@ -347,8 +353,12 @@ void SnarlParser::quantitative_table(const std::vector<std::tuple<string, vector
         std::vector<std::string> list_snarl = std::get<1>(tuple_snarl);
         auto [df, allele_number] = create_quantitative_table(sampleNames, list_snarl, matrix);
 
-        // std::make_tuple(beta, se, p_value)
-        std::tuple<string, string, string, string> tuple_info = linear_regression(df, quantitative_phenotype);
+        if (covar.size() > 0) {
+            std::tuple<string, string, string, string> tuple_info = LMM_quantitative(df, covar, quantitative_phenotype);
+        } else {
+            // std::make_tuple(r2, beta, se, p_value)
+            std::tuple<string, string, string, string> tuple_info = linear_regression(df, quantitative_phenotype);
+        }
 
         std::string snarl = std::get<0>(tuple_snarl), pos = std::get<2>(tuple_snarl);
         std::vector<std::string> type_var = std::get<3>(tuple_snarl);
@@ -372,44 +382,3 @@ void SnarlParser::quantitative_table(const std::vector<std::tuple<string, vector
     }
 }
 
-// Extracts the genotype from the genotype string
-std::vector<int> extractGenotype(const std::string& genotypeStr) {
-    std::vector<int> alleles;
-    std::vector<std::string> alleleStrs = split(genotypeStr, '/');
-
-    for (const std::string& alleleStr : alleleStrs) {
-        if (alleleStr[0] == '.') {
-            alleles.push_back(-1); // Use -1 for missing data
-        } else {
-            alleles.push_back(std::stoi(alleleStr)); // Convert allele string to integer
-        }
-    }
-    return alleles;
-}
-
-// Extracts the AT field from the INFO field and returns a vector of strings
-std::vector<std::string> extractATField(const std::string& infoField) {
-    std::vector<std::string> atValues; // Change to vector of strings
-    std::vector<std::string> infoParts = split(infoField, ';');
-    
-    for (const std::string& part : infoParts) {
-        if (part.rfind("AT=", 0) == 0) {
-            std::string atData = part.substr(3);  // Remove "AT="
-            // Split the AT data using ',' only
-            atValues = split(atData, ','); // Directly assign the split result to atValues
-            return atValues; // Return the result
-        }
-    }
-    return atValues;  // Return empty if AT field is not found
-}
-
-// Utility function to split strings
-std::vector<std::string> split(const std::string& s, char delimiter) {
-    std::vector<std::string> tokens;
-    std::stringstream ss(s);
-    std::string token;
-    while (std::getline(ss, token, delimiter)) {
-        tokens.push_back(token);
-    }
-    return tokens;
-}

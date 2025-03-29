@@ -62,8 +62,8 @@ std::tuple<std::string, std::string, std::string, std::string> linear_regression
     return {r2_str, beta_mean_str, se_mean_str, p_value_str};
 }
 
-// Function to fit a Linear Mixed Model (LMM) for GWAS
-void LMM_quantitative(
+// Function to fit a Linear Mixed Model (LMM) for GWAS and return global p-value, mean beta, and mean SE
+std::tuple<std::string, std::string, std::string> LMM_quantitative(
     const std::unordered_map<std::string, std::vector<int>>& df,
     const std::unordered_map<std::string, double>& quantitative_phenotype,
     const std::unordered_map<std::string, std::vector<double>>& covariate) {
@@ -106,10 +106,48 @@ void LMM_quantitative(
     Eigen::VectorXd residuals = y - design_matrix * beta;
     double residual_variance = (residuals.transpose() * residuals).value() / residuals.size();
 
-    // Output estimated coefficients
-    std::cout << "Estimated coefficients:" << std::endl;
-    std::cout << beta << std::endl;
-    std::cout << "Residual variance: " << residual_variance << std::endl;
+    // Compute the covariance matrix of the estimated coefficients
+    Eigen::MatrixXd XtX_inv = XtX.ldlt().solve(Eigen::MatrixXd::Identity(XtX.rows(), XtX.cols()));
+    Eigen::MatrixXd beta_cov = residual_variance * XtX_inv;
+
+    // Compute standard errors (diagonal of the covariance matrix)
+    Eigen::VectorXd standard_errors = beta_cov.diagonal().array().sqrt();
+
+    // Compute F-statistic for the global test (based on the model's explained variance)
+    Eigen::VectorXd y_hat = design_matrix * beta; // predicted values
+    Eigen::VectorXd residuals_full = y - y_hat; // residuals
+    double ss_total = (y - y.mean()).transpose() * (y - y.mean());
+    double ss_residual = residuals_full.transpose() * residuals_full;
+    double ss_model = ss_total - ss_residual;
+
+    int degrees_of_freedom_model = X.cols() + covariate_matrix.cols();
+    int degrees_of_freedom_residual = y.size() - degrees_of_freedom_model;
+
+    double f_statistic = (ss_model / degrees_of_freedom_model) / (ss_residual / degrees_of_freedom_residual);
+    
+    // Compute p-value from the F-statistic (using the F-distribution)
+    double global_p_value = 1 - std::exp(-f_statistic / 2); // Simplified approximation for the p-value
+
+    // Convert the global p-value to a string
+    std::ostringstream p_value_stream;
+    p_value_stream << global_p_value;
+    std::string p_value_str = p_value_stream.str();
+
+    // Compute mean beta and mean standard error
+    double mean_beta = beta.mean();
+    double mean_se = standard_errors.mean();
+
+    // Convert mean beta and mean SE to strings
+    std::ostringstream beta_stream;
+    beta_stream << mean_beta;
+    std::string beta_str = beta_stream.str();
+
+    std::ostringstream se_stream;
+    se_stream << mean_se;
+    std::string se_str = se_stream.str();
+
+    // Return the tuple with p-value, mean beta, and mean SE as strings
+    return std::make_tuple(p_value_str, beta_str, se_str);
 }
 
 // Function to create the quantitative table

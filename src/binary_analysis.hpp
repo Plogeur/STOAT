@@ -11,6 +11,7 @@
 #include <map>
 #include <iomanip>
 #include <sstream>
+#include <Eigen/Dense>
 #include <boost/math/distributions/chi_squared.hpp>
 #include <boost/math/distributions/hypergeometric.hpp>
 
@@ -20,7 +21,9 @@
 
 // ------------------------ LMM ------------------------
 
-void LMM_binary(
+Eigen::VectorXd computePValues(const Eigen::VectorXd& beta, const Eigen::MatrixXd& XtWX);
+
+std::tuple<std::string, std::string, std::string> LMM_binary(
     const std::unordered_map<std::string, std::vector<int>>& df,
     const std::unordered_map<std::string, int>& binary_phenotype,
     const std::unordered_map<std::string, std::vector<double>>& covariate);

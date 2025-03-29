@@ -35,7 +35,7 @@ struct QTLRecord {
 void chromosome_chuck_quantitative(htsFile* &ptr_vcf, bcf_hdr_t* &hdr, bcf1_t* &rec, 
     const std::vector<std::string> &list_samples,
     unordered_map<string, std::vector<std::tuple<string, vector<string>, string, vector<string>>>> &snarl_chr,
-    const unordered_map<string, double>& pheno, std::ofstream& outf);
+    const unordered_map<string, double>& pheno, std::unordered_map<std::string, std::vector<double>> covar, std::ofstream& outf);
 
 void chromosome_chuck_eqtl(htsFile* &ptr_vcf, bcf_hdr_t* &hdr, bcf1_t* &rec, 
     const std::vector<std::string> &list_samples,
@@ -45,19 +45,20 @@ void chromosome_chuck_eqtl(htsFile* &ptr_vcf, bcf_hdr_t* &hdr, bcf1_t* &rec,
 void chromosome_chuck_binary(htsFile* &ptr_vcf, bcf_hdr_t* &hdr, bcf1_t* &rec, 
     const std::vector<std::string> &list_samples, 
     unordered_map<string, std::vector<std::tuple<string, vector<string>, string, vector<string>>>> &snarl_chr,
-    const unordered_map<string, bool>& pheno, std::ofstream& outf);
+    const unordered_map<string, bool>& pheno, std::unordered_map<std::string, std::vector<double>> covar, std::ofstream& outf);
 
-// void chromosome_chuck_make_bed(htsFile* &ptr_vcf, bcf_hdr_t* &hdr, bcf1_t* &rec, 
-//     const std::vector<std::string> &list_samples,
-//     unordered_map<string, std::vector<std::tuple<string, vector<string>, string, vector<string>>>> &snarl_chr,
-//     const unordered_map<string, double>& pheno, string output_dir);
+void chromosome_chuck_make_bed(htsFile* &ptr_vcf, bcf_hdr_t* &hdr, bcf1_t* &rec, 
+    const std::vector<std::string> &list_samples,
+    unordered_map<string, std::vector<std::tuple<string, vector<string>, string, vector<string>>>> &snarl_chr,
+    const unordered_map<string, double>& pheno, string output_dir);
 
 // Function to parse an eQTL file
 std::vector<QTLRecord> parseQTLFile(const std::string& filename);
 
 bool isValidQTLFormat(const std::string& line);
 
-void check_covariate(const std::unordered_map<std::string, double>& phenotype, 
+template <typename T>
+void check_phenotype_covariate(const std::unordered_map<std::string, T>& phenotype, 
     const std::unordered_map<std::string, std::vector<double>>& covariates);
 
 std::unordered_map<std::string, std::vector<double>> parseCovariate(const std::string& filename);

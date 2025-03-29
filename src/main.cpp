@@ -157,23 +157,27 @@ int main(int argc, char* argv[]) {
     std::unordered_map<std::string, double> quantitative;
     std::vector<QTLRecord> eqtl;
 
+    std::unordered_map<std::string, std::vector<double>> covariate;
+    if (!covariate_path.empty()) {
+        check_format_covariate(covariate_path);
+        covariate = parseCovariate(covariate_path);
+    }
+
     if (!binary_path.empty()) {
         check_format_binary_phenotype(binary_path);
         binary = parse_binary_pheno(binary_path);
         check_match_samples(binary, list_samples);
+        check_phenotype_covariate(binary, covariate);
+
     } else if (!quantitative_path.empty()) {
         check_format_quantitative_phenotype(quantitative_path);
         quantitative = parse_quantitative_pheno(quantitative_path);
         check_match_samples(quantitative, list_samples);
+        check_phenotype_covariate(quantitative, covariate);
+
     } else if (!eqtl_path.empty()) {
         eqtl = parseQTLFile(eqtl_path);
         //check_match_samples_eqtl(eqtl, list_samples);
-    }
-
-    Eigen::MatrixXd covariate;
-    if (!covariate_path.empty()) {
-        check_format_covariate(covariate_path);
-        covariate = parseCovariate(covariate_path);
     }
 
     // scope declaration
@@ -216,21 +220,20 @@ int main(int argc, char* argv[]) {
     } else if (!binary_path.empty()) {
 
         string output_binary = output_dir + "/binary_analysis.tsv";
-        string output_manh = output_dir + "/manhattan_plot_binary.png";
-        string output_qq = output_dir + "/qq_plot_binary.png";
-        string output_significative = output_dir + "/top_variant_binary.tsv";
         std::ofstream outf(output_binary, std::ios::binary);
-
         std::string headers = "CHR\tPOS\tSNARL\tTYPE\tP_FISHER\tP_CHI2\tALLELE_NUM\tMIN_ROW_INDEX\tNUM_COLUM\tINTER_GROUP\tAVERAGE\tGROUP_PATHS\n";
         outf.write(headers.c_str(), headers.size());
 
-        chromosome_chuck_binary(ptr_vcf, hdr, rec, list_samples, snarls_chr, binary, outf);
+        chromosome_chuck_binary(ptr_vcf, hdr, rec, list_samples, snarls_chr, binary, covariate, outf);
         if (gaf) {
             string output_gaf = output_dir + "/snarl.gaf";
             parse_input_file(output_binary, snarls_chr, *pg, output_gaf);
         }
 
         if (make_plot) {
+            string output_manh = output_dir + "/manhattan_plot_binary.png";
+            string output_qq = output_dir + "/qq_plot_binary.png";
+            string output_significative = output_dir + "/top_variant_binary.tsv";
             std::string python_cmd = "python3 ../src/p_value_analysis.py "
             " --pvalue " + output_binary + 
             " --significative " + output_significative + 
@@ -243,17 +246,17 @@ int main(int argc, char* argv[]) {
     } else if (!quantitative_path.empty()) {
 
         string output_quantitive = output_dir + "/quantitative_analysis.tsv";
-        string output_manh = output_dir + "/manhattan_plot_quantitative.png";
-        string output_qq = output_dir + "/qq_plot_quantitative.png";
-        string output_significative = output_dir + "/top_variant_quantitative.tsv";
-
         std::ofstream outf(output_quantitive, std::ios::binary);
         std::string headers = "CHR\tPOS\tSNARL\tTYPE\tRSQUARED\tBETA\tSE\tP\tALLELE_NUM\n";
         outf.write(headers.c_str(), headers.size());
 
-        chromosome_chuck_quantitative(ptr_vcf, hdr, rec, list_samples, snarls_chr, quantitative, outf);
+        chromosome_chuck_quantitative(ptr_vcf, hdr, rec, list_samples, snarls_chr, quantitative, covariate, outf);
 
         if (make_plot) {
+            string output_manh = output_dir + "/manhattan_plot_quantitative.png";
+            string output_qq = output_dir + "/qq_plot_quantitative.png";
+            string output_significative = output_dir + "/top_variant_quantitative.tsv";
+
             std::string python_cmd = "python3 ../src/p_value_analysis.py "
             " --pvalue " + output_quantitive + 
             " --significative " + output_significative + 
@@ -268,7 +271,7 @@ int main(int argc, char* argv[]) {
         std::ofstream outf(eqtl_output, std::ios::binary);
         std::string headers = "CHR\tPOS\tSNARL\tTYPE\tSE\tBETA\tP\n";
         outf.write(headers.c_str(), headers.size());
-
+        
         chromosome_chuck_eqtl(ptr_vcf, hdr, rec, list_samples, snarls_chr, eqtl, outf);
     }
     

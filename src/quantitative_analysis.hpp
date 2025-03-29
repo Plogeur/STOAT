@@ -30,7 +30,7 @@ std::pair<std::unordered_map<std::string, std::vector<int>>, size_t> create_quan
     const std::vector<std::string>& column_headers,
     Matrix& matrix);
 
-void LMM_quantitative(
+std::tuple<std::string, std::string, std::string> LMM_quantitative(
     const std::unordered_map<std::string, std::vector<int>>& df,
     const std::unordered_map<std::string, double>& quantitative_phenotype,
     const std::unordered_map<std::string, std::vector<double>>& covariate);

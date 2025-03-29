@@ -4,12 +4,27 @@
 
 // ------------------------ LMM LOGISTIC REGRESSION ------------------------
 
+// Function to compute p-values from Wald test
+Eigen::VectorXd computePValues(const Eigen::VectorXd& beta, const Eigen::MatrixXd& XtWX) {
+    Eigen::VectorXd standard_errors = XtWX.diagonal().array().sqrt().inverse();
+    Eigen::VectorXd z_scores = beta.array() / standard_errors.array();
+    Eigen::VectorXd p_values(z_scores.size());
+    boost::math::chi_squared chi_squared_dist(1);
+    
+    for (int i = 0; i < z_scores.size(); i++) {
+        double chi_squared_stat = std::pow(z_scores(i), 2);
+        p_values(i) = boost::math::cdf(boost::math::complement(chi_squared_dist, chi_squared_stat));
+    }
+    
+    return p_values;
+}
+
 // Function to fit a Linear Mixed Model (LMM) for binary GWAS
-void LMM_binary(
+std::tuple<std::string, std::string, std::string> LMM_binary(
     const std::unordered_map<std::string, std::vector<int>>& df,
     const std::unordered_map<std::string, int>& binary_phenotype,
     const std::unordered_map<std::string, std::vector<double>>& covariate) {
-        
+
     // Convert phenotype data into an Eigen vector
     Eigen::VectorXd y(binary_phenotype.size());
     Eigen::MatrixXd covariate_matrix(binary_phenotype.size(), covariate.begin()->second.size());
@@ -47,14 +62,20 @@ void LMM_binary(
     Eigen::VectorXd XtWz = design_matrix.transpose() * (W.asDiagonal() * (design_matrix * beta + (y - p).array()).matrix());
     beta = XtWX.ldlt().solve(XtWz);
 
+    // Compute p-values using Wald test
+    Eigen::VectorXd p_values = computePValues(beta, XtWX);
+
     // Compute residuals
     Eigen::VectorXd residuals = y - (1.0 / (1.0 + (-design_matrix * beta).array().exp())).matrix();
     double residual_variance = (residuals.transpose() * residuals).value() / residuals.size();
 
-    // Output estimated coefficients
-    std::cout << "Estimated coefficients (Binary LMM):" << std::endl;
-    std::cout << beta << std::endl;
-    std::cout << "Residual variance: " << residual_variance << std::endl;
+    // Convert results to strings
+    std::ostringstream beta_stream, p_values_stream, residual_var_stream;
+    beta_stream << beta.transpose();
+    p_values_stream << p_values.transpose();
+    residual_var_stream << residual_variance;
+
+    return std::make_tuple(beta_stream.str(), p_values_stream.str(), residual_var_stream.str());
 }
 
 // ------------------------ Chi2 test ------------------------
