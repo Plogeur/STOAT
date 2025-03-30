@@ -155,7 +155,7 @@ int main(int argc, char* argv[]) {
     auto [list_samples, ptr_vcf, hdr, rec] = parseHeader(vcf_path);    
     std::unordered_map<std::string, bool> binary;
     std::unordered_map<std::string, double> quantitative;
-    std::vector<QTLRecord> eqtl;
+    //std::vector<QTLRecord> eqtl;
 
     std::unordered_map<std::string, std::vector<double>> covariate;
     if (!covariate_path.empty()) {
@@ -167,16 +167,20 @@ int main(int argc, char* argv[]) {
         check_format_binary_phenotype(binary_path);
         binary = parse_binary_pheno(binary_path);
         check_match_samples(binary, list_samples);
-        check_phenotype_covariate(binary, covariate);
+        if (!covariate_path.empty()) {
+            check_phenotype_covariate(binary, covariate);
+        }
 
     } else if (!quantitative_path.empty()) {
         check_format_quantitative_phenotype(quantitative_path);
         quantitative = parse_quantitative_pheno(quantitative_path);
         check_match_samples(quantitative, list_samples);
-        check_phenotype_covariate(quantitative, covariate);
+        if (!covariate_path.empty()) {
+            check_phenotype_covariate(quantitative, covariate);
+        }
 
     } else if (!eqtl_path.empty()) {
-        eqtl = parseQTLFile(eqtl_path);
+        //eqtl = parseQTLFile(eqtl_path);
         //check_match_samples_eqtl(eqtl, list_samples);
     }
 
@@ -192,8 +196,10 @@ int main(int argc, char* argv[]) {
         auto start_0 = std::chrono::high_resolution_clock::now();
         auto [stree, pg, root, pp_overlay] = parse_graph_tree(pg_path, dist_path);
         auto snarls = save_snarls(*stree, root, *pg, ref_chr, *pp_overlay);
+
         string output_snarl_not_analyse = output_dir + "/snarl_not_analyse.tsv";
         string output_file = output_dir + "/snarl_analyse.tsv";
+
         snarls_chr = loop_over_snarls_write(*stree, snarls, *pg, output_file, output_snarl_not_analyse, children_threshold, only_snarl_parsing);
         auto end_0 = std::chrono::high_resolution_clock::now();
         std::cout << "Snarl analysis : " << std::chrono::duration<double>(end_0 - start_0).count() << " s" << std::endl;
@@ -211,23 +217,19 @@ int main(int argc, char* argv[]) {
 
         const std::string output_fam = output_dir + "/genotype.fam";
         create_fam(pheno, output_fam);
-        //chromosome_chuck_make_bed(ptr_vcf, hdr, rec, snarls_chr, output_dir);
+        //chromosome_chuck_make_bed(ptr_vcf, hdr, rec, list_samples, snarls_chr, output_dir);
 
         auto end_1 = std::chrono::high_resolution_clock::now();
-        std::cout << "Time plink files creations : " << std::chrono::duration<double>(end_1 - start_1).count() << " s" << std::endl;
+        std::cout << "Time genotype plink files creations : " << std::chrono::duration<double>(end_1 - start_1).count() << " s" << std::endl;
         return EXIT_SUCCESS;
 
     } else if (!binary_path.empty()) {
 
         string output_binary = output_dir + "/binary_analysis.tsv";
-        std::ofstream outf(output_binary, std::ios::binary);
-        std::string headers = "CHR\tPOS\tSNARL\tTYPE\tP_FISHER\tP_CHI2\tALLELE_NUM\tMIN_ROW_INDEX\tNUM_COLUM\tINTER_GROUP\tAVERAGE\tGROUP_PATHS\n";
-        outf.write(headers.c_str(), headers.size());
-
-        chromosome_chuck_binary(ptr_vcf, hdr, rec, list_samples, snarls_chr, binary, covariate, outf);
+        chromosome_chuck_binary(ptr_vcf, hdr, rec, list_samples, snarls_chr, binary, covariate, output_binary);
         if (gaf) {
-            string output_gaf = output_dir + "/snarl.gaf";
-            parse_input_file(output_binary, snarls_chr, *pg, output_gaf);
+            string output_gaf = output_dir + "/binary_analysis.gaf";
+            gaf_creation(output_binary, snarls_chr, *pg, output_gaf);
         }
 
         if (make_plot) {
@@ -246,11 +248,7 @@ int main(int argc, char* argv[]) {
     } else if (!quantitative_path.empty()) {
 
         string output_quantitive = output_dir + "/quantitative_analysis.tsv";
-        std::ofstream outf(output_quantitive, std::ios::binary);
-        std::string headers = "CHR\tPOS\tSNARL\tTYPE\tRSQUARED\tBETA\tSE\tP\tALLELE_NUM\n";
-        outf.write(headers.c_str(), headers.size());
-
-        chromosome_chuck_quantitative(ptr_vcf, hdr, rec, list_samples, snarls_chr, quantitative, covariate, outf);
+        chromosome_chuck_quantitative(ptr_vcf, hdr, rec, list_samples, snarls_chr, quantitative, covariate, output_quantitive);
 
         if (make_plot) {
             string output_manh = output_dir + "/manhattan_plot_quantitative.png";
@@ -271,8 +269,8 @@ int main(int argc, char* argv[]) {
         std::ofstream outf(eqtl_output, std::ios::binary);
         std::string headers = "CHR\tPOS\tSNARL\tTYPE\tSE\tBETA\tP\n";
         outf.write(headers.c_str(), headers.size());
-        
-        chromosome_chuck_eqtl(ptr_vcf, hdr, rec, list_samples, snarls_chr, eqtl, outf);
+
+        // chromosome_chuck_eqtl(ptr_vcf, hdr, rec, list_samples, snarls_chr, eqtl, outf);
     }
     
     auto end_1 = std::chrono::high_resolution_clock::now();

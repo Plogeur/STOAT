@@ -19,13 +19,10 @@
 #include "snarl_parser.hpp"
 #include "utils.hpp"
 
-// ------------------------ LMM ------------------------
+// ------------------------ LMM BINARY ------------------------
 
-Eigen::VectorXd computePValues(const Eigen::VectorXd& beta, const Eigen::MatrixXd& XtWX);
-
-std::tuple<std::string, std::string, std::string> LMM_binary(
-    const std::unordered_map<std::string, std::vector<int>>& df,
-    const std::unordered_map<std::string, int>& binary_phenotype,
+std::vector<std::string> LMM_binary(
+    const std::vector<std::vector<int>>& df,
     const std::unordered_map<std::string, std::vector<double>>& covariate);
 
 // ------------------------ Chi2 test ------------------------

@@ -4,126 +4,6 @@
 namespace fs = std::filesystem;
 using namespace std;
 
-void chromosome_chuck_make_bed(htsFile* &ptr_vcf, bcf_hdr_t* &hdr, bcf1_t* &rec, 
-    const std::vector<std::string> &list_samples,
-    unordered_map<string, std::vector<std::tuple<string, vector<string>, string, vector<string>>>> &snarl_chr,
-    const unordered_map<string, double>& pheno, string output_dir) {
-
-    const std::string output_bed = output_dir + "genotype.bed";
-    const std::string output_bim = output_dir + "genotype.bim";
-
-    std::cout << "GWAS analysis for chromosome : " << std::endl;
-    while (bcf_read(ptr_vcf, hdr, rec) >= 0) {
-
-        string chr = bcf_hdr_id2name(hdr, rec->rid);
-        std::cout << chr << std::endl;
-        size_t size_chr = snarl_chr[chr].size();
-
-        // Make genotype matrix by chromosome    
-        auto [vcf_object, ptr_vcf_new, hdr_new, rec_new] = make_matrix(ptr_vcf, hdr, rec, list_samples, chr, size_chr);
-        ptr_vcf = ptr_vcf_new;
-        hdr = hdr_new;
-        rec = rec_new;
-
-        auto snarl = snarl_chr[chr];
-
-        // Gwas analysis by chromosome
-        vcf_object.create_bim_bed(snarl, output_bim, output_bed);
-    }
-    
-    // Cleanup
-    bcf_destroy(rec);
-    bcf_hdr_destroy(hdr);
-    bcf_close(ptr_vcf);
-}
-
-void chromosome_chuck_quantitative(htsFile* &ptr_vcf, bcf_hdr_t* &hdr, bcf1_t* &rec, 
-    const std::vector<std::string> &list_samples,
-    unordered_map<string, std::vector<std::tuple<string, vector<string>, string, vector<string>>>> &snarl_chr,
-    const unordered_map<string, double>& pheno, std::unordered_map<std::string, std::vector<double>> covar, std::ofstream& outf) {
-        
-    std::cout << "GWAS analysis for chromosome : " << std::endl;
-    while (bcf_read(ptr_vcf, hdr, rec) >= 0) {
-
-        string chr = bcf_hdr_id2name(hdr, rec->rid);
-        std::cout << chr << std::endl;
-        size_t size_chr = snarl_chr[chr].size();
-
-        // Make genotype matrix by chromosome    
-        auto [vcf_object, ptr_vcf_new, hdr_new, rec_new] = make_matrix(ptr_vcf, hdr, rec, list_samples, chr, size_chr);
-        ptr_vcf = ptr_vcf_new;
-        hdr = hdr_new;
-        rec = rec_new;
-
-        auto snarl = snarl_chr[chr];
-
-        // Gwas analysis by chromosome
-        vcf_object.quantitative_table(snarl, pheno, chr, covar, outf);
-    }
-    // Cleanup
-    bcf_destroy(rec);
-    bcf_hdr_destroy(hdr);
-    bcf_close(ptr_vcf);
-}
-
-void chromosome_chuck_eqtl(htsFile* &ptr_vcf, bcf_hdr_t* &hdr, bcf1_t* &rec, 
-    const std::vector<std::string> &list_samples,
-    unordered_map<string, std::vector<std::tuple<string, vector<string>, string, vector<string>>>> &snarl_chr,
-    const vector<QTLRecord> pheno, std::ofstream& outf) {
-
-    std::cout << "GWAS analysis for chromosome : " << std::endl;
-    while (bcf_read(ptr_vcf, hdr, rec) >= 0) {
-
-        string chr = bcf_hdr_id2name(hdr, rec->rid);
-        std::cout << chr << std::endl;
-        size_t size_chr = snarl_chr[chr].size();
-
-        // Make genotype matrix by chromosome    
-        auto [vcf_object, ptr_vcf_new, hdr_new, rec_new] = make_matrix(ptr_vcf, hdr, rec, list_samples, chr, size_chr);
-        ptr_vcf = ptr_vcf_new;
-        hdr = hdr_new;
-        rec = rec_new;
-
-        auto snarl = snarl_chr[chr];
-
-        // Gwas analysis by chromosome
-        vcf_object.eqtl_table(snarl, pheno, chr, outf);
-    }
-    // Cleanup
-    bcf_destroy(rec);
-    bcf_hdr_destroy(hdr);
-    bcf_close(ptr_vcf);
-}
-
-void chromosome_chuck_binary(htsFile* &ptr_vcf, bcf_hdr_t* &hdr, bcf1_t* &rec, 
-    const std::vector<std::string> &list_samples, 
-    unordered_map<string, std::vector<std::tuple<string, vector<string>, string, vector<string>>>> &snarl_chr,
-    const unordered_map<string, bool>& pheno, std::unordered_map<std::string, std::vector<double>> covar, std::ofstream& outf) {
-
-    std::cout << "GWAS analysis for chromosome : " << std::endl;
-    while (bcf_read(ptr_vcf, hdr, rec) >= 0) {
-
-        string chr = bcf_hdr_id2name(hdr, rec->rid);
-        std::cout << chr << std::endl;
-        size_t size_chr = snarl_chr[chr].size();
-
-        // Make genotype matrix by chromosome    
-        auto [vcf_object, ptr_vcf_new, hdr_new, rec_new] = make_matrix(ptr_vcf, hdr, rec, list_samples, chr, size_chr);
-        ptr_vcf = ptr_vcf_new;
-        hdr = hdr_new;
-        rec = rec_new;
-
-        auto snarl = snarl_chr[chr];
-
-        // Gwas analysis by chromosome
-        vcf_object.binary_table(snarl, pheno, chr, covar, outf);
-    }
-    // Cleanup
-    bcf_destroy(rec);
-    bcf_hdr_destroy(hdr);
-    bcf_close(ptr_vcf);
-}
-
 std::unordered_set<std::string> parse_chromosome_reference(const string& file_path) {
     std::unordered_set<std::string> reference;
     ifstream file(file_path);
@@ -239,6 +119,10 @@ std::tuple<std::vector<std::string>, htsFile*, bcf_hdr_t*, bcf1_t*> parseHeader(
     return std::make_tuple(list_samples, ptr_vcf, hdr, rec);
 }
 
+// Explicit instantiation for specific types
+template void check_match_samples<bool>(const std::unordered_map<std::string, bool>&, const std::vector<std::string>&);
+template void check_match_samples<double>(const std::unordered_map<std::string, double>&, const std::vector<std::string>&);
+
 template <typename T>
 void check_match_samples(const std::unordered_map<std::string, T>& map, const std::vector<std::string>& keys) {
     for (const auto& key : keys) {
@@ -252,10 +136,6 @@ void check_match_samples(const std::unordered_map<std::string, T>& map, const st
         cerr << "Number of samples in the phenotype file: " << map.size() << endl;
     }
 }
-
-// Explicit instantiation for specific types
-template void check_match_samples<bool>(const std::unordered_map<std::string, bool>&, const std::vector<std::string>&);
-template void check_match_samples<double>(const std::unordered_map<std::string, double>&, const std::vector<std::string>&);
 
 // Function to parse the snarl path file
 std::unordered_map<std::string, std::vector<std::tuple<string, vector<string>, string, vector<string>>>> parse_snarl_path(const std::string& file_path) {
@@ -362,11 +242,10 @@ std::vector<QTLRecord> parseQTLFile(const std::string& filename) {
 }
 
 // Function to check covariate format
-bool check_format_covariate(const std::string& filename) {
+void check_format_covariate(const std::string& filename) {
     std::ifstream file(filename);
     if (!file.is_open()) {
         std::cerr << "Error: Cannot open file " << filename << std::endl;
-        return false;
     }
 
     std::string line;
@@ -384,13 +263,10 @@ bool check_format_covariate(const std::string& filename) {
             numCols = colCount; // Set number of columns from first line
         } else if (colCount != numCols) {
             std::cerr << "Error: Inconsistent column count in row " << lineCount + 1 << std::endl;
-            return false;
         }
         lineCount++;
     }
-
     file.close();
-    return true;
 }
 
 // Function to parse covariates into an unordered_map
@@ -422,10 +298,10 @@ std::unordered_map<std::string, std::vector<double>> parseCovariate(const std::s
     return covariates;
 }
 
-void check_phenotype_covariate(const std::unordered_map<std::string, double>& phenotype, 
+template void check_phenotype_covariate<double>(const std::unordered_map<std::string, double>& phenotype, 
     const std::unordered_map<std::string, std::vector<double>>& covariates);
 
-void check_phenotype_covariate(const std::unordered_map<std::string, bool>& phenotype, 
+template void check_phenotype_covariate<bool>(const std::unordered_map<std::string, bool>& phenotype, 
     const std::unordered_map<std::string, std::vector<double>>& covariates);
 
 // Function to check if phenotype and covariate files match

@@ -32,28 +32,9 @@ struct QTLRecord {
     std::string trait;
 };
 
-void chromosome_chuck_quantitative(htsFile* &ptr_vcf, bcf_hdr_t* &hdr, bcf1_t* &rec, 
-    const std::vector<std::string> &list_samples,
-    unordered_map<string, std::vector<std::tuple<string, vector<string>, string, vector<string>>>> &snarl_chr,
-    const unordered_map<string, double>& pheno, std::unordered_map<std::string, std::vector<double>> covar, std::ofstream& outf);
-
-void chromosome_chuck_eqtl(htsFile* &ptr_vcf, bcf_hdr_t* &hdr, bcf1_t* &rec, 
-    const std::vector<std::string> &list_samples,
-    unordered_map<string, std::vector<std::tuple<string, vector<string>, string, vector<string>>>> &snarl_chr,
-    const vector<QTLRecord> pheno, std::ofstream& outf);
-
-void chromosome_chuck_binary(htsFile* &ptr_vcf, bcf_hdr_t* &hdr, bcf1_t* &rec, 
-    const std::vector<std::string> &list_samples, 
-    unordered_map<string, std::vector<std::tuple<string, vector<string>, string, vector<string>>>> &snarl_chr,
-    const unordered_map<string, bool>& pheno, std::unordered_map<std::string, std::vector<double>> covar, std::ofstream& outf);
-
-void chromosome_chuck_make_bed(htsFile* &ptr_vcf, bcf_hdr_t* &hdr, bcf1_t* &rec, 
-    const std::vector<std::string> &list_samples,
-    unordered_map<string, std::vector<std::tuple<string, vector<string>, string, vector<string>>>> &snarl_chr,
-    const unordered_map<string, double>& pheno, string output_dir);
-
 // Function to parse an eQTL file
 std::vector<QTLRecord> parseQTLFile(const std::string& filename);
+void check_format_covariate(const std::string& filename);
 
 bool isValidQTLFormat(const std::string& line);
 

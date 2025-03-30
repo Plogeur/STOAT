@@ -41,6 +41,28 @@ public:
 
 };
 
+// void chromosome_chuck_eqtl(htsFile* &ptr_vcf, bcf_hdr_t* &hdr, bcf1_t* &rec, 
+//     const std::vector<std::string> &list_samples,
+//     unordered_map<string, std::vector<std::tuple<string, vector<string>, string, vector<string>>>> &snarl_chr,
+//     const vector<QTLRecord> pheno, std::ofstream& outf);
+
+void chromosome_chuck_binary(htsFile* &ptr_vcf, bcf_hdr_t* &hdr, bcf1_t* &rec, 
+    const std::vector<std::string> &list_samples, 
+    unordered_map<string, std::vector<std::tuple<string, vector<string>, string, vector<string>>>> &snarl_chr,
+    const unordered_map<string, bool>& pheno, std::unordered_map<std::string, std::vector<double>> covar, 
+    const std::string& output_binary);
+
+void chromosome_chuck_quantitative(htsFile* &ptr_vcf, bcf_hdr_t* &hdr, bcf1_t* &rec, 
+    const std::vector<std::string> &list_samples,
+    unordered_map<string, std::vector<std::tuple<string, vector<string>, string, vector<string>>>> &snarl_chr,
+    const unordered_map<string, double>& pheno, std::unordered_map<std::string, std::vector<double>> covar,
+    const std::string& output_quantitive);
+
+void chromosome_chuck_make_bed(htsFile* &ptr_vcf, bcf_hdr_t* &hdr, bcf1_t* &rec, 
+    const std::vector<std::string> &list_samples,
+    unordered_map<string, std::vector<std::tuple<string, vector<string>, string, vector<string>>>> &snarl_chr,
+    const unordered_map<string, double>& pheno, string output_dir);
+
 std::tuple<htsFile*, bcf_hdr_t*, bcf1_t*> parse_vcf(const std::string& vcf_path);
 
 void create_fam(const std::vector<std::pair<std::string, int>> &pheno, 

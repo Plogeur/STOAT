@@ -2,80 +2,56 @@
 #include "snarl_parser.hpp"
 #include "utils.hpp"
 
-// ------------------------ LMM LOGISTIC REGRESSION ------------------------
+// ------------------------ LMM BINARY ------------------------
 
-// Function to compute p-values from Wald test
-Eigen::VectorXd computePValues(const Eigen::VectorXd& beta, const Eigen::MatrixXd& XtWX) {
-    Eigen::VectorXd standard_errors = XtWX.diagonal().array().sqrt().inverse();
-    Eigen::VectorXd z_scores = beta.array() / standard_errors.array();
-    Eigen::VectorXd p_values(z_scores.size());
-    boost::math::chi_squared chi_squared_dist(1);
-    
-    for (int i = 0; i < z_scores.size(); i++) {
-        double chi_squared_stat = std::pow(z_scores(i), 2);
-        p_values(i) = boost::math::cdf(boost::math::complement(chi_squared_dist, chi_squared_stat));
-    }
-    
-    return p_values;
-}
+#include <vector>
+#include <unordered_map>
+#include <string>
+#include <Eigen/Dense>
+#include <cmath>
 
-// Function to fit a Linear Mixed Model (LMM) for binary GWAS
-std::tuple<std::string, std::string, std::string> LMM_binary(
-    const std::unordered_map<std::string, std::vector<int>>& df,
-    const std::unordered_map<std::string, int>& binary_phenotype,
+// LMM Model fitting function
+std::vector<std::string> LMM_binary(const std::vector<std::vector<int>>& df,
     const std::unordered_map<std::string, std::vector<double>>& covariate) {
 
-    // Convert phenotype data into an Eigen vector
-    Eigen::VectorXd y(binary_phenotype.size());
-    Eigen::MatrixXd covariate_matrix(binary_phenotype.size(), covariate.begin()->second.size());
-    int index = 0;
-    std::vector<std::string> sample_ids;
+    int num_samples = df[0].size();
 
-    for (const auto& pair : binary_phenotype) {
-        y(index) = pair.second;
-        sample_ids.push_back(pair.first);
-        for (int j = 0; j < covariate.at(pair.first).size(); j++) {
-            covariate_matrix(index, j) = covariate.at(pair.first)[j];
-        }
-        index++;
+    // Convert df to Eigen matrix (phenotype)
+    Eigen::VectorXd Y(num_samples);
+    for (int i = 0; i < num_samples; ++i) {
+        Y(i) = df[1][i];  // Group 1 (affected cases)
     }
 
-    // Construct the genotype matrix X
-    Eigen::MatrixXd X(sample_ids.size(), df.size());
-    int col = 0;
-    for (const auto& snp : df) {
-        for (int row = 0; row < sample_ids.size(); row++) {
-            X(row, col) = snp.second[row];
+    // Covariate matrix
+    int num_covariates = covariate.size();
+    Eigen::MatrixXd X(num_samples, num_covariates + 1); // Include intercept
+
+    // Set intercept
+    X.col(0) = Eigen::VectorXd::Ones(num_samples);
+
+    // Fill in covariates
+    int col_idx = 1;
+    for (const auto& [key, values] : covariate) {
+        for (int i = 0; i < num_samples; ++i) {
+            X(i, col_idx) = values[i];
         }
-        col++;
+        col_idx++;
     }
 
-    // Combine genotype matrix with covariates
-    Eigen::MatrixXd design_matrix(sample_ids.size(), X.cols() + covariate_matrix.cols());
-    design_matrix << X, covariate_matrix;
+    // Fit LMM (simplified REML method)
+    Eigen::VectorXd beta = (X.transpose() * X).ldlt().solve(X.transpose() * Y);
+    Eigen::VectorXd residuals = Y - (X * beta);
+    double sigma2 = (residuals.transpose() * residuals)(0, 0) / (num_samples - num_covariates - 1);
 
-    // Estimate beta using logistic regression approximation
-    Eigen::VectorXd beta = Eigen::VectorXd::Zero(design_matrix.cols());
-    Eigen::VectorXd p = (1.0 / (1.0 + (-design_matrix * beta).array().exp())).matrix();
-    Eigen::VectorXd W = p.array() * (1 - p.array());
-    Eigen::MatrixXd XtWX = design_matrix.transpose() * W.asDiagonal() * design_matrix;
-    Eigen::VectorXd XtWz = design_matrix.transpose() * (W.asDiagonal() * (design_matrix * beta + (y - p).array()).matrix());
-    beta = XtWX.ldlt().solve(XtWz);
+    // Standard errors (diagonal of covariance matrix)
+    Eigen::VectorXd se = (X.transpose() * X).inverse().diagonal().array().sqrt() * std::sqrt(sigma2);
 
-    // Compute p-values using Wald test
-    Eigen::VectorXd p_values = computePValues(beta, XtWX);
+    // Compute p-value using likelihood ratio test (LRT)
+    Eigen::VectorXd chi2_stat = (beta.array().square() / se.array().square());
+    Eigen::VectorXd p_value = (-0.5 * chi2_stat.array()).exp(); // Approximation
 
-    // Compute residuals
-    Eigen::VectorXd residuals = y - (1.0 / (1.0 + (-design_matrix * beta).array().exp())).matrix();
-    double residual_variance = (residuals.transpose() * residuals).value() / residuals.size();
-
-    // Convert results to strings
-    std::ostringstream beta_stream, p_values_stream, residual_var_stream;
-    beta_stream << beta.transpose();
-    p_values_stream << p_values.transpose();
-    residual_var_stream << residual_variance;
-
-    return std::make_tuple(beta_stream.str(), p_values_stream.str(), residual_var_stream.str());
+    // Convert to strings for output
+    return {std::to_string(beta.mean()), std::to_string(se.mean()), std::to_string(p_value.mean())};
 }
 
 // ------------------------ Chi2 test ------------------------
@@ -204,22 +180,6 @@ std::string fastFishersExactTest(const std::vector<std::vector<int>>& table) {
 
 // ------------------------ Binary table & stats ------------------------
 
-
-std::string format_group_paths(const std::vector<std::vector<int>>& matrix) {
-
-    std::string result;
-    size_t rows = matrix.size();
-
-    for (size_t row = 0; row < rows; ++row) {
-        result += std::to_string(matrix[row][0]) + ":" + std::to_string(matrix[row][1]);
-        if (row < rows - 1) {
-            result += ","; // Separate row pairs with ','
-        }
-    }
-
-    return result;
-}
-
 std::vector<std::string> binary_stat_test(const std::vector<std::vector<int>>& df) {
 
     // Compute derived statistics
@@ -252,11 +212,26 @@ std::vector<std::string> binary_stat_test(const std::vector<std::vector<int>>& d
     return {fastfisher_p_value, chi2_p_value, std::to_string(allele_number), std::to_string(min_row_index), std::to_string(numb_colum), std::to_string(inter_group), std::to_string(average), group_paths};
 }
 
+std::string format_group_paths(const std::vector<std::vector<int>>& matrix) {
+
+    std::string result;
+    size_t rows = matrix.size();
+
+    for (size_t row = 0; row < rows; ++row) {
+        result += std::to_string(matrix[row][0]) + ":" + std::to_string(matrix[row][1]);
+        if (row < rows - 1) {
+            result += ","; // Separate row pairs with ','
+        }
+    }
+
+    return result;
+}
+
 std::vector<std::vector<int>> create_binary_table(
     const std::unordered_map<std::string, bool>& groups, 
     const std::vector<std::string>& list_path_snarl, 
-    const std::vector<std::string>& list_samples, Matrix& matrix) 
-{
+    const std::vector<std::string>& list_samples, Matrix& matrix)  {
+
     std::unordered_map<std::string, size_t> row_headers_dict = matrix.get_row_header();
     size_t length_column_headers = list_path_snarl.size();
 

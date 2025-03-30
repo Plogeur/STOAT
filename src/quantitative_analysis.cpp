@@ -4,15 +4,65 @@
 
 using namespace std;
 
-// Linear regression function OLS
-std::tuple<std::string, std::string, std::string, std::string> linear_regression(
+// Function to fit a Linear Mixed Model (LMM)
+std::tuple<std::string, std::string, std::string> LMM_quantitative(
     const std::unordered_map<std::string, std::vector<int>>& df,
-    const std::unordered_map<std::string, double>& quantitative_phenotype) {
+    const std::unordered_map<std::string, double>& quantitative_phenotype,
+    const std::unordered_map<std::string, std::vector<double>>& covariate) {
 
     size_t num_samples = df.size();
-    size_t max_paths = 0;
+    size_t num_covariates = covariate.begin()->second.size();
+
+    Eigen::VectorXd y(num_samples);  // Phenotype vector
+    Eigen::MatrixXd X(num_samples, num_covariates + 1);  // Design matrix (including intercept)
+    X.col(0) = Eigen::VectorXd::Ones(num_samples);  // Intercept column
     
-    // Determine the maximum number of predictors (columns)
+    int row = 0;
+    for (const auto& [sample, paths] : df) {
+        y(row) = quantitative_phenotype.at(sample);
+
+        for (size_t col = 0; col < num_covariates; ++col) {
+            X(row, col + 1) = covariate.at(sample)[col];
+        }
+        ++row;
+    }
+
+    // Compute the LMM parameters using OLS as an approximation
+    Eigen::VectorXd beta = (X.transpose() * X).ldlt().solve(X.transpose() * y);
+    Eigen::VectorXd y_pred = X * beta;
+    Eigen::VectorXd residuals = y - y_pred;
+    
+    double rss = residuals.squaredNorm();
+    double tss = (y.array() - y.mean()).matrix().squaredNorm();
+    double r2 = 1 - (rss / tss);
+
+    int df_reg = num_covariates;
+    int df_res = num_samples - num_covariates - 1;
+    double mse = rss / df_res;
+
+    Eigen::MatrixXd cov_matrix = (X.transpose() * X).inverse();
+    Eigen::VectorXd se = (cov_matrix.diagonal() * mse).array().sqrt().matrix();
+
+    // Compute p-value for the model fit using Chi-Square test
+    double chi2_stat = (beta.transpose() * X.transpose() * X * beta)(0, 0) / mse;
+    boost::math::chi_squared dist(df_reg);
+    double p_value = boost::math::cdf(boost::math::complement(dist, chi2_stat));
+
+    // Convert to strings with precision
+    std::string r2_str = set_precision(r2);
+    std::string beta_mean_str = set_precision(beta.mean());
+    std::string p_value_str = set_precision(p_value);
+
+    return {r2_str, beta_mean_str, p_value_str};
+}
+
+// Linear regression function OLS
+std::tuple<string, string, string, string> linear_regression(
+    const std::unordered_map<std::string, std::vector<int>>& df,
+    const std::unordered_map<std::string, double>& quantitative_phenotype) {
+    
+    size_t num_samples = df.size();
+    size_t max_paths = 0;
     for (const auto& [_, paths] : df) {
         max_paths = std::max(max_paths, paths.size());
     }
@@ -30,20 +80,21 @@ std::tuple<std::string, std::string, std::string, std::string> linear_regression
         ++row;
     }
     
-    // Perform OLS: β = (X^T X)^(-1) X^T y
     Eigen::VectorXd beta = (X.transpose() * X).ldlt().solve(X.transpose() * y);
+    Eigen::VectorXd y_pred = X * beta;
+    Eigen::VectorXd residuals = y - y_pred;
     
-    // Compute residuals
-    Eigen::VectorXd residuals = y - X * beta;
-    double ss_res = residuals.squaredNorm();
+    double rss = residuals.squaredNorm();
+    double tss = (y.array() - y.mean()).matrix().squaredNorm();
+    double r2 = 1 - (rss / tss);
+
+    int df_reg = max_paths - 1;
+    int df_res = num_samples - max_paths;
+    double mse = rss / df_res;  // Mean Squared Error (MSE)
     
-    // Compute total sum of squares
-    double y_mean = y.mean();
-    double ss_tot = (y.array() - y_mean).square().sum();
-    
-    // Compute R-squared
-    double r_squared = 1 - (ss_res / ss_tot);
-    
+    Eigen::MatrixXd cov_matrix = (X.transpose() * X).inverse();
+    Eigen::VectorXd se = (cov_matrix.diagonal() * mse).array().sqrt().matrix();
+
     // Compute F-statistic
     double f_stat = (r2 / df_reg) / ((1 - r2) / df_res);
     
@@ -55,99 +106,11 @@ std::tuple<std::string, std::string, std::string, std::string> linear_regression
 
     // set precision : 4 digit
     string r2_str = set_precision(r2);
-    string beta_mean_str = set_precision(beta.mean());
+    string bete_mean_str = set_precision(beta.mean());
     string se_mean_str = set_precision(se.mean());
-    string p_value_str = set_precision(global_p_value);
+    string p_value_str = set_precision(p_value);
 
-    return {r2_str, beta_mean_str, se_mean_str, p_value_str};
-}
-
-// Function to fit a Linear Mixed Model (LMM) for GWAS and return global p-value, mean beta, and mean SE
-std::tuple<std::string, std::string, std::string> LMM_quantitative(
-    const std::unordered_map<std::string, std::vector<int>>& df,
-    const std::unordered_map<std::string, double>& quantitative_phenotype,
-    const std::unordered_map<std::string, std::vector<double>>& covariate) {
-
-    // Convert phenotype data into an Eigen vector
-    Eigen::VectorXd y(quantitative_phenotype.size());
-    Eigen::MatrixXd covariate_matrix(quantitative_phenotype.size(), covariate.begin()->second.size());
-    int index = 0;
-    std::vector<std::string> sample_ids;
-
-    for (const auto& pair : quantitative_phenotype) {
-        y(index) = pair.second;
-        sample_ids.push_back(pair.first);
-        for (int j = 0; j < covariate.at(pair.first).size(); j++) {
-            covariate_matrix(index, j) = covariate.at(pair.first)[j];
-        }
-        index++;
-    }
-
-    // Construct the genotype matrix X
-    Eigen::MatrixXd X(sample_ids.size(), df.size());
-    int col = 0;
-    for (const auto& snp : df) {
-        for (int row = 0; row < sample_ids.size(); row++) {
-            X(row, col) = snp.second[row];
-        }
-        col++;
-    }
-
-    // Combine genotype matrix with covariates
-    Eigen::MatrixXd design_matrix(sample_ids.size(), X.cols() + covariate_matrix.cols());
-    design_matrix << X, covariate_matrix;
-
-    // Estimate beta using OLS (beta = (X'X)^-1 X'Y)
-    Eigen::MatrixXd XtX = design_matrix.transpose() * design_matrix;
-    Eigen::VectorXd Xty = design_matrix.transpose() * y;
-    Eigen::VectorXd beta = XtX.ldlt().solve(Xty);
-
-    // Compute residuals
-    Eigen::VectorXd residuals = y - design_matrix * beta;
-    double residual_variance = (residuals.transpose() * residuals).value() / residuals.size();
-
-    // Compute the covariance matrix of the estimated coefficients
-    Eigen::MatrixXd XtX_inv = XtX.ldlt().solve(Eigen::MatrixXd::Identity(XtX.rows(), XtX.cols()));
-    Eigen::MatrixXd beta_cov = residual_variance * XtX_inv;
-
-    // Compute standard errors (diagonal of the covariance matrix)
-    Eigen::VectorXd standard_errors = beta_cov.diagonal().array().sqrt();
-
-    // Compute F-statistic for the global test (based on the model's explained variance)
-    Eigen::VectorXd y_hat = design_matrix * beta; // predicted values
-    Eigen::VectorXd residuals_full = y - y_hat; // residuals
-    double ss_total = (y - y.mean()).transpose() * (y - y.mean());
-    double ss_residual = residuals_full.transpose() * residuals_full;
-    double ss_model = ss_total - ss_residual;
-
-    int degrees_of_freedom_model = X.cols() + covariate_matrix.cols();
-    int degrees_of_freedom_residual = y.size() - degrees_of_freedom_model;
-
-    double f_statistic = (ss_model / degrees_of_freedom_model) / (ss_residual / degrees_of_freedom_residual);
-    
-    // Compute p-value from the F-statistic (using the F-distribution)
-    double global_p_value = 1 - std::exp(-f_statistic / 2); // Simplified approximation for the p-value
-
-    // Convert the global p-value to a string
-    std::ostringstream p_value_stream;
-    p_value_stream << global_p_value;
-    std::string p_value_str = p_value_stream.str();
-
-    // Compute mean beta and mean standard error
-    double mean_beta = beta.mean();
-    double mean_se = standard_errors.mean();
-
-    // Convert mean beta and mean SE to strings
-    std::ostringstream beta_stream;
-    beta_stream << mean_beta;
-    std::string beta_str = beta_stream.str();
-
-    std::ostringstream se_stream;
-    se_stream << mean_se;
-    std::string se_str = se_stream.str();
-
-    // Return the tuple with p-value, mean beta, and mean SE as strings
-    return std::make_tuple(p_value_str, beta_str, se_str);
+    return {r2_str, bete_mean_str, se_mean_str, p_value_str};
 }
 
 // Function to create the quantitative table
