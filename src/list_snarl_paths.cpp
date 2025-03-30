@@ -414,8 +414,8 @@ std::unordered_map<std::string, std::vector<std::tuple<string, vector<string>, s
             
             if (bool_return) {
                 out_snarl << chr << "\t" << pos
-                        << "\t" << snarl_id << "\t" << pretty_paths_stream.str() 
-                        << "\t" << type_variants_stream.str() << "\n";
+                    << "\t" << snarl_id << "\t" << pretty_paths_stream.str() 
+                    << "\t" << type_variants_stream.str() << "\n";
             } else {
                 // case new chr
                 if (chr != save_chr && !save_chr.empty()) {

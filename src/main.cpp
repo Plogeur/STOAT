@@ -128,7 +128,7 @@ int main(int argc, char* argv[]) {
         // Case 2: pg_path + dist_path + vcf_path + phenotype
     } else if (!pg_path.empty() && !dist_path.empty() && vcf_path.empty() && snarl_path.empty() && phenotype == 0) {
         // Case 3: Only pg_path + dist_path
-        only_snarl_parsing = false;
+        only_snarl_parsing = true;
     } else if (((!pg_path.empty() && !dist_path.empty()) || (!snarl_path.empty())) && !vcf_path.empty() && make_bed == true) {
         // Case 4: Only pg_path + dist_path + vcf_path + make_bed activated
         // Case 5: snarl_path + vcf_path + --make-bed
@@ -152,7 +152,15 @@ int main(int argc, char* argv[]) {
     }
 
     // Check phenotypes
-    auto [list_samples, ptr_vcf, hdr, rec] = parseHeader(vcf_path);    
+    std::vector<std::string> list_samples;
+    htsFile* ptr_vcf;
+    bcf_hdr_t* hdr;
+    bcf1_t* rec;
+
+    if (!only_snarl_parsing) {
+        auto [list_samples, ptr_vcf, hdr, rec] = parseHeader(vcf_path);    
+    }
+
     std::unordered_map<std::string, bool> binary;
     std::unordered_map<std::string, double> quantitative;
     //std::vector<QTLRecord> eqtl;
