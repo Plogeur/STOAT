@@ -30,11 +30,11 @@ public:
     void binary_table(const std::vector<std::tuple<string, vector<string>, string, vector<string>>>& snarls,
                         const std::unordered_map<std::string, bool>& binary_groups, const string &chr,
                         const std::unordered_map<std::string, std::vector<double>>& covar,
-                        std::ofstream& outf);
+                        const double& maf, std::ofstream& outf);
     void quantitative_table(const std::vector<std::tuple<string, vector<string>, string, vector<string>>>& snarls,
                                 const std::unordered_map<std::string, double>& quantitative, const string &chr,
                                 const std::unordered_map<std::string, std::vector<double>>& covar,
-                                std::ofstream& outf);
+                                const double& maf, std::ofstream& outf);
     void create_bim_bed(const std::vector<std::tuple<string, vector<string>, string, vector<string>>>& snarls, 
                                     string chromosome, const std::string& output_bim, const std::string& output_bed);
     std::vector<int> create_table_short_path(const std::string& list_path_snarl);
@@ -46,17 +46,20 @@ public:
 //     unordered_map<string, std::vector<std::tuple<string, vector<string>, string, vector<string>>>> &snarl_chr,
 //     const vector<QTLRecord> pheno, std::ofstream& outf);
 
+bool check_MAF_threshold_binary(const std::vector<std::vector<int>>& df, const double& maf);
+bool check_MAF_threshold_quantitative(const std::unordered_map<std::string, std::vector<int>>& df, const double& maf);
+
 void chromosome_chuck_binary(htsFile* &ptr_vcf, bcf_hdr_t* &hdr, bcf1_t* &rec, 
     const std::vector<std::string> &list_samples, 
     unordered_map<string, std::vector<std::tuple<string, vector<string>, string, vector<string>>>> &snarl_chr,
     const unordered_map<string, bool>& pheno, std::unordered_map<std::string, std::vector<double>> covar, 
-    const std::string& output_binary);
+    const double& maf, const std::string& output_binary);
 
 void chromosome_chuck_quantitative(htsFile* &ptr_vcf, bcf_hdr_t* &hdr, bcf1_t* &rec, 
     const std::vector<std::string> &list_samples,
     unordered_map<string, std::vector<std::tuple<string, vector<string>, string, vector<string>>>> &snarl_chr,
     const unordered_map<string, double>& pheno, std::unordered_map<std::string, std::vector<double>> covar,
-    const std::string& output_quantitive);
+    const double& maf, const std::string& output_quantitive);
 
 void chromosome_chuck_make_bed(htsFile* &ptr_vcf, bcf_hdr_t* &hdr, bcf1_t* &rec, 
     const std::vector<std::string> &list_samples,

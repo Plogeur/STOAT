@@ -42,7 +42,7 @@ void chromosome_chuck_quantitative(htsFile* &ptr_vcf, bcf_hdr_t* &hdr, bcf1_t* &
     const std::vector<std::string> &list_samples,
     unordered_map<string, std::vector<std::tuple<string, vector<string>, string, vector<string>>>> &snarl_chr,
     const unordered_map<string, double>& pheno, std::unordered_map<std::string, std::vector<double>> covar,
-    const std::string& output_quantitive) {
+    const double& maf, const std::string& output_quantitive) {
 
     std::ofstream outf(output_quantitive, std::ios::binary);
     std::string headers;
@@ -69,7 +69,7 @@ void chromosome_chuck_quantitative(htsFile* &ptr_vcf, bcf_hdr_t* &hdr, bcf1_t* &
         auto& snarl = snarl_chr[chr];
 
         // Gwas analysis by chromosome
-        vcf_object.quantitative_table(snarl, pheno, chr, covar, outf);
+        vcf_object.quantitative_table(snarl, pheno, chr, covar, maf, outf);
     }
     // Cleanup
     bcf_destroy(rec);
@@ -110,7 +110,7 @@ void chromosome_chuck_binary(htsFile* &ptr_vcf, bcf_hdr_t* &hdr, bcf1_t* &rec,
     const std::vector<std::string> &list_samples, 
     unordered_map<string, std::vector<std::tuple<string, vector<string>, string, vector<string>>>> &snarl_chr,
     const unordered_map<string, bool>& pheno, std::unordered_map<std::string, std::vector<double>> covar, 
-    const std::string& output_binary) {
+    const double& maf, const std::string& output_binary) {
 
     std::ofstream outf(output_binary, std::ios::binary);
 
@@ -138,7 +138,7 @@ void chromosome_chuck_binary(htsFile* &ptr_vcf, bcf_hdr_t* &hdr, bcf1_t* &rec,
         auto& snarl = snarl_chr[chr];
 
         // Gwas analysis by chromosome
-        vcf_object.binary_table(snarl, pheno, chr, covar, outf);
+        vcf_object.binary_table(snarl, pheno, chr, covar, maf, outf);
     }
     // Cleanup
     bcf_destroy(rec);
@@ -445,7 +445,7 @@ std::vector<int> identify_correct_path(
 void SnarlParser::binary_table(const std::vector<std::tuple<string, vector<string>, string, vector<string>>>& snarls,
                                const std::unordered_map<std::string, bool>& binary_groups, const string &chr,
                                const std::unordered_map<std::string, std::vector<double>>& covar,
-                               std::ofstream& outf) {
+                               const double& maf, std::ofstream& outf) {
 
     // Iterate over each snarl
     for (const auto& tuple_snarl : snarls) {
@@ -454,6 +454,7 @@ void SnarlParser::binary_table(const std::vector<std::tuple<string, vector<strin
         std::vector<std::vector<int>> df = create_binary_table(binary_groups, list_snarl, sampleNames, matrix);
         std::string snarl = std::get<0>(tuple_snarl), pos = std::get<2>(tuple_snarl);
         std::vector<std::string> type_var = std::get<3>(tuple_snarl);
+        bool ok_df = check_MAF_threshold_binary(df, maf);
 
         // make a string separated by , from a vector of string
         std::ostringstream oss;
@@ -465,21 +466,31 @@ void SnarlParser::binary_table(const std::vector<std::tuple<string, vector<strin
         std::string type_var_str = oss.str();
         std::vector<std::string> stats;
         std::stringstream data;
-
+        
         if (covar.size() > 0) {
             stats = LMM_binary(df, covar);
+            string p_value = ok_df ? stats[2] : "NA";
 
             // chr, pos, snarl, type variant, beta, se, p_value
             data << chr << "\t" << pos << "\t" << snarl << "\t" << type_var_str
-            << "\t" << stats[0] << "\t" << stats[1] << "\t" << stats[2] << "\n";
+            << "\t" << stats[0] << "\t" << stats[1] << "\t" << p_value << "\n";
 
         } else {
             stats = binary_stat_test(df);
+            string p_value_f; 
+            string p_value_c;
+            if (ok_df) {
+                p_value_f = stats[0];
+                p_value_c = stats[1];
+            } else {
+                p_value_f = "NA";
+                p_value_c = "NA";
+            }
 
             // chr, pos, snarl, type variant
             // fisher_p_value, chi2_p_value, allele_number, min_row_index, numb_colum, inter_group, average
             data << chr << "\t" << pos << "\t" << snarl << "\t" << type_var_str
-            << "\t" << stats[0] << "\t" << stats[1] << "\t" << stats[2] << "\t" << stats[3] 
+            << "\t" << p_value_f << "\t" << p_value_c << "\t" << stats[2] << "\t" << stats[3] 
             << "\t" << stats[4]  << "\t" << stats[5] << "\t" << stats[6] << "\t" << stats[7] << "\n";
         }
 
@@ -491,7 +502,7 @@ void SnarlParser::binary_table(const std::vector<std::tuple<string, vector<strin
 void SnarlParser::quantitative_table(const std::vector<std::tuple<string, vector<string>, string, vector<string>>>& snarls,
                                         const std::unordered_map<std::string, double>& quantitative_phenotype, const string &chr,
                                         const std::unordered_map<std::string, std::vector<double>>& covar,
-                                        std::ofstream& outf) 
+                                        const double& maf, std::ofstream& outf) 
 {
 
     // Iterate over each snarl
@@ -501,6 +512,7 @@ void SnarlParser::quantitative_table(const std::vector<std::tuple<string, vector
         auto [df, allele_number] = create_quantitative_table(sampleNames, list_snarl, matrix);
         std::string snarl = std::get<0>(tuple_snarl), pos = std::get<2>(tuple_snarl);
         std::vector<std::string> type_var = std::get<3>(tuple_snarl);
+        bool df_ok = check_MAF_threshold_quantitative(df, maf);
 
         // make a string separated by ',' from a vector of string
         std::ostringstream oss;
@@ -513,16 +525,24 @@ void SnarlParser::quantitative_table(const std::vector<std::tuple<string, vector
 
         if (covar.size() > 0) {
             std::tuple<string, string, string> tuple_info = LMM_quantitative(df, quantitative_phenotype, covar);
+            string p_value;
+            p_value = df_ok ? std::get<2>(tuple_info) : "NA";
+            
+            // beta, se, p_value
             data << chr << "\t" << pos << "\t" << snarl << "\t" << type_var_str
             << "\t" << std::get<0>(tuple_info) << "\t" << std::get<1>(tuple_info) 
-            << "\t" << std::get<2>(tuple_info) << "\t" << allele_number << "\n";
+            << "\t" << p_value << "\t" << allele_number << "\n";
 
         } else {
-            // std::make_tuple(r2, beta, se, p_value)
+
+            // r2, beta, se, p_value
             std::tuple<string, string, string, string> tuple_info = linear_regression(df, quantitative_phenotype);
+            string p_value;
+            p_value = df_ok ? std::get<3>(tuple_info) : "NA";
+
             data << chr << "\t" << pos << "\t" << snarl << "\t" << type_var_str
             << "\t" << std::get<0>(tuple_info) << "\t" << std::get<1>(tuple_info) 
-            << "\t" << std::get<2>(tuple_info) << "\t" << std::get<3>(tuple_info) 
+            << "\t" << std::get<2>(tuple_info) << "\t" << p_value
             << "\t" << allele_number << "\n";
         }
 
@@ -530,3 +550,48 @@ void SnarlParser::quantitative_table(const std::vector<std::tuple<string, vector
     }
 }
 
+bool check_MAF_threshold_binary(const std::vector<std::vector<int>>& df, const double& maf) {
+
+    int n = df[0].size(); // Number of columns (paths)
+    int totalSum = 0;
+    
+    // Compute total sum of all elements in the matrix
+    for (int i = 0; i < 2; ++i) {
+        for (int j = 0; j < n; ++j) {
+            totalSum += df[i][j];
+        }
+    }
+    
+    // Check if any column's sum exceeds the threshold relative to total sum
+    for (int i = 0; i < n; ++i) {
+        int columnSum = df[0][i] + df[1][i];
+        if (static_cast<double>(columnSum) / totalSum >= maf) {
+            return false; // If any column's sum proportion meets or exceeds the threshold, return false
+        }
+    }
+
+    return true; // If no column exceeds the threshold, return true
+}
+
+bool check_MAF_threshold_quantitative(const std::unordered_map<std::string, std::vector<int>>& df, const double& maf) {    
+    int totalSum = 0;
+    size_t numPaths = df.begin()->second.size(); // Get the number of paths from the first element
+    std::vector<int> table(numPaths, 0); // Initialize vector with the correct size
+
+    // Compute total sum of all elements in the matrix
+    for (const auto& [key, paths] : df) {
+        for (size_t i = 0; i < paths.size(); i++) {
+            table[i] += paths[i];
+            totalSum += paths[i];
+        }
+    }
+    
+    // Check if any column's sum proportion exceeds the threshold
+    for (int val : table) {
+        if (static_cast<double>(val) / totalSum >= maf) {
+            return false; // If any value exceeds the threshold, return false
+        }
+    }
+    
+    return true; // If all values are within the threshold, return true
+}

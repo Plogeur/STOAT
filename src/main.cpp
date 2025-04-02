@@ -29,6 +29,7 @@ void print_help() {
               << "  -e, --eqtl <path>           Path to the Expression Quantitative Trait Loci file (.txt or .tsv)\n"
               << "  --make-bed                  Create a plink format files (.bed, .bim, bed)\n"
               << "  --plot                      Create Manhatthan plot and QQ plot\n"
+              << "  --maf                       Add a maf (Maximum allele frequency) thresold (defauld : 0.99)\n"
               << "  -o, --output <name>         Output dir name\n"
               << "  -t, --thread <int>          Number of threads\n"
               << "  -h, --help                  Print this help message\n";
@@ -43,6 +44,7 @@ int main(int argc, char* argv[]) {
     size_t threads=1;
     size_t phenotype=0;
     size_t children_threshold = 50;
+    double maf = 0.99;
     bool gaf = false;
     bool only_snarl_parsing = false;
     bool show_help = false;
@@ -101,6 +103,13 @@ int main(int argc, char* argv[]) {
                 std::cerr << "Error: Number of threads must be a positive integer\n";
                 return EXIT_FAILURE;
             }
+        } else if ((arg == "--maf") && i + 1 < argc) {
+            // convert str to int and verify that it is a positive number
+            maf = std::stoi(argv[++i]);
+            if (maf < 0 || maf > 1) {
+                std::cerr << "Error: maf threshold must be a between 0 and 1\n";
+                return EXIT_FAILURE;
+            }
         } else if ((arg == "-o" || arg == "--output") && i + 1 < argc) {
             output_dir = argv[++i];
         } else if (arg == "-h" || arg == "--help") {
@@ -113,7 +122,6 @@ int main(int argc, char* argv[]) {
     }
 
     auto start_1 = std::chrono::high_resolution_clock::now();
-
     std::filesystem::create_directory(output_dir);
     std::unordered_set<std::string> ref_chr = (!chromosome_path.empty()) ? parse_chromosome_reference(chromosome_path) : std::unordered_set<std::string>{"ref"};
 
@@ -234,7 +242,7 @@ int main(int argc, char* argv[]) {
     } else if (!binary_path.empty()) {
 
         string output_binary = output_dir + "/binary_analysis.tsv";
-        chromosome_chuck_binary(ptr_vcf, hdr, rec, list_samples, snarls_chr, binary, covariate, output_binary);
+        chromosome_chuck_binary(ptr_vcf, hdr, rec, list_samples, snarls_chr, binary, covariate, maf, output_binary);
         if (gaf) {
             string output_gaf = output_dir + "/binary_analysis.gaf";
             gaf_creation(output_binary, snarls_chr, *pg, output_gaf);
@@ -256,7 +264,7 @@ int main(int argc, char* argv[]) {
     } else if (!quantitative_path.empty()) {
 
         string output_quantitive = output_dir + "/quantitative_analysis.tsv";
-        chromosome_chuck_quantitative(ptr_vcf, hdr, rec, list_samples, snarls_chr, quantitative, covariate, output_quantitive);
+        chromosome_chuck_quantitative(ptr_vcf, hdr, rec, list_samples, snarls_chr, quantitative, covariate, maf, output_quantitive);
 
         if (make_plot) {
             string output_manh = output_dir + "/manhattan_plot_quantitative.png";
