@@ -57,7 +57,7 @@ std::tuple<std::string, std::string, std::string> LMM_quantitative(
 }
 
 // Linear regression function OLS
-std::tuple<string, string, string, string, string> linear_regression(
+std::tuple<string, string, string, string> linear_regression(
     const std::unordered_map<std::string, std::vector<int>>& df,
     const std::unordered_map<std::string, double>& quantitative_phenotype, 
     const size_t& total_snarl) {

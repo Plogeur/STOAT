@@ -79,7 +79,7 @@ bool check_observed(const std::vector<std::vector<int>>& observed, size_t rows, 
 }
 
 // Function to calculate the Chi-square test statistic
-std::pair<std::string, std::string> chi2Test(const std::vector<std::vector<int>>& observed, const size_t& total_snarl) {
+std::string chi2Test(const std::vector<std::vector<int>>& observed, const size_t& total_snarl) {
     size_t rows = observed.size();
     size_t cols = observed[0].size();
 
@@ -126,7 +126,7 @@ std::pair<std::string, std::string> chi2Test(const std::vector<std::vector<int>>
     boost::math::chi_squared chi_squared_dist(degrees_of_freedom);
     long double p_value = boost::math::cdf(boost::math::complement(chi_squared_dist, chi_squared_stat));
 
-    return {set_precision(p_value), ""};
+    return set_precision(p_value);
 }
 
 // ------------------------ Fisher exact test ------------------------
@@ -144,7 +144,7 @@ long double logHypergeometricProb(long double* logFacs , int a, int b, int c, in
     - logFacs[a] - logFacs[b] - logFacs[c] - logFacs[d] - logFacs[a+b+c+d];
 }
 
-std::pair<std::string, std::string> fastFishersExactTest(const std::vector<std::vector<int>>& table, const size_t& total_snarl) {
+std::string fastFishersExactTest(const std::vector<std::vector<int>>& table, const size_t& total_snarl) {
     // Ensure the table is 2x2
     if (table.size() != 2 || table[0].size() != 2 || table[1].size() != 2) {
         return {"NA", "NA"};
@@ -176,7 +176,7 @@ std::pair<std::string, std::string> fastFishersExactTest(const std::vector<std::
     long double p_value = exp(logpCutoff + log(pFraction));
     delete [] logFacs;
 
-    return {set_precision(p_value), ""};
+    return set_precision(p_value);
 }
 
 // ------------------------ Binary table & stats ------------------------
@@ -206,10 +206,10 @@ std::vector<std::string> binary_stat_test(const std::vector<std::vector<int>>& d
     int average = static_cast<double>(allele_number) / numb_colum; // get 200 instead of 200.00000
 
     // Compute  Fisher's exact & Chi-squared test p-value
-    const auto& [chi2_p_value, chi2_p_value_ajusted] = chi2Test(df, total_snarl);
-    const auto& [fastfisher_p_value, fastfisher_p_value_ajusted] = fastFishersExactTest(df, total_snarl);
+    string chi2_p_value = chi2Test(df, total_snarl);
+    string fastfisher_p_value = fastFishersExactTest(df, total_snarl);
     std::string group_paths = format_group_paths(df); // Placeholder for future implementation
-    return {fastfisher_p_value, fastfisher_p_value_ajusted, chi2_p_value, chi2_p_value_ajusted, std::to_string(allele_number), std::to_string(min_row_index), std::to_string(numb_colum), std::to_string(inter_group), std::to_string(average), group_paths};
+    return {fastfisher_p_value, chi2_p_value, std::to_string(allele_number), std::to_string(min_row_index), std::to_string(numb_colum), std::to_string(inter_group), std::to_string(average), group_paths};
 }
 
 std::string format_group_paths(const std::vector<std::vector<int>>& matrix) {

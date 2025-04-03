@@ -26,7 +26,7 @@ find_package(Python3 COMPONENTS Interpreter REQUIRED)
 # Ensure dependencies are installed
 add_custom_target(install_python_dependencies ALL
     COMMAND ${Python3_EXECUTABLE} -m pip install --upgrade pip
-    COMMAND ${Python3_EXECUTABLE} -m pip install pandas matplotlib qmplot
+    COMMAND ${Python3_EXECUTABLE} -m pip install numpy pandas matplotlib scipy qmplot statsmodels
     WORKING_DIRECTORY ${CMAKE_SOURCE_DIR}
 )
 
@@ -37,7 +37,6 @@ add_executable(${PROJECT_NAME}
     src/arg_parser.cpp
     src/binary_analysis.cpp
     src/gaf_creator.cpp
-    src/p_value_analysing.cpp
     src/list_snarl_paths.cpp
     src/matrix.cpp
     src/quantitative_analysis.cpp

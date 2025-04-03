@@ -47,9 +47,9 @@ void chromosome_chuck_quantitative(htsFile* &ptr_vcf, bcf_hdr_t* &hdr, bcf1_t* &
     std::ofstream outf(output_quantitive, std::ios::binary);
     std::string headers;
     if (covar.size() > 0) {
-        headers = "CHR\tPOS\tSNARL\tTYPE\tRSQUARED\tBETA\tSE\tP\tP_ADJUSTED\tALLELE_NUM\n";
+        headers = "CHR\tPOS\tSNARL\tTYPE\tRSQUARED\tBETA\tSE\tP\tALLELE_NUM\n";
     } else {
-        headers = "CHR\tPOS\tSNARL\tTYPE\tBETA\tSE\tP\tP_ADJUSTED\tALLELE_NUM\n";
+        headers = "CHR\tPOS\tSNARL\tTYPE\tBETA\tSE\tP\tALLELE_NUM\n";
     }
     outf.write(headers.c_str(), headers.size());
 
@@ -115,9 +115,9 @@ void chromosome_chuck_binary(htsFile* &ptr_vcf, bcf_hdr_t* &hdr, bcf1_t* &rec,
     std::ofstream outf(output_binary, std::ios::binary);
     std::string headers;
     if (covar.size() > 0) {
-        headers = "CHR\tPOS\tSNARL\tTYPE\tBETA\tSE\tP\tP_ADJUSTED\n";
+        headers = "CHR\tPOS\tSNARL\tTYPE\tBETA\tSE\tP\n";
     } else {
-        headers = "CHR\tPOS\tSNARL\tTYPE\tP_FISHER\tP_CHI2\tP_ADJUSTED\tALLELE_NUM\tMIN_ROW_INDEX\tNUM_COLUM\tINTER_GROUP\tAVERAGE\tGROUP_PATHS\n";
+        headers = "CHR\tPOS\tSNARL\tTYPE\tP_FISHER\tP_CHI2\tALLELE_NUM\tMIN_ROW_INDEX\tNUM_COLUM\tINTER_GROUP\tAVERAGE\tGROUP_PATHS\n";
     }
     outf.write(headers.c_str(), headers.size());
 
@@ -474,23 +474,24 @@ void SnarlParser::binary_table(const std::vector<std::tuple<string, vector<strin
             << "\t" << stats[0] << "\t" << stats[1] << "\t" << p_value << "\n";
 
         } else {
+            // fastfisher_p_value, chi2_p_value, allele_number, min_row_index, numb_colum, inter_group, average, group_paths
             stats = binary_stat_test(df, total_snarl);
             string p_value_f, p_value_c; 
 
             if (df_ok) {
                 p_value_f = stats[0];
-                p_value_c = stats[2];
+                p_value_c = stats[1];
             } else {
                 p_value_f = p_value_c = "NA";
             }
 
             // chr, pos, snarl, type variant
-            // fisher_p_value, fisher_p_value_adjusted, chi2_p_value, chi2_p_value_adjusted, 
-            // allele_number, min_row_index, numb_colum, inter_group, average
+            // fisher_p_value, chi2_p_value, allele_number, min_row_index, 
+            // numb_colum, inter_group, average
             data << chr << "\t" << pos << "\t" << snarl << "\t" << type_var_str
-            << "\t" << p_value_f << "\t" << "\t" << p_value_c << "\t" << "" 
-            << "\t" << stats[4]  << "\t" << stats[5] << "\t" << stats[6]  << "\t" << stats[7] 
-            << "\t" << stats[8] << "\t" << stats[9] << "\n";
+            << "\t" << p_value_f << "\t" << p_value_c << "\t" << stats[2] 
+            << "\t" << stats[3] << "\t" << stats[4]  << "\t" << stats[5] 
+            << "\t" << stats[6] << "\t" << stats[7] << "\n";
         }
 
         outf.write(data.str().c_str(), data.str().size());
@@ -538,8 +539,8 @@ void SnarlParser::quantitative_table(const std::vector<std::tuple<string, vector
 
         } else {
 
-            // r2, beta, se, p_value, p_value_adj
-            std::tuple<string, string, string, string, string> tuple_info = linear_regression(df, quantitative_phenotype, total_snarl);
+            // r2, beta, se, p_value
+            std::tuple<string, string, string, string> tuple_info = linear_regression(df, quantitative_phenotype, total_snarl);
             string p_value;
             if (df_ok) {
                 p_value = std::get<3>(tuple_info);
@@ -549,7 +550,7 @@ void SnarlParser::quantitative_table(const std::vector<std::tuple<string, vector
 
             data << chr << "\t" << pos << "\t" << snarl << "\t" << type_var_str
             << "\t" << std::get<0>(tuple_info) << "\t" << std::get<1>(tuple_info) 
-            << "\t" << std::get<2>(tuple_info) << "\t" << p_value << "\t" << ""
+            << "\t" << std::get<2>(tuple_info) << "\t" << p_value
             << "\t" << allele_number << "\n";
         }
 

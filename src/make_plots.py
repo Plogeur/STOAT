@@ -102,4 +102,3 @@ if __name__ == "__main__" :
     elif args.quantitative :
         qq_plot_quantitatif(args.pvalue, args.qq)
         plot_manhattan_quantitatif(args.pvalue, args.manh)
-    

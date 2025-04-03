@@ -10,7 +10,6 @@
 #include "arg_parser.hpp"
 #include "list_snarl_paths.hpp"
 #include "gaf_creator.hpp"
-#include "p_value_analysing.hpp"
 
 using namespace std;
 
@@ -254,7 +253,10 @@ int main(int argc, char* argv[]) {
         chromosome_chuck_binary(ptr_vcf, hdr, rec, list_samples, snarls_chr, binary, covariate, maf, total_snarl, output_binary);
 
         string output_significative = output_dir + "/top_variant_binary.tsv";
-        process_Binary(output_binary, argv[2], output_significative);
+        std::string python_cmd = "python3 ../src/adjusted_pvalue.py "
+        " --pvalue " + output_binary + 
+        " --binary";
+        system(python_cmd.c_str());
 
         if (gaf) {
             string output_gaf = output_dir + "/binary_analysis.gaf";
@@ -264,7 +266,7 @@ int main(int argc, char* argv[]) {
         if (make_plot) {
             string output_manh = output_dir + "/manhattan_plot_binary.png";
             string output_qq = output_dir + "/qq_plot_binary.png";
-            std::string python_cmd = "python3 ../src/p_value_analysis.py "
+            std::string python_cmd = "python3 ../src/make_plots.py "
             " --pvalue " + output_binary + 
             " --qq " + output_qq + 
             " --manh " + output_manh +
@@ -278,12 +280,16 @@ int main(int argc, char* argv[]) {
         chromosome_chuck_quantitative(ptr_vcf, hdr, rec, list_samples, snarls_chr, quantitative, covariate, maf, total_snarl, output_quantitive);
         
         string output_significative = output_dir + "/top_variant_quantitative.tsv";
+        std::string python_cmd = "python3 ../src/adjusted_pvalue.py "
+        " --pvalue " + output_quantitive + 
+        " --quantitative";
+        system(python_cmd.c_str());
 
         if (make_plot) {
             string output_manh = output_dir + "/manhattan_plot_quantitative.png";
             string output_qq = output_dir + "/qq_plot_quantitative.png";
 
-            std::string python_cmd = "python3 ../src/p_value_analysis.py "
+            std::string python_cmd = "python3 ../src/make_plots.py "
             " --pvalue " + output_quantitive + 
             " --qq " + output_qq + 
             " --manh " + output_manh +
