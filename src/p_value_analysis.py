@@ -3,37 +3,6 @@ import matplotlib.pyplot as plt
 import qmplot # type: ignore
 import argparse
 
-SIGNIFICANCE_THRESHOLD = 0.00001 # >10^-5
-
-def process_file(file_path, p_col, output_snarl, writer_function):
-    # Read and filter the dataframe based on significance threshold
-    df = pd.read_csv(file_path, sep='\t')
-    df[p_col] = pd.to_numeric(df[p_col], errors='coerce')
-    filtered_df = df[df[p_col] < SIGNIFICANCE_THRESHOLD].dropna(subset=[p_col])
-
-    # Write the filtered rows using the provided writer function
-    writer_function(filtered_df.itertuples(index=False, name=None), output_snarl)
-
-def significative_snarl_binary(file_path, output_snarl):
-    process_file(file_path, 'P_FISHER', output_snarl, write_significative_snarl_binary)
-
-def significative_snarl_quantitatif(file_path, output_snarl):
-    process_file(file_path, 'P', output_snarl, write_significative_snarl_quantitatif)
-
-def write_significative_snarl_binary(tupple_snarl, output_snarl):
-    headers = 'CHR\tPOS\tSNARL\tTYPE\tREF\tALT\tP_FISHER\tP_CHI2\tALLELE_NUM\tMIN_ROW_INDEX\tNUM_COLUM\tINTER_GROUP\tAVERAGE\n'
-    with open(output_snarl, "wb") as f:
-        f.write(headers.encode('utf-8'))
-        for row in tupple_snarl:
-            f.write(('\t'.join(map(str, row)) + '\n').encode('utf-8'))
-
-def write_significative_snarl_quantitatif(tupple_snarl, output_snarl):
-    headers = 'CHR\tPOS\tSNARL\tTYPE\tREF\tALT\tRSQUARED\tBETA\tSE\tP\n'
-    with open(output_snarl, "wb") as f:
-        f.write(headers.encode('utf-8'))
-        for row in tupple_snarl:
-            f.write(('\t'.join(map(str, row)) + '\n').encode('utf-8'))
-
 def qq_plot_quantitatif(file_path, output_qqplot="qq_plot.png") :
     
     data = pd.read_csv(file_path, sep="\t")
@@ -118,7 +87,6 @@ if __name__ == "__main__" :
 
     parser = argparse.ArgumentParser(description="Run the Pvalue Stoat GWAS analysis")
     parser.add_argument("--pvalue",type=str, required=True)
-    parser.add_argument("--significative",type=str, required=True)
     parser.add_argument("--qq",type=str, required=True)
     parser.add_argument("--manh",type=str, required=True)
 
@@ -128,12 +96,10 @@ if __name__ == "__main__" :
     args = parser.parse_args()
 
     if args.binary :
-        significative_snarl_binary(args.pvalue, args.significative)
         qq_plot_binary(args.pvalue, args.qq)
         plot_manhattan_binary(args.pvalue, args.manh)
     
     elif args.quantitative :
-        significative_snarl_quantitatif(args.pvalue, args.significative)
         qq_plot_quantitatif(args.pvalue, args.qq)
         plot_manhattan_quantitatif(args.pvalue, args.manh)
     

@@ -10,6 +10,7 @@
 #include "arg_parser.hpp"
 #include "list_snarl_paths.hpp"
 #include "gaf_creator.hpp"
+#include "p_value_analysing.hpp"
 
 using namespace std;
 
@@ -166,7 +167,7 @@ int main(int argc, char* argv[]) {
     bcf1_t* rec;
 
     if (!only_snarl_parsing) {
-        auto [list_samples, ptr_vcf, hdr, rec] = parseHeader(vcf_path);    
+        std::tie(list_samples, ptr_vcf, hdr, rec) = parseHeader(vcf_path);    
     }
 
     std::unordered_map<std::string, bool> binary;
@@ -203,25 +204,33 @@ int main(int argc, char* argv[]) {
     // scope declaration
     // chr : <snarl, paths, pos, type>
     std::unordered_map<std::string, std::vector<std::tuple<string, vector<string>, string, vector<string>>>> snarls_chr;
+    std::unique_ptr<bdsg::SnarlDistanceIndex> stree;
     std::unique_ptr<bdsg::PackedGraph> pg;
+    handlegraph::net_handle_t root;
+    std::unique_ptr<bdsg::PackedPositionOverlay> pp_overlay;
+    size_t total_snarl;
 
     if (!snarl_path.empty()){
-        snarls_chr = parse_snarl_path(snarl_path);
+        std::tie(snarls_chr, total_snarl) = parse_snarl_path(snarl_path);
     } else {
         std::cout << "Start snarl analysis... " << std::endl;
         auto start_0 = std::chrono::high_resolution_clock::now();
-        auto [stree, pg, root, pp_overlay] = parse_graph_tree(pg_path, dist_path);
+        std::tie(stree, pg, root, pp_overlay) = parse_graph_tree(pg_path, dist_path);
         auto snarls = save_snarls(*stree, root, *pg, ref_chr, *pp_overlay);
 
         string output_snarl_not_analyse = output_dir + "/snarl_not_analyse.tsv";
         string output_file = output_dir + "/snarl_analyse.tsv";
 
-        snarls_chr = loop_over_snarls_write(*stree, snarls, *pg, output_file, output_snarl_not_analyse, children_threshold, only_snarl_parsing);
+        std::tie(snarls_chr, total_snarl) = loop_over_snarls_write(*stree, snarls, *pg, output_file, output_snarl_not_analyse, children_threshold, only_snarl_parsing);
         auto end_0 = std::chrono::high_resolution_clock::now();
         std::cout << "Snarl analysis : " << std::chrono::duration<double>(end_0 - start_0).count() << " s" << std::endl;
         if (only_snarl_parsing) {
             return EXIT_SUCCESS;
         }
+
+        // Clean up unique_ptr except pg
+        stree.reset();
+        pp_overlay.reset();
     }
 
     if (make_bed) {
@@ -233,7 +242,7 @@ int main(int argc, char* argv[]) {
 
         const std::string output_fam = output_dir + "/genotype.fam";
         create_fam(pheno, output_fam);
-        //chromosome_chuck_make_bed(ptr_vcf, hdr, rec, list_samples, snarls_chr, output_dir);
+        // chromosome_chuck_make_bed(ptr_vcf, hdr, rec, list_samples, snarls_chr, output_dir);
 
         auto end_1 = std::chrono::high_resolution_clock::now();
         std::cout << "Time genotype plink files creations : " << std::chrono::duration<double>(end_1 - start_1).count() << " s" << std::endl;
@@ -242,7 +251,11 @@ int main(int argc, char* argv[]) {
     } else if (!binary_path.empty()) {
 
         string output_binary = output_dir + "/binary_analysis.tsv";
-        chromosome_chuck_binary(ptr_vcf, hdr, rec, list_samples, snarls_chr, binary, covariate, maf, output_binary);
+        chromosome_chuck_binary(ptr_vcf, hdr, rec, list_samples, snarls_chr, binary, covariate, maf, total_snarl, output_binary);
+
+        string output_significative = output_dir + "/top_variant_binary.tsv";
+        process_Binary(output_binary, argv[2], output_significative);
+
         if (gaf) {
             string output_gaf = output_dir + "/binary_analysis.gaf";
             gaf_creation(output_binary, snarls_chr, *pg, output_gaf);
@@ -251,10 +264,8 @@ int main(int argc, char* argv[]) {
         if (make_plot) {
             string output_manh = output_dir + "/manhattan_plot_binary.png";
             string output_qq = output_dir + "/qq_plot_binary.png";
-            string output_significative = output_dir + "/top_variant_binary.tsv";
             std::string python_cmd = "python3 ../src/p_value_analysis.py "
             " --pvalue " + output_binary + 
-            " --significative " + output_significative + 
             " --qq " + output_qq + 
             " --manh " + output_manh +
             " --binary";
@@ -264,16 +275,16 @@ int main(int argc, char* argv[]) {
     } else if (!quantitative_path.empty()) {
 
         string output_quantitive = output_dir + "/quantitative_analysis.tsv";
-        chromosome_chuck_quantitative(ptr_vcf, hdr, rec, list_samples, snarls_chr, quantitative, covariate, maf, output_quantitive);
+        chromosome_chuck_quantitative(ptr_vcf, hdr, rec, list_samples, snarls_chr, quantitative, covariate, maf, total_snarl, output_quantitive);
+        
+        string output_significative = output_dir + "/top_variant_quantitative.tsv";
 
         if (make_plot) {
             string output_manh = output_dir + "/manhattan_plot_quantitative.png";
             string output_qq = output_dir + "/qq_plot_quantitative.png";
-            string output_significative = output_dir + "/top_variant_quantitative.tsv";
 
             std::string python_cmd = "python3 ../src/p_value_analysis.py "
             " --pvalue " + output_quantitive + 
-            " --significative " + output_significative + 
             " --qq " + output_qq + 
             " --manh " + output_manh +
             " --quantitative";

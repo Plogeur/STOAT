@@ -22,9 +22,10 @@
 #include "utils.hpp"
 
 // Linear regression function that returns a tuple of p_value, standard error (se), and beta
-std::tuple<string, string, string, string> linear_regression(
+std::tuple<string, string, string, string, string> linear_regression(
     const std::unordered_map<std::string, std::vector<int>>& df,
-    const std::unordered_map<std::string, double>& quantitative_phenotype);
+    const std::unordered_map<std::string, double>& quantitative_phenotype, 
+    const size_t& total_snarl);
 
 std::pair<std::unordered_map<std::string, std::vector<int>>, size_t> create_quantitative_table(
     const std::vector<std::string>& list_samples, 

@@ -110,12 +110,11 @@ std::tuple<std::vector<std::string>, htsFile*, bcf_hdr_t*, bcf1_t*> parseHeader(
     auto [ptr_vcf, hdr, rec] = parse_vcf(vcf_path);
 
     std::vector<std::string> list_samples;
-
     // Get the samples names
     for (int i = 0; i < bcf_hdr_nsamples(hdr); i++) {
         list_samples.push_back(bcf_hdr_int2id(hdr, BCF_DT_SAMPLE, i));
     }
-
+        
     return std::make_tuple(list_samples, ptr_vcf, hdr, rec);
 }
 
@@ -132,19 +131,18 @@ void check_match_samples(const std::unordered_map<std::string, T>& map, const st
     }
     if (map.size() != keys.size()) {
         cerr << "Warning:  Number of samples found in VCF does not match the number of samples in the phenotype file" << endl;
-        cerr << "Number of samples found in VCF: " << keys.size() << endl;
-        cerr << "Number of samples in the phenotype file: " << map.size() << endl;
     }
 }
 
 // Function to parse the snarl path file
-std::unordered_map<std::string, std::vector<std::tuple<string, vector<string>, string, vector<string>>>> parse_snarl_path(const std::string& file_path) {
+std::pair<std::unordered_map<std::string, std::vector<std::tuple<string, vector<string>, string, vector<string>>>>, size_t> parse_snarl_path(const std::string& file_path) {
 
     std::string line, chr, pos, snarl, path_list, type_var;
     unordered_map<string, std::vector<std::tuple<string, vector<string>, string, vector<string>>>> chr_snarl_matrix;
     std::vector<std::tuple<string, vector<string>, string, vector<string>>> snarl_paths;
     std::ifstream file(file_path);
     std::string save_chr = "";
+    size_t total_snarl = 0;
 
     // Read header
     std::getline(file, line);
@@ -152,6 +150,7 @@ std::unordered_map<std::string, std::vector<std::tuple<string, vector<string>, s
     // Process each line
     while (std::getline(file, line)) {
         std::istringstream ss(line);
+        total_snarl += 1;
 
         std::getline(ss, chr, '\t');   // chr column
         std::getline(ss, pos, '\t');   // pos column
@@ -189,7 +188,7 @@ std::unordered_map<std::string, std::vector<std::tuple<string, vector<string>, s
     chr_snarl_matrix[save_chr] = std::move(snarl_paths);
 
     file.close();
-    return chr_snarl_matrix;
+    return {chr_snarl_matrix, total_snarl};
 }
 
 // Function to check if a line follows the expected QTL format

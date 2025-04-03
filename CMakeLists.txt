@@ -37,6 +37,7 @@ add_executable(${PROJECT_NAME}
     src/arg_parser.cpp
     src/binary_analysis.cpp
     src/gaf_creator.cpp
+    src/p_value_analysing.cpp
     src/list_snarl_paths.cpp
     src/matrix.cpp
     src/quantitative_analysis.cpp

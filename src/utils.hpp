@@ -16,6 +16,6 @@
 
 using namespace std;
 
-std::string set_precision(double value);
+std::string set_precision(long double value);
 
 #endif

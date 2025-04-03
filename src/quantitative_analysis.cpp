@@ -57,9 +57,10 @@ std::tuple<std::string, std::string, std::string> LMM_quantitative(
 }
 
 // Linear regression function OLS
-std::tuple<string, string, string, string> linear_regression(
+std::tuple<string, string, string, string, string> linear_regression(
     const std::unordered_map<std::string, std::vector<int>>& df,
-    const std::unordered_map<std::string, double>& quantitative_phenotype) {
+    const std::unordered_map<std::string, double>& quantitative_phenotype, 
+    const size_t& total_snarl) {
     
     size_t num_samples = df.size();
     size_t max_paths = 0;
@@ -98,7 +99,7 @@ std::tuple<string, string, string, string> linear_regression(
     // Compute F-statistic
     double f_stat = (r2 / df_reg) / ((1 - r2) / df_res);
     
-    double p_value = 1.0f;
+    long double p_value = 1.0f;
     if (f_stat > 0) {
         boost::math::fisher_f dist(df_reg, df_res);
         p_value = boost::math::cdf(boost::math::complement(dist, f_stat));
@@ -109,7 +110,6 @@ std::tuple<string, string, string, string> linear_regression(
     string bete_mean_str = set_precision(beta.mean());
     string se_mean_str = set_precision(se.mean());
     string p_value_str = set_precision(p_value);
-
     return {r2_str, bete_mean_str, se_mean_str, p_value_str};
 }
 

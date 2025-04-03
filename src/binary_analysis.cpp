@@ -2,13 +2,13 @@
 #include "snarl_parser.hpp"
 #include "utils.hpp"
 
-// ------------------------ LMM BINARY ------------------------
-
 #include <vector>
 #include <unordered_map>
 #include <string>
 #include <Eigen/Dense>
 #include <cmath>
+
+// ------------------------ LMM BINARY ------------------------
 
 // LMM Model fitting function
 std::vector<std::string> LMM_binary(const std::vector<std::vector<int>>& df,
@@ -79,19 +79,19 @@ bool check_observed(const std::vector<std::vector<int>>& observed, size_t rows, 
 }
 
 // Function to calculate the Chi-square test statistic
-std::string chi2Test(const std::vector<std::vector<int>>& observed) {
+std::pair<std::string, std::string> chi2Test(const std::vector<std::vector<int>>& observed, const size_t& total_snarl) {
     size_t rows = observed.size();
     size_t cols = observed[0].size();
 
     // Validate the observed matrix
     if (!check_observed(observed, rows, cols)) {
-        return "NA";
+        return {"NA", "NA"};
     }
 
     // Compute row and column sums
     std::vector<double> row_sums(rows, 0.0);
     std::vector<double> col_sums(cols, 0.0);
-    double total_sum = 0.0;
+    long double total_sum = 0.0;
 
     for (size_t i = 0; i < rows; ++i) {
         for (size_t j = 0; j < cols; ++j) {
@@ -124,9 +124,9 @@ std::string chi2Test(const std::vector<std::vector<int>>& observed) {
 
     // Compute p-value using Boost's chi-squared distribution
     boost::math::chi_squared chi_squared_dist(degrees_of_freedom);
-    double p_value = boost::math::cdf(boost::math::complement(chi_squared_dist, chi_squared_stat));
+    long double p_value = boost::math::cdf(boost::math::complement(chi_squared_dist, chi_squared_stat));
 
-    return set_precision(p_value);
+    return {set_precision(p_value), ""};
 }
 
 // ------------------------ Fisher exact test ------------------------
@@ -144,10 +144,10 @@ long double logHypergeometricProb(long double* logFacs , int a, int b, int c, in
     - logFacs[a] - logFacs[b] - logFacs[c] - logFacs[d] - logFacs[a+b+c+d];
 }
 
-std::string fastFishersExactTest(const std::vector<std::vector<int>>& table) {
+std::pair<std::string, std::string> fastFishersExactTest(const std::vector<std::vector<int>>& table, const size_t& total_snarl) {
     // Ensure the table is 2x2
     if (table.size() != 2 || table[0].size() != 2 || table[1].size() != 2) {
-        return "NA";
+        return {"NA", "NA"};
     }
 
     // Extract values from the table
@@ -173,14 +173,15 @@ std::string fastFishersExactTest(const std::vector<std::vector<int>>& table) {
         }
     }
 
-    long double logpValue = exp(logpCutoff + log(pFraction));
+    long double p_value = exp(logpCutoff + log(pFraction));
     delete [] logFacs;
-    return set_precision(logpValue);
+
+    return {set_precision(p_value), ""};
 }
 
 // ------------------------ Binary table & stats ------------------------
 
-std::vector<std::string> binary_stat_test(const std::vector<std::vector<int>>& df) {
+std::vector<std::string> binary_stat_test(const std::vector<std::vector<int>>& df, const size_t& total_snarl) {
 
     // Compute derived statistics
     int allele_number = 0;
@@ -205,11 +206,10 @@ std::vector<std::string> binary_stat_test(const std::vector<std::vector<int>>& d
     int average = static_cast<double>(allele_number) / numb_colum; // get 200 instead of 200.00000
 
     // Compute  Fisher's exact & Chi-squared test p-value
-    std::string chi2_p_value = chi2Test(df);
-    std::string fastfisher_p_value = fastFishersExactTest(df);
+    const auto& [chi2_p_value, chi2_p_value_ajusted] = chi2Test(df, total_snarl);
+    const auto& [fastfisher_p_value, fastfisher_p_value_ajusted] = fastFishersExactTest(df, total_snarl);
     std::string group_paths = format_group_paths(df); // Placeholder for future implementation
-
-    return {fastfisher_p_value, chi2_p_value, std::to_string(allele_number), std::to_string(min_row_index), std::to_string(numb_colum), std::to_string(inter_group), std::to_string(average), group_paths};
+    return {fastfisher_p_value, fastfisher_p_value_ajusted, chi2_p_value, chi2_p_value_ajusted, std::to_string(allele_number), std::to_string(min_row_index), std::to_string(numb_colum), std::to_string(inter_group), std::to_string(average), group_paths};
 }
 
 std::string format_group_paths(const std::vector<std::vector<int>>& matrix) {

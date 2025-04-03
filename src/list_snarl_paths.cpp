@@ -42,9 +42,9 @@ void Path::addNodeHandle(const net_handle_t& node_h, const SnarlDistanceIndex& s
 
     auto removeSubstrings = [](std::string& str, const std::vector<std::string>& substrings) {
         for (const auto& sub : substrings) {
-            size_t pos;
-            while ((pos = str.find(sub)) != std::string::npos) {
-                str.erase(pos, sub.length());
+            size_t pos_2;
+            while ((pos_2 = str.find(sub)) != std::string::npos) {
+                str.erase(pos_2, sub.length());
             }
         }
     };
@@ -337,7 +337,7 @@ tuple<vector<string>, vector<string>, size_t> fill_pretty_paths(
 }
 
 // {chr : matrix(snarl, paths, chr, pos, type)}
-std::unordered_map<std::string, std::vector<std::tuple<string, vector<string>, string, vector<string>>>> loop_over_snarls_write(
+std::pair<std::unordered_map<std::string, std::vector<std::tuple<string, vector<string>, string, vector<string>>>>, size_t> loop_over_snarls_write(
         SnarlDistanceIndex& stree,
         vector<tuple<net_handle_t, string, size_t>>& snarls,
         PackedGraph& pg, 
@@ -355,6 +355,7 @@ std::unordered_map<std::string, std::vector<std::tuple<string, vector<string>, s
     std::vector<std::tuple<string, vector<string>, string, vector<string>>> snarl_paths;
     unordered_map<string, std::vector<std::tuple<string, vector<string>, string, vector<string>>>> chr_snarl_matrix;
     size_t paths_number_analysis = 0;
+    size_t total_snarl = 0;
     chrono::seconds time_threshold(2);
     string save_chr = "";
 
@@ -411,7 +412,9 @@ std::unordered_map<std::string, std::vector<std::tuple<string, vector<string>, s
             // chromosome   position    snarl_id    paths    type
             string chr = std::get<1>(snarl_path_pos);
             string pos = std::to_string(std::get<2>(snarl_path_pos)+padding);
-            
+            total_snarl += 1; 
+            paths_number_analysis += pretty_paths.size();
+
             if (bool_return) {
                 out_snarl << chr << "\t" << pos
                     << "\t" << snarl_id << "\t" << pretty_paths_stream.str() 
@@ -426,7 +429,6 @@ std::unordered_map<std::string, std::vector<std::tuple<string, vector<string>, s
                 save_chr = chr;
                 snarl_paths.push_back(std::make_tuple(snarl_id, pretty_paths, pos, type_variants));
             }
-            paths_number_analysis += pretty_paths.size();
         }
     }
 
@@ -443,5 +445,5 @@ std::unordered_map<std::string, std::vector<std::tuple<string, vector<string>, s
         cout << "chr : " << chr_snarl.first << ", number of snarl : " << chr_snarl.second.size() << endl;
     }
 
-    return chr_snarl_matrix;
+    return {chr_snarl_matrix, total_snarl};
 }
