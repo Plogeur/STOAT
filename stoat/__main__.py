@@ -12,7 +12,7 @@ import sys
 def main() : 
 
     # Argument Parsing
-    parser = argparse.ArgumentParser(description="Run the Stoat GWAS analysis pipeline")
+    parser = argparse.ArgumentParser(description="Run the Stoat GWAS analysis tool")
     parser.add_argument("-p", "--pg",type=utils.check_file, help='The input pangenome .pg file', required=False)
     parser.add_argument("-d", "--dist",type=utils.check_file, help='The input distance index .dist file', required=False)
     parser.add_argument("-n", "--name_chr",type=utils.check_file, help='The input chromosome prefix reference file', required=False)
