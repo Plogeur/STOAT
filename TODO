@@ -1,3 +1,4 @@
+MODIFY the p_adjusted and replace it to c++ (do vector pair <pvalue, index line> (binary case do the means of pvalue) sort it  and calcul the BH)
 ADD MULTI-THREADING
 ADD FONCTION TEST
 ADD CHUNK SUPERPOSITION
