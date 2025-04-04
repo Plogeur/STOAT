@@ -63,10 +63,7 @@ std::tuple<string, string, string, string> linear_regression(
     const size_t& total_snarl) {
     
     size_t num_samples = df.size();
-    size_t max_paths = 0;
-    for (const auto& [_, paths] : df) {
-        max_paths = std::max(max_paths, paths.size());
-    }
+    size_t max_paths = df.begin()->second.size();
     
     Eigen::MatrixXd X(num_samples, max_paths);
     X.setZero(); // Initialize matrix with zeros

@@ -511,7 +511,13 @@ void SnarlParser::quantitative_table(const std::vector<std::tuple<string, vector
         auto [df, allele_number] = create_quantitative_table(sampleNames, list_snarl, matrix);
         std::string snarl = std::get<0>(tuple_snarl), pos = std::get<2>(tuple_snarl);
         std::vector<std::string> type_var = std::get<3>(tuple_snarl);
-        bool df_ok = check_MAF_threshold_quantitative(df, maf);
+        bool df_ok = false;
+        bool df_empty = false;
+        if (allele_number < 2) {
+            df_empty = true;
+        } else {
+            df_ok = check_MAF_threshold_quantitative(df, maf);
+        }
 
         // make a string separated by ',' from a vector of string
         std::ostringstream oss;
@@ -540,6 +546,13 @@ void SnarlParser::quantitative_table(const std::vector<std::tuple<string, vector
         } else {
 
             // r2, beta, se, p_value
+            if (df_empty) {
+                data << chr << "\t" << pos << "\t" << snarl << "\t" << type_var_str
+                << "\t" << "NA" << "\t" << "NA" 
+                << "\t" << "NA" << "\t" << allele_number << "\n";
+                outf.write(data.str().c_str(), data.str().size());
+                continue;
+            }
             std::tuple<string, string, string, string> tuple_info = linear_regression(df, quantitative_phenotype, total_snarl);
             string p_value;
             if (df_ok) {
