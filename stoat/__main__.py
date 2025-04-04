@@ -160,7 +160,7 @@ Usage example:
  
 Usage test:
     stoat -p tests/simulation/binary/pg.full.pg -d tests/simulation/binary/pg.dist -v tests/simulation/binary/merged_output.vcf \
-    -b tests/simulation/binary/phenotype.tsv -o output
+    -b tests/simulation/binary/phenotype.tsv -o output --gaf
 
     stoat -p tests/simulation/quantitative/pg.full.pg -d tests/simulation/quantitative/pg.dist -v tests/simulation/quantitative/merged_output.vcf \
     -q tests/simulation/quantitative/phenotype.tsv -o output
