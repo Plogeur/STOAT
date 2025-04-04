@@ -32,34 +32,17 @@ struct QTLRecord {
     std::string trait;
 };
 
-void chromosome_chuck_quantitative(htsFile* &ptr_vcf, bcf_hdr_t* &hdr, bcf1_t* &rec, 
-    const std::vector<std::string> &list_samples,
-    unordered_map<string, std::vector<std::tuple<string, vector<string>, string, vector<string>>>> &snarl_chr,
-    const unordered_map<string, double>& pheno, std::ofstream& outf);
-
-void chromosome_chuck_eqtl(htsFile* &ptr_vcf, bcf_hdr_t* &hdr, bcf1_t* &rec, 
-    const std::vector<std::string> &list_samples,
-    unordered_map<string, std::vector<std::tuple<string, vector<string>, string, vector<string>>>> &snarl_chr,
-    const vector<QTLRecord> pheno, std::ofstream& outf);
-
-void chromosome_chuck_binary(htsFile* &ptr_vcf, bcf_hdr_t* &hdr, bcf1_t* &rec, 
-    const std::vector<std::string> &list_samples, 
-    unordered_map<string, std::vector<std::tuple<string, vector<string>, string, vector<string>>>> &snarl_chr,
-    const unordered_map<string, bool>& pheno, std::ofstream& outf);
-
-// void chromosome_chuck_make_bed(htsFile* &ptr_vcf, bcf_hdr_t* &hdr, bcf1_t* &rec, 
-//     const std::vector<std::string> &list_samples,
-//     unordered_map<string, std::vector<std::tuple<string, vector<string>, string, vector<string>>>> &snarl_chr,
-//     const unordered_map<string, double>& pheno, string output_dir);
-
 // Function to parse an eQTL file
 std::vector<QTLRecord> parseQTLFile(const std::string& filename);
+void check_format_covariate(const std::string& filename);
 
 bool isValidQTLFormat(const std::string& line);
 
-Eigen::MatrixXd parseCovariate(const std::string& filename);
+template <typename T>
+void check_phenotype_covariate(const std::unordered_map<std::string, T>& phenotype, 
+    const std::unordered_map<std::string, std::vector<double>>& covariates);
 
-bool check_format_covariate(const std::string& filename);
+std::unordered_map<std::string, std::vector<double>> parseCovariate(const std::string& filename);
 
 // Parses the group file and fills the group_0 and group_1 maps with sample data.
 std::unordered_map<std::string, bool> parse_binary_pheno(const std::string& binary_pheno);
@@ -75,9 +58,8 @@ template <typename T>
 void check_match_samples(const std::unordered_map<std::string, T>& map, const std::vector<std::string>& keys);
 
 // Parses the snarl path file and returns a map with snarl as keys and paths as a list of strings.
-std::unordered_map<std::string, std::vector<std::tuple<string, vector<string>, string, vector<string>>>> parse_snarl_path(const std::string& path_file);
+std::pair<std::unordered_map<std::string, std::vector<std::tuple<string, vector<string>, string, vector<string>>>>, size_t> parse_snarl_path(const std::string& path_file);
 
-void check_format_paths_snarl(const std::string& file_path);
 void check_format_quantitative_phenotype(const std::string& file_path);
 void check_format_binary_phenotype(const std::string& file_path);
 void check_file(const std::string& file_path);

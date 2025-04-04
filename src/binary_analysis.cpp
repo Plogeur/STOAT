@@ -2,6 +2,58 @@
 #include "snarl_parser.hpp"
 #include "utils.hpp"
 
+#include <vector>
+#include <unordered_map>
+#include <string>
+#include <Eigen/Dense>
+#include <cmath>
+
+// ------------------------ LMM BINARY ------------------------
+
+// LMM Model fitting function
+std::vector<std::string> LMM_binary(const std::vector<std::vector<int>>& df,
+    const std::unordered_map<std::string, std::vector<double>>& covariate) {
+
+    int num_samples = df[0].size();
+
+    // Convert df to Eigen matrix (phenotype)
+    Eigen::VectorXd Y(num_samples);
+    for (int i = 0; i < num_samples; ++i) {
+        Y(i) = df[1][i];  // Group 1 (affected cases)
+    }
+
+    // Covariate matrix
+    int num_covariates = covariate.size();
+    Eigen::MatrixXd X(num_samples, num_covariates + 1); // Include intercept
+
+    // Set intercept
+    X.col(0) = Eigen::VectorXd::Ones(num_samples);
+
+    // Fill in covariates
+    int col_idx = 1;
+    for (const auto& [key, values] : covariate) {
+        for (int i = 0; i < num_samples; ++i) {
+            X(i, col_idx) = values[i];
+        }
+        col_idx++;
+    }
+
+    // Fit LMM (simplified REML method)
+    Eigen::VectorXd beta = (X.transpose() * X).ldlt().solve(X.transpose() * Y);
+    Eigen::VectorXd residuals = Y - (X * beta);
+    double sigma2 = (residuals.transpose() * residuals)(0, 0) / (num_samples - num_covariates - 1);
+
+    // Standard errors (diagonal of covariance matrix)
+    Eigen::VectorXd se = (X.transpose() * X).inverse().diagonal().array().sqrt() * std::sqrt(sigma2);
+
+    // Compute p-value using likelihood ratio test (LRT)
+    Eigen::VectorXd chi2_stat = (beta.array().square() / se.array().square());
+    Eigen::VectorXd p_value = (-0.5 * chi2_stat.array()).exp(); // Approximation
+
+    // Convert to strings for output
+    return {std::to_string(beta.mean()), std::to_string(se.mean()), std::to_string(p_value.mean())};
+}
+
 // ------------------------ Chi2 test ------------------------
 
 // Check if the observed matrix is valid (no zero rows/columns)
@@ -27,19 +79,19 @@ bool check_observed(const std::vector<std::vector<int>>& observed, size_t rows, 
 }
 
 // Function to calculate the Chi-square test statistic
-std::string chi2Test(const std::vector<std::vector<int>>& observed) {
+std::string chi2Test(const std::vector<std::vector<int>>& observed, const size_t& total_snarl) {
     size_t rows = observed.size();
     size_t cols = observed[0].size();
 
     // Validate the observed matrix
     if (!check_observed(observed, rows, cols)) {
-        return "NA";
+        return {"NA", "NA"};
     }
 
     // Compute row and column sums
     std::vector<double> row_sums(rows, 0.0);
     std::vector<double> col_sums(cols, 0.0);
-    double total_sum = 0.0;
+    long double total_sum = 0.0;
 
     for (size_t i = 0; i < rows; ++i) {
         for (size_t j = 0; j < cols; ++j) {
@@ -72,7 +124,7 @@ std::string chi2Test(const std::vector<std::vector<int>>& observed) {
 
     // Compute p-value using Boost's chi-squared distribution
     boost::math::chi_squared chi_squared_dist(degrees_of_freedom);
-    double p_value = boost::math::cdf(boost::math::complement(chi_squared_dist, chi_squared_stat));
+    long double p_value = boost::math::cdf(boost::math::complement(chi_squared_dist, chi_squared_stat));
 
     return set_precision(p_value);
 }
@@ -92,10 +144,10 @@ long double logHypergeometricProb(long double* logFacs , int a, int b, int c, in
     - logFacs[a] - logFacs[b] - logFacs[c] - logFacs[d] - logFacs[a+b+c+d];
 }
 
-std::string fastFishersExactTest(const std::vector<std::vector<int>>& table) {
+std::string fastFishersExactTest(const std::vector<std::vector<int>>& table, const size_t& total_snarl) {
     // Ensure the table is 2x2
     if (table.size() != 2 || table[0].size() != 2 || table[1].size() != 2) {
-        return "NA";
+        return {"NA", "NA"};
     }
 
     // Extract values from the table
@@ -121,30 +173,15 @@ std::string fastFishersExactTest(const std::vector<std::vector<int>>& table) {
         }
     }
 
-    long double logpValue = exp(logpCutoff + log(pFraction));
+    long double p_value = exp(logpCutoff + log(pFraction));
     delete [] logFacs;
-    return set_precision(logpValue);
+
+    return set_precision(p_value);
 }
 
 // ------------------------ Binary table & stats ------------------------
 
-
-std::string format_group_paths(const std::vector<std::vector<int>>& matrix) {
-
-    std::string result;
-    size_t rows = matrix.size();
-
-    for (size_t row = 0; row < rows; ++row) {
-        result += std::to_string(matrix[row][0]) + ":" + std::to_string(matrix[row][1]);
-        if (row < rows - 1) {
-            result += ","; // Separate row pairs with ','
-        }
-    }
-
-    return result;
-}
-
-std::vector<std::string> binary_stat_test(const std::vector<std::vector<int>>& df) {
+std::vector<std::string> binary_stat_test(const std::vector<std::vector<int>>& df, const size_t& total_snarl) {
 
     // Compute derived statistics
     int allele_number = 0;
@@ -169,18 +206,32 @@ std::vector<std::string> binary_stat_test(const std::vector<std::vector<int>>& d
     int average = static_cast<double>(allele_number) / numb_colum; // get 200 instead of 200.00000
 
     // Compute  Fisher's exact & Chi-squared test p-value
-    std::string chi2_p_value = chi2Test(df);
-    std::string fastfisher_p_value = fastFishersExactTest(df);
+    string chi2_p_value = chi2Test(df, total_snarl);
+    string fastfisher_p_value = fastFishersExactTest(df, total_snarl);
     std::string group_paths = format_group_paths(df); // Placeholder for future implementation
-
     return {fastfisher_p_value, chi2_p_value, std::to_string(allele_number), std::to_string(min_row_index), std::to_string(numb_colum), std::to_string(inter_group), std::to_string(average), group_paths};
+}
+
+std::string format_group_paths(const std::vector<std::vector<int>>& matrix) {
+
+    std::string result;
+    size_t rows = matrix.size();
+
+    for (size_t row = 0; row < rows; ++row) {
+        result += std::to_string(matrix[row][0]) + ":" + std::to_string(matrix[row][1]);
+        if (row < rows - 1) {
+            result += ","; // Separate row pairs with ','
+        }
+    }
+
+    return result;
 }
 
 std::vector<std::vector<int>> create_binary_table(
     const std::unordered_map<std::string, bool>& groups, 
     const std::vector<std::string>& list_path_snarl, 
-    const std::vector<std::string>& list_samples, Matrix& matrix) 
-{
+    const std::vector<std::string>& list_samples, Matrix& matrix)  {
+
     std::unordered_map<std::string, size_t> row_headers_dict = matrix.get_row_header();
     size_t length_column_headers = list_path_snarl.size();
 

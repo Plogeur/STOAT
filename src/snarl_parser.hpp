@@ -29,22 +29,50 @@ public:
     void push_matrix(const std::string& decomposedSnarl, std::unordered_map<std::string, size_t>& rowHeaderDict, size_t indexColumn);
     void binary_table(const std::vector<std::tuple<string, vector<string>, string, vector<string>>>& snarls,
                         const std::unordered_map<std::string, bool>& binary_groups, const string &chr,
-                        std::ofstream& outf);
+                        const std::unordered_map<std::string, std::vector<double>>& covar,
+                        const double& maf, const size_t& total_snarl, std::ofstream& outf);
     void quantitative_table(const std::vector<std::tuple<string, vector<string>, string, vector<string>>>& snarls,
-                                const std::unordered_map<std::string, double>& quantitative, const string &chr,
-                                std::ofstream& outf);
+                            const std::unordered_map<std::string, double>& quantitative_phenotype, const string &chr,
+                            const std::unordered_map<std::string, std::vector<double>>& covar,
+                            const double& maf, const size_t& total_snarl, std::ofstream& outf);
+
     void create_bim_bed(const std::vector<std::tuple<string, vector<string>, string, vector<string>>>& snarls, 
                                     string chromosome, const std::string& output_bim, const std::string& output_bed);
     std::vector<int> create_table_short_path(const std::string& list_path_snarl);
 
 };
 
+// void chromosome_chuck_eqtl(htsFile* &ptr_vcf, bcf_hdr_t* &hdr, bcf1_t* &rec, 
+//     const std::vector<std::string> &list_samples,
+//     unordered_map<string, std::vector<std::tuple<string, vector<string>, string, vector<string>>>> &snarl_chr,
+//     const vector<QTLRecord> pheno, std::ofstream& outf);
+
+bool check_MAF_threshold_binary(const std::vector<std::vector<int>>& df, const double& maf);
+bool check_MAF_threshold_quantitative(const std::unordered_map<std::string, std::vector<int>>& df, const double& maf);
+
+long double bonferroni_adjust(long double p, const size_t& m);
+
+void chromosome_chuck_binary(htsFile* &ptr_vcf, bcf_hdr_t* &hdr, bcf1_t* &rec, 
+    const std::vector<std::string> &list_samples, 
+    unordered_map<string, std::vector<std::tuple<string, vector<string>, string, vector<string>>>> &snarl_chr,
+    const unordered_map<string, bool>& pheno, std::unordered_map<std::string, std::vector<double>> covar, 
+    const double& maf, const size_t& total_snarl, const std::string& output_binary);
+
+void chromosome_chuck_quantitative(htsFile* &ptr_vcf, bcf_hdr_t* &hdr, bcf1_t* &rec, 
+    const std::vector<std::string> &list_samples,
+    unordered_map<string, std::vector<std::tuple<string, vector<string>, string, vector<string>>>> &snarl_chr,
+    const unordered_map<string, double>& pheno, std::unordered_map<std::string, std::vector<double>> covar,
+    const double& maf, const size_t& total_snarl, const std::string& output_quantitive);
+
+void chromosome_chuck_make_bed(htsFile* &ptr_vcf, bcf_hdr_t* &hdr, bcf1_t* &rec, 
+    const std::vector<std::string> &list_samples,
+    unordered_map<string, std::vector<std::tuple<string, vector<string>, string, vector<string>>>> &snarl_chr,
+    const unordered_map<string, double>& pheno, string output_dir);
+
 std::tuple<htsFile*, bcf_hdr_t*, bcf1_t*> parse_vcf(const std::string& vcf_path);
 
 void create_fam(const std::vector<std::pair<std::string, int>> &pheno, 
     const std::string& output_path);
-
-void process_vcf_batch(std::vector<bcf1_t*> records, bcf_hdr_t* hdr, SnarlParser& snarl_parser, std::unordered_map<std::string, size_t>& row_header_dict, std::mutex& mutex);
 
 std::tuple<SnarlParser, htsFile*, bcf_hdr_t*, bcf1_t*> make_matrix(htsFile *ptr_vcf, bcf_hdr_t *hdr, bcf1_t *rec, const vector<string>& sample_names, string &chr, size_t &num_paths_ch);
 
@@ -53,15 +81,6 @@ unsigned long long int getOrAddIndex(std::unordered_map<std::string, unsigned lo
 
 // Function to decompose a string with snarl information
 std::vector<std::string> decompose_string(const std::string& s);
-
-// Function to split a string by a delimiter
-std::vector<std::string> split(const std::string& str, char delimiter);
-
-std::vector<int> extractGenotype(const std::string& genotypeStr);
-
-std::vector<std::string> extractATField(const std::string& infoField);
-
-std::vector<std::string> split(const std::string& s, char delimiter);
 
 // Function to determine and extract an integer from the string
 std::pair<int, std::string> determine_str(const std::string& s, size_t length_s, size_t i);

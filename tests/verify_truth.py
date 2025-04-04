@@ -11,20 +11,6 @@ def split_snarl(input_str):
     # Split the string and filter empty elements, then convert to integers
     return [str(num) for num in re.split(r'[><]', input_str) if num]
 
-def parse_snarl_path_file_dict(path_file:str) -> dict :
-    
-    snarl_paths = {}
-    df = pd.read_csv(path_file, sep='\t', dtype=str)
-    df['paths'] = df['paths'].str.split(',')
-    for paths, pos in zip(df['paths'], df['pos']):
-        for path in paths :
-            list_node = split_snarl(path)
-            # all case : SNP, INS, DEL, COMPLEX
-            node = int(list_node[1])
-            snarl_paths[node] = pos
-
-    return snarl_paths
-
 # Function to process the frequency file and get result list with differences
 def process_file(freq_file, threshold=0.2):
     df = pd.read_csv(freq_file, sep='\t')

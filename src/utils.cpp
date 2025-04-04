@@ -1,6 +1,6 @@
 #include "utils.hpp"
 
-std::string set_precision(double value) {
+std::string set_precision(long double value) {
     std::ostringstream oss;
     if (value < 0.0001) {
         oss << std::scientific << std::setprecision(4) << value; // Scientific notation with 4 decimals

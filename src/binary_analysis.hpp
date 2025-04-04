@@ -11,6 +11,7 @@
 #include <map>
 #include <iomanip>
 #include <sstream>
+#include <Eigen/Dense>
 #include <boost/math/distributions/chi_squared.hpp>
 #include <boost/math/distributions/hypergeometric.hpp>
 
@@ -18,13 +19,19 @@
 #include "snarl_parser.hpp"
 #include "utils.hpp"
 
+// ------------------------ LMM BINARY ------------------------
+
+std::vector<std::string> LMM_binary(
+    const std::vector<std::vector<int>>& df,
+    const std::unordered_map<std::string, std::vector<double>>& covariate);
+
 // ------------------------ Chi2 test ------------------------
 
 // Function to check if matrix is valid (no zero rows/columns)
 bool check_observed(const std::vector<std::vector<int>>& observed, size_t rows, size_t cols);
 
 // Function to perform the Chi-square test
-std::string chi2Test(const std::vector<std::vector<int>>& observed);
+std::string chi2Test(const std::vector<std::vector<int>>& observed, const size_t& total_snarl);
 
 // ------------------------ Fisher exact test ------------------------
 
@@ -32,13 +39,13 @@ long double logHypergeometricProb(long double* logFacs , int a, int b, int c, in
 void initLogFacs(long double* logFacs, int n);
 
 // Function to perform Fisher's exact test
-std::string fastFishersExactTest(const std::vector<std::vector<int>>& table);
+std::string fastFishersExactTest(const std::vector<std::vector<int>>& table, const size_t& total_snarl);
 
 // ------------------------ Binary table ------------------------
 
 std::string format_group_paths(const std::vector<std::vector<int>>& df);
 
-std::vector<std::string> binary_stat_test(const std::vector<std::vector<int>>& df);
+std::vector<std::string> binary_stat_test(const std::vector<std::vector<int>>& df, const size_t& total_snarl);
 
 std::vector<std::vector<int>> create_binary_table(
     const std::unordered_map<std::string, bool>& groups, 

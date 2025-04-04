@@ -4,18 +4,66 @@
 
 using namespace std;
 
-// Linear regression function OLS
-std::tuple<std::string, std::string, std::string, std::string> linear_regression(
+// Function to fit a Linear Mixed Model (LMM)
+std::tuple<std::string, std::string, std::string> LMM_quantitative(
     const std::unordered_map<std::string, std::vector<int>>& df,
-    const std::unordered_map<std::string, double>& quantitative_phenotype) {
+    const std::unordered_map<std::string, double>& quantitative_phenotype,
+    const std::unordered_map<std::string, std::vector<double>>& covariate) {
+
+    size_t num_samples = df.size();
+    size_t num_covariates = covariate.begin()->second.size();
+
+    Eigen::VectorXd y(num_samples);  // Phenotype vector
+    Eigen::MatrixXd X(num_samples, num_covariates + 1);  // Design matrix (including intercept)
+    X.col(0) = Eigen::VectorXd::Ones(num_samples);  // Intercept column
+    
+    int row = 0;
+    for (const auto& [sample, paths] : df) {
+        y(row) = quantitative_phenotype.at(sample);
+
+        for (size_t col = 0; col < num_covariates; ++col) {
+            X(row, col + 1) = covariate.at(sample)[col];
+        }
+        ++row;
+    }
+
+    // Compute the LMM parameters using OLS as an approximation
+    Eigen::VectorXd beta = (X.transpose() * X).ldlt().solve(X.transpose() * y);
+    Eigen::VectorXd y_pred = X * beta;
+    Eigen::VectorXd residuals = y - y_pred;
+    
+    double rss = residuals.squaredNorm();
+    double tss = (y.array() - y.mean()).matrix().squaredNorm();
+    double r2 = 1 - (rss / tss);
+
+    int df_reg = num_covariates;
+    int df_res = num_samples - num_covariates - 1;
+    double mse = rss / df_res;
+
+    Eigen::MatrixXd cov_matrix = (X.transpose() * X).inverse();
+    Eigen::VectorXd se = (cov_matrix.diagonal() * mse).array().sqrt().matrix();
+
+    // Compute p-value for the model fit using Chi-Square test
+    double chi2_stat = (beta.transpose() * X.transpose() * X * beta)(0, 0) / mse;
+    boost::math::chi_squared dist(df_reg);
+    double p_value = boost::math::cdf(boost::math::complement(dist, chi2_stat));
+
+    // Convert to strings with precision
+    std::string r2_str = set_precision(r2);
+    std::string beta_mean_str = set_precision(beta.mean());
+    std::string p_value_str = set_precision(p_value);
+
+    return {r2_str, beta_mean_str, p_value_str};
+}
+
+// Linear regression function OLS
+std::tuple<string, string, string, string> linear_regression(
+    const std::unordered_map<std::string, std::vector<int>>& df,
+    const std::unordered_map<std::string, double>& quantitative_phenotype, 
+    const size_t& total_snarl) {
     
     size_t num_samples = df.size();
-    size_t max_paths = 0;
-    
-    // Determine the maximum number of predictors (columns)
-    for (const auto& [_, paths] : df) {
-        max_paths = std::max(max_paths, paths.size());
-    }
+    size_t max_paths = df.begin()->second.size();
     
     Eigen::MatrixXd X(num_samples, max_paths);
     X.setZero(); // Initialize matrix with zeros
@@ -30,7 +78,6 @@ std::tuple<std::string, std::string, std::string, std::string> linear_regression
         ++row;
     }
     
-    // Perform OLS: β = (X^T X)^(-1) X^T y
     Eigen::VectorXd beta = (X.transpose() * X).ldlt().solve(X.transpose() * y);
     Eigen::VectorXd y_pred = X * beta;
     Eigen::VectorXd residuals = y - y_pred;
@@ -49,7 +96,7 @@ std::tuple<std::string, std::string, std::string, std::string> linear_regression
     // Compute F-statistic
     double f_stat = (r2 / df_reg) / ((1 - r2) / df_res);
     
-    double p_value = 1.0f;
+    long double p_value = 1.0f;
     if (f_stat > 0) {
         boost::math::fisher_f dist(df_reg, df_res);
         p_value = boost::math::cdf(boost::math::complement(dist, f_stat));
@@ -57,11 +104,10 @@ std::tuple<std::string, std::string, std::string, std::string> linear_regression
 
     // set precision : 4 digit
     string r2_str = set_precision(r2);
-    string beta_mean_str = set_precision(beta.mean());
+    string bete_mean_str = set_precision(beta.mean());
     string se_mean_str = set_precision(se.mean());
     string p_value_str = set_precision(p_value);
-
-    return {r2_str, beta_mean_str, se_mean_str, p_value_str};
+    return {r2_str, bete_mean_str, se_mean_str, p_value_str};
 }
 
 // Function to create the quantitative table
