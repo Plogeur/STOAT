@@ -91,7 +91,7 @@ std::string chi2Test(const std::vector<std::vector<int>>& observed, const size_t
     // Compute row and column sums
     std::vector<double> row_sums(rows, 0.0);
     std::vector<double> col_sums(cols, 0.0);
-    long double total_sum = 0.0;
+    double total_sum = 0.0;
 
     for (size_t i = 0; i < rows; ++i) {
         for (size_t j = 0; j < cols; ++j) {
@@ -124,7 +124,7 @@ std::string chi2Test(const std::vector<std::vector<int>>& observed, const size_t
 
     // Compute p-value using Boost's chi-squared distribution
     boost::math::chi_squared chi_squared_dist(degrees_of_freedom);
-    long double p_value = boost::math::cdf(boost::math::complement(chi_squared_dist, chi_squared_stat));
+    double p_value = boost::math::cdf(boost::math::complement(chi_squared_dist, chi_squared_stat));
 
     return set_precision(p_value);
 }
@@ -132,14 +132,14 @@ std::string chi2Test(const std::vector<std::vector<int>>& observed, const size_t
 // ------------------------ Fisher exact test ------------------------
 
 // Function to initialize the log factorials array
-void initLogFacs(long double* logFacs, int n) {
+void initLogFacs(double* logFacs, int n) {
     logFacs[0] = 0; 
     for (int i = 1; i < n+1; ++i) {
         logFacs[i] = logFacs[i - 1] + log((double)i);
     }
 }
 
-long double logHypergeometricProb(long double* logFacs , int a, int b, int c, int d) {
+double logHypergeometricProb(double* logFacs , int a, int b, int c, int d) {
     return logFacs[a+b] + logFacs[c+d] + logFacs[a+c] + logFacs[b+d]
     - logFacs[a] - logFacs[b] - logFacs[c] - logFacs[d] - logFacs[a+b+c+d];
 }
@@ -158,22 +158,22 @@ std::string fastFishersExactTest(const std::vector<std::vector<int>>& table, con
 
     // Total sum of the table
     int n = a + b + c + d;
-    long double* logFacs = new long double[n+1]; // *** dynamically allocate memory logFacs[0..n] ***
+    double* logFacs = new double[n+1]; // *** dynamically allocate memory logFacs[0..n] ***
     initLogFacs(logFacs , n);
 
-    long double logpCutoff = logHypergeometricProb(logFacs,a,b,c,d);
-    long double pFraction = 0;
+    double logpCutoff = logHypergeometricProb(logFacs,a,b,c,d);
+    double pFraction = 0;
     for(int x=0; x <= n; ++x) { // among all possible x
         int abx = a + b - x;
         int acx = a + c - x;
         int dax = d - a + x;
         if (abx >= 0 && acx >= 0 && dax >=0) { 
-            long double l = logHypergeometricProb(logFacs, x, abx, acx, dax);
+            double l = logHypergeometricProb(logFacs, x, abx, acx, dax);
             if (l <= logpCutoff) {pFraction += exp(l - logpCutoff);}
         }
     }
 
-    long double p_value = exp(logpCutoff + log(pFraction));
+    double p_value = exp(logpCutoff + log(pFraction));
     delete [] logFacs;
 
     return set_precision(p_value);

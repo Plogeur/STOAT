@@ -10,6 +10,7 @@
 #include "arg_parser.hpp"
 #include "list_snarl_paths.hpp"
 #include "gaf_creator.hpp"
+#include "adjusted_pvalue.hpp"
 
 using namespace std;
 
@@ -29,7 +30,7 @@ void print_help() {
               << "  -e, --eqtl <path>           Path to the Expression Quantitative Trait Loci file (.txt or .tsv)\n"
               << "  --make-bed                  Create a plink format files (.bed, .bim, bed)\n"
               << "  --plot                      Create Manhatthan plot and QQ plot\n"
-              << "  --maf                       Add a maf (Maximum allele frequency) thresold (defauld : 0.99)\n"
+              << "  --maf                       Add a maf (Minimum allele frequency) thresold (defauld : 0.01)\n"
               << "  -o, --output <name>         Output dir name\n"
               << "  -t, --thread <int>          Number of threads\n"
               << "  -h, --help                  Print this help message\n";
@@ -105,7 +106,7 @@ int main(int argc, char* argv[]) {
             }
         } else if ((arg == "--maf") && i + 1 < argc) {
             // convert str to int and verify that it is a positive number
-            maf = std::stoi(argv[++i]);
+            maf = 1-std::stoi(argv[++i]);
             if (maf < 0 || maf > 1) {
                 std::cerr << "Error: maf threshold must be a between 0 and 1\n";
                 return EXIT_FAILURE;
@@ -232,6 +233,9 @@ int main(int argc, char* argv[]) {
         pp_overlay.reset();
     }
 
+    // pvalue, index
+    std::vector<std::tuple<double, double, size_t>> pvalue_vector;
+    pvalue_vector.reserve(total_snarl);
     if (make_bed) {
         std::vector<std::pair<std::string, int>> pheno;
         
@@ -250,13 +254,12 @@ int main(int argc, char* argv[]) {
     } else if (!binary_path.empty()) {
 
         string output_binary = output_dir + "/binary_analysis.tsv";
-        chromosome_chuck_binary(ptr_vcf, hdr, rec, list_samples, snarls_chr, binary, covariate, maf, total_snarl, output_binary);
+        chromosome_chuck_binary(ptr_vcf, hdr, rec, list_samples, snarls_chr, binary, covariate, maf, total_snarl, pvalue_vector, output_binary);
 
         string output_significative = output_dir + "/top_variant_binary.tsv";
-        std::string python_cmd = "python3 ../src/adjusted_pvalue.py "
-        " --pvalue " + output_binary + 
-        " --binary";
-        system(python_cmd.c_str());
+        int column_index = 6; // binary adjusted pvalue column index
+        adjust_pvalues_BH(pvalue_vector);
+        update_gwas_file_with_adjusted_pvalues(output_binary, output_significative, column_index, pvalue_vector);
 
         if (gaf) {
             string output_gaf = output_dir + "/binary_analysis.gaf";
@@ -277,13 +280,12 @@ int main(int argc, char* argv[]) {
     } else if (!quantitative_path.empty()) {
 
         string output_quantitive = output_dir + "/quantitative_analysis.tsv";
-        chromosome_chuck_quantitative(ptr_vcf, hdr, rec, list_samples, snarls_chr, quantitative, covariate, maf, total_snarl, output_quantitive);
-        
+        chromosome_chuck_quantitative(ptr_vcf, hdr, rec, list_samples, snarls_chr, quantitative, covariate, maf, total_snarl, pvalue_vector, output_quantitive);
+
         string output_significative = output_dir + "/top_variant_quantitative.tsv";
-        std::string python_cmd = "python3 ../src/adjusted_pvalue.py "
-        " --pvalue " + output_quantitive + 
-        " --quantitative";
-        system(python_cmd.c_str());
+        int column_index = 8; // quantitative adjusted pvalue column index
+        adjust_pvalues_BH(pvalue_vector);
+        update_gwas_file_with_adjusted_pvalues(output_quantitive, output_significative, column_index, pvalue_vector);
 
         if (make_plot) {
             string output_manh = output_dir + "/manhattan_plot_quantitative.png";
