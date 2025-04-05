@@ -30,11 +30,13 @@ public:
     void binary_table(const std::vector<std::tuple<string, vector<string>, string, vector<string>>>& snarls,
                         const std::unordered_map<std::string, bool>& binary_groups, const string &chr,
                         const std::unordered_map<std::string, std::vector<double>>& covar,
-                        const double& maf, const size_t& total_snarl, std::ofstream& outf);
+                        const double& maf, const size_t& total_snarl, 
+                        std::vector<std::tuple<double, double, size_t>>& pvalue_vector, std::ofstream& outf);
     void quantitative_table(const std::vector<std::tuple<string, vector<string>, string, vector<string>>>& snarls,
                             const std::unordered_map<std::string, double>& quantitative_phenotype, const string &chr,
                             const std::unordered_map<std::string, std::vector<double>>& covar,
-                            const double& maf, const size_t& total_snarl, std::ofstream& outf);
+                            const double& maf, const size_t& total_snarl, 
+                            std::vector<std::tuple<double, double, size_t>>& pvalue_vector, std::ofstream& outf);
 
     void create_bim_bed(const std::vector<std::tuple<string, vector<string>, string, vector<string>>>& snarls, 
                                     string chromosome, const std::string& output_bim, const std::string& output_bed);
@@ -50,19 +52,17 @@ public:
 bool check_MAF_threshold_binary(const std::vector<std::vector<int>>& df, const double& maf);
 bool check_MAF_threshold_quantitative(const std::unordered_map<std::string, std::vector<int>>& df, const double& maf);
 
-long double bonferroni_adjust(long double p, const size_t& m);
-
 void chromosome_chuck_binary(htsFile* &ptr_vcf, bcf_hdr_t* &hdr, bcf1_t* &rec, 
     const std::vector<std::string> &list_samples, 
     unordered_map<string, std::vector<std::tuple<string, vector<string>, string, vector<string>>>> &snarl_chr,
     const unordered_map<string, bool>& pheno, std::unordered_map<std::string, std::vector<double>> covar, 
-    const double& maf, const size_t& total_snarl, const std::string& output_binary);
+    const double& maf, const size_t& total_snarl, std::vector<std::tuple<double, double, size_t>>& pvalue_vector, const std::string& output_binary);
 
 void chromosome_chuck_quantitative(htsFile* &ptr_vcf, bcf_hdr_t* &hdr, bcf1_t* &rec, 
     const std::vector<std::string> &list_samples,
     unordered_map<string, std::vector<std::tuple<string, vector<string>, string, vector<string>>>> &snarl_chr,
     const unordered_map<string, double>& pheno, std::unordered_map<std::string, std::vector<double>> covar,
-    const double& maf, const size_t& total_snarl, const std::string& output_quantitive);
+    const double& maf, const size_t& total_snarl, std::vector<std::tuple<double, double, size_t>>& pvalue_vector, const std::string& output_quantitive);
 
 void chromosome_chuck_make_bed(htsFile* &ptr_vcf, bcf_hdr_t* &hdr, bcf1_t* &rec, 
     const std::vector<std::string> &list_samples,
@@ -77,7 +77,7 @@ void create_fam(const std::vector<std::pair<std::string, int>> &pheno,
 std::tuple<SnarlParser, htsFile*, bcf_hdr_t*, bcf1_t*> make_matrix(htsFile *ptr_vcf, bcf_hdr_t *hdr, bcf1_t *rec, const vector<string>& sample_names, string &chr, size_t &num_paths_ch);
 
 // Retrieve the index of `key` if it exists in `ordered_map`. Otherwise, add it and return the new index.
-unsigned long long int getOrAddIndex(std::unordered_map<std::string, unsigned long long int>& orderedMap, const std::string& key, unsigned long long int lengthOrderedMap);
+size_t getOrAddIndex(std::unordered_map<std::string, size_t>& orderedMap, const std::string& key, size_t lengthOrderedMap);
 
 // Function to decompose a string with snarl information
 std::vector<std::string> decompose_string(const std::string& s);

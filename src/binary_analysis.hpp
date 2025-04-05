@@ -35,8 +35,8 @@ std::string chi2Test(const std::vector<std::vector<int>>& observed, const size_t
 
 // ------------------------ Fisher exact test ------------------------
 
-long double logHypergeometricProb(long double* logFacs , int a, int b, int c, int d);
-void initLogFacs(long double* logFacs, int n);
+double logHypergeometricProb(double* logFacs , int a, int b, int c, int d);
+void initLogFacs(double* logFacs, int n);
 
 // Function to perform Fisher's exact test
 std::string fastFishersExactTest(const std::vector<std::vector<int>>& table, const size_t& total_snarl);

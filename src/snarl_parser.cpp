@@ -2,6 +2,7 @@
 #include "matrix.hpp"
 #include "binary_analysis.hpp"
 #include "quantitative_analysis.hpp"
+#include "utils.hpp"
 
 using namespace std;
 
@@ -42,14 +43,14 @@ void chromosome_chuck_quantitative(htsFile* &ptr_vcf, bcf_hdr_t* &hdr, bcf1_t* &
     const std::vector<std::string> &list_samples,
     unordered_map<string, std::vector<std::tuple<string, vector<string>, string, vector<string>>>> &snarl_chr,
     const unordered_map<string, double>& pheno, std::unordered_map<std::string, std::vector<double>> covar,
-    const double& maf, const size_t& total_snarl, const std::string& output_quantitive) {
+    const double& maf, const size_t& total_snarl, std::vector<std::tuple<double, double, size_t>>& pvalue_vector, const std::string& output_quantitive) {
 
     std::ofstream outf(output_quantitive, std::ios::binary);
     std::string headers;
     if (covar.size() > 0) {
         headers = "CHR\tPOS\tSNARL\tTYPE\tRSQUARED\tBETA\tSE\tP\tALLELE_NUM\n";
     } else {
-        headers = "CHR\tPOS\tSNARL\tTYPE\tBETA\tSE\tP\tALLELE_NUM\n";
+        headers = "CHR\tPOS\tSNARL\tTYPE\tRSQUARE\tBETA\tSE\tP\tP_ADJUSTED\tALLELE_NUM\n";
     }
     outf.write(headers.c_str(), headers.size());
 
@@ -69,7 +70,7 @@ void chromosome_chuck_quantitative(htsFile* &ptr_vcf, bcf_hdr_t* &hdr, bcf1_t* &
         auto& snarl = snarl_chr[chr];
 
         // Gwas analysis by chromosome
-        vcf_object.quantitative_table(snarl, pheno, chr, covar, maf, total_snarl, outf);
+        vcf_object.quantitative_table(snarl, pheno, chr, covar, maf, total_snarl, pvalue_vector, outf);
     }
     // Cleanup
     bcf_destroy(rec);
@@ -110,14 +111,14 @@ void chromosome_chuck_binary(htsFile* &ptr_vcf, bcf_hdr_t* &hdr, bcf1_t* &rec,
     const std::vector<std::string> &list_samples, 
     unordered_map<string, std::vector<std::tuple<string, vector<string>, string, vector<string>>>> &snarl_chr,
     const unordered_map<string, bool>& pheno, std::unordered_map<std::string, std::vector<double>> covar, 
-    const double& maf, const size_t& total_snarl, const std::string& output_binary) {
+    const double& maf, const size_t& total_snarl, std::vector<std::tuple<double, double, size_t>>& pvalue_vector, const std::string& output_binary) {
 
     std::ofstream outf(output_binary, std::ios::binary);
     std::string headers;
     if (covar.size() > 0) {
         headers = "CHR\tPOS\tSNARL\tTYPE\tBETA\tSE\tP\n";
     } else {
-        headers = "CHR\tPOS\tSNARL\tTYPE\tP_FISHER\tP_CHI2\tALLELE_NUM\tMIN_ROW_INDEX\tNUM_COLUM\tINTER_GROUP\tAVERAGE\tGROUP_PATHS\n";
+        headers = "CHR\tPOS\tSNARL\tTYPE\tP_FISHER\tP_CHI2\tP_ADJUSTED\tALLELE_NUM\tMIN_ROW_INDEX\tNUM_COLUM\tINTER_GROUP\tAVERAGE\tGROUP_PATHS\n";
     }
     outf.write(headers.c_str(), headers.size());
 
@@ -136,7 +137,7 @@ void chromosome_chuck_binary(htsFile* &ptr_vcf, bcf_hdr_t* &hdr, bcf1_t* &rec,
         auto& snarl = snarl_chr[chr];
 
         // Gwas analysis by chromosome
-        vcf_object.binary_table(snarl, pheno, chr, covar, maf, total_snarl, outf);
+        vcf_object.binary_table(snarl, pheno, chr, covar, maf, total_snarl, pvalue_vector, outf);
     }
     // Cleanup
     bcf_destroy(rec);
@@ -251,7 +252,7 @@ void create_fam(const std::vector<std::pair<std::string, int>> &pheno,
 }
 
 // Function to extract an integer from a string starting at index `i`
-std::pair<int, std::string> determine_str(const std::string& s, int length_s, int i) {
+std::pair<int, std::string> determine_str(const std::string& s, size_t length_s, size_t i) {
     int start_idx = i;
     while (i < length_s && s[i] != '>' && s[i] != '<') {
         i++;
@@ -443,16 +444,18 @@ std::vector<int> identify_correct_path(
 void SnarlParser::binary_table(const std::vector<std::tuple<string, vector<string>, string, vector<string>>>& snarls,
                                const std::unordered_map<std::string, bool>& binary_groups, const string &chr,
                                const std::unordered_map<std::string, std::vector<double>>& covar,
-                               const double& maf, const size_t& total_snarl, std::ofstream& outf) {
+                               const double& maf, const size_t& total_snarl,
+                               std::vector<std::tuple<double, double, size_t>>& pvalue_vector, std::ofstream& outf) {
 
     // Iterate over each snarl
+    size_t itr = 0;
     for (const auto& tuple_snarl : snarls) {
 
         std::vector<std::string> list_snarl = std::get<1>(tuple_snarl);
         std::vector<std::vector<int>> df = create_binary_table(binary_groups, list_snarl, sampleNames, matrix);
         std::string snarl = std::get<0>(tuple_snarl), pos = std::get<2>(tuple_snarl);
         std::vector<std::string> type_var = std::get<3>(tuple_snarl);
-        bool df_ok = check_MAF_threshold_binary(df, maf);
+        bool df_filtration = check_MAF_threshold_binary(df, maf);
 
         // make a string separated by , from a vector of string
         std::ostringstream oss;
@@ -467,7 +470,7 @@ void SnarlParser::binary_table(const std::vector<std::tuple<string, vector<strin
         
         if (covar.size() > 0) {
             stats = LMM_binary(df, covar);
-            string p_value = df_ok ? stats[2] : "NA";
+            string p_value = df_filtration ? stats[2] : "NA";
 
             // chr, pos, snarl, type variant, beta, se, p_value
             data << chr << "\t" << pos << "\t" << snarl << "\t" << type_var_str
@@ -478,23 +481,26 @@ void SnarlParser::binary_table(const std::vector<std::tuple<string, vector<strin
             stats = binary_stat_test(df, total_snarl);
             string p_value_f, p_value_c; 
 
-            if (df_ok) {
+            if (df_filtration) {
                 p_value_f = stats[0];
                 p_value_c = stats[1];
             } else {
                 p_value_f = p_value_c = "NA";
             }
-
+            
+            double mean_pvalue = mean_pvalue_from_strings(p_value_f, p_value_c);
+            pvalue_vector.push_back({mean_pvalue, 1, itr});
             // chr, pos, snarl, type variant
-            // fisher_p_value, chi2_p_value, allele_number, min_row_index, 
+            // fisher_p_value, chi2_p_value, adjusted_pvalue, allele_number, min_row_index, 
             // numb_colum, inter_group, average
             data << chr << "\t" << pos << "\t" << snarl << "\t" << type_var_str
-            << "\t" << p_value_f << "\t" << p_value_c << "\t" << stats[2] 
+            << "\t" << p_value_f << "\t" << p_value_c << "\t" << "" << "\t" << stats[2] 
             << "\t" << stats[3] << "\t" << stats[4]  << "\t" << stats[5] 
             << "\t" << stats[6] << "\t" << stats[7] << "\n";
         }
 
         outf.write(data.str().c_str(), data.str().size());
+        itr++;
     }
 }
 
@@ -502,21 +508,24 @@ void SnarlParser::binary_table(const std::vector<std::tuple<string, vector<strin
 void SnarlParser::quantitative_table(const std::vector<std::tuple<string, vector<string>, string, vector<string>>>& snarls,
                                         const std::unordered_map<std::string, double>& quantitative_phenotype, const string &chr,
                                         const std::unordered_map<std::string, std::vector<double>>& covar,
-                                        const double& maf, const size_t& total_snarl, std::ofstream& outf) {
+                                        const double& maf, const size_t& total_snarl, 
+                                        std::vector<std::tuple<double, double, size_t>>& pvalue_vector, std::ofstream& outf) {
 
     // Iterate over each snarl
+    size_t itr = 0;
     for (const auto& tuple_snarl : snarls) {
 
         std::vector<std::string> list_snarl = std::get<1>(tuple_snarl);
         auto [df, allele_number] = create_quantitative_table(sampleNames, list_snarl, matrix);
         std::string snarl = std::get<0>(tuple_snarl), pos = std::get<2>(tuple_snarl);
         std::vector<std::string> type_var = std::get<3>(tuple_snarl);
-        bool df_ok = false;
+        bool df_filtration = false;
         bool df_empty = false;
+
         if (allele_number < 2) {
             df_empty = true;
         } else {
-            df_ok = check_MAF_threshold_quantitative(df, maf);
+            df_filtration = check_MAF_threshold_quantitative(df, maf);
         }
 
         // make a string separated by ',' from a vector of string
@@ -532,42 +541,35 @@ void SnarlParser::quantitative_table(const std::vector<std::tuple<string, vector
             std::tuple<string, string, string> tuple_info = LMM_quantitative(df, quantitative_phenotype, covar);
             string p_value;
             
-            if (df_ok) {
-                p_value = std::get<2>(tuple_info);
-            } else {
-                p_value = "NA";
-            }
-
-            // beta, se, p_value
+            // chr, pos, snarl, type, r2, beta, se, p_value, allele_number
             data << chr << "\t" << pos << "\t" << snarl << "\t" << type_var_str
             << "\t" << std::get<0>(tuple_info) << "\t" << std::get<1>(tuple_info) 
             << "\t" << p_value << "\t" << allele_number << "\n";
 
         } else {
 
-            // r2, beta, se, p_value
-            if (df_empty) {
+            // chr, pos, snarl, type, r2, beta, se, p_value, adjusted_pvalue, allele_number
+            if (df_empty || !df_filtration) {
+                pvalue_vector.push_back({1, 1, itr});
                 data << chr << "\t" << pos << "\t" << snarl << "\t" << type_var_str
-                << "\t" << "NA" << "\t" << "NA" 
-                << "\t" << "NA" << "\t" << allele_number << "\n";
-                outf.write(data.str().c_str(), data.str().size());
-                continue;
-            }
-            std::tuple<string, string, string, string> tuple_info = linear_regression(df, quantitative_phenotype, total_snarl);
-            string p_value;
-            if (df_ok) {
-                p_value = std::get<3>(tuple_info);
-            } else {
-                p_value = "NA";
-            }
+                << "\t" << "NA" << "\t" << "NA" << "\t" << "NA" << "\t" << "NA"
+                << "\t" << "" << "\t" << allele_number << "\n";
 
-            data << chr << "\t" << pos << "\t" << snarl << "\t" << type_var_str
-            << "\t" << std::get<0>(tuple_info) << "\t" << std::get<1>(tuple_info) 
-            << "\t" << std::get<2>(tuple_info) << "\t" << p_value
-            << "\t" << allele_number << "\n";
+            } else {
+                std::tuple<string, string, string, string> tuple_info = linear_regression(df, quantitative_phenotype, total_snarl);
+                string p_value;
+                p_value = std::get<3>(tuple_info);
+                pvalue_vector.push_back({string_to_pvalue(p_value), 1, itr});
+
+                data << chr << "\t" << pos << "\t" << snarl << "\t" << type_var_str
+                << "\t" << std::get<0>(tuple_info) << "\t" << std::get<1>(tuple_info) 
+                << "\t" << std::get<2>(tuple_info) << "\t" << p_value << "\t" << ""
+                << "\t" << allele_number << "\n";
+            }
         }
 
         outf.write(data.str().c_str(), data.str().size());
+        itr++;
     }
 }
 

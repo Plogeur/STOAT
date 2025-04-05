@@ -16,6 +16,9 @@
 
 using namespace std;
 
-std::string set_precision(long double value);
+std::string set_precision(double value);
+double mean_pvalue_from_strings(const std::string& p1, const std::string& p2);
+bool is_na(const std::string& s);
+double string_to_pvalue(const std::string& p1);
 
 #endif

@@ -82,7 +82,7 @@ std::tuple<string, string, string, string> linear_regression(
     // Compute F-statistic
     double f_stat = (r2 / df_reg) / ((1 - r2) / df_res);
     
-    long double p_value = 1.0f;
+    double p_value = 1.0f;
     if (f_stat > 0) {
         boost::math::fisher_f dist(df_reg, df_res);
         p_value = boost::math::cdf(boost::math::complement(dist, f_stat));
