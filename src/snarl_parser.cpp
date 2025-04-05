@@ -543,6 +543,8 @@ void SnarlParser::quantitative_table(const std::vector<std::tuple<string, vector
 
         if (covar.size() > 0) {
             std::tuple<string, string, string, string> tuple_info = lmm_quantitative(df, quantitative_phenotype, kinship, covar);
+            string p_value = std::get<3>(tuple_info);
+            pvalue_vector.push_back({string_to_pvalue(p_value), 1, itr});
             
             // chr, pos, snarl, type, t-dist, beta, se, p_value, allele_number
             data << chr << "\t" << pos << "\t" << snarl << "\t" << type_var_str
@@ -561,8 +563,7 @@ void SnarlParser::quantitative_table(const std::vector<std::tuple<string, vector
 
             } else {
                 std::tuple<string, string, string, string> tuple_info = linear_regression(df, quantitative_phenotype);
-                string p_value;
-                p_value = std::get<3>(tuple_info);
+                string p_value = std::get<3>(tuple_info);
                 pvalue_vector.push_back({string_to_pvalue(p_value), 1, itr});
 
                 data << chr << "\t" << pos << "\t" << snarl << "\t" << type_var_str

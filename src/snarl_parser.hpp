@@ -24,6 +24,7 @@ using namespace std;
 // SnarlParser class declaration
 class SnarlParser {
 public:
+    // caca change to private
     std::vector<std::string> sampleNames;
     Matrix matrix;
 

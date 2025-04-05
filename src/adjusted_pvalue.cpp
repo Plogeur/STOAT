@@ -16,6 +16,8 @@ void adjust_pvalues_BH(
     std::vector<double> adjusted(n);
     for (size_t i = 0; i < n; ++i) {
         double p = std::get<0>(data[i]);
+        double bh = p * n / (i + 1);  // BH formula
+        if (bh == 0.0) {continue;} // Special case of NA on i = 0
         adjusted[i] = p * n / (i + 1);  // BH formula
     }
 
