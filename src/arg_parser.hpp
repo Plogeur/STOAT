@@ -23,20 +23,21 @@
 using namespace std;
 
 // Struct to store parsed eQTL data
-struct QTLRecord {
-    std::string marker;
-    int chromosome;
-    double position;
-    double lod;
-    double p_value;
-    std::string trait;
+struct ExpressionData {
+    std::vector<std::string> sample_ids;
+    std::vector<std::string> gene_ids;
+    std::vector<std::vector<double>> expression_matrix;
 };
 
-// Function to parse an eQTL file
-std::vector<QTLRecord> parseQTLFile(const std::string& filename);
-void check_format_covariate(const std::string& filename);
+struct KinshipMatrix {
+    std::vector<std::string> ids;
+    std::vector<std::vector<double>> matrix;
+};
 
-bool isValidQTLFormat(const std::string& line);
+KinshipMatrix parseKinshipMatrix(const std::string& filename);
+ExpressionData parseExpressionFile(const std::string& filename);
+
+void check_format_covariate(const std::string& filename);
 
 template <typename T>
 void check_phenotype_covariate(const std::unordered_map<std::string, T>& phenotype, 

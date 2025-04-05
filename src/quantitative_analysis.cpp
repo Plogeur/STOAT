@@ -1,66 +1,52 @@
 #include "quantitative_analysis.hpp"
 #include "snarl_parser.hpp"
 #include "utils.hpp"
+#include "arg_parser.hpp"
 
 using namespace std;
 
-// Function to fit a Linear Mixed Model (LMM)
-std::tuple<std::string, std::string, std::string> LMM_quantitative(
-    const std::unordered_map<std::string, std::vector<int>>& df,
-    const std::unordered_map<std::string, double>& quantitative_phenotype,
-    const std::unordered_map<std::string, std::vector<double>>& covariate) {
+std::vector<double> LMM(
+    const Eigen::VectorXd& phenotype,
+    const Eigen::MatrixXd& kinship,
+    const Eigen::VectorXd& snp,
+    const Eigen::MatrixXd& covariates) {
 
-    size_t num_samples = df.size();
-    size_t num_covariates = covariate.begin()->second.size();
+    const int N = phenotype.size();
 
-    Eigen::VectorXd y(num_samples);  // Phenotype vector
-    Eigen::MatrixXd X(num_samples, num_covariates + 1);  // Design matrix (including intercept)
-    X.col(0) = Eigen::VectorXd::Ones(num_samples);  // Intercept column
-    
-    int row = 0;
-    for (const auto& [sample, paths] : df) {
-        y(row) = quantitative_phenotype.at(sample);
+    Eigen::SelfAdjointEigenSolver<Eigen::MatrixXd> eig(kinship);
+    Eigen::MatrixXd U = eig.eigenvectors();
+    Eigen::VectorXd S = eig.eigenvalues();
 
-        for (size_t col = 0; col < num_covariates; ++col) {
-            X(row, col + 1) = covariate.at(sample)[col];
-        }
-        ++row;
-    }
+    Eigen::VectorXd y_star = U.transpose() * phenotype;
 
-    // Compute the LMM parameters using OLS as an approximation
-    Eigen::VectorXd beta = (X.transpose() * X).ldlt().solve(X.transpose() * y);
-    Eigen::VectorXd y_pred = X * beta;
-    Eigen::VectorXd residuals = y - y_pred;
-    
-    double rss = residuals.squaredNorm();
-    double tss = (y.array() - y.mean()).matrix().squaredNorm();
-    double r2 = 1 - (rss / tss);
+    Eigen::MatrixXd X(covariates.rows(), covariates.cols() + 1);
+    X << snp, covariates;
+    Eigen::MatrixXd X_star = U.transpose() * X;
 
-    int df_reg = num_covariates;
-    int df_res = num_samples - num_covariates - 1;
-    double mse = rss / df_res;
+    // NOTE: This delta should be optimized in a real LMM.
+    double delta = 1.0;
 
-    Eigen::MatrixXd cov_matrix = (X.transpose() * X).inverse();
-    Eigen::VectorXd se = (cov_matrix.diagonal() * mse).array().sqrt().matrix();
+    Eigen::VectorXd V_diag = S + delta;
+    Eigen::VectorXd V_inv_diag = V_diag.cwiseInverse();
 
-    // Compute p-value for the model fit using Chi-Square test
-    double chi2_stat = (beta.transpose() * X.transpose() * X * beta)(0, 0) / mse;
-    boost::math::chi_squared dist(df_reg);
-    double p_value = boost::math::cdf(boost::math::complement(dist, chi2_stat));
+    Eigen::MatrixXd XVX = X_star.transpose() * V_inv_diag.asDiagonal() * X_star;
+    Eigen::VectorXd XVy = X_star.transpose() * V_inv_diag.asDiagonal() * y_star;
 
-    // Convert to strings with precision
-    std::string r2_str = set_precision(r2);
-    std::string beta_mean_str = set_precision(beta.mean());
-    std::string p_value_str = set_precision(p_value);
+    Eigen::VectorXd beta_hat = XVX.ldlt().solve(XVy);
 
-    return {r2_str, beta_mean_str, p_value_str};
+    Eigen::MatrixXd XVX_inv = XVX.inverse();
+    double beta = beta_hat(0);
+    double se = std::sqrt(XVX_inv(0, 0));
+    double t_stat = beta / se;
+    double p_val = 2.0 * (1.0 - normal_cdf(std::fabs(t_stat)));
+
+    return GWASResult{beta, se, t_stat, p_val};
 }
 
 // Linear regression function OLS
 std::tuple<string, string, string, string> linear_regression(
     const std::unordered_map<std::string, std::vector<int>>& df,
-    const std::unordered_map<std::string, double>& quantitative_phenotype, 
-    const size_t& total_snarl) {
+    const std::unordered_map<std::string, double>& quantitative_phenotype) {
     
     size_t num_samples = df.size();
     size_t max_paths = df.begin()->second.size();

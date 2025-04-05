@@ -4,6 +4,43 @@
 namespace fs = std::filesystem;
 using namespace std;
 
+KinshipMatrix parseKinshipMatrix(const std::string& filename) {
+    KinshipMatrix km;
+    std::ifstream file(filename);
+    std::string line;
+
+    if (!file.is_open()) {
+        throw std::runtime_error("Could not open file.");
+    }
+
+    // Parse header line for IDs
+    if (std::getline(file, line)) {
+        std::stringstream ss(line);
+        std::string token;
+        // Skip the empty top-left cell
+        std::getline(ss, token, '\t');
+        while (std::getline(ss, token, '\t')) {
+            km.ids.push_back(token);
+        }
+    }
+
+    // Parse matrix rows
+    while (std::getline(file, line)) {
+        std::stringstream ss(line);
+        std::string rowLabel;
+        std::getline(ss, rowLabel, '\t'); // row label
+        std::vector<double> row;
+        std::string value;
+        while (std::getline(ss, value, '\t')) {
+            row.push_back(std::stod(value));
+        }
+        km.matrix.push_back(row);
+    }
+
+    file.close();
+    return km;
+}
+
 std::unordered_set<std::string> parse_chromosome_reference(const string& file_path) {
     std::unordered_set<std::string> reference;
     ifstream file(file_path);
@@ -135,14 +172,13 @@ void check_match_samples(const std::unordered_map<std::string, T>& map, const st
 }
 
 // Function to parse the snarl path file
-std::pair<std::unordered_map<std::string, std::vector<std::tuple<string, vector<string>, string, vector<string>>>>, size_t> parse_snarl_path(const std::string& file_path) {
+std::unordered_map<std::string, std::vector<std::tuple<string, vector<string>, string, vector<string>>>> parse_snarl_path(const std::string& file_path) {
 
     std::string line, chr, pos, snarl, path_list, type_var;
     unordered_map<string, std::vector<std::tuple<string, vector<string>, string, vector<string>>>> chr_snarl_matrix;
     std::vector<std::tuple<string, vector<string>, string, vector<string>>> snarl_paths;
     std::ifstream file(file_path);
     std::string save_chr = "";
-    size_t total_snarl = 0;
 
     // Read header
     std::getline(file, line);
@@ -150,7 +186,6 @@ std::pair<std::unordered_map<std::string, std::vector<std::tuple<string, vector<
     // Process each line
     while (std::getline(file, line)) {
         std::istringstream ss(line);
-        total_snarl += 1;
 
         std::getline(ss, chr, '\t');   // chr column
         std::getline(ss, pos, '\t');   // pos column
@@ -188,56 +223,53 @@ std::pair<std::unordered_map<std::string, std::vector<std::tuple<string, vector<
     chr_snarl_matrix[save_chr] = std::move(snarl_paths);
 
     file.close();
-    return {chr_snarl_matrix, total_snarl};
+    return chr_snarl_matrix;
 }
 
-// Function to check if a line follows the expected QTL format
-bool isValidQTLFormat(const std::string& line) {
-    std::regex qtlPattern(R"(^\S+\t\d+\t\d+(\.\d+)?\t\d+(\.\d+)?\t\d+(\.\d+)?\t\S+$)");
-    return std::regex_match(line, qtlPattern);
-}
-
-// Function to parse a QTL file and extract data
-std::vector<QTLRecord> parseQTLFile(const std::string& filename) {
-    std::vector<QTLRecord> qtlData;
+ExpressionData parseExpressionFile(const std::string& filename) {
+    ExpressionData data;
     std::ifstream file(filename);
+    std::string line;
 
     if (!file.is_open()) {
-        std::cerr << "Error: Unable to open file " << filename << std::endl;
-        return qtlData;
+        throw std::runtime_error("Cannot open file: " + filename);
     }
 
-    std::string line;
-    std::getline(file, line); // Skip header
+    // Parse header line for sample IDs
+    if (std::getline(file, line)) {
+        std::stringstream ss(line);
+        std::string token;
 
+        // First column is "Gene_ID", skip it
+        std::getline(ss, token, '\t');
+
+        // Sample IDs
+        while (std::getline(ss, token, '\t')) {
+            data.sample_ids.push_back(token);
+        }
+    }
+
+    // Parse gene expression rows
     while (std::getline(file, line)) {
-        if (!isValidQTLFormat(line)) {
-            std::cerr << "Invalid QTL format: " << line << std::endl;
-            continue;
+        std::stringstream ss(line);
+        std::string gene_id;
+        std::string value;
+        std::vector<double> expression_values;
+
+        // First column: gene ID
+        std::getline(ss, gene_id, '\t');
+        data.gene_ids.push_back(gene_id);
+
+        // Remaining columns: expression values
+        while (std::getline(ss, value, '\t')) {
+            expression_values.push_back(std::stod(value));
         }
 
-        std::istringstream iss(line);
-        QTLRecord record;
-        std::string chromosome, position, lod, p_value;
-
-        std::getline(iss, record.marker, '\t');
-        std::getline(iss, chromosome, '\t');
-        std::getline(iss, position, '\t');
-        std::getline(iss, lod, '\t');
-        std::getline(iss, p_value, '\t');
-        std::getline(iss, record.trait, '\t');
-
-        // Convert data to appropriate types
-        record.chromosome = std::stoi(chromosome);
-        record.position = std::stod(position);
-        record.lod = std::stod(lod);
-        record.p_value = std::stod(p_value);
-
-        qtlData.push_back(record);
+        data.expression_matrix.push_back(expression_values);
     }
 
     file.close();
-    return qtlData;
+    return data;
 }
 
 // Function to check covariate format

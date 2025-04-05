@@ -79,7 +79,7 @@ bool check_observed(const std::vector<std::vector<int>>& observed, size_t rows, 
 }
 
 // Function to calculate the Chi-square test statistic
-std::string chi2Test(const std::vector<std::vector<int>>& observed, const size_t& total_snarl) {
+std::string chi2Test(const std::vector<std::vector<int>>& observed) {
     size_t rows = observed.size();
     size_t cols = observed[0].size();
 
