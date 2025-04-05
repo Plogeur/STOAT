@@ -1,3 +1,6 @@
+#ifndef GAF_CREATOR_HPP
+#define GAF_CREATOR_HPP
+
 #include <iostream>
 #include <cmath>
 #include <algorithm>
@@ -28,3 +31,5 @@ int calcul_path_length(PackedGraph& pg, const string& snarl);
 void write_gaf_lines(const string& sequence_name, const string& path, int length, double prop, ofstream& outfile);
 void gaf_creation(const string& input_file, std::unordered_map<std::string, std::vector<std::tuple<string, vector<string>, string, vector<string>>>>& snarl_chr,
     PackedGraph& pg, const string& output_file);
+
+#endif // GAF_CREATOR_HPP

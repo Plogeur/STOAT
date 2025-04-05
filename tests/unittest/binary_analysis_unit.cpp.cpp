@@ -41,8 +41,8 @@ TEST_CASE("Chi-square & Fisher test function", "[chi2Test]") {
             {10, 20, 30},
             {20, 30, 40}
         };
-        REQUIRE(chi2Test(observed, 1) != "NA");
-        REQUIRE(fastFishersExactTest(observed, 1) == "NA");
+        REQUIRE(chi2Test(observed) != "NA");
+        REQUIRE(fastFishersExactTest(observed) == "NA");
     }
 
     SECTION("Chi-square fail & Fisher test valid (zero row)") {
@@ -50,7 +50,7 @@ TEST_CASE("Chi-square & Fisher test function", "[chi2Test]") {
             {0, 0},
             {4, 5}
         };
-        REQUIRE(chi2Test(zero_row_matrix, 1) == "NA");
-        REQUIRE(fastFishersExactTest(zero_row_matrix, 1) != "NA");
+        REQUIRE(chi2Test(zero_row_matrix) == "NA");
+        REQUIRE(fastFishersExactTest(zero_row_matrix) != "NA");
     }
 }

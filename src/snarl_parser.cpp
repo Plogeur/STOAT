@@ -3,6 +3,8 @@
 #include "binary_analysis.hpp"
 #include "quantitative_analysis.hpp"
 #include "utils.hpp"
+#include "lmm.hpp"
+#include "arg_parser.hpp"
 
 using namespace std;
 
@@ -43,7 +45,8 @@ void chromosome_chuck_quantitative(htsFile* &ptr_vcf, bcf_hdr_t* &hdr, bcf1_t* &
     const std::vector<std::string> &list_samples,
     unordered_map<string, std::vector<std::tuple<string, vector<string>, string, vector<string>>>> &snarl_chr,
     const unordered_map<string, double>& pheno, std::unordered_map<std::string, std::vector<double>> covar,
-    const double& maf, const size_t& total_snarl, std::vector<std::tuple<double, double, size_t>>& pvalue_vector, const std::string& output_quantitive) {
+    const double& maf, std::vector<std::tuple<double, double, size_t>>& pvalue_vector, 
+    const KinshipMatrix& kinship, const std::string& output_quantitive) {
 
     std::ofstream outf(output_quantitive, std::ios::binary);
     std::string headers;
@@ -70,7 +73,7 @@ void chromosome_chuck_quantitative(htsFile* &ptr_vcf, bcf_hdr_t* &hdr, bcf1_t* &
         auto& snarl = snarl_chr[chr];
 
         // Gwas analysis by chromosome
-        vcf_object.quantitative_table(snarl, pheno, chr, covar, maf, total_snarl, pvalue_vector, outf);
+        vcf_object.quantitative_table(snarl, pheno, chr, covar, maf, pvalue_vector, kinship, outf);
     }
     // Cleanup
     bcf_destroy(rec);
@@ -81,7 +84,7 @@ void chromosome_chuck_quantitative(htsFile* &ptr_vcf, bcf_hdr_t* &hdr, bcf1_t* &
 // void chromosome_chuck_eqtl(htsFile* &ptr_vcf, bcf_hdr_t* &hdr, bcf1_t* &rec, 
 //     const std::vector<std::string> &list_samples,
 //     unordered_map<string, std::vector<std::tuple<string, vector<string>, string, vector<string>>>> &snarl_chr,
-//     const vector<QTLRecord> pheno, std::ofstream& outf) {
+//     const vector<QTL> qtl_pheno, std::ofstream& outf) {
 
 //     std::cout << "GWAS analysis for chromosome : " << std::endl;
 //     while (bcf_read(ptr_vcf, hdr, rec) >= 0) {
@@ -111,7 +114,8 @@ void chromosome_chuck_binary(htsFile* &ptr_vcf, bcf_hdr_t* &hdr, bcf1_t* &rec,
     const std::vector<std::string> &list_samples, 
     unordered_map<string, std::vector<std::tuple<string, vector<string>, string, vector<string>>>> &snarl_chr,
     const unordered_map<string, bool>& pheno, std::unordered_map<std::string, std::vector<double>> covar, 
-    const double& maf, const size_t& total_snarl, std::vector<std::tuple<double, double, size_t>>& pvalue_vector, const std::string& output_binary) {
+    const double& maf, std::vector<std::tuple<double, double, size_t>>& pvalue_vector, 
+    const KinshipMatrix& kinship, const std::string& output_binary) {
 
     std::ofstream outf(output_binary, std::ios::binary);
     std::string headers;
@@ -137,7 +141,7 @@ void chromosome_chuck_binary(htsFile* &ptr_vcf, bcf_hdr_t* &hdr, bcf1_t* &rec,
         auto& snarl = snarl_chr[chr];
 
         // Gwas analysis by chromosome
-        vcf_object.binary_table(snarl, pheno, chr, covar, maf, total_snarl, pvalue_vector, outf);
+        vcf_object.binary_table(snarl, pheno, chr, covar, maf, pvalue_vector, kinship, outf);
     }
     // Cleanup
     bcf_destroy(rec);
@@ -444,8 +448,8 @@ std::vector<int> identify_correct_path(
 void SnarlParser::binary_table(const std::vector<std::tuple<string, vector<string>, string, vector<string>>>& snarls,
                                const std::unordered_map<std::string, bool>& binary_groups, const string &chr,
                                const std::unordered_map<std::string, std::vector<double>>& covar,
-                               const double& maf, const size_t& total_snarl,
-                               std::vector<std::tuple<double, double, size_t>>& pvalue_vector, std::ofstream& outf) {
+                               const double& maf, std::vector<std::tuple<double, double, size_t>>& pvalue_vector, 
+                               const KinshipMatrix& kinship, std::ofstream& outf) {
 
     // Iterate over each snarl
     size_t itr = 0;
@@ -469,16 +473,16 @@ void SnarlParser::binary_table(const std::vector<std::tuple<string, vector<strin
         std::stringstream data;
         
         if (covar.size() > 0) {
-            stats = LMM_binary(df, covar);
-            string p_value = df_filtration ? stats[2] : "NA";
+            // stats = lmm_binay(df, binary_phenotype, kinship, covar);
+            // string p_value = df_filtration ? stats[2] : "NA";
 
-            // chr, pos, snarl, type variant, beta, se, p_value
-            data << chr << "\t" << pos << "\t" << snarl << "\t" << type_var_str
-            << "\t" << stats[0] << "\t" << stats[1] << "\t" << p_value << "\n";
+            // // chr, pos, snarl, type variant, beta, se, p_value
+            // data << chr << "\t" << pos << "\t" << snarl << "\t" << type_var_str
+            // << "\t" << stats[0] << "\t" << stats[1] << "\t" << p_value << "\n";
 
         } else {
             // fastfisher_p_value, chi2_p_value, allele_number, min_row_index, numb_colum, inter_group, average, group_paths
-            stats = binary_stat_test(df, total_snarl);
+            stats = binary_stat_test(df);
             string p_value_f, p_value_c; 
 
             if (df_filtration) {
@@ -508,8 +512,8 @@ void SnarlParser::binary_table(const std::vector<std::tuple<string, vector<strin
 void SnarlParser::quantitative_table(const std::vector<std::tuple<string, vector<string>, string, vector<string>>>& snarls,
                                         const std::unordered_map<std::string, double>& quantitative_phenotype, const string &chr,
                                         const std::unordered_map<std::string, std::vector<double>>& covar,
-                                        const double& maf, const size_t& total_snarl, 
-                                        std::vector<std::tuple<double, double, size_t>>& pvalue_vector, std::ofstream& outf) {
+                                        const double& maf, std::vector<std::tuple<double, double, size_t>>& pvalue_vector, 
+                                        const KinshipMatrix& kinship, std::ofstream& outf) {
 
     // Iterate over each snarl
     size_t itr = 0;
@@ -538,13 +542,13 @@ void SnarlParser::quantitative_table(const std::vector<std::tuple<string, vector
         std::stringstream data;
 
         if (covar.size() > 0) {
-            std::tuple<string, string, string> tuple_info = LMM_quantitative(df, quantitative_phenotype, covar);
-            string p_value;
+            std::tuple<string, string, string, string> tuple_info = lmm_quantitative(df, quantitative_phenotype, kinship, covar);
             
-            // chr, pos, snarl, type, r2, beta, se, p_value, allele_number
+            // chr, pos, snarl, type, t-dist, beta, se, p_value, allele_number
             data << chr << "\t" << pos << "\t" << snarl << "\t" << type_var_str
             << "\t" << std::get<0>(tuple_info) << "\t" << std::get<1>(tuple_info) 
-            << "\t" << p_value << "\t" << allele_number << "\n";
+            << "\t" << std::get<2>(tuple_info) << "\t" << std::get<3>(tuple_info) 
+            << "\t" << allele_number << "\n";
 
         } else {
 
@@ -556,7 +560,7 @@ void SnarlParser::quantitative_table(const std::vector<std::tuple<string, vector
                 << "\t" << "" << "\t" << allele_number << "\n";
 
             } else {
-                std::tuple<string, string, string, string> tuple_info = linear_regression(df, quantitative_phenotype, total_snarl);
+                std::tuple<string, string, string, string> tuple_info = linear_regression(df, quantitative_phenotype);
                 string p_value;
                 p_value = std::get<3>(tuple_info);
                 pvalue_vector.push_back({string_to_pvalue(p_value), 1, itr});
@@ -617,4 +621,23 @@ bool check_MAF_threshold_quantitative(const std::unordered_map<std::string, std:
     }
     
     return true; // If all values are within the threshold, return true
+}
+
+std::unordered_map<std::string, std::vector<double>> convertBinaryGroups(
+    const std::unordered_map<std::string, bool>& binary_groups) {
+
+    std::unordered_map<std::string, std::vector<double>> converted_map;
+
+    for (const auto& entry : binary_groups) {
+        const std::string& sample_id = entry.first;
+        bool group_value = entry.second;
+
+        // Convert the binary value (bool) to a vector of double (1.0 or 0.0)
+        std::vector<double> group_vector = {group_value ? 1.0 : 0.0};
+
+        // Store the converted vector in the result map
+        converted_map[sample_id] = group_vector;
+    }
+
+    return converted_map;
 }

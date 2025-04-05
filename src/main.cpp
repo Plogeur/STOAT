@@ -5,9 +5,9 @@
 #include <Eigen/Dense>
 #include <cstdlib>
 
+#include "arg_parser.hpp"
 #include "snarl_parser.hpp"     
 #include "matrix.hpp"
-#include "arg_parser.hpp"
 #include "list_snarl_paths.hpp"
 #include "gaf_creator.hpp"
 #include "adjusted_pvalue.hpp"
@@ -28,6 +28,7 @@ void print_help() {
               << "  -q, --quantitative <path>   Path to the quantitative phenotype file (.txt or .tsv)\n"
               << "  --covariate <path>          Path to the covariate file (.txt or .tsv)\n"
               << "  -e, --eqtl <path>           Path to the Expression Quantitative Trait Loci file (.txt or .tsv)\n"
+              << "  -k, --kinship <path>         Path to the kinship matrix file (.txt or .tsv)\n"
               << "  --make-bed                  Create a plink format files (.bed, .bim, bed)\n"
               << "  --plot                      Create Manhatthan plot and QQ plot\n"
               << "  --maf                       Add a maf (Minimum allele frequency) thresold (defauld : 0.01)\n"
@@ -40,7 +41,7 @@ int main(int argc, char* argv[]) {
     // Declare variables to hold argument values
     std::string vcf_path, snarl_path, pg_path, dist_path, 
         chromosome_path, binary_path, quantitative_path, 
-        eqtl_path, covariate_path, output_dir;
+        eqtl_path, covariate_path, kinship_path, output_dir;
 
     size_t threads=1;
     size_t phenotype=0;
@@ -89,6 +90,9 @@ int main(int argc, char* argv[]) {
         } else if ((arg == "--covariate") && i + 1 < argc) {
             covariate_path = argv[++i];
             check_file(covariate_path);
+        } else if ((arg == "-k" || arg == "--kinship") && i + 1 < argc) {
+            kinship_path = argv[++i];
+            check_file(kinship_path);
         } else if ((arg == "-q" || arg == "--quantitative") && i + 1 < argc) {
             quantitative_path = argv[++i];
             phenotype ++;
@@ -180,6 +184,12 @@ int main(int argc, char* argv[]) {
         covariate = parseCovariate(covariate_path);
     }
 
+    KinshipMatrix kinship;
+    if (!kinship_path.empty()) {
+        // check_format_kinship(kinship_path);
+        kinship = parseKinshipMatrix(kinship_path);
+    }
+
     if (!binary_path.empty()) {
         check_format_binary_phenotype(binary_path);
         binary = parse_binary_pheno(binary_path);
@@ -208,10 +218,9 @@ int main(int argc, char* argv[]) {
     std::unique_ptr<bdsg::PackedGraph> pg;
     handlegraph::net_handle_t root;
     std::unique_ptr<bdsg::PackedPositionOverlay> pp_overlay;
-    size_t total_snarl;
 
     if (!snarl_path.empty()){
-        std::tie(snarls_chr, total_snarl) = parse_snarl_path(snarl_path);
+        snarls_chr = parse_snarl_path(snarl_path);
     } else {
         std::cout << "Start snarl analysis... " << std::endl;
         auto start_0 = std::chrono::high_resolution_clock::now();
@@ -235,7 +244,6 @@ int main(int argc, char* argv[]) {
 
     // pvalue, index
     std::vector<std::tuple<double, double, size_t>> pvalue_vector;
-    pvalue_vector.reserve(total_snarl);
     if (make_bed) {
         std::vector<std::pair<std::string, int>> pheno;
         
@@ -254,7 +262,7 @@ int main(int argc, char* argv[]) {
     } else if (!binary_path.empty()) {
 
         string output_binary = output_dir + "/binary_analysis.tsv";
-        chromosome_chuck_binary(ptr_vcf, hdr, rec, list_samples, snarls_chr, binary, covariate, maf, total_snarl, pvalue_vector, output_binary);
+        chromosome_chuck_binary(ptr_vcf, hdr, rec, list_samples, snarls_chr, binary, covariate, maf, pvalue_vector, kinship, output_binary);
 
         string output_significative = output_dir + "/top_variant_binary.tsv";
         int column_index = 6; // binary adjusted pvalue column index
@@ -280,7 +288,7 @@ int main(int argc, char* argv[]) {
     } else if (!quantitative_path.empty()) {
 
         string output_quantitive = output_dir + "/quantitative_analysis.tsv";
-        chromosome_chuck_quantitative(ptr_vcf, hdr, rec, list_samples, snarls_chr, quantitative, covariate, maf, total_snarl, pvalue_vector, output_quantitive);
+        chromosome_chuck_quantitative(ptr_vcf, hdr, rec, list_samples, snarls_chr, quantitative, covariate, maf, pvalue_vector, kinship, output_quantitive);
 
         string output_significative = output_dir + "/top_variant_quantitative.tsv";
         int column_index = 8; // quantitative adjusted pvalue column index

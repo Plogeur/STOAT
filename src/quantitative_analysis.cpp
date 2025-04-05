@@ -5,49 +5,11 @@
 
 using namespace std;
 
-std::vector<double> LMM(
-    const Eigen::VectorXd& phenotype,
-    const Eigen::MatrixXd& kinship,
-    const Eigen::VectorXd& snp,
-    const Eigen::MatrixXd& covariates) {
-
-    const int N = phenotype.size();
-
-    Eigen::SelfAdjointEigenSolver<Eigen::MatrixXd> eig(kinship);
-    Eigen::MatrixXd U = eig.eigenvectors();
-    Eigen::VectorXd S = eig.eigenvalues();
-
-    Eigen::VectorXd y_star = U.transpose() * phenotype;
-
-    Eigen::MatrixXd X(covariates.rows(), covariates.cols() + 1);
-    X << snp, covariates;
-    Eigen::MatrixXd X_star = U.transpose() * X;
-
-    // NOTE: This delta should be optimized in a real LMM.
-    double delta = 1.0;
-
-    Eigen::VectorXd V_diag = S + delta;
-    Eigen::VectorXd V_inv_diag = V_diag.cwiseInverse();
-
-    Eigen::MatrixXd XVX = X_star.transpose() * V_inv_diag.asDiagonal() * X_star;
-    Eigen::VectorXd XVy = X_star.transpose() * V_inv_diag.asDiagonal() * y_star;
-
-    Eigen::VectorXd beta_hat = XVX.ldlt().solve(XVy);
-
-    Eigen::MatrixXd XVX_inv = XVX.inverse();
-    double beta = beta_hat(0);
-    double se = std::sqrt(XVX_inv(0, 0));
-    double t_stat = beta / se;
-    double p_val = 2.0 * (1.0 - normal_cdf(std::fabs(t_stat)));
-
-    return GWASResult{beta, se, t_stat, p_val};
-}
-
 // Linear regression function OLS
 std::tuple<string, string, string, string> linear_regression(
     const std::unordered_map<std::string, std::vector<int>>& df,
     const std::unordered_map<std::string, double>& quantitative_phenotype) {
-    
+
     size_t num_samples = df.size();
     size_t max_paths = df.begin()->second.size();
     

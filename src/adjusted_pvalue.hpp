@@ -1,4 +1,5 @@
-#pragma once
+#ifndef ADJUSTED_PVALUE_HPP
+#define ADJUSTED_PVALUE_HPP
 
 #include <vector>
 #include <tuple>
@@ -20,3 +21,4 @@ void update_gwas_file_with_adjusted_pvalues(
     const std::vector<std::tuple<double, double, size_t>>& adjusted_pvalues);
 
 
+#endif // ADJUSTED_PVALUE_HPP

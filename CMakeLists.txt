@@ -42,6 +42,7 @@ add_executable(${PROJECT_NAME}
     src/matrix.cpp
     src/quantitative_analysis.cpp
     src/snarl_parser.cpp
+    src/lmm.cpp
     ${ALGLIB_SOURCES}
 )
 
@@ -89,6 +90,7 @@ add_executable(unit_tests
     src/matrix.cpp
     src/quantitative_analysis.cpp
     src/snarl_parser.cpp
+    src/lmm.cpp
 )
 
 # add src target lib + Catch2 lib 

@@ -226,8 +226,8 @@ std::unordered_map<std::string, std::vector<std::tuple<string, vector<string>, s
     return chr_snarl_matrix;
 }
 
-ExpressionData parseExpressionFile(const std::string& filename) {
-    ExpressionData data;
+QTL parseExpressionFile(const std::string& filename) {
+    QTL data;
     std::ifstream file(filename);
     std::string line;
 
