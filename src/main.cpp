@@ -10,7 +10,7 @@
 #include "matrix.hpp"
 #include "list_snarl_paths.hpp"
 #include "gaf_creator.hpp"
-#include "adjusted_pvalue.hpp"
+#include "post_processing.hpp"
 
 using namespace std;
 
@@ -43,7 +43,7 @@ int main(int argc, char* argv[]) {
         chromosome_path, binary_path, quantitative_path, 
         eqtl_path, covariate_path, kinship_path, output_dir;
 
-    size_t threads=1;
+    size_t num_threads=1;
     size_t phenotype=0;
     size_t children_threshold = 50;
     double maf = 0.99;
@@ -103,8 +103,8 @@ int main(int argc, char* argv[]) {
             check_file(eqtl_path);
         } else if ((arg == "-t" || arg == "--threads") && i + 1 < argc) {
             // convert str to int and verify that it is a positive number
-            threads = std::stoi(argv[++i]);
-            if (threads < 1) {
+            num_threads = std::stoi(argv[++i]);
+            if (num_threads < 1) {
                 std::cerr << "Error: Number of threads must be a positive integer\n";
                 return EXIT_FAILURE;
             }
@@ -232,7 +232,7 @@ int main(int argc, char* argv[]) {
 
         snarls_chr = loop_over_snarls_write(*stree, snarls, *pg, output_file, output_snarl_not_analyse, children_threshold, only_snarl_parsing);
         auto end_0 = std::chrono::high_resolution_clock::now();
-        std::cout << "Snarl analysis : " << std::chrono::duration<double>(end_0 - start_0).count() << " s" << std::endl;
+        std::cout << "Snarl decomposition : " << std::chrono::duration<double>(end_0 - start_0).count() << " s" << std::endl;
         if (only_snarl_parsing) {
             return EXIT_SUCCESS;
         }
@@ -241,6 +241,8 @@ int main(int argc, char* argv[]) {
         stree.reset();
         pp_overlay.reset();
     }
+
+    auto start_2 = std::chrono::high_resolution_clock::now();
 
     // pvalue, index
     std::vector<std::tuple<double, double, size_t>> pvalue_vector;
@@ -262,12 +264,11 @@ int main(int argc, char* argv[]) {
     } else if (!binary_path.empty()) {
 
         string output_binary = output_dir + "/binary_analysis.tsv";
-        chromosome_chuck_binary(ptr_vcf, hdr, rec, list_samples, snarls_chr, binary, covariate, maf, pvalue_vector, kinship, output_binary);
+        chromosome_chuck_binary(ptr_vcf, hdr, rec, list_samples, snarls_chr, binary, covariate, maf, kinship, num_threads, output_binary);
 
         string output_significative = output_dir + "/top_variant_binary.tsv";
-        int column_index = 6; // binary adjusted pvalue column index
-        adjust_pvalues_BH(pvalue_vector);
-        update_gwas_file_with_adjusted_pvalues(output_binary, output_significative, column_index, pvalue_vector);
+        string phenotype_type = "binary";
+        add_BH_adjusted_column(output_binary, output_significative, phenotype_type);
 
         if (gaf) {
             string output_gaf = output_dir + "/binary_analysis.gaf";
@@ -288,12 +289,11 @@ int main(int argc, char* argv[]) {
     } else if (!quantitative_path.empty()) {
 
         string output_quantitive = output_dir + "/quantitative_analysis.tsv";
-        chromosome_chuck_quantitative(ptr_vcf, hdr, rec, list_samples, snarls_chr, quantitative, covariate, maf, pvalue_vector, kinship, output_quantitive);
+        chromosome_chuck_quantitative(ptr_vcf, hdr, rec, list_samples, snarls_chr, quantitative, covariate, maf, kinship, num_threads, output_quantitive);
 
         string output_significative = output_dir + "/top_variant_quantitative.tsv";
-        int column_index = 8; // quantitative adjusted pvalue column index
-        adjust_pvalues_BH(pvalue_vector);
-        update_gwas_file_with_adjusted_pvalues(output_quantitive, output_significative, column_index, pvalue_vector);
+        string phenotype_type = "quantitative";
+        add_BH_adjusted_column(output_quantitive, output_significative, phenotype_type);
 
         if (make_plot) {
             string output_manh = output_dir + "/manhattan_plot_quantitative.png";
@@ -316,7 +316,9 @@ int main(int argc, char* argv[]) {
         // chromosome_chuck_eqtl(ptr_vcf, hdr, rec, list_samples, snarls_chr, eqtl, outf);
     }
     
+    
     auto end_1 = std::chrono::high_resolution_clock::now();
+    std::cout << "Snarl analysis : " << std::chrono::duration<double>(end_1 - start_2).count() << " s" << std::endl;
     std::cout << "Time Gwas analysis : " << std::chrono::duration<double>(end_1 - start_1).count() << " s" << std::endl;
 
     return EXIT_SUCCESS;

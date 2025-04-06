@@ -2,6 +2,7 @@
 #include "matrix.hpp"
 #include "binary_analysis.hpp"
 #include "gaf_creator.hpp"
+#include "utils.hpp"
 
 using namespace std;
 
@@ -133,8 +134,8 @@ void gaf_creation(const string& input_file, std::unordered_map<std::string, std:
 
         const string& chr = columns[0];
         string snarl_list = columns[2];
-        double pfisher = stod(columns[6]);
-        double pchi = stod(columns[7]);
+        double pfisher = string_to_pvalue(columns[6]);
+        double pchi = string_to_pvalue(columns[7]);
         string group_paths = columns[11];
         auto it = snarl_chr.find(chr);
         auto& data = it->second;  
