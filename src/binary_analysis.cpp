@@ -230,7 +230,7 @@ std::string format_group_paths(const std::vector<std::vector<int>>& matrix) {
 std::vector<std::vector<int>> create_binary_table(
     const std::unordered_map<std::string, bool>& groups, 
     const std::vector<std::string>& list_path_snarl, 
-    const std::vector<std::string>& list_samples, Matrix& matrix)  {
+    const std::vector<std::string>& list_samples, const Matrix& matrix)  {
 
     std::unordered_map<std::string, size_t> row_headers_dict = matrix.get_row_header();
     size_t length_column_headers = list_path_snarl.size();

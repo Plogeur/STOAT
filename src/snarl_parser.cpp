@@ -452,13 +452,10 @@ void SnarlParser::binary_table(const std::vector<std::tuple<string, vector<strin
                                const KinshipMatrix& kinship, std::ofstream& outf) {
 
     // Iterate over each snarl
-    size_t itr = 0;
-    for (const auto& tuple_snarl : snarls) {
+    for (size_t itr = 0; itr < snarls.size(); ++itr) {
+        const auto& [snarl, list_snarl, pos, type_var] = snarls[itr];
 
-        std::vector<std::string> list_snarl = std::get<1>(tuple_snarl);
         std::vector<std::vector<int>> df = create_binary_table(binary_groups, list_snarl, sampleNames, matrix);
-        std::string snarl = std::get<0>(tuple_snarl), pos = std::get<2>(tuple_snarl);
-        std::vector<std::string> type_var = std::get<3>(tuple_snarl);
         bool df_filtration = check_MAF_threshold_binary(df, maf);
 
         // make a string separated by , from a vector of string
@@ -483,17 +480,15 @@ void SnarlParser::binary_table(const std::vector<std::tuple<string, vector<strin
         } else {
             // fastfisher_p_value, chi2_p_value, allele_number, min_row_index, numb_colum, inter_group, average, group_paths
             stats = binary_stat_test(df);
-            string p_value_f, p_value_c; 
+            std::string p_value_f = "NA", p_value_c = "NA";
 
             if (df_filtration) {
                 p_value_f = stats[0];
                 p_value_c = stats[1];
-            } else {
-                p_value_f = p_value_c = "NA";
             }
             
             double mean_pvalue = mean_pvalue_from_strings(p_value_f, p_value_c);
-            pvalue_vector.push_back({mean_pvalue, 1, itr});
+            pvalue_vector.emplace_back(mean_pvalue, 1, itr);
             // chr, pos, snarl, type variant
             // fisher_p_value, chi2_p_value, adjusted_pvalue, allele_number, min_row_index, 
             // numb_colum, inter_group, average
@@ -504,7 +499,6 @@ void SnarlParser::binary_table(const std::vector<std::tuple<string, vector<strin
         }
 
         outf.write(data.str().c_str(), data.str().size());
-        itr++;
     }
 }
 
@@ -516,8 +510,8 @@ void SnarlParser::quantitative_table(const std::vector<std::tuple<string, vector
                                         const KinshipMatrix& kinship, std::ofstream& outf) {
 
     // Iterate over each snarl
-    size_t itr = 0;
-    for (const auto& tuple_snarl : snarls) {
+    for (size_t itr = 0; itr < snarls.size(); ++itr) {
+        const auto& tuple_snarl = snarls[itr];
 
         std::vector<std::string> list_snarl = std::get<1>(tuple_snarl);
         auto [df, allele_number] = create_quantitative_table(sampleNames, list_snarl, matrix);
@@ -574,7 +568,6 @@ void SnarlParser::quantitative_table(const std::vector<std::tuple<string, vector
         }
 
         outf.write(data.str().c_str(), data.str().size());
-        itr++;
     }
 }
 
