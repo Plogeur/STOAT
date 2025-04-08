@@ -11,7 +11,7 @@ I will release one days, I will !!!
 [![Docker Repository on Quay](https://quay.io/repository/jmonlong/sveval/status "Docker Repository on Quay")](https://quay.io/repository/jmonlong/sveval) 
 -->
 
-<img src="pictures/logo.jpeg" width="150">
+<img src="pictures/logo.png" width="150">
 
 ## Project Overview
 

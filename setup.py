@@ -16,18 +16,18 @@ setup(
     ],
     python_requires=">=3.10",
     install_requires=[
-        "cyvcf2==0.31.1",
-        "numpy==2.0.1",
-        "pandas==2.2.2",
-        "statsmodels==0.14.4",
-        "qmplot==0.3.3",
-        "scipy==1.14.1",
-        "setuptools==78.0.2",
-        "scikit-learn==1.6.0",
-        "matplotlib==3.9.4",
-        "seaborn==0.13.2",
-        "plotly==5.24.1",
-        "pytest==8.3.4"
+        "cyvcf2>=0.31.1",
+        "numpy>=2.0.1",
+        "pandas>=2.2.2",
+        "statsmodels>=0.14.4",
+        "qmplot>=0.3.3",
+        "scipy>=1.14.1",
+        "setuptools>=78.0.2",
+        "scikit-learn>=1.6.0",
+        "matplotlib>=3.9.4",
+        "seaborn>=0.13.2",
+        "plotly>=5.24.1",
+        "pytest>=8.3.4"
     ],
     entry_points={
         "console_scripts": [
