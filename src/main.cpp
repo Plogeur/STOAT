@@ -122,6 +122,11 @@ int main(int argc, char* argv[]) {
         }
     }
 
+    if (show_help) {
+        print_help();
+        return EXIT_FAILURE;    
+    }
+    
     if (output_dir.empty()) {
         output_dir = "../output";
     }
@@ -129,11 +134,6 @@ int main(int argc, char* argv[]) {
     auto start_1 = std::chrono::high_resolution_clock::now();
     std::filesystem::create_directory(output_dir);
     std::unordered_set<std::string> ref_chr = (!chromosome_path.empty()) ? parse_chromosome_reference(chromosome_path) : std::unordered_set<std::string>{"ref"};
-
-    if (show_help) {
-        print_help();
-        return EXIT_FAILURE;    
-    }
 
     // Enforce valid argument combinations
     if ((!snarl_path.empty() || (!pg_path.empty() && !dist_path.empty())) && !vcf_path.empty() && phenotype == 1) {

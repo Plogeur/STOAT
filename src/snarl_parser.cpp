@@ -329,7 +329,7 @@ std::tuple<SnarlParser, htsFile*, bcf_hdr_t*, bcf1_t*> make_matrix(htsFile *ptr_
     std::unordered_map<std::string, size_t> row_header_dict;
 
     // loop over the VCF file for each line and stop where chr is different
-    while ((bcf_read(ptr_vcf, hdr, rec) >= 0) || (chr != bcf_hdr_id2name(hdr, rec->rid))) {
+    while ((bcf_read(ptr_vcf, hdr, rec) >= 0) && (chr == bcf_hdr_id2name(hdr, rec->rid))) {
         bcf_unpack(rec, BCF_UN_STR);
 
         // Check the INFO field for LV (Level Variant) and skip if LV != 0
