@@ -172,7 +172,7 @@ void follow_edges(SnarlDistanceIndex& stree,
     auto add_to_path = [&](const net_handle_t& next_child) {
         if (stree.is_sentinel(next_child)) {
             // If this is the bound of the snarl then we're done
-            finished_paths.emplace_back(path); // replace loop for net in path ?
+            finished_paths.emplace_back(path);
             finished_paths.back().push_back(next_child);
         } else {
             for (const auto& i : path) {
@@ -181,7 +181,7 @@ void follow_edges(SnarlDistanceIndex& stree,
                     return false;
                 }
             }
-            paths.emplace_back(path); // replace loop for net in path ?
+            paths.emplace_back(path);
             paths.back().push_back(next_child);
         }
         return true;
@@ -287,7 +287,8 @@ tuple<vector<string>, vector<string>, size_t> fill_pretty_paths(
             if (stree.is_sentinel(net)) {
                 net = stree.get_node_from_sentinel(net);
             }
-
+            
+            // Node case
             if (stree.is_node(net)) {
                 ppath.addNodeHandle(net, stree);
                 //length_net.push_back(stree.node_length(net));
@@ -298,6 +299,7 @@ tuple<vector<string>, vector<string>, size_t> fill_pretty_paths(
                 seq_net.push_back(seq_node);
             }
 
+            // Trivial chain case
             else if (stree.is_trivial_chain(net)) {
                 ppath.addNodeHandle(net, stree);
                 auto stn_start = stree.starts_at_start(net) ? stree.get_bound(net, false, true) : stree.get_bound(net, true, true);
@@ -307,6 +309,7 @@ tuple<vector<string>, vector<string>, size_t> fill_pretty_paths(
                 seq_net.push_back(seq_trivial_chain);
             }
 
+            // Chain case
             else if (stree.is_chain(net)) {
                 net_handle_t nodl, nodr;
                 if (stree.starts_at_start(net)) {
