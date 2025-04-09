@@ -340,7 +340,7 @@ tuple<vector<string>, vector<string>, size_t> fill_pretty_paths(
 }
 
 // {chr : matrix(snarl, paths, chr, pos, type)}
-std::pair<std::unordered_map<std::string, std::vector<std::tuple<string, vector<string>, string, vector<string>>>>, size_t> loop_over_snarls_write(
+std::unordered_map<std::string, std::vector<std::tuple<string, vector<string>, string, vector<string>>>> loop_over_snarls_write(
         SnarlDistanceIndex& stree,
         vector<tuple<net_handle_t, string, size_t>>& snarls,
         PackedGraph& pg, 
@@ -358,7 +358,6 @@ std::pair<std::unordered_map<std::string, std::vector<std::tuple<string, vector<
     std::vector<std::tuple<string, vector<string>, string, vector<string>>> snarl_paths;
     unordered_map<string, std::vector<std::tuple<string, vector<string>, string, vector<string>>>> chr_snarl_matrix;
     size_t paths_number_analysis = 0;
-    size_t total_snarl = 0;
     chrono::seconds time_threshold(2);
     string save_chr = "";
 
@@ -415,7 +414,6 @@ std::pair<std::unordered_map<std::string, std::vector<std::tuple<string, vector<
             // chromosome   position    snarl_id    paths    type
             string chr = std::get<1>(snarl_path_pos);
             string pos = std::to_string(std::get<2>(snarl_path_pos)+padding);
-            total_snarl += 1; 
             paths_number_analysis += pretty_paths.size();
 
             if (bool_return) {
@@ -448,5 +446,5 @@ std::pair<std::unordered_map<std::string, std::vector<std::tuple<string, vector<
         cout << "chr : " << chr_snarl.first << ", number of snarl : " << chr_snarl.second.size() << endl;
     }
 
-    return {chr_snarl_matrix, total_snarl};
+    return {chr_snarl_matrix};
 }

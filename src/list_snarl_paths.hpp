@@ -92,7 +92,7 @@ tuple<vector<string>, vector<string>, size_t> fill_pretty_paths(
                             vector<vector<net_handle_t>>& finished_paths);
 
 // Function to loop over snarls and write output
-std::pair<std::unordered_map<std::string, std::vector<std::tuple<string, vector<string>, string, vector<string>>>>, size_t> loop_over_snarls_write(
+std::unordered_map<std::string, std::vector<std::tuple<string, vector<string>, string, vector<string>>>> loop_over_snarls_write(
                             SnarlDistanceIndex& stree, 
                             vector<tuple<net_handle_t, string, size_t>>& snarls, 
                             PackedGraph& pg, 
@@ -101,4 +101,4 @@ std::pair<std::unordered_map<std::string, std::vector<std::tuple<string, vector<
                             size_t children_treshold, 
                             bool bool_return);
 
-#endif 
+#endif

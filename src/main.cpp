@@ -5,12 +5,12 @@
 #include <Eigen/Dense>
 #include <cstdlib>
 
+#include "arg_parser.hpp"
 #include "snarl_parser.hpp"     
 #include "matrix.hpp"
-#include "arg_parser.hpp"
 #include "list_snarl_paths.hpp"
 #include "gaf_creator.hpp"
-#include "adjusted_pvalue.hpp"
+#include "post_processing.hpp"
 
 using namespace std;
 
@@ -28,6 +28,7 @@ void print_help() {
               << "  -q, --quantitative <path>   Path to the quantitative phenotype file (.txt or .tsv)\n"
               << "  --covariate <path>          Path to the covariate file (.txt or .tsv)\n"
               << "  -e, --eqtl <path>           Path to the Expression Quantitative Trait Loci file (.txt or .tsv)\n"
+              << "  -k, --kinship <path>         Path to the kinship matrix file (.txt or .tsv)\n"
               << "  --make-bed                  Create a plink format files (.bed, .bim, bed)\n"
               << "  --plot                      Create Manhatthan plot and QQ plot\n"
               << "  --maf                       Add a maf (Minimum allele frequency) thresold (defauld : 0.01)\n"
@@ -40,9 +41,9 @@ int main(int argc, char* argv[]) {
     // Declare variables to hold argument values
     std::string vcf_path, snarl_path, pg_path, dist_path, 
         chromosome_path, binary_path, quantitative_path, 
-        eqtl_path, covariate_path, output_dir;
+        eqtl_path, covariate_path, kinship_path, output_dir;
 
-    size_t threads=1;
+    size_t num_threads=1;
     size_t phenotype=0;
     size_t children_threshold = 50;
     double maf = 0.99;
@@ -89,6 +90,9 @@ int main(int argc, char* argv[]) {
         } else if ((arg == "--covariate") && i + 1 < argc) {
             covariate_path = argv[++i];
             check_file(covariate_path);
+        } else if ((arg == "-k" || arg == "--kinship") && i + 1 < argc) {
+            kinship_path = argv[++i];
+            check_file(kinship_path);
         } else if ((arg == "-q" || arg == "--quantitative") && i + 1 < argc) {
             quantitative_path = argv[++i];
             phenotype ++;
@@ -99,8 +103,8 @@ int main(int argc, char* argv[]) {
             check_file(eqtl_path);
         } else if ((arg == "-t" || arg == "--threads") && i + 1 < argc) {
             // convert str to int and verify that it is a positive number
-            threads = std::stoi(argv[++i]);
-            if (threads < 1) {
+            num_threads = std::stoi(argv[++i]);
+            if (num_threads < 1) {
                 std::cerr << "Error: Number of threads must be a positive integer\n";
                 return EXIT_FAILURE;
             }
@@ -180,6 +184,12 @@ int main(int argc, char* argv[]) {
         covariate = parseCovariate(covariate_path);
     }
 
+    KinshipMatrix kinship;
+    if (!kinship_path.empty()) {
+        // check_format_kinship(kinship_path);
+        kinship = parseKinshipMatrix(kinship_path);
+    }
+
     if (!binary_path.empty()) {
         check_format_binary_phenotype(binary_path);
         binary = parse_binary_pheno(binary_path);
@@ -208,10 +218,9 @@ int main(int argc, char* argv[]) {
     std::unique_ptr<bdsg::PackedGraph> pg;
     handlegraph::net_handle_t root;
     std::unique_ptr<bdsg::PackedPositionOverlay> pp_overlay;
-    size_t total_snarl;
 
     if (!snarl_path.empty()){
-        std::tie(snarls_chr, total_snarl) = parse_snarl_path(snarl_path);
+        snarls_chr = parse_snarl_path(snarl_path);
     } else {
         std::cout << "Start snarl analysis... " << std::endl;
         auto start_0 = std::chrono::high_resolution_clock::now();
@@ -221,9 +230,9 @@ int main(int argc, char* argv[]) {
         string output_snarl_not_analyse = output_dir + "/snarl_not_analyse.tsv";
         string output_file = output_dir + "/snarl_analyse.tsv";
 
-        std::tie(snarls_chr, total_snarl) = loop_over_snarls_write(*stree, snarls, *pg, output_file, output_snarl_not_analyse, children_threshold, only_snarl_parsing);
+        snarls_chr = loop_over_snarls_write(*stree, snarls, *pg, output_file, output_snarl_not_analyse, children_threshold, only_snarl_parsing);
         auto end_0 = std::chrono::high_resolution_clock::now();
-        std::cout << "Snarl analysis : " << std::chrono::duration<double>(end_0 - start_0).count() << " s" << std::endl;
+        std::cout << "Snarl decomposition : " << std::chrono::duration<double>(end_0 - start_0).count() << " s" << std::endl;
         if (only_snarl_parsing) {
             return EXIT_SUCCESS;
         }
@@ -233,9 +242,10 @@ int main(int argc, char* argv[]) {
         pp_overlay.reset();
     }
 
+    auto start_2 = std::chrono::high_resolution_clock::now();
+
     // pvalue, index
     std::vector<std::tuple<double, double, size_t>> pvalue_vector;
-    pvalue_vector.reserve(total_snarl);
     if (make_bed) {
         std::vector<std::pair<std::string, int>> pheno;
         
@@ -254,12 +264,11 @@ int main(int argc, char* argv[]) {
     } else if (!binary_path.empty()) {
 
         string output_binary = output_dir + "/binary_analysis.tsv";
-        chromosome_chuck_binary(ptr_vcf, hdr, rec, list_samples, snarls_chr, binary, covariate, maf, total_snarl, pvalue_vector, output_binary);
+        chromosome_chuck_binary(ptr_vcf, hdr, rec, list_samples, snarls_chr, binary, covariate, maf, kinship, num_threads, output_binary);
 
         string output_significative = output_dir + "/top_variant_binary.tsv";
-        int column_index = 6; // binary adjusted pvalue column index
-        adjust_pvalues_BH(pvalue_vector);
-        update_gwas_file_with_adjusted_pvalues(output_binary, output_significative, column_index, pvalue_vector);
+        string phenotype_type = "binary";
+        add_BH_adjusted_column(output_binary, output_significative, phenotype_type);
 
         if (gaf) {
             string output_gaf = output_dir + "/binary_analysis.gaf";
@@ -280,12 +289,11 @@ int main(int argc, char* argv[]) {
     } else if (!quantitative_path.empty()) {
 
         string output_quantitive = output_dir + "/quantitative_analysis.tsv";
-        chromosome_chuck_quantitative(ptr_vcf, hdr, rec, list_samples, snarls_chr, quantitative, covariate, maf, total_snarl, pvalue_vector, output_quantitive);
+        chromosome_chuck_quantitative(ptr_vcf, hdr, rec, list_samples, snarls_chr, quantitative, covariate, maf, kinship, num_threads, output_quantitive);
 
         string output_significative = output_dir + "/top_variant_quantitative.tsv";
-        int column_index = 8; // quantitative adjusted pvalue column index
-        adjust_pvalues_BH(pvalue_vector);
-        update_gwas_file_with_adjusted_pvalues(output_quantitive, output_significative, column_index, pvalue_vector);
+        string phenotype_type = "quantitative";
+        add_BH_adjusted_column(output_quantitive, output_significative, phenotype_type);
 
         if (make_plot) {
             string output_manh = output_dir + "/manhattan_plot_quantitative.png";
@@ -308,7 +316,9 @@ int main(int argc, char* argv[]) {
         // chromosome_chuck_eqtl(ptr_vcf, hdr, rec, list_samples, snarls_chr, eqtl, outf);
     }
     
+    
     auto end_1 = std::chrono::high_resolution_clock::now();
+    std::cout << "Snarl analysis : " << std::chrono::duration<double>(end_1 - start_2).count() << " s" << std::endl;
     std::cout << "Time Gwas analysis : " << std::chrono::duration<double>(end_1 - start_1).count() << " s" << std::endl;
 
     return EXIT_SUCCESS;

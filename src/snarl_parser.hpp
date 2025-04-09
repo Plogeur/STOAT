@@ -1,4 +1,5 @@
-#pragma once
+#ifndef SNARL_PARSER_HPP
+#define SNARL_PARSER_HPP
 
 #include <string>
 #include <vector>
@@ -11,38 +12,51 @@
 #include <iostream>
 #include <thread>
 #include <mutex>
+#include <future>
 #include <chrono>
 #include <htslib/vcf.h>
 #include <htslib/hts.h>
 
 #include "matrix.hpp"
+#include "arg_parser.hpp"
 
 using namespace std;
 
 // SnarlParser class declaration
 class SnarlParser {
 public:
+    // caca change to private
     std::vector<std::string> sampleNames;
     Matrix matrix;
 
     SnarlParser(const vector<string>& sample_names, size_t num_paths_chr);
+    ~SnarlParser()=default;
     void push_matrix(const std::string& decomposedSnarl, std::unordered_map<std::string, size_t>& rowHeaderDict, size_t indexColumn);
-    void binary_table(const std::vector<std::tuple<string, vector<string>, string, vector<string>>>& snarls,
-                        const std::unordered_map<std::string, bool>& binary_groups, const string &chr,
-                        const std::unordered_map<std::string, std::vector<double>>& covar,
-                        const double& maf, const size_t& total_snarl, 
-                        std::vector<std::tuple<double, double, size_t>>& pvalue_vector, std::ofstream& outf);
+    
+    void binary_table(const std::vector<std::tuple<std::string, std::vector<std::string>, std::string, std::vector<std::string>>>& snarls,
+        const std::unordered_map<std::string, bool>& binary_groups, const std::string& chr,
+        const std::unordered_map<std::string, std::vector<double>>& covar,
+        const double& maf, const KinshipMatrix& kinship, 
+        const size_t& num_threads, std::ofstream& outf);
+
     void quantitative_table(const std::vector<std::tuple<string, vector<string>, string, vector<string>>>& snarls,
                             const std::unordered_map<std::string, double>& quantitative_phenotype, const string &chr,
                             const std::unordered_map<std::string, std::vector<double>>& covar,
-                            const double& maf, const size_t& total_snarl, 
-                            std::vector<std::tuple<double, double, size_t>>& pvalue_vector, std::ofstream& outf);
+                            const double& maf, const KinshipMatrix& kinship, const size_t& num_threads, std::ofstream& outf);
 
     void create_bim_bed(const std::vector<std::tuple<string, vector<string>, string, vector<string>>>& snarls, 
                                     string chromosome, const std::string& output_bim, const std::string& output_bed);
     std::vector<int> create_table_short_path(const std::string& list_path_snarl);
 
 };
+
+void process_snarl(size_t snarl_index,
+    const std::vector<std::tuple<std::string, std::vector<std::string>, std::string, std::vector<std::string>>>& snarls,
+    const std::unordered_map<std::string, bool>& binary_groups, const std::string& chr,
+    const std::unordered_map<std::string, std::vector<double>>& covar, const double& maf,
+    std::vector<std::tuple<double, double, size_t>>& pvalue_vector, std::mutex& pval_mutex,
+    std::ofstream& outf, std::mutex& outf_mutex,
+    const std::vector<std::string>& sampleNames, const Matrix& matrix);
 
 // void chromosome_chuck_eqtl(htsFile* &ptr_vcf, bcf_hdr_t* &hdr, bcf1_t* &rec, 
 //     const std::vector<std::string> &list_samples,
@@ -56,13 +70,15 @@ void chromosome_chuck_binary(htsFile* &ptr_vcf, bcf_hdr_t* &hdr, bcf1_t* &rec,
     const std::vector<std::string> &list_samples, 
     unordered_map<string, std::vector<std::tuple<string, vector<string>, string, vector<string>>>> &snarl_chr,
     const unordered_map<string, bool>& pheno, std::unordered_map<std::string, std::vector<double>> covar, 
-    const double& maf, const size_t& total_snarl, std::vector<std::tuple<double, double, size_t>>& pvalue_vector, const std::string& output_binary);
+    const double& maf, const KinshipMatrix& kinship, 
+    const size_t& num_threads, const std::string& output_binary);
 
 void chromosome_chuck_quantitative(htsFile* &ptr_vcf, bcf_hdr_t* &hdr, bcf1_t* &rec, 
     const std::vector<std::string> &list_samples,
     unordered_map<string, std::vector<std::tuple<string, vector<string>, string, vector<string>>>> &snarl_chr,
     const unordered_map<string, double>& pheno, std::unordered_map<std::string, std::vector<double>> covar,
-    const double& maf, const size_t& total_snarl, std::vector<std::tuple<double, double, size_t>>& pvalue_vector, const std::string& output_quantitive);
+    const double& maf, const KinshipMatrix& kinship, 
+    const size_t& num_threads, const std::string& output_quantitive);
 
 void chromosome_chuck_make_bed(htsFile* &ptr_vcf, bcf_hdr_t* &hdr, bcf1_t* &rec, 
     const std::vector<std::string> &list_samples,
@@ -93,3 +109,8 @@ std::vector<int> identify_correct_path(const std::vector<std::string>& decompose
                                         size_t>& row_headers_dict, 
                                         const Matrix& matrix, 
                                         const size_t num_cols);
+
+std::unordered_map<std::string, std::vector<double>> convertBinaryGroups(
+                                        const std::unordered_map<std::string, bool>& binary_groups);
+
+#endif

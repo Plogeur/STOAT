@@ -10,6 +10,7 @@
 class Matrix {
 public:
     Matrix(size_t rows, size_t cols);
+    ~Matrix()=default;
     bool operator()(size_t row, size_t col) const;
     void set(size_t row, size_t col);
     const std::vector<uint8_t>& get_matrix() const;

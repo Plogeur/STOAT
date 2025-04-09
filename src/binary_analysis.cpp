@@ -79,7 +79,7 @@ bool check_observed(const std::vector<std::vector<int>>& observed, size_t rows, 
 }
 
 // Function to calculate the Chi-square test statistic
-std::string chi2Test(const std::vector<std::vector<int>>& observed, const size_t& total_snarl) {
+std::string chi2Test(const std::vector<std::vector<int>>& observed) {
     size_t rows = observed.size();
     size_t cols = observed[0].size();
 
@@ -144,7 +144,7 @@ double logHypergeometricProb(double* logFacs , int a, int b, int c, int d) {
     - logFacs[a] - logFacs[b] - logFacs[c] - logFacs[d] - logFacs[a+b+c+d];
 }
 
-std::string fastFishersExactTest(const std::vector<std::vector<int>>& table, const size_t& total_snarl) {
+std::string fastFishersExactTest(const std::vector<std::vector<int>>& table) {
     // Ensure the table is 2x2
     if (table.size() != 2 || table[0].size() != 2 || table[1].size() != 2) {
         return {"NA", "NA"};
@@ -181,7 +181,7 @@ std::string fastFishersExactTest(const std::vector<std::vector<int>>& table, con
 
 // ------------------------ Binary table & stats ------------------------
 
-std::vector<std::string> binary_stat_test(const std::vector<std::vector<int>>& df, const size_t& total_snarl) {
+std::vector<std::string> binary_stat_test(const std::vector<std::vector<int>>& df) {
 
     // Compute derived statistics
     int allele_number = 0;
@@ -206,8 +206,8 @@ std::vector<std::string> binary_stat_test(const std::vector<std::vector<int>>& d
     int average = static_cast<double>(allele_number) / numb_colum; // get 200 instead of 200.00000
 
     // Compute  Fisher's exact & Chi-squared test p-value
-    string chi2_p_value = chi2Test(df, total_snarl);
-    string fastfisher_p_value = fastFishersExactTest(df, total_snarl);
+    string chi2_p_value = chi2Test(df);
+    string fastfisher_p_value = fastFishersExactTest(df);
     std::string group_paths = format_group_paths(df); // Placeholder for future implementation
     return {fastfisher_p_value, chi2_p_value, std::to_string(allele_number), std::to_string(min_row_index), std::to_string(numb_colum), std::to_string(inter_group), std::to_string(average), group_paths};
 }
@@ -230,7 +230,7 @@ std::string format_group_paths(const std::vector<std::vector<int>>& matrix) {
 std::vector<std::vector<int>> create_binary_table(
     const std::unordered_map<std::string, bool>& groups, 
     const std::vector<std::string>& list_path_snarl, 
-    const std::vector<std::string>& list_samples, Matrix& matrix)  {
+    const std::vector<std::string>& list_samples, const Matrix& matrix)  {
 
     std::unordered_map<std::string, size_t> row_headers_dict = matrix.get_row_header();
     size_t length_column_headers = list_path_snarl.size();

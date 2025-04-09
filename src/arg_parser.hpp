@@ -1,5 +1,5 @@
-#ifndef ARG_PARSERS_HPP
-#define ARG_PARSERS_HPP
+#ifndef ARG_PARSER_HPP
+#define ARG_PARSER_HPP
 
 #include <iostream>
 #include <fstream>
@@ -22,21 +22,39 @@
 
 using namespace std;
 
-// Struct to store parsed eQTL data
-struct QTLRecord {
-    std::string marker;
-    int chromosome;
-    double position;
-    double lod;
-    double p_value;
-    std::string trait;
+// Struct to store parsed eQTL data// QTL struct
+struct QTL {
+    std::vector<std::string> sample_ids;
+    std::vector<std::string> gene_ids;
+    std::vector<std::vector<double>> expression_matrix;
+
+    // Default constructor
+    QTL() = default;
+    
+    QTL(const std::vector<std::string>& sample_ids,
+        const std::vector<std::string>& gene_ids,
+        const std::vector<std::vector<double>>& expression_matrix)
+        : sample_ids(sample_ids), gene_ids(gene_ids), expression_matrix(expression_matrix) {}
 };
 
-// Function to parse an eQTL file
-std::vector<QTLRecord> parseQTLFile(const std::string& filename);
-void check_format_covariate(const std::string& filename);
+// KinshipMatrix struct
+struct KinshipMatrix {
+    std::vector<std::string> ids;
+    std::vector<std::vector<double>> matrix;
 
-bool isValidQTLFormat(const std::string& line);
+    // Default constructor
+    KinshipMatrix() = default;
+
+    // Parameterized constructor
+    KinshipMatrix(const std::vector<std::string>& ids,
+                  const std::vector<std::vector<double>>& matrix)
+        : ids(ids), matrix(matrix) {}
+};
+
+KinshipMatrix parseKinshipMatrix(const std::string& filename);
+QTL parseExpressionFile(const std::string& filename);
+
+void check_format_covariate(const std::string& filename);
 
 template <typename T>
 void check_phenotype_covariate(const std::unordered_map<std::string, T>& phenotype, 
@@ -58,7 +76,7 @@ template <typename T>
 void check_match_samples(const std::unordered_map<std::string, T>& map, const std::vector<std::string>& keys);
 
 // Parses the snarl path file and returns a map with snarl as keys and paths as a list of strings.
-std::pair<std::unordered_map<std::string, std::vector<std::tuple<string, vector<string>, string, vector<string>>>>, size_t> parse_snarl_path(const std::string& path_file);
+std::unordered_map<std::string, std::vector<std::tuple<string, vector<string>, string, vector<string>>>> parse_snarl_path(const std::string& path_file);
 
 void check_format_quantitative_phenotype(const std::string& file_path);
 void check_format_binary_phenotype(const std::string& file_path);
