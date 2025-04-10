@@ -22,16 +22,16 @@
 // ------------------------ LMM BINARY ------------------------
 
 std::vector<std::string> LMM_binary(
-    const std::vector<std::vector<uint64_t>>& df,
+    const std::vector<std::vector<size_t>>& df,
     const std::unordered_map<std::string, std::vector<double>>& covariate);
 
 // ------------------------ Chi2 test ------------------------
 
 // Function to check if matrix is valid (no zero rows/columns)
-bool check_observed(const std::vector<std::vector<uint64_t>>& observed, uint64_t rows, uint64_t cols);
+bool check_observed(const std::vector<std::vector<size_t>>& observed, size_t rows, size_t cols);
 
 // Function to perform the Chi-square test
-std::string chi2Test(const std::vector<std::vector<uint64_t>>& observed);
+std::string chi2Test(const std::vector<std::vector<size_t>>& observed);
 
 // ------------------------ Fisher exact test ------------------------
 
@@ -39,15 +39,15 @@ double logHypergeometricProb(double* logFacs , int a, int b, int c, int d);
 void initLogFacs(double* logFacs, int n);
 
 // Function to perform Fisher's exact test
-std::string fastFishersExactTest(const std::vector<std::vector<uint64_t>>& table);
+std::string fastFishersExactTest(const std::vector<std::vector<size_t>>& table);
 
 // ------------------------ Binary table ------------------------
 
-std::string format_group_paths(const std::vector<std::vector<uint64_t>>& df);
+std::string format_group_paths(const std::vector<std::vector<size_t>>& df);
 
-std::vector<std::string> binary_stat_test(const std::vector<std::vector<uint64_t>>& df);
+std::vector<std::string> binary_stat_test(const std::vector<std::vector<size_t>>& df);
 
-std::vector<std::vector<uint64_t>> create_binary_table(
+std::vector<std::vector<size_t>> create_binary_table(
     const std::unordered_map<std::string, bool>& groups, 
     const std::vector<std::string>& list_path_snarl, 
     const std::vector<std::string>& list_samples, const Matrix& matrix);

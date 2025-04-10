@@ -12,7 +12,7 @@ TEST_CASE("Matrix Constructor and Basic Properties", "[Matrix]") {
 TEST_CASE("Matrix Expansion", "[Matrix]") {
     SECTION("Matrix expands properly") {
         Matrix mat(4, 5);
-        uint64_t original_size = mat.get_matrix().size();
+        size_t original_size = mat.get_matrix().size();
         mat.expandMatrix();
         REQUIRE(mat.get_matrix().size() > original_size);
     }
@@ -28,7 +28,7 @@ TEST_CASE("Matrix Set and Access Elements", "[Matrix]") {
 TEST_CASE("Matrix Shrink", "[Matrix]") {
     SECTION("Matrix correctly shrinks") {
         Matrix mat(10, 5);
-        uint64_t original_size = mat.get_matrix().size();
+        size_t original_size = mat.get_matrix().size();
         mat.shrink(5);  // Reduce row count
         REQUIRE(mat.get_matrix().size() < original_size);
     }

@@ -20,7 +20,7 @@ void Path::addNodeHandle(const net_handle_t& node_h, const SnarlDistanceIndex& s
 
     // Handle trivial chain modifications
     if (stree.is_trivial_chain(node_h)) {
-        uint64_t pos;
+        size_t pos;
         while ((pos = node_s.find(" pretending to be a chain")) != std::string::npos) {
             node_s.replace(pos, 25, "");
         }
@@ -30,7 +30,7 @@ void Path::addNodeHandle(const net_handle_t& node_h, const SnarlDistanceIndex& s
     }
 
     // Parse node info
-    uint64_t pos = node_s.find("node ");
+    size_t pos = node_s.find("node ");
     if (pos != std::string::npos) {
         node_s.erase(pos, 5);
     }
@@ -42,7 +42,7 @@ void Path::addNodeHandle(const net_handle_t& node_h, const SnarlDistanceIndex& s
 
     auto removeSubstrings = [](std::string& str, const std::vector<std::string>& substrings) {
         for (const auto& sub : substrings) {
-            uint64_t pos_2;
+            size_t pos_2;
             while ((pos_2 = str.find(sub)) != std::string::npos) {
                 str.erase(pos_2, sub.length());
             }
@@ -59,7 +59,7 @@ void Path::addNodeHandle(const net_handle_t& node_h, const SnarlDistanceIndex& s
 // Get the string representation of the path
 std::string Path::print() const {
     std::string out_path;
-    for (uint64_t i = 0; i < nodes.size(); ++i) {
+    for (size_t i = 0; i < nodes.size(); ++i) {
         out_path += orients[i] + nodes[i];
     }
     return out_path;
@@ -69,7 +69,7 @@ std::string Path::print() const {
 void Path::flip() {
     std::reverse(nodes.begin(), nodes.end());
     std::reverse(orients.begin(), orients.end());
-    for (uint64_t i = 0; i < orients.size(); ++i) {
+    for (size_t i = 0; i < orients.size(); ++i) {
         if (nodes[i] == "*") {
             continue;
         }
@@ -78,19 +78,19 @@ void Path::flip() {
 }
 
 // Get the size of the path
-uint64_t Path::size() const {
+size_t Path::size() const {
     return nodes.size();
 }
 
 // Count the number of reversed nodes
-uint64_t Path::nreversed() const {
+size_t Path::nreversed() const {
     return std::count(orients.begin(), orients.end(), '<');
 }
 
 // Function to calculate the type of variant
-pair<vector<string>, uint64_t> calcul_pos_type_variant(const vector<vector<string>>& list_list_length_paths) {
+pair<vector<string>, size_t> calcul_pos_type_variant(const vector<vector<string>>& list_list_length_paths) {
     vector<string> list_type_variant;
-    uint64_t padding = 0;
+    size_t padding = 0;
     bool just_snp = true;
 
     for (const auto& path_lengths : list_list_length_paths) {
@@ -193,20 +193,20 @@ void follow_edges(SnarlDistanceIndex& stree,
     }
 }
 
-vector<tuple<net_handle_t, string, uint64_t>> save_snarls(
+vector<tuple<net_handle_t, string, size_t>> save_snarls(
                                 SnarlDistanceIndex& stree, 
                                 net_handle_t& root,
                                 PackedGraph& pg, 
                                 unordered_set<string>& ref_chr,
                                 PackedPositionOverlay& ppo) {
 
-    vector<tuple<net_handle_t, string, uint64_t>> snarls;
-    unordered_map<string, pair<string, uint64_t>> snarls_pos;
+    vector<tuple<net_handle_t, string, size_t>> snarls;
+    unordered_map<string, pair<string, size_t>> snarls_pos;
 
     // Given a node handle (dist index), return a position on a chr reference path
-    auto get_node_position = [&](net_handle_t node) -> pair<string, uint64_t> { // node : net_handle_t
+    auto get_node_position = [&](net_handle_t node) -> pair<string, size_t> { // node : net_handle_t
         handle_t node_h = stree.get_handle(node, &pg);
-        pair<string, uint64_t> ret_pos; // pair<string, uint64_t> path_name, position
+        pair<string, size_t> ret_pos; // pair<string, size_t> path_name, position
 
         auto step_callback = [&](const step_handle_t& step_handle) {
             path_handle_t path_handle = pg.get_path_handle_of_step(step_handle);
@@ -226,16 +226,16 @@ vector<tuple<net_handle_t, string, uint64_t>> save_snarls(
         return ret_pos;
     };
 
-    auto get_net_start_position = [&](net_handle_t net) -> pair<string, uint64_t> {
+    auto get_net_start_position = [&](net_handle_t net) -> pair<string, size_t> {
 
         if (stree.is_node(net)) {
             return get_node_position(net);
         }
 
         net_handle_t bnode1 = stree.get_bound(net, true, false);
-        pair<string, uint64_t> bnode1_p = get_node_position(bnode1);
+        pair<string, size_t> bnode1_p = get_node_position(bnode1);
         net_handle_t bnode2 = stree.get_bound(net, false, false);
-        pair<string, uint64_t> bnode2_p = get_node_position(bnode2);
+        pair<string, size_t> bnode2_p = get_node_position(bnode2);
 
         // Check if the string part of the pair is empty
         if (bnode1_p.first.empty()) return bnode1_p;
@@ -249,7 +249,7 @@ vector<tuple<net_handle_t, string, uint64_t>> save_snarls(
 
     function<void(net_handle_t)> save_snarl_tree_node;
     save_snarl_tree_node = [&](net_handle_t net) {
-        pair<string, uint64_t> snarl_pos = get_net_start_position(net);
+        pair<string, size_t> snarl_pos = get_net_start_position(net);
         if (snarl_pos.first.empty()) {
             auto par_net = stree.get_parent(net);
             snarl_pos = snarls_pos[stree.net_handle_as_string(par_net)];
@@ -271,7 +271,7 @@ vector<tuple<net_handle_t, string, uint64_t>> save_snarls(
     return snarls;
 }
 
-tuple<vector<string>, vector<string>, uint64_t> fill_pretty_paths(
+tuple<vector<string>, vector<string>, size_t> fill_pretty_paths(
     SnarlDistanceIndex& stree, 
     PackedGraph& pg, 
     vector<vector<net_handle_t>>& finished_paths) {
@@ -334,7 +334,7 @@ tuple<vector<string>, vector<string>, uint64_t> fill_pretty_paths(
         seq_net_paths.push_back(seq_net);
     }
 
-    // pair<vector<string>, uint64_t>
+    // pair<vector<string>, size_t>
     auto [type_variants, length_first_variant] = calcul_pos_type_variant(seq_net_paths);
     return std::make_tuple(pretty_paths, type_variants, length_first_variant);
 }
@@ -342,11 +342,11 @@ tuple<vector<string>, vector<string>, uint64_t> fill_pretty_paths(
 // {chr : matrix(snarl, paths, chr, pos, type)}
 std::unordered_map<std::string, std::vector<std::tuple<string, vector<string>, string, vector<string>>>> loop_over_snarls_write(
         SnarlDistanceIndex& stree,
-        vector<tuple<net_handle_t, string, uint64_t>>& snarls,
+        vector<tuple<net_handle_t, string, size_t>>& snarls,
         PackedGraph& pg, 
         const string& output_file,
         const string& output_snarl_not_analyse,
-        uint64_t children_threshold = 50, 
+        size_t children_threshold = 50, 
         bool bool_return = true) {
 
     ofstream out_snarl(output_file);
@@ -357,11 +357,11 @@ std::unordered_map<std::string, std::vector<std::tuple<string, vector<string>, s
     
     std::vector<std::tuple<string, vector<string>, string, vector<string>>> snarl_paths;
     unordered_map<string, std::vector<std::tuple<string, vector<string>, string, vector<string>>>> chr_snarl_matrix;
-    uint64_t paths_number_analysis = 0;
+    size_t paths_number_analysis = 0;
     chrono::seconds time_threshold(2);
     string save_chr = "";
 
-    std::vector<uint64_t> children = {0};
+    std::vector<size_t> children = {0};
     auto count_children = [&](net_handle_t net) {
         children[0] += 1;
         return true;
@@ -401,12 +401,12 @@ std::unordered_map<std::string, std::vector<std::tuple<string, vector<string>, s
             std::ostringstream pretty_paths_stream, type_variants_stream;
 
             // Convert pretty_paths (vector<string>) into a comma-separated string
-            for (uint64_t i = 0; i < pretty_paths.size(); ++i) {
+            for (size_t i = 0; i < pretty_paths.size(); ++i) {
                 if (i > 0) pretty_paths_stream << ",";
                 pretty_paths_stream << pretty_paths[i];
             }
  
-            for (uint64_t i = 0; i < type_variants.size(); ++i) {
+            for (size_t i = 0; i < type_variants.size(); ++i) {
                 if (i > 0) type_variants_stream << ",";  // Add a comma and space between strings
                 type_variants_stream << type_variants[i];
             }

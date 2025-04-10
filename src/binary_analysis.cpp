@@ -26,7 +26,7 @@ static const double kExactTestBias = 0.00000000000000000000000010339757656912845
 // ------------------------ LMM BINARY ------------------------
 
 // LMM Model fitting function
-std::vector<std::string> LMM_binary(const std::vector<std::vector<uint64_t>>& df,
+std::vector<std::string> LMM_binary(const std::vector<std::vector<size_t>>& df,
     const std::unordered_map<std::string, std::vector<double>>& covariate) {
 
     int num_samples = df[0].size();
@@ -72,21 +72,21 @@ std::vector<std::string> LMM_binary(const std::vector<std::vector<uint64_t>>& df
 // ------------------------ Chi2 test ------------------------
 
 // Check if the observed matrix is valid (no zero rows/columns)
-bool check_observed(const std::vector<std::vector<uint64_t>>& observed, uint64_t rows, uint64_t cols) {
+bool check_observed(const std::vector<std::vector<size_t>>& observed, size_t rows, size_t cols) {
     std::vector<int> col_sums(cols, 0);
 
     if (observed.size() == 0) return false;
     
-    for (uint64_t i = 0; i < rows; ++i) {
+    for (size_t i = 0; i < rows; ++i) {
         int row_sum = 0;
-        for (uint64_t j = 0; j < cols; ++j) {
+        for (size_t j = 0; j < cols; ++j) {
             row_sum += observed[i][j];
             col_sums[j] += observed[i][j];
         }
         if (row_sum <= 0) return false; // Check row sum
     }
 
-    for (uint64_t j = 0; j < cols; ++j) {
+    for (size_t j = 0; j < cols; ++j) {
         if (col_sums[j] <= 0) return false; // Check column sums
     }
 
@@ -94,9 +94,9 @@ bool check_observed(const std::vector<std::vector<uint64_t>>& observed, uint64_t
 }
 
 // Function to calculate the Chi-square test statistic
-std::string chi2Test(const std::vector<std::vector<uint64_t>>& observed) {
-    uint64_t rows = observed.size();
-    uint64_t cols = observed[0].size();
+std::string chi2Test(const std::vector<std::vector<size_t>>& observed) {
+    size_t rows = observed.size();
+    size_t cols = observed[0].size();
 
     // Validate the observed matrix
     if (!check_observed(observed, rows, cols)) {
@@ -108,8 +108,8 @@ std::string chi2Test(const std::vector<std::vector<uint64_t>>& observed) {
     std::vector<double> col_sums(cols, 0.0);
     double total_sum = 0.0;
 
-    for (uint64_t i = 0; i < rows; ++i) {
-        for (uint64_t j = 0; j < cols; ++j) {
+    for (size_t i = 0; i < rows; ++i) {
+        for (size_t j = 0; j < cols; ++j) {
             row_sums[i] += observed[i][j];
             col_sums[j] += observed[i][j];
             total_sum += observed[i][j];
@@ -118,16 +118,16 @@ std::string chi2Test(const std::vector<std::vector<uint64_t>>& observed) {
 
     // Compute expected frequencies
     std::vector<std::vector<double>> expected(rows, std::vector<double>(cols, 0.0));
-    for (uint64_t i = 0; i < rows; ++i) {
-        for (uint64_t j = 0; j < cols; ++j) {
+    for (size_t i = 0; i < rows; ++i) {
+        for (size_t j = 0; j < cols; ++j) {
             expected[i][j] = (row_sums[i] * col_sums[j]) / total_sum;
         }
     }
 
     // Compute chi-squared statistic
     double chi_squared_stat = 0.0;
-    for (uint64_t i = 0; i < rows; ++i) {
-        for (uint64_t j = 0; j < cols; ++j) {
+    for (size_t i = 0; i < rows; ++i) {
+        for (size_t j = 0; j < cols; ++j) {
             if (expected[i][j] > 0) { // Avoid division by zero
                 double diff = observed[i][j] - expected[i][j];
                 chi_squared_stat += diff * diff / expected[i][j];
@@ -135,7 +135,7 @@ std::string chi2Test(const std::vector<std::vector<uint64_t>>& observed) {
         }
     }
 
-    uint64_t degrees_of_freedom = (rows - 1) * (cols - 1);
+    size_t degrees_of_freedom = (rows - 1) * (cols - 1);
 
     // Compute p-value using Boost's chi-squared distribution
     boost::math::chi_squared chi_squared_dist(degrees_of_freedom);
@@ -146,7 +146,7 @@ std::string chi2Test(const std::vector<std::vector<uint64_t>>& observed) {
 
 // ------------------------ Fisher exact test ------------------------
 
-std::string fastFishersExactTest(const std::vector<std::vector<uint64_t>>& table) {
+std::string fastFishersExactTest(const std::vector<std::vector<size_t>>& table) {
 
     // Ensure the table is 2x2
     if (table.size() != 2 || table[0].size() != 2 || table[1].size() != 2) {
@@ -154,15 +154,15 @@ std::string fastFishersExactTest(const std::vector<std::vector<uint64_t>>& table
     }
 
     // Extract values from the table
-    uint64_t m11 = table[0][0];
-    uint64_t m12 = table[0][1];
-    uint64_t m21 = table[1][0];
-    uint64_t m22 = table[1][1];
+    size_t m11 = table[0][0];
+    size_t m12 = table[0][1];
+    size_t m21 = table[1][0];
+    size_t m22 = table[1][1];
 
     double tprob = (1 - kExactTestEpsilon2) * kExactTestBias;
     double cur_prob = tprob;
     double cprob = 0;
-    uint64_t uii;
+    size_t uii;
     double cur11, cur12, cur21, cur22;
     double preaddp;
 
@@ -176,7 +176,7 @@ std::string fastFishersExactTest(const std::vector<std::vector<uint64_t>>& table
         m11 = m22;
         m22 = uii;
     }
-    if ((S_CAST(uint64_t, m11) * m22) > (S_CAST(uint64_t, m12) * m21)) {
+    if ((S_CAST(size_t, m11) * m22) > (S_CAST(size_t, m12) * m21)) {
         uii = m11;
         m11 = m12;
         m12 = uii;
@@ -248,7 +248,7 @@ std::string fastFishersExactTest(const std::vector<std::vector<uint64_t>>& table
 
 // ------------------------ Binary table & stats ------------------------
 
-std::vector<std::string> binary_stat_test(const std::vector<std::vector<uint64_t>>& df) {
+std::vector<std::string> binary_stat_test(const std::vector<std::vector<size_t>>& df) {
 
     // Compute derived statistics
     int allele_number = 0;
@@ -263,7 +263,7 @@ std::vector<std::string> binary_stat_test(const std::vector<std::vector<uint64_t
     }
     
     for (int col=0; col < numb_colum; ++col) {
-        uint64_t col_min = INT_MAX;
+        size_t col_min = INT_MAX;
         for (const auto& row : df) {
             col_min = std::min(col_min, row[col]);
         }
@@ -279,12 +279,12 @@ std::vector<std::string> binary_stat_test(const std::vector<std::vector<uint64_t
     return {fastfisher_p_value, chi2_p_value, std::to_string(allele_number), std::to_string(min_row_index), std::to_string(numb_colum), std::to_string(inter_group), std::to_string(average), group_paths};
 }
 
-std::string format_group_paths(const std::vector<std::vector<uint64_t>>& matrix) {
+std::string format_group_paths(const std::vector<std::vector<size_t>>& matrix) {
 
     std::string result;
-    uint64_t rows = matrix.size();
+    size_t rows = matrix.size();
 
-    for (uint64_t row = 0; row < rows; ++row) {
+    for (size_t row = 0; row < rows; ++row) {
         result += std::to_string(matrix[row][0]) + ":" + std::to_string(matrix[row][1]);
         if (row < rows - 1) {
             result += ","; // Separate row pairs with ','
@@ -294,22 +294,22 @@ std::string format_group_paths(const std::vector<std::vector<uint64_t>>& matrix)
     return result;
 }
 
-std::vector<std::vector<uint64_t>> create_binary_table(
+std::vector<std::vector<size_t>> create_binary_table(
     const std::unordered_map<std::string, bool>& groups, 
     const std::vector<std::string>& list_path_snarl, 
     const std::vector<std::string>& list_samples, const Matrix& matrix)  {
 
-    std::unordered_map<std::string, uint64_t> row_headers_dict = matrix.get_row_header();
-    uint64_t length_column_headers = list_path_snarl.size();
+    std::unordered_map<std::string, size_t> row_headers_dict = matrix.get_row_header();
+    size_t length_column_headers = list_path_snarl.size();
 
     // Initialize g0 and g1 with zeros, corresponding to the length of column_headers
-    std::vector<uint64_t> g0(length_column_headers, 0);
-    std::vector<uint64_t> g1(length_column_headers, 0);
+    std::vector<size_t> g0(length_column_headers, 0);
+    std::vector<size_t> g1(length_column_headers, 0);
 
     // Iterate over each path_snarl in column_headers
-    for (uint64_t idx_g = 0; idx_g < list_path_snarl.size(); ++idx_g) {
+    for (size_t idx_g = 0; idx_g < list_path_snarl.size(); ++idx_g) {
         const std::string& path_snarl = list_path_snarl[idx_g];
-        const uint64_t number_sample = list_samples.size();
+        const size_t number_sample = list_samples.size();
         std::vector<std::string> decomposed_snarl = decompose_string(path_snarl);
         std::vector<int> idx_srr_save = identify_correct_path(decomposed_snarl, row_headers_dict, matrix, number_sample*2);
 

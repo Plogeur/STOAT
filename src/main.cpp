@@ -43,9 +43,9 @@ int main(int argc, char* argv[]) {
         chromosome_path, binary_path, quantitative_path, 
         eqtl_path, covariate_path, kinship_path, output_dir;
 
-    uint64_t num_threads=1;
-    uint64_t phenotype=0;
-    uint64_t children_threshold = 50;
+    size_t num_threads=1;
+    size_t phenotype=0;
+    size_t children_threshold = 50;
     double maf = 0.99;
     bool gaf = false;
     bool only_snarl_parsing = false;
@@ -245,7 +245,7 @@ int main(int argc, char* argv[]) {
     auto start_2 = std::chrono::high_resolution_clock::now();
 
     // pvalue, index
-    std::vector<std::tuple<double, double, uint64_t>> pvalue_vector;
+    std::vector<std::tuple<double, double, size_t>> pvalue_vector;
     if (make_bed) {
         std::vector<std::pair<std::string, int>> pheno;
         

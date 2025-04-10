@@ -357,8 +357,8 @@ void check_format_quantitative_phenotype(const std::string& file_path) {
     file.close();
 
     std::vector<std::string> header;
-    uint64_t start = 0;
-    uint64_t end = first_line.find('\t');
+    size_t start = 0;
+    size_t end = first_line.find('\t');
     while (end != std::string::npos) {
         header.push_back(first_line.substr(start, end - start));
         start = end + 1;

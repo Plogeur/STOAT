@@ -20,7 +20,7 @@ static const double kExactTestBias = 0.00000000000000000000000010339757656912845
 
 int main() {
     // Example 2x2 table values
-    uint64_t m11 = 1, m12 = 9, m21 = 11, m22 = 5;
+    size_t m11 = 1, m12 = 9, m21 = 11, m22 = 5;
 
     // Run the first approach 1000 times and time it
     auto start1 = std::chrono::high_resolution_clock::now();

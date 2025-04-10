@@ -21,7 +21,7 @@ void chromosome_chuck_make_bed(htsFile* &ptr_vcf, bcf_hdr_t* &hdr, bcf1_t* &rec,
 
         string chr = bcf_hdr_id2name(hdr, rec->rid);
         std::cout << chr << std::endl;
-        uint64_t size_chr = snarl_chr[chr].size();
+        size_t size_chr = snarl_chr[chr].size();
 
         // Make genotype matrix by chromosome    
         auto [vcf_object, ptr_vcf_new, hdr_new, rec_new] = make_matrix(ptr_vcf, hdr, rec, list_samples, chr, size_chr);
@@ -46,7 +46,7 @@ void chromosome_chuck_quantitative(htsFile* &ptr_vcf, bcf_hdr_t* &hdr, bcf1_t* &
     unordered_map<string, std::vector<std::tuple<string, vector<string>, string, vector<string>>>> &snarl_chr,
     const unordered_map<string, double>& pheno, std::unordered_map<std::string, std::vector<double>> covar,
     const double& maf, const KinshipMatrix& kinship, 
-    const uint64_t& num_threads, const std::string& output_quantitive) {
+    const size_t& num_threads, const std::string& output_quantitive) {
 
     std::ofstream outf(output_quantitive, std::ios::binary);
     std::string headers;
@@ -62,7 +62,7 @@ void chromosome_chuck_quantitative(htsFile* &ptr_vcf, bcf_hdr_t* &hdr, bcf1_t* &
 
         string chr = bcf_hdr_id2name(hdr, rec->rid);
         std::cout << chr << std::endl;
-        uint64_t size_chr = snarl_chr[chr].size();
+        size_t size_chr = snarl_chr[chr].size();
 
         // Make genotype matrix by chromosome    
         auto [vcf_object, ptr_vcf_new, hdr_new, rec_new] = make_matrix(ptr_vcf, hdr, rec, list_samples, chr, size_chr);
@@ -91,7 +91,7 @@ void chromosome_chuck_quantitative(htsFile* &ptr_vcf, bcf_hdr_t* &hdr, bcf1_t* &
 
 //         string chr = bcf_hdr_id2name(hdr, rec->rid);
 //         std::cout << chr << std::endl;
-//         uint64_t size_chr = snarl_chr[chr].size();
+//         size_t size_chr = snarl_chr[chr].size();
 
 //         // Make genotype matrix by chromosome    
 //         auto [vcf_object, ptr_vcf_new, hdr_new, rec_new] = make_matrix(ptr_vcf, hdr, rec, list_samples, chr, size_chr);
@@ -115,7 +115,7 @@ void chromosome_chuck_binary(htsFile* &ptr_vcf, bcf_hdr_t* &hdr, bcf1_t* &rec,
     unordered_map<string, std::vector<std::tuple<string, vector<string>, string, vector<string>>>> &snarl_chr,
     const unordered_map<string, bool>& pheno, std::unordered_map<std::string, std::vector<double>> covar, 
     const double& maf, const KinshipMatrix& kinship, 
-    const uint64_t& num_threads, const std::string& output_binary) {
+    const size_t& num_threads, const std::string& output_binary) {
 
     std::ofstream outf(output_binary, std::ios::binary);
     std::string headers;
@@ -131,7 +131,7 @@ void chromosome_chuck_binary(htsFile* &ptr_vcf, bcf_hdr_t* &hdr, bcf1_t* &rec,
 
         string chr = bcf_hdr_id2name(hdr, rec->rid);
         std::cout << chr << std::endl;
-        uint64_t size_chr = snarl_chr[chr].size();
+        size_t size_chr = snarl_chr[chr].size();
 
         // Make genotype matrix by chromosome    
         auto [vcf_object, ptr_vcf_new, hdr_new, rec_new] = make_matrix(ptr_vcf, hdr, rec, list_samples, chr, size_chr);
@@ -149,16 +149,16 @@ void chromosome_chuck_binary(htsFile* &ptr_vcf, bcf_hdr_t* &hdr, bcf1_t* &rec,
     bcf_close(ptr_vcf);
 }
 
-SnarlParser::SnarlParser(const vector<string>& sample_names, uint64_t num_paths_chr) : 
+SnarlParser::SnarlParser(const vector<string>& sample_names, size_t num_paths_chr) : 
     sampleNames(sample_names), matrix(num_paths_chr*4, sample_names.size() * 2)
 {}
 
 std::vector<int> SnarlParser::create_table_short_path(const std::string& list_path_snarl) {
-    std::unordered_map<std::string, uint64_t> row_headers_dict = matrix.get_row_header();
+    std::unordered_map<std::string, size_t> row_headers_dict = matrix.get_row_header();
 
     // Iterate over each path_snarl in column_headers
     const std::string& path_snarl = list_path_snarl;
-    const uint64_t number_sample = sampleNames.size();
+    const size_t number_sample = sampleNames.size();
     std::vector<std::string> decomposed_snarl = decompose_string(path_snarl);
     return identify_correct_path(decomposed_snarl, row_headers_dict, matrix, number_sample*2);
 }
@@ -169,7 +169,7 @@ void SnarlParser::create_bim_bed(const std::vector<std::tuple<string, vector<str
     std::ofstream outbim(output_bim);
     std::ofstream outbed(output_bed, std::ios::binary);  // Open BED file as binary
     
-    const uint64_t allele_number = sampleNames.size();  // Number of individuals
+    const size_t allele_number = sampleNames.size();  // Number of individuals
 
     if (!outbim.is_open() || !outbed.is_open()) {
         std::cerr << "Error opening output files!" << std::endl;
@@ -201,7 +201,7 @@ void SnarlParser::create_bim_bed(const std::vector<std::tuple<string, vector<str
         int bit_pos = 0;
 
         // Loop through each sample (pair of alleles per individual)
-        for (uint64_t snarl_list_idx = 0; snarl_list_idx < allele_number; ++snarl_list_idx) {
+        for (size_t snarl_list_idx = 0; snarl_list_idx < allele_number; ++snarl_list_idx) {
             int allele1 = table[2 * snarl_list_idx];      // First allele for the individual for the first paths
             int allele2 = table[2 * snarl_list_idx + 1];  // Second allele for the individual at SNP
 
@@ -256,7 +256,7 @@ void create_fam(const std::vector<std::pair<std::string, int>> &pheno,
 }
 
 // Function to extract an integer from a string starting at index `i`
-std::pair<int, std::string> determine_str(const std::string& s, uint64_t length_s, uint64_t i) {
+std::pair<int, std::string> determine_str(const std::string& s, size_t length_s, size_t i) {
     int start_idx = i;
     while (i < length_s && s[i] != '>' && s[i] != '<') {
         i++;
@@ -297,23 +297,23 @@ const std::vector<std::vector<std::string>> decompose_snarl(const std::vector<st
 }
 
 // Retrieve the index of `key` if it exists in `ordered_map`. Otherwise, add it and return the new index.
-uint64_t getOrAddIndex(std::unordered_map<std::string, uint64_t>& orderedMap, const std::string& key, uint64_t lengthOrderedMap) {
+size_t getOrAddIndex(std::unordered_map<std::string, size_t>& orderedMap, const std::string& key, size_t lengthOrderedMap) {
     auto it = orderedMap.find(key);
     if (it != orderedMap.end()) {
         return it->second;
     } else {
-        uint64_t newIndex = lengthOrderedMap;
+        size_t newIndex = lengthOrderedMap;
         orderedMap[key] = newIndex;
         return newIndex;
     }
 }
 
 // Add True to the matrix if snarl is found
-void SnarlParser::push_matrix(const std::string& decomposedSnarl, std::unordered_map<std::string, uint64_t>& rowHeaderDict, uint64_t indexColumn) {
+void SnarlParser::push_matrix(const std::string& decomposedSnarl, std::unordered_map<std::string, size_t>& rowHeaderDict, size_t indexColumn) {
     
-    uint64_t lengthOrderedMap = rowHeaderDict.size();
-    uint64_t idxSnarl = getOrAddIndex(rowHeaderDict, decomposedSnarl, lengthOrderedMap);
-    uint64_t currentRowsNumber = matrix.getMaxElement();
+    size_t lengthOrderedMap = rowHeaderDict.size();
+    size_t idxSnarl = getOrAddIndex(rowHeaderDict, decomposedSnarl, lengthOrderedMap);
+    size_t currentRowsNumber = matrix.getMaxElement();
     
     if (lengthOrderedMap > currentRowsNumber - 1) {
         matrix.expandMatrix();
@@ -323,10 +323,10 @@ void SnarlParser::push_matrix(const std::string& decomposedSnarl, std::unordered
 }
 
 // Function to parse VCF and fill matrix genotypes
-std::tuple<SnarlParser, htsFile*, bcf_hdr_t*, bcf1_t*> make_matrix(htsFile *ptr_vcf, bcf_hdr_t *hdr, bcf1_t *rec, const std::vector<std::string> &sampleNames, string &chr, uint64_t &num_paths_chr) {
+std::tuple<SnarlParser, htsFile*, bcf_hdr_t*, bcf1_t*> make_matrix(htsFile *ptr_vcf, bcf_hdr_t *hdr, bcf1_t *rec, const std::vector<std::string> &sampleNames, string &chr, size_t &num_paths_chr) {
 
     SnarlParser snarl_parser(sampleNames, num_paths_chr);
-    std::unordered_map<std::string, uint64_t> row_header_dict;
+    std::unordered_map<std::string, size_t> row_header_dict;
 
     // loop over the VCF file for each line and stop where chr is different
     while ((bcf_read(ptr_vcf, hdr, rec) >= 0) && (chr == bcf_hdr_id2name(hdr, rec->rid))) {
@@ -378,7 +378,7 @@ std::tuple<SnarlParser, htsFile*, bcf_hdr_t*, bcf1_t*> make_matrix(htsFile *ptr_
             for (int i = 0; i < rec->n_sample; ++i) {
                 int allele_1 = bcf_gt_allele(gt[i * 2]);
                 int allele_2 = bcf_gt_allele(gt[i * 2 + 1]);
-                uint64_t col_idx = i * 2;
+                size_t col_idx = i * 2;
 
                 if (allele_1 != -1) { // Handle non-missing genotypes
                     for (const auto &decompose_allele_1 : list_list_decomposed_snarl[allele_1]) {
@@ -404,9 +404,9 @@ std::tuple<SnarlParser, htsFile*, bcf_hdr_t*, bcf1_t*> make_matrix(htsFile *ptr_
 
 std::vector<int> identify_correct_path(
     const std::vector<std::string>& decomposed_snarl,
-    const std::unordered_map<std::string, uint64_t>& row_headers_dict,
+    const std::unordered_map<std::string, size_t>& row_headers_dict,
     const Matrix& matrix,
-    const uint64_t num_cols) {
+    const size_t num_cols) {
 
     std::vector<int> rows_to_check;
 
@@ -425,8 +425,8 @@ std::vector<int> identify_correct_path(
     // Check columns for all 1s in the specified rows
     std::vector<bool> columns_all_ones(num_cols, true);
 
-    for (uint64_t col = 0; col < num_cols; ++col) {
-        for (uint64_t row : rows_to_check) {
+    for (size_t col = 0; col < num_cols; ++col) {
+        for (size_t row : rows_to_check) {
             if (!matrix(row, col)) {  // Use the `operator()` to access the matrix element
                 columns_all_ones[col] = false;
                 break; // Stop checking this column if any element is not 1
@@ -436,7 +436,7 @@ std::vector<int> identify_correct_path(
 
     // Populate idx_srr_save with indices of columns where all elements are 1
     std::vector<int> idx_srr_save;
-    for (uint64_t col = 0; col < num_cols; ++col) {
+    for (size_t col = 0; col < num_cols; ++col) {
         if (columns_all_ones[col]) {
             idx_srr_save.push_back(col);
         }
@@ -448,32 +448,32 @@ void SnarlParser::binary_table(const std::vector<std::tuple<std::string, std::ve
                                const std::unordered_map<std::string, bool>& binary_groups, const std::string& chr,
                                const std::unordered_map<std::string, std::vector<double>>& covar,
                                const double& maf, const KinshipMatrix& kinship, 
-                               const uint64_t& num_threads, std::ofstream& outf) {
+                               const size_t& num_threads, std::ofstream& outf) {
 
-    const uint64_t total = snarls.size();
-    uint64_t chunk_size = (total + num_threads - 1) / num_threads;
+    const size_t total = snarls.size();
+    size_t chunk_size = (total + num_threads - 1) / num_threads;
 
     std::mutex mutex_pvalues;
     std::mutex mutex_file;
 
     std::vector<std::thread> threads;
 
-    for (uint64_t thread_id = 0; thread_id < num_threads; ++thread_id) {
+    for (size_t thread_id = 0; thread_id < num_threads; ++thread_id) {
         threads.emplace_back([&, thread_id]() {
-            uint64_t start = thread_id * chunk_size;
-            uint64_t end = std::min(start + chunk_size, total);
+            size_t start = thread_id * chunk_size;
+            size_t end = std::min(start + chunk_size, total);
 
             std::stringstream local_buffer;
-            std::vector<std::tuple<double, double, uint64_t>> local_pvalues;
+            std::vector<std::tuple<double, double, size_t>> local_pvalues;
 
-            for (uint64_t itr = start; itr < end; ++itr) {
+            for (size_t itr = start; itr < end; ++itr) {
                 const auto& [snarl, list_snarl, pos, type_var] = snarls[itr];
 
-                std::vector<std::vector<uint64_t>> df = create_binary_table(binary_groups, list_snarl, sampleNames, matrix);
+                std::vector<std::vector<size_t>> df = create_binary_table(binary_groups, list_snarl, sampleNames, matrix);
                 bool df_filtration = check_MAF_threshold_binary(df, maf);
 
                 std::ostringstream oss;
-                for (uint64_t i = 0; i < type_var.size(); ++i) {
+                for (size_t i = 0; i < type_var.size(); ++i) {
                     if (i != 0) oss << ",";
                     oss << type_var[i];
                 }
@@ -518,10 +518,10 @@ void SnarlParser::binary_table(const std::vector<std::tuple<std::string, std::ve
 void SnarlParser::quantitative_table(const std::vector<std::tuple<string, vector<string>, string, vector<string>>>& snarls,
                                         const std::unordered_map<std::string, double>& quantitative_phenotype, const string &chr,
                                         const std::unordered_map<std::string, std::vector<double>>& covar,
-                                        const double& maf, const KinshipMatrix& kinship, const uint64_t& num_threads, std::ofstream& outf) {
+                                        const double& maf, const KinshipMatrix& kinship, const size_t& num_threads, std::ofstream& outf) {
 
     // Iterate over each snarl
-    for (uint64_t itr = 0; itr < snarls.size(); ++itr) {
+    for (size_t itr = 0; itr < snarls.size(); ++itr) {
         const auto& [snarl, list_snarl, pos, type_var] = snarls[itr];
 
         auto [df, allele_number] = create_quantitative_table(sampleNames, list_snarl, matrix);
@@ -536,7 +536,7 @@ void SnarlParser::quantitative_table(const std::vector<std::tuple<string, vector
 
         // make a string separated by ',' from a vector of string
         std::ostringstream oss;
-        for (uint64_t i = 0; i < type_var.size(); ++i) {
+        for (size_t i = 0; i < type_var.size(); ++i) {
             if (i != 0) oss << ","; // Add comma before all elements except the first
             oss << type_var[i];
         }
@@ -573,7 +573,7 @@ void SnarlParser::quantitative_table(const std::vector<std::tuple<string, vector
     }
 }
 
-bool check_MAF_threshold_binary(const std::vector<std::vector<uint64_t>>& df, const double& maf) {
+bool check_MAF_threshold_binary(const std::vector<std::vector<size_t>>& df, const double& maf) {
 
     int n = df[0].size(); // Number of columns (paths)
     int totalSum = 0;
@@ -598,12 +598,12 @@ bool check_MAF_threshold_binary(const std::vector<std::vector<uint64_t>>& df, co
 
 bool check_MAF_threshold_quantitative(const std::unordered_map<std::string, std::vector<int>>& df, const double& maf) {    
     int totalSum = 0;
-    uint64_t numPaths = df.begin()->second.size(); // Get the number of paths from the first element
+    size_t numPaths = df.begin()->second.size(); // Get the number of paths from the first element
     std::vector<int> table(numPaths, 0); // Initialize vector with the correct size
 
     // Compute total sum of all elements in the matrix
     for (const auto& [key, paths] : df) {
-        for (uint64_t i = 0; i < paths.size(); i++) {
+        for (size_t i = 0; i < paths.size(); i++) {
             table[i] += paths[i];
             totalSum += paths[i];
         }
