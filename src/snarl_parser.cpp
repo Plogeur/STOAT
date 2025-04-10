@@ -455,16 +455,13 @@ void SnarlParser::binary_table(const std::vector<std::tuple<std::string, std::ve
 
     std::mutex mutex_pvalues;
     std::mutex mutex_file;
-
     std::vector<std::thread> threads;
 
     for (size_t thread_id = 0; thread_id < num_threads; ++thread_id) {
         threads.emplace_back([&, thread_id]() {
             size_t start = thread_id * chunk_size;
             size_t end = std::min(start + chunk_size, total);
-
             std::stringstream local_buffer;
-            std::vector<std::tuple<double, double, size_t>> local_pvalues;
 
             for (size_t itr = start; itr < end; ++itr) {
                 const auto& [snarl, list_snarl, pos, type_var] = snarls[itr];
