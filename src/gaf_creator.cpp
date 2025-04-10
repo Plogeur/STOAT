@@ -46,7 +46,7 @@ std::pair<double, double> calcul_proportion_signi(int number_ind_group0, int num
 }
 
 std::string addSuffixToFilename(const std::string& filename, const std::string& suffix) {
-    size_t lastDotPos = filename.find_last_of(".");
+    uint64_t lastDotPos = filename.find_last_of(".");
     if (lastDotPos == std::string::npos) {
         // No extension found, return the filename with suffix appended
         return filename + suffix;
@@ -72,7 +72,7 @@ void writeGafLines(const std::string& sequenceName, const std::string& path,
 
 // Adds a suffix to a filename before the file extension
 string add_suffix_to_filename(const string& filename, const string& suffix) {
-    size_t dotPos = filename.find_last_of(".");
+    uint64_t dotPos = filename.find_last_of(".");
     if (dotPos == string::npos) {
         return filename + suffix;
     }
@@ -119,7 +119,7 @@ void gaf_creation(const string& input_file, std::unordered_map<std::string, std:
     }
 
     string line;
-    size_t count_line = 0;
+    uint64_t count_line = 0;
     getline(infile, line); // Skip header
 
     while (getline(infile, line)) {
@@ -150,7 +150,7 @@ void gaf_creation(const string& input_file, std::unordered_map<std::string, std:
 
         vector<string> group_0, group_1, sequence_name_g0, sequence_name_g1;
         for (const auto& path_group : decomposed_group_paths) {
-            size_t pos = path_group.find(':');
+            uint64_t pos = path_group.find(':');
             if (pos == string::npos) continue;
             group_0.push_back(path_group.substr(0, pos));
             group_1.push_back(path_group.substr(pos + 1));
@@ -158,13 +158,13 @@ void gaf_creation(const string& input_file, std::unordered_map<std::string, std:
             sequence_name_g1.push_back(snarl_list + "_G1_" + group_1.back() + "_F" + to_string(pfisher) + "_C" + to_string(pchi));
         }
 
-        for (size_t idx = 0; idx < list_path.size(); ++idx) {
+        for (uint64_t idx = 0; idx < list_path.size(); ++idx) {
             const string& path = list_path[idx];
 
             // Case where "*" is in path
             if (path.find('*') != string::npos) {
                 // If the path contains '*', split it into two sub-paths
-                size_t star_pos = path.find('*');
+                uint64_t star_pos = path.find('*');
                 string star_path_1 = path.substr(0, star_pos - 1);
                 string star_path_2 = path.substr(star_pos + 1);
 

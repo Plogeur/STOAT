@@ -3,7 +3,7 @@
 
 TEST_CASE("Check observed matrix validity", "[check_observed]") {
     SECTION("Valid matrix (no zero rows or columns)") {
-        std::vector<std::vector<int>> valid_matrix = {
+        std::vector<std::vector<uint64_t>> valid_matrix = {
             {1, 2, 3},
             {4, 5, 6},
             {7, 8, 9}
@@ -12,7 +12,7 @@ TEST_CASE("Check observed matrix validity", "[check_observed]") {
     }
 
     SECTION("Matrix with a zero row") {
-        std::vector<std::vector<int>> zero_row_matrix = {
+        std::vector<std::vector<uint64_t>> zero_row_matrix = {
             {0, 0, 0},
             {4, 5, 6},
             {7, 8, 9}
@@ -21,7 +21,7 @@ TEST_CASE("Check observed matrix validity", "[check_observed]") {
     }
 
     SECTION("Matrix with a zero column") {
-        std::vector<std::vector<int>> zero_column_matrix = {
+        std::vector<std::vector<uint64_t>> zero_column_matrix = {
             {1, 2, 0},
             {4, 5, 0},
             {7, 8, 0}
@@ -30,14 +30,14 @@ TEST_CASE("Check observed matrix validity", "[check_observed]") {
     }
 
     SECTION("Empty matrix") {
-        std::vector<std::vector<int>> empty_matrix = {};
+        std::vector<std::vector<uint64_t>> empty_matrix = {};
         REQUIRE(check_observed(empty_matrix, 0, 0) == false);
     }
 }
 
 TEST_CASE("Chi-square & Fisher test function", "[chi2Test]") {
     SECTION("Valid chi-square test & not valid Fisher test calculation") {
-        std::vector<std::vector<int>> observed = {
+        std::vector<std::vector<uint64_t>> observed = {
             {10, 20, 30},
             {20, 30, 40}
         };
@@ -46,7 +46,7 @@ TEST_CASE("Chi-square & Fisher test function", "[chi2Test]") {
     }
 
     SECTION("Chi-square fail & Fisher test valid (zero row)") {
-        std::vector<std::vector<int>> zero_row_matrix = {
+        std::vector<std::vector<uint64_t>> zero_row_matrix = {
             {0, 0},
             {4, 5}
         };

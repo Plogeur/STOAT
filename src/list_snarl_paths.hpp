@@ -50,10 +50,10 @@ public:
     void flip();
 
     // Get the size of the path
-    size_t size() const;
+    uint64_t size() const;
 
     // Count the number of reversed nodes
-    size_t nreversed() const;
+    uint64_t nreversed() const;
 };
 
 std::tuple<std::unique_ptr<bdsg::SnarlDistanceIndex>, 
@@ -63,7 +63,7 @@ std::tuple<std::unique_ptr<bdsg::SnarlDistanceIndex>,
 parse_graph_tree(const std::string& pg_file, const std::string& dist_file);
 
 // Function to calculate the type of variant
-pair<vector<string>, size_t> calcul_pos_type_variant(const vector<vector<string>>& list_list_length_paths);
+pair<vector<string>, uint64_t> calcul_pos_type_variant(const vector<vector<string>>& list_list_length_paths);
 
 // Function to find snarl ID
 string find_snarl_id(SnarlDistanceIndex& stree, net_handle_t& snarl);
@@ -78,7 +78,7 @@ void follow_edges(
 );
 
 // Function to save snarls
-vector<tuple<net_handle_t, string, size_t>> save_snarls(
+vector<tuple<net_handle_t, string, uint64_t>> save_snarls(
                             SnarlDistanceIndex& stree, 
                             net_handle_t& root,
                             PackedGraph& pg, 
@@ -86,7 +86,7 @@ vector<tuple<net_handle_t, string, size_t>> save_snarls(
                             PackedPositionOverlay& ppo);
 
 // Function to fill pretty paths
-tuple<vector<string>, vector<string>, size_t> fill_pretty_paths(
+tuple<vector<string>, vector<string>, uint64_t> fill_pretty_paths(
                             SnarlDistanceIndex& stree, 
                             PackedGraph& pg, 
                             vector<vector<net_handle_t>>& finished_paths);
@@ -94,11 +94,11 @@ tuple<vector<string>, vector<string>, size_t> fill_pretty_paths(
 // Function to loop over snarls and write output
 std::unordered_map<std::string, std::vector<std::tuple<string, vector<string>, string, vector<string>>>> loop_over_snarls_write(
                             SnarlDistanceIndex& stree, 
-                            vector<tuple<net_handle_t, string, size_t>>& snarls, 
+                            vector<tuple<net_handle_t, string, uint64_t>>& snarls, 
                             PackedGraph& pg, 
                             const string& output_file, 
                             const string& output_snarl_not_analyse, 
-                            size_t children_treshold, 
+                            uint64_t children_treshold, 
                             bool bool_return);
 
 #endif

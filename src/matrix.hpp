@@ -9,22 +9,22 @@
 
 class Matrix {
 public:
-    Matrix(size_t rows, size_t cols);
+    Matrix(uint64_t rows, uint64_t cols);
     ~Matrix()=default;
-    bool operator()(size_t row, size_t col) const;
-    void set(size_t row, size_t col);
+    bool operator()(uint64_t row, uint64_t col) const;
+    void set(uint64_t row, uint64_t col);
     const std::vector<uint8_t>& get_matrix() const;
-    const std::unordered_map<std::string, size_t>& get_row_header() const;
-    size_t getMaxElement() const;
+    const std::unordered_map<std::string, uint64_t>& get_row_header() const;
+    uint64_t getMaxElement() const;
     void expandMatrix();
-    void set_row_header(const std::unordered_map<std::string, size_t>& row_header);
-    void shrink(size_t current_rows);
+    void set_row_header(const std::unordered_map<std::string, uint64_t>& row_header);
+    void shrink(uint64_t current_rows);
 
 private:
-    size_t cols_;
-    size_t MaxElement;
+    uint64_t cols_;
+    uint64_t MaxElement;
     std::vector<uint8_t> matrix_1D;
-    std::unordered_map<std::string, size_t> row_header;
+    std::unordered_map<std::string, uint64_t> row_header;
 };
 
 #endif

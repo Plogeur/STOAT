@@ -8,10 +8,25 @@
 #include <Eigen/Dense>
 #include <cmath>
 
+// Fisher's Exact Test for 2x2 contingency table
+#ifndef DBL_MAX
+#  define DBL_MAX 1.7976931348623157e308
+#endif
+
+#ifdef __cplusplus
+#  define K_CAST(type, val) (const_cast<type>(val))
+#  define R_CAST(type, val) (reinterpret_cast<type>(val))
+#  define S_CAST(type, val) (static_cast<type>(val))
+#endif
+
+// 2^{-40} for now, since 2^{-44} was too small on real data
+static const double kExactTestEpsilon2 = 0.0000000000009094947017729282379150390625;
+static const double kExactTestBias = 0.00000000000000000000000010339757656912845935892608650874535669572651386260986328125;
+
 // ------------------------ LMM BINARY ------------------------
 
 // LMM Model fitting function
-std::vector<std::string> LMM_binary(const std::vector<std::vector<int>>& df,
+std::vector<std::string> LMM_binary(const std::vector<std::vector<uint64_t>>& df,
     const std::unordered_map<std::string, std::vector<double>>& covariate) {
 
     int num_samples = df[0].size();
@@ -57,21 +72,21 @@ std::vector<std::string> LMM_binary(const std::vector<std::vector<int>>& df,
 // ------------------------ Chi2 test ------------------------
 
 // Check if the observed matrix is valid (no zero rows/columns)
-bool check_observed(const std::vector<std::vector<int>>& observed, size_t rows, size_t cols) {
+bool check_observed(const std::vector<std::vector<uint64_t>>& observed, uint64_t rows, uint64_t cols) {
     std::vector<int> col_sums(cols, 0);
 
     if (observed.size() == 0) return false;
     
-    for (size_t i = 0; i < rows; ++i) {
+    for (uint64_t i = 0; i < rows; ++i) {
         int row_sum = 0;
-        for (size_t j = 0; j < cols; ++j) {
+        for (uint64_t j = 0; j < cols; ++j) {
             row_sum += observed[i][j];
             col_sums[j] += observed[i][j];
         }
         if (row_sum <= 0) return false; // Check row sum
     }
 
-    for (size_t j = 0; j < cols; ++j) {
+    for (uint64_t j = 0; j < cols; ++j) {
         if (col_sums[j] <= 0) return false; // Check column sums
     }
 
@@ -79,9 +94,9 @@ bool check_observed(const std::vector<std::vector<int>>& observed, size_t rows, 
 }
 
 // Function to calculate the Chi-square test statistic
-std::string chi2Test(const std::vector<std::vector<int>>& observed) {
-    size_t rows = observed.size();
-    size_t cols = observed[0].size();
+std::string chi2Test(const std::vector<std::vector<uint64_t>>& observed) {
+    uint64_t rows = observed.size();
+    uint64_t cols = observed[0].size();
 
     // Validate the observed matrix
     if (!check_observed(observed, rows, cols)) {
@@ -93,8 +108,8 @@ std::string chi2Test(const std::vector<std::vector<int>>& observed) {
     std::vector<double> col_sums(cols, 0.0);
     double total_sum = 0.0;
 
-    for (size_t i = 0; i < rows; ++i) {
-        for (size_t j = 0; j < cols; ++j) {
+    for (uint64_t i = 0; i < rows; ++i) {
+        for (uint64_t j = 0; j < cols; ++j) {
             row_sums[i] += observed[i][j];
             col_sums[j] += observed[i][j];
             total_sum += observed[i][j];
@@ -103,16 +118,16 @@ std::string chi2Test(const std::vector<std::vector<int>>& observed) {
 
     // Compute expected frequencies
     std::vector<std::vector<double>> expected(rows, std::vector<double>(cols, 0.0));
-    for (size_t i = 0; i < rows; ++i) {
-        for (size_t j = 0; j < cols; ++j) {
+    for (uint64_t i = 0; i < rows; ++i) {
+        for (uint64_t j = 0; j < cols; ++j) {
             expected[i][j] = (row_sums[i] * col_sums[j]) / total_sum;
         }
     }
 
     // Compute chi-squared statistic
     double chi_squared_stat = 0.0;
-    for (size_t i = 0; i < rows; ++i) {
-        for (size_t j = 0; j < cols; ++j) {
+    for (uint64_t i = 0; i < rows; ++i) {
+        for (uint64_t j = 0; j < cols; ++j) {
             if (expected[i][j] > 0) { // Avoid division by zero
                 double diff = observed[i][j] - expected[i][j];
                 chi_squared_stat += diff * diff / expected[i][j];
@@ -120,7 +135,7 @@ std::string chi2Test(const std::vector<std::vector<int>>& observed) {
         }
     }
 
-    size_t degrees_of_freedom = (rows - 1) * (cols - 1);
+    uint64_t degrees_of_freedom = (rows - 1) * (cols - 1);
 
     // Compute p-value using Boost's chi-squared distribution
     boost::math::chi_squared chi_squared_dist(degrees_of_freedom);
@@ -131,57 +146,109 @@ std::string chi2Test(const std::vector<std::vector<int>>& observed) {
 
 // ------------------------ Fisher exact test ------------------------
 
-// Function to initialize the log factorials array
-void initLogFacs(double* logFacs, int n) {
-    logFacs[0] = 0; 
-    for (int i = 1; i < n+1; ++i) {
-        logFacs[i] = logFacs[i - 1] + log((double)i);
-    }
-}
+std::string fastFishersExactTest(const std::vector<std::vector<uint64_t>>& table) {
 
-double logHypergeometricProb(double* logFacs , int a, int b, int c, int d) {
-    return logFacs[a+b] + logFacs[c+d] + logFacs[a+c] + logFacs[b+d]
-    - logFacs[a] - logFacs[b] - logFacs[c] - logFacs[d] - logFacs[a+b+c+d];
-}
-
-std::string fastFishersExactTest(const std::vector<std::vector<int>>& table) {
     // Ensure the table is 2x2
     if (table.size() != 2 || table[0].size() != 2 || table[1].size() != 2) {
-        return {"NA", "NA"};
+        return "NA";
     }
 
     // Extract values from the table
-    int a = table[0][0];
-    int b = table[0][1];
-    int c = table[1][0];
-    int d = table[1][1];
+    uint64_t m11 = table[0][0];
+    uint64_t m12 = table[0][1];
+    uint64_t m21 = table[1][0];
+    uint64_t m22 = table[1][1];
 
-    // Total sum of the table
-    int n = a + b + c + d;
-    double* logFacs = new double[n+1]; // *** dynamically allocate memory logFacs[0..n] ***
-    initLogFacs(logFacs , n);
+    double tprob = (1 - kExactTestEpsilon2) * kExactTestBias;
+    double cur_prob = tprob;
+    double cprob = 0;
+    uint64_t uii;
+    double cur11, cur12, cur21, cur22;
+    double preaddp;
 
-    double logpCutoff = logHypergeometricProb(logFacs,a,b,c,d);
-    double pFraction = 0;
-    for(int x=0; x <= n; ++x) { // among all possible x
-        int abx = a + b - x;
-        int acx = a + c - x;
-        int dax = d - a + x;
-        if (abx >= 0 && acx >= 0 && dax >=0) { 
-            double l = logHypergeometricProb(logFacs, x, abx, acx, dax);
-            if (l <= logpCutoff) {pFraction += exp(l - logpCutoff);}
+    if (m12 > m21) {
+        uii = m12;
+        m12 = m21;
+        m21 = uii;
+    }
+    if (m11 > m22) {
+        uii = m11;
+        m11 = m22;
+        m22 = uii;
+    }
+    if ((S_CAST(uint64_t, m11) * m22) > (S_CAST(uint64_t, m12) * m21)) {
+        uii = m11;
+        m11 = m12;
+        m12 = uii;
+        uii = m21;
+        m21 = m22;
+        m22 = uii;
+    }
+
+    cur11 = m11;
+    cur12 = m12;
+    cur21 = m21;
+    cur22 = m22;
+
+    while (cur12 > 0.5) {
+        cur11 += 1;
+        cur22 += 1;
+        cur_prob *= (cur12 * cur21) / (cur11 * cur22);
+        cur12 -= 1;
+        cur21 -= 1;
+        if (cur_prob > DBL_MAX) {
+        return "0.0";
+        }
+        if (cur_prob < kExactTestBias) {
+        tprob += cur_prob;
+        break;
+        }
+        cprob += cur_prob;
+    }
+
+    if (cprob == 0) {
+        return "1.0";
+    }
+
+    while (cur12 > 0.5) {
+        cur11 += 1;
+        cur22 += 1;
+        cur_prob *= (cur12 * cur21) / (cur11 * cur22);
+        cur12 -= 1;
+        cur21 -= 1;
+        preaddp = tprob;
+        tprob += cur_prob;
+        if (tprob <= preaddp) {
+        break;
         }
     }
 
-    double p_value = exp(logpCutoff + log(pFraction));
-    delete [] logFacs;
+    if (m11) {
+        cur11 = m11;
+        cur12 = m12;
+        cur21 = m21;
+        cur22 = m22;
+        cur_prob = (1 - kExactTestEpsilon2) * kExactTestBias;
+        do {
+        cur12 += 1;
+        cur21 += 1;
+        cur_prob *= (cur11 * cur22) / (cur12 * cur21);
+        cur11 -= 1;
+        cur22 -= 1;
+        preaddp = tprob;
+        tprob += cur_prob;
+        if (tprob <= preaddp) {
+            return set_precision(preaddp / (cprob + preaddp));
+        }
+        } while (cur11 > 0.5);
+    }
 
-    return set_precision(p_value);
+    return set_precision(tprob / (cprob + tprob));
 }
 
 // ------------------------ Binary table & stats ------------------------
 
-std::vector<std::string> binary_stat_test(const std::vector<std::vector<int>>& df) {
+std::vector<std::string> binary_stat_test(const std::vector<std::vector<uint64_t>>& df) {
 
     // Compute derived statistics
     int allele_number = 0;
@@ -196,7 +263,7 @@ std::vector<std::string> binary_stat_test(const std::vector<std::vector<int>>& d
     }
     
     for (int col=0; col < numb_colum; ++col) {
-        int col_min = INT_MAX;
+        uint64_t col_min = INT_MAX;
         for (const auto& row : df) {
             col_min = std::min(col_min, row[col]);
         }
@@ -212,12 +279,12 @@ std::vector<std::string> binary_stat_test(const std::vector<std::vector<int>>& d
     return {fastfisher_p_value, chi2_p_value, std::to_string(allele_number), std::to_string(min_row_index), std::to_string(numb_colum), std::to_string(inter_group), std::to_string(average), group_paths};
 }
 
-std::string format_group_paths(const std::vector<std::vector<int>>& matrix) {
+std::string format_group_paths(const std::vector<std::vector<uint64_t>>& matrix) {
 
     std::string result;
-    size_t rows = matrix.size();
+    uint64_t rows = matrix.size();
 
-    for (size_t row = 0; row < rows; ++row) {
+    for (uint64_t row = 0; row < rows; ++row) {
         result += std::to_string(matrix[row][0]) + ":" + std::to_string(matrix[row][1]);
         if (row < rows - 1) {
             result += ","; // Separate row pairs with ','
@@ -227,22 +294,22 @@ std::string format_group_paths(const std::vector<std::vector<int>>& matrix) {
     return result;
 }
 
-std::vector<std::vector<int>> create_binary_table(
+std::vector<std::vector<uint64_t>> create_binary_table(
     const std::unordered_map<std::string, bool>& groups, 
     const std::vector<std::string>& list_path_snarl, 
     const std::vector<std::string>& list_samples, const Matrix& matrix)  {
 
-    std::unordered_map<std::string, size_t> row_headers_dict = matrix.get_row_header();
-    size_t length_column_headers = list_path_snarl.size();
+    std::unordered_map<std::string, uint64_t> row_headers_dict = matrix.get_row_header();
+    uint64_t length_column_headers = list_path_snarl.size();
 
     // Initialize g0 and g1 with zeros, corresponding to the length of column_headers
-    std::vector<int> g0(length_column_headers, 0);
-    std::vector<int> g1(length_column_headers, 0);
+    std::vector<uint64_t> g0(length_column_headers, 0);
+    std::vector<uint64_t> g1(length_column_headers, 0);
 
     // Iterate over each path_snarl in column_headers
-    for (size_t idx_g = 0; idx_g < list_path_snarl.size(); ++idx_g) {
+    for (uint64_t idx_g = 0; idx_g < list_path_snarl.size(); ++idx_g) {
         const std::string& path_snarl = list_path_snarl[idx_g];
-        const size_t number_sample = list_samples.size();
+        const uint64_t number_sample = list_samples.size();
         std::vector<std::string> decomposed_snarl = decompose_string(path_snarl);
         std::vector<int> idx_srr_save = identify_correct_path(decomposed_snarl, row_headers_dict, matrix, number_sample*2);
 

@@ -10,8 +10,8 @@ std::tuple<string, string, string, string> linear_regression(
     const std::unordered_map<std::string, std::vector<int>>& df,
     const std::unordered_map<std::string, double>& quantitative_phenotype) {
 
-    size_t num_samples = df.size();
-    size_t max_paths = df.begin()->second.size();
+    uint64_t num_samples = df.size();
+    uint64_t max_paths = df.begin()->second.size();
     
     Eigen::MatrixXd X(num_samples, max_paths);
     X.setZero(); // Initialize matrix with zeros
@@ -20,7 +20,7 @@ std::tuple<string, string, string, string> linear_regression(
     int row = 0;
     for (const auto& [sample, paths] : df) {
         y(row) = quantitative_phenotype.at(sample);
-        for (size_t col = 0; col < paths.size(); ++col) {
+        for (uint64_t col = 0; col < paths.size(); ++col) {
             X(row, col) = paths[col];
         }
         ++row;
@@ -59,23 +59,23 @@ std::tuple<string, string, string, string> linear_regression(
 }
 
 // Function to create the quantitative table
-std::pair<std::unordered_map<std::string, std::vector<int>>, size_t> create_quantitative_table(
+std::pair<std::unordered_map<std::string, std::vector<uint64_t>>, uint64_t> create_quantitative_table(
     const std::vector<std::string>& list_samples, 
     const std::vector<std::string>& column_headers,
     Matrix& matrix) {
 
     // Retrieve row headers dictionary
-    std::unordered_map<std::string, size_t> row_headers_dict = matrix.get_row_header();
-    size_t allele_number = 0;
-    size_t length_sample = list_samples.size();
-    size_t length_column = column_headers.size();
+    std::unordered_map<std::string, uint64_t> row_headers_dict = matrix.get_row_header();
+    uint64_t allele_number = 0;
+    uint64_t length_sample = list_samples.size();
+    uint64_t length_column = column_headers.size();
     std::vector<int> srr_save(length_sample);
 
     // Initialize a zero matrix for genotypes
-    std::vector<std::vector<int>> genotypes(length_sample, std::vector<int>(length_column, 0));
+    std::vector<std::vector<uint64_t>> genotypes(length_sample, std::vector<uint64_t>(length_column, 0));
 
     // Genotype paths
-    for (size_t col_idx = 0; col_idx < length_column; ++col_idx) {
+    for (uint64_t col_idx = 0; col_idx < length_column; ++col_idx) {
         const std::string& path_snarl = column_headers[col_idx];
         std::vector<std::string> decomposed_snarl = decompose_string(path_snarl);
 
@@ -84,14 +84,14 @@ std::pair<std::unordered_map<std::string, std::vector<int>>, size_t> create_quan
                                                               matrix, length_sample*2);
 
         for (auto idx : idx_srr_save) {
-            size_t srr_idx = idx / 2;  // Adjust index to correspond to the sample index
+            uint64_t srr_idx = idx / 2;  // Adjust index to correspond to the sample index
             genotypes[srr_idx][col_idx] += 1;
             allele_number++;
         }
     }
 
-    std::unordered_map<std::string, std::vector<int>> df;
-    for (size_t i = 0; i < list_samples.size(); ++i) {
+    std::unordered_map<std::string, std::vector<uint64_t>> df;
+    for (uint64_t i = 0; i < list_samples.size(); ++i) {
         df[list_samples[i]] = genotypes[i];
     }
     

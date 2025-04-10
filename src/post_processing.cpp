@@ -2,26 +2,26 @@
 #include "utils.hpp"
 
 // BH Adjustment
-void adjust_pvalues_BH(std::vector<std::tuple<double, double, size_t>>& data) {
-    size_t n = data.size();
+void adjust_pvalues_BH(std::vector<std::tuple<double, double, uint64_t>>& data) {
+    uint64_t n = data.size();
     std::sort(data.begin(), data.end(), [](const auto& a, const auto& b) {
         return std::get<0>(a) < std::get<0>(b);
     });
 
     std::vector<double> adjusted(n);
-    for (size_t i = 0; i < n; ++i) {
+    for (uint64_t i = 0; i < n; ++i) {
         double p = std::get<0>(data[i]);
         if (p == 0.0) continue;
         adjusted[i] = p * n / (i + 1);
     }
 
-    for (size_t i = n - 1; i > 0; --i) {
+    for (uint64_t i = n - 1; i > 0; --i) {
         if (adjusted[i - 1] > adjusted[i]) {
             adjusted[i - 1] = adjusted[i];
         }
     }
 
-    for (size_t i = 0; i < n; ++i) {
+    for (uint64_t i = 0; i < n; ++i) {
         std::get<1>(data[i]) = std::min(1.0, adjusted[i]);
     }
 
@@ -40,10 +40,10 @@ void add_BH_adjusted_column(
     std::string col;
 
     // First pass: Collect p-values
-    std::vector<std::tuple<double, double, size_t>> pvalues;
+    std::vector<std::tuple<double, double, uint64_t>> pvalues;
     std::string line;
-    size_t line_index = 0;
-    size_t adjusted_col_index = phenotype_type == "binary" ? 6 : 5; 
+    uint64_t line_index = 0;
+    uint64_t adjusted_col_index = phenotype_type == "binary" ? 6 : 5; 
 
     // Read the header line
     std::string header_line;
@@ -103,14 +103,14 @@ void add_BH_adjusted_column(
         columns[adjusted_col_index] = adj_str;
 
         // Write updated line
-        for (size_t i = 0; i < columns.size(); ++i) {
+        for (uint64_t i = 0; i < columns.size(); ++i) {
             outfile << columns[i];
             if (i != columns.size() - 1) outfile << '\t';
         }
         outfile << '\n';
 
         if (adjusted_p < 1e-5) {
-            for (size_t i = 0; i < columns.size(); ++i) {
+            for (uint64_t i = 0; i < columns.size(); ++i) {
                 outfile_significant << columns[i];
                 if (i != columns.size() - 1) outfile_significant << '\t';
             }
