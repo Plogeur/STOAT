@@ -72,76 +72,40 @@ std::vector<std::string> LMM_binary(const std::vector<std::vector<size_t>>& df,
 // ------------------------ Chi2 test ------------------------
 
 // Check if the observed matrix is valid (no zero rows/columns)
-bool check_observed(const std::vector<std::vector<size_t>>& observed, size_t rows, size_t cols) {
-    std::vector<int> col_sums(cols, 0);
-
-    if (observed.size() == 0) return false;
-    
-    for (size_t i = 0; i < rows; ++i) {
-        int row_sum = 0;
-        for (size_t j = 0; j < cols; ++j) {
-            row_sum += observed[i][j];
-            col_sums[j] += observed[i][j];
-        }
-        if (row_sum <= 0) return false; // Check row sum
-    }
-
-    for (size_t j = 0; j < cols; ++j) {
-        if (col_sums[j] <= 0) return false; // Check column sums
-    }
-
-    return true;
-}
-
-// Function to calculate the Chi-square test statistic
 std::string chi2Test(const std::vector<std::vector<size_t>>& observed) {
-    size_t rows = observed.size();
+    
     size_t cols = observed[0].size();
-
-    // Validate the observed matrix
-    if (!check_observed(observed, rows, cols)) {
-        return {"NA", "NA"};
-    }
-
-    // Compute row and column sums
-    std::vector<double> row_sums(rows, 0.0);
     std::vector<double> col_sums(cols, 0.0);
-    double total_sum = 0.0;
+    double row_sum0 = 0.0, row_sum1 = 0.0, total = 0.0;
 
-    for (size_t i = 0; i < rows; ++i) {
-        for (size_t j = 0; j < cols; ++j) {
-            row_sums[i] += observed[i][j];
-            col_sums[j] += observed[i][j];
-            total_sum += observed[i][j];
-        }
+    // Precompute row sums and column sums
+    for (size_t j = 0; j < cols; ++j) {
+        double a = observed[0][j];
+        double b = observed[1][j];
+        row_sum0 += a;
+        row_sum1 += b;
+        col_sums[j] = a + b;
+        total += a + b;
     }
 
-    // Compute expected frequencies
-    std::vector<std::vector<double>> expected(rows, std::vector<double>(cols, 0.0));
-    for (size_t i = 0; i < rows; ++i) {
-        for (size_t j = 0; j < cols; ++j) {
-            expected[i][j] = (row_sums[i] * col_sums[j]) / total_sum;
-        }
-    }
+    if (total == 0.0) return "0.0";
 
     // Compute chi-squared statistic
-    double chi_squared_stat = 0.0;
-    for (size_t i = 0; i < rows; ++i) {
-        for (size_t j = 0; j < cols; ++j) {
-            if (expected[i][j] > 0) { // Avoid division by zero
-                double diff = observed[i][j] - expected[i][j];
-                chi_squared_stat += diff * diff / expected[i][j];
-            }
-        }
+    double chi2 = 0.0;
+    for (size_t j = 0; j < cols; ++j) {
+        double expected0 = (row_sum0 * col_sums[j]) / total;
+        double expected1 = (row_sum1 * col_sums[j]) / total;
+
+        double diff0 = observed[0][j] - expected0;
+        double diff1 = observed[1][j] - expected1;
+
+        if (expected0 > 0) chi2 += (diff0 * diff0) / expected0;
+        if (expected1 > 0) chi2 += (diff1 * diff1) / expected1;
     }
 
-    size_t degrees_of_freedom = (rows - 1) * (cols - 1);
-
-    // Compute p-value using Boost's chi-squared distribution
-    boost::math::chi_squared chi_squared_dist(degrees_of_freedom);
-    double p_value = boost::math::cdf(boost::math::complement(chi_squared_dist, chi_squared_stat));
-
-    return set_precision(p_value);
+    size_t df = (observed.size() - 1) * (observed[0].size() - 1);
+    boost::math::chi_squared dist(df);
+    return set_precision(boost::math::cdf(boost::math::complement(dist, chi2)));
 }
 
 // ------------------------ Fisher exact test ------------------------

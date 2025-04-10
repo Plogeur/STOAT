@@ -64,7 +64,7 @@ void process_snarl(size_t snarl_index,
 //     const vector<QTLRecord> pheno, std::ofstream& outf);
 
 bool check_MAF_threshold_binary(const std::vector<std::vector<size_t>>& df, const double& maf);
-bool check_MAF_threshold_quantitative(const std::unordered_map<std::string, std::vector<int>>& df, const double& maf);
+bool check_MAF_threshold_quantitative(const std::unordered_map<std::string, std::vector<size_t>>& df, const double& maf);
 
 void chromosome_chuck_binary(htsFile* &ptr_vcf, bcf_hdr_t* &hdr, bcf1_t* &rec, 
     const std::vector<std::string> &list_samples, 

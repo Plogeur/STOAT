@@ -596,7 +596,7 @@ bool check_MAF_threshold_binary(const std::vector<std::vector<size_t>>& df, cons
     return true; // If no column exceeds the threshold, return true
 }
 
-bool check_MAF_threshold_quantitative(const std::unordered_map<std::string, std::vector<int>>& df, const double& maf) {    
+bool check_MAF_threshold_quantitative(const std::unordered_map<std::string, std::vector<size_t>>& df, const double& maf) {    
     int totalSum = 0;
     size_t numPaths = df.begin()->second.size(); // Get the number of paths from the first element
     std::vector<int> table(numPaths, 0); // Initialize vector with the correct size

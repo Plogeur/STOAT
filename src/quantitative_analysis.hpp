@@ -23,7 +23,7 @@
 
 // Linear regression function that returns a tuple of p_value, standard error (se), and beta
 std::tuple<string, string, string, string> linear_regression(
-    const std::unordered_map<std::string, std::vector<int>>& df,
+    const std::unordered_map<std::string, std::vector<size_t>>& df,
     const std::unordered_map<std::string, double>& quantitative_phenotype);
 
 std::pair<std::unordered_map<std::string, std::vector<size_t>>, size_t> create_quantitative_table(

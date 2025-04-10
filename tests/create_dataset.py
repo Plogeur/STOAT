@@ -50,11 +50,10 @@ def generate_vcf_and_paths(num_samples, num_variants, vcf_file, paths_file):
                 ref = random.choice(['A', 'C', 'G', 'T'])
                 alt = random_base(exclude=ref)
                 ref_path, alt_path, current_node = generate_paths(current_node)
-
                 at_info = f"AT=>{'>'.join(ref_path)},>{'>'.join(alt_path)}"
 
                 fmt = "GT"
-                genotypes = [random.choice(["0/0", "0/1", "1/1"]) for _ in range(num_samples)]
+                genotypes = ["0/1" for _ in range(num_samples)]
                 var_id = f"{chrom}_{i+1}"
                 vcf.write(f"{chrom}\t{pos}\trs{var_id}\t{ref}\t{alt}\t.\tPASS\t{at_info}\t{fmt}\t" + "\t".join(genotypes) + "\n")
 

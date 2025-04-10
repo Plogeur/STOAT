@@ -20,7 +20,7 @@
 double normal_cdf(double x);
 
 std::tuple<string, string, string, string> lmm_quantitative(
-    const std::unordered_map<std::string, std::vector<int>>& df,                  
+    const std::unordered_map<std::string, std::vector<size_t>>& df,                  
     const std::unordered_map<std::string, double>& phenotype_table,      
     const KinshipMatrix& kinship,                                              
     const std::unordered_map<std::string, std::vector<double>>& covariates);
