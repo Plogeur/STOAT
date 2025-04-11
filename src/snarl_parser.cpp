@@ -406,43 +406,46 @@ std::vector<int> identify_correct_path(
     const std::vector<std::string>& decomposed_snarl,
     const std::unordered_map<std::string, size_t>& row_headers_dict,
     const Matrix& matrix,
-    const size_t num_cols) {
+    const size_t num_cols)
+{
+    std::vector<size_t> rows_to_check;
+    rows_to_check.reserve(decomposed_snarl.size());
 
-    std::vector<int> rows_to_check;
-
+    // Map snarl names to row indices
     for (const auto& snarl : decomposed_snarl) {
         if (snarl.find("*") != std::string::npos) {
-            continue; // Skip snarls containing "*"
+            continue;
         }
         auto it = row_headers_dict.find(snarl);
         if (it != row_headers_dict.end()) {
             rows_to_check.push_back(it->second);
         } else {
-            return {}; // Return an empty vector if snarl is not in row_headers_dict
+            return {}; // If any snarl isn't found, abort early
         }
     }
 
-    // Check columns for all 1s in the specified rows
-    std::vector<bool> columns_all_ones(num_cols, true);
+    if (rows_to_check.empty()) return {};
 
+    std::vector<int> idx_srr_save;
+    idx_srr_save.reserve(num_cols);
+
+    // Loop columns first (better cache locality if matrix is column-major or similar)
     for (size_t col = 0; col < num_cols; ++col) {
+        bool all_ones = true;
         for (size_t row : rows_to_check) {
-            if (!matrix(row, col)) {  // Use the `operator()` to access the matrix element
-                columns_all_ones[col] = false;
-                break; // Stop checking this column if any element is not 1
+            if (!matrix(row, col)) {
+                all_ones = false;
+                break;
             }
         }
-    }
-
-    // Populate idx_srr_save with indices of columns where all elements are 1
-    std::vector<int> idx_srr_save;
-    for (size_t col = 0; col < num_cols; ++col) {
-        if (columns_all_ones[col]) {
-            idx_srr_save.push_back(col);
+        if (all_ones) {
+            idx_srr_save.push_back(static_cast<int>(col));
         }
     }
+
     return idx_srr_save;
 }
+
 
 void SnarlParser::binary_table(const std::vector<std::tuple<std::string, std::vector<std::string>, std::string, std::vector<std::string>>>& snarls,
                                const std::unordered_map<std::string, bool>& binary_groups, const std::string& chr,
