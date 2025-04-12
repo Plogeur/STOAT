@@ -335,6 +335,8 @@ std::tuple<SnarlParser, htsFile*, bcf_hdr_t*, bcf1_t*> make_matrix(htsFile *ptr_
         // Check the INFO field for LV (Level Variant) and skip if LV != 0
         int32_t *lv = nullptr;
         int n_lv = 0;
+
+        // Extract LV field from INFO skip if variant is lv != 0 to avoid duplication paths/snarl variant analysis
         if (bcf_get_info_int32(hdr, rec, "LV", &lv, &n_lv) > 0) {
             if (lv[0] != 0) {
                 free(lv);
@@ -354,46 +356,36 @@ std::tuple<SnarlParser, htsFile*, bcf_hdr_t*, bcf1_t*> make_matrix(htsFile *ptr_
         nat = bcf_get_info_string(hdr, rec, "AT", &at_str, &nat);
         std::vector<std::string> path_list;
 
-        if (nat > 0 && at_str) {
-            std::string at_value(at_str);  // Convert C-string to C++ string
-            free(at_str);  // Free HTSlib-allocated memory
+        std::string at_value(at_str);  // Convert C-string to C++ string
+        free(at_str);  // Free HTSlib-allocated memory
 
-            // Split by comma
-            std::stringstream ss(at_value);
-            std::string item;
-            while (std::getline(ss, item, ',')) {
-                path_list.push_back(item);
-            }
-
-        } else {
-            std::cerr << "No AT field found" << std::endl;
-            free(at_str);
+        // Split by comma
+        std::stringstream ss(at_value);
+        std::string item;
+        while (std::getline(ss, item, ',')) {
+            path_list.push_back(item);
         }
 
         // Decompose snarl paths
         const std::vector<std::vector<std::string>> list_list_decomposed_snarl = decompose_snarl(path_list);
         
-        if (ngt > 0 && gt) {
-            // loop over the genotypes
-            for (int i = 0; i < rec->n_sample; ++i) {
-                int allele_1 = bcf_gt_allele(gt[i * 2]);
-                int allele_2 = bcf_gt_allele(gt[i * 2 + 1]);
-                size_t col_idx = i * 2;
+        for (int i = 0; i < rec->n_sample; ++i) {
+            int allele_1 = bcf_gt_allele(gt[i * 2]);
+            int allele_2 = bcf_gt_allele(gt[i * 2 + 1]);
+            size_t col_idx = i * 2;
 
-                if (allele_1 != -1) { // Handle non-missing genotypes
-                    for (const auto &decompose_allele_1 : list_list_decomposed_snarl[allele_1]) {
-                        snarl_parser.push_matrix(decompose_allele_1, row_header_dict, col_idx);
-                    }
-                }
-                if (allele_2 != -1) { // Handle non-missing genotypes
-                    for (const auto &decompose_allele_2 : list_list_decomposed_snarl[allele_2]) {
-                        snarl_parser.push_matrix(decompose_allele_2, row_header_dict, col_idx + 1);
-                    }
+            if (allele_1 != -1) { // Handle non-missing genotypes
+                for (const auto &decompose_allele_1 : list_list_decomposed_snarl[allele_1]) {
+                    snarl_parser.push_matrix(decompose_allele_1, row_header_dict, col_idx);
                 }
             }
-        } else {
-            cerr << "No genotypes found" << std::endl;
+            if (allele_2 != -1) { // Handle non-missing genotypes
+                for (const auto &decompose_allele_2 : list_list_decomposed_snarl[allele_2]) {
+                    snarl_parser.push_matrix(decompose_allele_2, row_header_dict, col_idx + 1);
+                }
+            }
         }
+
         free(gt);
     }
 
@@ -406,8 +398,8 @@ std::vector<int> identify_correct_path(
     const std::vector<std::string>& decomposed_snarl,
     const std::unordered_map<std::string, size_t>& row_headers_dict,
     const Matrix& matrix,
-    const size_t num_cols)
-{
+    const size_t num_cols) {
+
     std::vector<size_t> rows_to_check;
     rows_to_check.reserve(decomposed_snarl.size());
 
@@ -468,9 +460,9 @@ void SnarlParser::binary_table(const std::vector<std::tuple<std::string, std::ve
 
             for (size_t itr = start; itr < end; ++itr) {
                 const auto& [snarl, list_snarl, pos, type_var] = snarls[itr];
-
-                std::vector<std::vector<size_t>> df = create_binary_table(binary_groups, list_snarl, sampleNames, matrix);
-                bool df_filtration = check_MAF_threshold_binary(df, maf);
+                
+                std::vector<std::vector<size_t>> df;
+                bool df_filtration = create_binary_table_with_maf_check(df, binary_groups, list_snarl, sampleNames, matrix, maf);
 
                 std::ostringstream oss;
                 for (size_t i = 0; i < type_var.size(); ++i) {
@@ -485,18 +477,20 @@ void SnarlParser::binary_table(const std::vector<std::tuple<std::string, std::ve
                 if (!covar.empty()) {
                     // Placeholder for LMM (not implemented in original)
                 } else {
-                    stats = binary_stat_test(df);
-                    std::string p_value_f = "NA", p_value_c = "NA";
+                    // Binary analysis
+                    std::string fastfisher_p_value = "NA", chi2_p_value = "NA",
+                    group_paths = "NA", allele_number_str = "NA", min_row_index_str = "NA",
+                    numb_colum_str = "NA", inter_group_str = "NA", average_str = "NA";
 
-                    if (df_filtration) {
-                        p_value_f = stats[0];
-                        p_value_c = stats[1];
+                    if (!df_filtration) { // good df
+                        binary_stat_test(df, fastfisher_p_value, chi2_p_value, group_paths,
+                            allele_number_str, min_row_index_str, numb_colum_str, inter_group_str, average_str);
                     }
 
                     data << chr << "\t" << pos << "\t" << snarl << "\t" << type_var_str
-                        << "\t" << p_value_f << "\t" << p_value_c << "\t" << "" << "\t" << stats[2] 
-                        << "\t" << stats[3] << "\t" << stats[4] << "\t" << stats[5] 
-                        << "\t" << stats[6] << "\t" << stats[7] << "\n";
+                        << "\t" << fastfisher_p_value << "\t" << chi2_p_value << "\t" << "" << "\t" << group_paths
+                        << "\t" << allele_number_str << "\t" << min_row_index_str << "\t" << numb_colum_str 
+                        << "\t" << inter_group_str << "\t" << average_str << "\n";
                 }
 
                 local_buffer << data.str();
@@ -589,11 +583,11 @@ bool check_MAF_threshold_binary(const std::vector<std::vector<size_t>>& df, cons
     for (int i = 0; i < n; ++i) {
         int columnSum = df[0][i] + df[1][i];
         if (static_cast<double>(columnSum) / totalSum >= maf) {
-            return false; // If any column's sum proportion meets or exceeds the threshold, return false
+            return true; // If any column's sum proportion meets or exceeds the threshold, return false
         }
     }
 
-    return true; // If no column exceeds the threshold, return true
+    return false; // If no column exceeds the threshold, return true
 }
 
 bool check_MAF_threshold_quantitative(const std::unordered_map<std::string, std::vector<size_t>>& df, const double& maf) {    

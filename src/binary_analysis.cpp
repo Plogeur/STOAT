@@ -1,3 +1,18 @@
+// This file is part of STOAT 0.0.1, copyright (C) 2024-2025 Matis Alias-Bagarre, Jean Monlong.
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
 #include "binary_analysis.hpp"
 #include "snarl_parser.hpp"
 #include "utils.hpp"
@@ -111,6 +126,7 @@ std::string chi2Test(const std::vector<std::vector<size_t>>& observed) {
 // ------------------------ Fisher exact test ------------------------
 
 std::string fastFishersExactTest(const std::vector<std::vector<size_t>>& table) {
+// plink 1.9 fisher22 implementation
 
     // Ensure the table is 2x2
     if (table.size() != 2 || table[0].size() != 2 || table[1].size() != 2) {
@@ -212,7 +228,10 @@ std::string fastFishersExactTest(const std::vector<std::vector<size_t>>& table) 
 
 // ------------------------ Binary table & stats ------------------------
 
-std::vector<std::string> binary_stat_test(const std::vector<std::vector<size_t>>& df) {
+void binary_stat_test(const std::vector<std::vector<size_t>>& df, 
+    string& fastfisher_p_value, string& chi2_p_value, string& group_paths,
+    string& allele_number_str, string& min_row_index_str, string& numb_colum_str, 
+    string& inter_group_str, string& average_str) {
 
     // Compute derived statistics
     int allele_number = 0;
@@ -237,10 +256,14 @@ std::vector<std::string> binary_stat_test(const std::vector<std::vector<size_t>>
     int average = static_cast<double>(allele_number) / numb_colum; // get 200 instead of 200.00000
 
     // Compute  Fisher's exact & Chi-squared test p-value
-    string chi2_p_value = chi2Test(df);
-    string fastfisher_p_value = fastFishersExactTest(df);
-    std::string group_paths = format_group_paths(df); // Placeholder for future implementation
-    return {fastfisher_p_value, chi2_p_value, std::to_string(allele_number), std::to_string(min_row_index), std::to_string(numb_colum), std::to_string(inter_group), std::to_string(average), group_paths};
+    chi2_p_value = chi2Test(df);
+    fastfisher_p_value = fastFishersExactTest(df);
+    group_paths = format_group_paths(df);
+    allele_number_str = std::to_string(allele_number);
+    min_row_index_str = std::to_string(min_row_index);
+    numb_colum_str = std::to_string(numb_colum);
+    inter_group_str = std::to_string(inter_group);
+    average_str = std::to_string(average);
 }
 
 std::string format_group_paths(const std::vector<std::vector<size_t>>& matrix) {
@@ -258,45 +281,50 @@ std::string format_group_paths(const std::vector<std::vector<size_t>>& matrix) {
     return result;
 }
 
-std::vector<std::vector<size_t>> create_binary_table(
+bool create_binary_table_with_maf_check(
+    std::vector<std::vector<size_t>>& df,
     const std::unordered_map<std::string, bool>& groups, 
     const std::vector<std::string>& list_path_snarl, 
-    const std::vector<std::string>& list_samples, const Matrix& matrix)  {
+    const std::vector<std::string>& list_samples, 
+    const Matrix& matrix,
+    const double& maf) {
 
     std::unordered_map<std::string, size_t> row_headers_dict = matrix.get_row_header();
     size_t length_column_headers = list_path_snarl.size();
 
-    // Initialize g0 and g1 with zeros, corresponding to the length of column_headers
     std::vector<size_t> g0(length_column_headers, 0);
     std::vector<size_t> g1(length_column_headers, 0);
 
-    // Iterate over each path_snarl in column_headers
+    size_t totalSum = 0;
+
     for (size_t idx_g = 0; idx_g < list_path_snarl.size(); ++idx_g) {
         const std::string& path_snarl = list_path_snarl[idx_g];
-        const size_t number_sample = list_samples.size();
+        size_t number_sample = list_samples.size();
+
         std::vector<std::string> decomposed_snarl = decompose_string(path_snarl);
-        std::vector<int> idx_srr_save = identify_correct_path(decomposed_snarl, row_headers_dict, matrix, number_sample*2);
+        std::vector<int> idx_srr_save = identify_correct_path(decomposed_snarl, row_headers_dict, matrix, number_sample * 2);
 
-        // Count occurrences in g0 and g1 based on the updated idx_srr_save
         for (int idx : idx_srr_save) {
-            std::string srr = list_samples[idx / 2];  // Convert index to the appropriate sample name
+            std::string srr = list_samples[idx / 2];
 
-            // Check if sample belongs to a group and increment the respective count
             auto it = groups.find(srr);
-            if (it != groups.end()) {
-                if (it->second) {
-                    // If true, consider as part of Group 1
-                    g1[idx_g] += 1;
-                } else {
-                    // If false, consider as part of Group 0
-                    g0[idx_g] += 1;
-                }
+            if (it->second) {
+                g1[idx_g] += 1;
             } else {
-                throw std::runtime_error("Sample " + srr + " not found in groups.");
+                g0[idx_g] += 1;
             }
+            totalSum += 1;
         }
     }
 
-    // Return the populated binary table
-    return {g0, g1};
+    // Check MAF threshold
+    for (size_t i = 0; i < length_column_headers; ++i) {
+        int columnSum = g0[i] + g1[i];
+        if (static_cast<double>(columnSum) / totalSum >= maf) {
+            return true; // MAF threshold met
+        }
+    }
+
+    df = {g0, g1};
+    return false; // No column met MAF threshold
 }
