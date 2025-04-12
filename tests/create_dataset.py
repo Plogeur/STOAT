@@ -4,7 +4,7 @@ import argparse
 def generate_phenotypes(num_samples, output_file="phenotypes.txt"):
     with open(output_file, "w") as f:
         f.write("FID\tIID\tPHENO\n")
-        phenos = [0] * (num_samples // 2) + [1] * (num_samples - num_samples // 2)
+        phenos = [1] * (num_samples // 2) + [2] * (num_samples - num_samples // 2)
         random.shuffle(phenos)
         for i in range(num_samples):
             fid = iid = f"sample{i+1}"
@@ -78,4 +78,4 @@ if __name__ == "__main__":
 
     print(f"Files generated:\n- {args.pheno_file}\n- {args.vcf_file}\n- {args.paths_file}")
 
-# python3 tests/create_dataset.py 200 1000
+# python3 tests/create_dataset.py 200 1000 --pheno_file tests/simu/phenotypes.txt --vcf_file tests/simu/variants.vcf --paths_file tests/simu/paths_snarl.tsv

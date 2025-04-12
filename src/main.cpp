@@ -45,7 +45,6 @@ void print_help() {
               << "  -e, --eqtl <path>           Path to the Expression Quantitative Trait Loci file (.txt or .tsv)\n"
               << "  -k, --kinship <path>         Path to the kinship matrix file (.txt or .tsv)\n"
               << "  --make-bed                  Create a plink format files (.bed, .bim, bed)\n"
-              << "  --plot                      Create Manhatthan plot and QQ plot\n"
               << "  --maf                       Add a maf (Minimum allele frequency) thresold (defauld : 0.01)\n"
               << "  -o, --output <name>         Output dir name\n"
               << "  -t, --thread <int>          Number of threads\n"
@@ -66,7 +65,6 @@ int main(int argc, char* argv[]) {
     bool only_snarl_parsing = false;
     bool show_help = false;
     bool make_bed = false;
-    bool make_plot = false;
 
     // Parse arguments manually
     for (int i = 1; i < argc; ++i) {
@@ -88,8 +86,6 @@ int main(int argc, char* argv[]) {
             check_file(chromosome_path);
         } else if ((arg == "--make-bed") && i + 1 < argc) {
             make_bed=true;
-        } else if ((arg == "--plot") && i + 1 < argc) {
-            make_plot=true;
         } else if ((arg == "--children") && i + 1 < argc) {
             children_threshold = std::stoi(argv[++i]);
             if (children_threshold < 2) {
@@ -291,17 +287,6 @@ int main(int argc, char* argv[]) {
             gaf_creation(output_binary, snarls_chr, *pg, output_gaf);
         }
 
-        if (make_plot) {
-            string output_manh = output_dir + "/manhattan_plot_binary.png";
-            string output_qq = output_dir + "/qq_plot_binary.png";
-            std::string python_cmd = "python3 ../src/make_plots.py "
-            " --pvalue " + output_binary + 
-            " --qq " + output_qq + 
-            " --manh " + output_manh +
-            " --binary";
-            system(python_cmd.c_str());
-        }
-
     } else if (!quantitative_path.empty()) {
 
         string output_quantitive = output_dir + "/quantitative_analysis.tsv";
@@ -311,18 +296,6 @@ int main(int argc, char* argv[]) {
         string phenotype_type = "quantitative";
         add_BH_adjusted_column(output_quantitive, output_significative, phenotype_type);
 
-        if (make_plot) {
-            string output_manh = output_dir + "/manhattan_plot_quantitative.png";
-            string output_qq = output_dir + "/qq_plot_quantitative.png";
-
-            std::string python_cmd = "python3 ../src/make_plots.py "
-            " --pvalue " + output_quantitive + 
-            " --qq " + output_qq + 
-            " --manh " + output_manh +
-            " --quantitative";
-            system(python_cmd.c_str());
-        }
-
     } else if (!eqtl_path.empty()) {
         string eqtl_output = output_dir + "/eqtl_gwas.tsv";
         std::ofstream outf(eqtl_output, std::ios::binary);
@@ -331,7 +304,6 @@ int main(int argc, char* argv[]) {
 
         // chromosome_chuck_eqtl(ptr_vcf, hdr, rec, list_samples, snarls_chr, eqtl, outf);
     }
-    
     
     auto end_1 = std::chrono::high_resolution_clock::now();
     std::cout << "Snarl analysis : " << std::chrono::duration<double>(end_1 - start_2).count() << " s" << std::endl;

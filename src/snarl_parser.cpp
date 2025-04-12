@@ -130,7 +130,7 @@ void chromosome_chuck_binary(htsFile* &ptr_vcf, bcf_hdr_t* &hdr, bcf1_t* &rec,
     while (bcf_read(ptr_vcf, hdr, rec) >= 0) {
 
         string chr = bcf_hdr_id2name(hdr, rec->rid);
-        std::cout << chr << std::endl;
+        std::cout << "> " << chr << std::endl;
         size_t size_chr = snarl_chr[chr].size();
 
         // Make genotype matrix by chromosome    
