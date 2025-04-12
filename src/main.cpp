@@ -209,7 +209,6 @@ int main(int argc, char* argv[]) {
     }
 
     if (!binary_path.empty()) {
-        check_format_binary_phenotype(binary_path);
         binary = parse_binary_pheno(binary_path);
         check_match_samples(binary, list_samples);
         if (!covariate_path.empty()) {
@@ -217,7 +216,6 @@ int main(int argc, char* argv[]) {
         }
 
     } else if (!quantitative_path.empty()) {
-        check_format_quantitative_phenotype(quantitative_path);
         quantitative = parse_quantitative_pheno(quantitative_path);
         check_match_samples(quantitative, list_samples);
         if (!covariate_path.empty()) {
