@@ -72,12 +72,12 @@ std::unordered_map<std::string, bool> parse_binary_pheno(const std::string& file
             throw std::runtime_error("Malformed line: " + line);
         }
         int pheno = std::stoi(phenoStr);
-        if (pheno == 0) {
+        if (pheno == 1) {
             count_controls++;
-        } else if (pheno == 1) {
+        } else if (pheno == 2) {
             count_cases++;
         } else {
-            throw std::runtime_error("Error: Phenotype must be 0 or 1");
+            throw std::runtime_error("Error: Phenotype must be 1 or 2");
         }
         parsed_pheno[iid] = static_cast<bool>(pheno);
     }
