@@ -358,7 +358,7 @@ std::unordered_map<std::string, std::vector<std::tuple<string, vector<string>, s
     std::vector<std::tuple<string, vector<string>, string, vector<string>>> snarl_paths;
     unordered_map<string, std::vector<std::tuple<string, vector<string>, string, vector<string>>>> chr_snarl_matrix;
     size_t paths_number_analysis = 0;
-    chrono::seconds time_threshold(2);
+    size_t itr_thresold = 10000; // TODO change it 
     string save_chr = "";
 
     std::vector<size_t> children = {0};
@@ -369,7 +369,7 @@ std::unordered_map<std::string, std::vector<std::tuple<string, vector<string>, s
 
     for (const auto& snarl_path_pos : snarls) {
         net_handle_t snarl = std::get<0>(snarl_path_pos);
-        auto snarl_time = chrono::steady_clock::now();
+        size_t itr = 0;
         string snarl_id = find_snarl_id(stree, snarl);
         bool not_break = true;
         children = {0}; // re-initialise the children vec
@@ -387,12 +387,13 @@ std::unordered_map<std::string, std::vector<std::tuple<string, vector<string>, s
             auto path = paths.back();
             paths.pop_back();
 
-            if (chrono::steady_clock::now() - snarl_time > time_threshold) {
-                out_fail << snarl_id << "\ttime_calculation_out\n";
+            if (itr > itr_thresold) {
+                out_fail << snarl_id << "\titeration_calculation_out\n";
                 not_break = false;
                 break;
             }
             follow_edges(stree, finished_paths, path, paths, pg);
+            itr++;
         }
 
         if (not_break) {

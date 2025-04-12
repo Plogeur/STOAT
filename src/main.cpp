@@ -17,12 +17,12 @@ using namespace std;
 void print_help() {
     std::cout << "Usage: SnarlParser [options]\n\n"
               << "Options:\n"
-              << "  -v, --vcf_path <path>       Path to the VCF file (.vcf or .vcf.gz)\n"
+              << "  -v, --vcf <path>       Path to the VCF file (.vcf or .vcf.gz)\n"
               << "  -s, --snarl <path>          Path to the snarl file (.txt or .tsv)\n"
               << "  -p, --pg <path>             Path to the pg file (.pg)\n"
               << "  -d, --dist <path>           Path to the dist file (.dist)\n"
-              << "  -r, --chr_ref <path>        Path to the chromosome reference file (.txt)\n"
-              << "  -c, --children <int>        Max number of children for a snarl in the snarl decomposition process (default = 50)\n"
+              << "  -r, --chr <path>        Path to the chromosome reference file (.txt)\n"
+              << "  --children <int>        Max number of children for a snarl in the snarl decomposition process (default = 50)\n"
               << "  -b, --binary <path>         Path to the binary group file (.txt or .tsv)\n"
               << "  -g, --gaf                   Make a GAF file from the GWAS analysis\n"
               << "  -q, --quantitative <path>   Path to the quantitative phenotype file (.txt or .tsv)\n"
@@ -56,7 +56,7 @@ int main(int argc, char* argv[]) {
     // Parse arguments manually
     for (int i = 1; i < argc; ++i) {
         std::string arg = argv[i];
-        if ((arg == "-v" || arg == "--vcf_path") && i + 1 < argc) {
+        if ((arg == "-v" || arg == "--vcf") && i + 1 < argc) {
             vcf_path = argv[++i];
             check_file(vcf_path);
         } else if ((arg == "-s" || arg == "--snarl") && i + 1 < argc) {
@@ -68,14 +68,14 @@ int main(int argc, char* argv[]) {
         } else if ((arg == "-d" || arg == "--dist") && i + 1 < argc) {
             dist_path = argv[++i];
             check_file(dist_path);
-        } else if ((arg == "-r" || arg == "--chr_ref") && i + 1 < argc) {
+        } else if ((arg == "--chr") && i + 1 < argc) {
             chromosome_path = argv[++i];
             check_file(chromosome_path);
         } else if ((arg == "--make-bed") && i + 1 < argc) {
             make_bed=true;
         } else if ((arg == "--plot") && i + 1 < argc) {
             make_plot=true;
-        } else if ((arg == "-c" || arg == "--children") && i + 1 < argc) {
+        } else if ((arg == "--children") && i + 1 < argc) {
             children_threshold = std::stoi(argv[++i]);
             if (children_threshold < 2) {
                 std::cerr << "Error: Number of children must be a positive integer > 1\n";
@@ -118,6 +118,9 @@ int main(int argc, char* argv[]) {
         } else if ((arg == "-o" || arg == "--output") && i + 1 < argc) {
             output_dir = argv[++i];
         } else if (arg == "-h" || arg == "--help") {
+            show_help = true;
+        } else {
+            std::cerr << "Unknown argument: " << arg << "\n";
             show_help = true;
         }
     }
