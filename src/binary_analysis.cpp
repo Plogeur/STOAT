@@ -289,12 +289,9 @@ bool create_binary_table_with_maf_check(
     const Matrix& matrix,
     const double& maf) {
 
-    std::unordered_map<std::string, size_t> row_headers_dict = matrix.get_row_header();
     size_t length_column_headers = list_path_snarl.size();
-
     std::vector<size_t> g0(length_column_headers, 0);
     std::vector<size_t> g1(length_column_headers, 0);
-
     size_t totalSum = 0;
 
     for (size_t idx_g = 0; idx_g < list_path_snarl.size(); ++idx_g) {
@@ -302,7 +299,7 @@ bool create_binary_table_with_maf_check(
         size_t number_sample = list_samples.size();
 
         std::vector<std::string> decomposed_snarl = decompose_string(path_snarl);
-        std::vector<int> idx_srr_save = identify_correct_path(decomposed_snarl, row_headers_dict, matrix, number_sample * 2);
+        std::vector<int> idx_srr_save = identify_correct_path(decomposed_snarl, matrix, number_sample * 2);
 
         for (int idx : idx_srr_save) {
             std::string srr = list_samples[idx / 2];

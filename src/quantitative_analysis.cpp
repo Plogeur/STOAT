@@ -65,11 +65,9 @@ std::pair<std::unordered_map<std::string, std::vector<size_t>>, size_t> create_q
     Matrix& matrix) {
 
     // Retrieve row headers dictionary
-    std::unordered_map<std::string, size_t> row_headers_dict = matrix.get_row_header();
     size_t allele_number = 0;
     size_t length_sample = list_samples.size();
     size_t length_column = column_headers.size();
-    std::vector<int> srr_save(length_sample);
 
     // Initialize a zero matrix for genotypes
     std::vector<std::vector<size_t>> genotypes(length_sample, std::vector<size_t>(length_column, 0));
@@ -80,13 +78,12 @@ std::pair<std::unordered_map<std::string, std::vector<size_t>>, size_t> create_q
         std::vector<std::string> decomposed_snarl = decompose_string(path_snarl);
 
         // Identify correct paths
-        std::vector<int> idx_srr_save = identify_correct_path(decomposed_snarl, row_headers_dict, 
-                                                              matrix, length_sample*2);
+        std::vector<int> idx_srr_save = identify_correct_path(decomposed_snarl, matrix, length_sample*2);
 
         for (auto idx : idx_srr_save) {
             size_t srr_idx = idx / 2;  // Adjust index to correspond to the sample index
             genotypes[srr_idx][col_idx] += 1;
-            allele_number++;
+            allele_number++; // inversed matrice n*m by m*n
         }
     }
 
