@@ -87,14 +87,15 @@ std::unordered_map<std::string, bool> parse_binary_pheno(const std::string& file
         } catch (const std::invalid_argument& e) {
             throw std::runtime_error("Bad phenotype type : " + phenoStr);
         }
-        if (pheno == 0) {
+        if (pheno == 1) {
             count_controls++;
-        } else if (pheno == 1) {
+            parsed_pheno[iid] = static_cast<bool>(false);
+        } else if (pheno == 2) {
             count_cases++;
+            parsed_pheno[iid] = static_cast<bool>(true);
         } else {
             throw std::runtime_error("Error: Phenotype must be 1 or 2");
         }
-        parsed_pheno[iid] = static_cast<bool>(pheno);
     }
     cout << "Binary phenotypes founds : " << count_controls+count_cases
     << " (Control : " << count_controls

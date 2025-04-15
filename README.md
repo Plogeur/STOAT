@@ -13,7 +13,7 @@ Manual installation :
 - boost
 - Catch2 v3
 
-Or you can use the Dockerfile provided [here](Dockerfile)
+Or you can use the compiled unbuntu version provided.
 
 ## Building
 
