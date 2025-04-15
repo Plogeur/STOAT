@@ -32,18 +32,18 @@ using namespace std;
 void print_help() {
     std::cout << "Usage: SnarlParser [options]\n\n"
               << "Options:\n"
-              << "  -v, --vcf <path>       Path to the VCF file (.vcf or .vcf.gz)\n"
+              << "  -v, --vcf <path>            Path to the VCF file (.vcf or .vcf.gz)\n"
               << "  -s, --snarl <path>          Path to the snarl file (.txt or .tsv)\n"
               << "  -p, --pg <path>             Path to the pg file (.pg)\n"
               << "  -d, --dist <path>           Path to the dist file (.dist)\n"
-              << "  -r, --chr <path>        Path to the chromosome reference file (.txt)\n"
-              << "  --children <int>        Max number of children for a snarl in the snarl decomposition process (default = 50)\n"
+              << "  -r, --chr <path>            Path to the chromosome reference file (.txt)\n"
+              << "  --children <int>            Max number of children for a snarl in the snarl decomposition process (default = 50)\n"
               << "  -b, --binary <path>         Path to the binary group file (.txt or .tsv)\n"
               << "  -g, --gaf                   Make a GAF file from the GWAS analysis\n"
               << "  -q, --quantitative <path>   Path to the quantitative phenotype file (.txt or .tsv)\n"
               << "  --covariate <path>          Path to the covariate file (.txt or .tsv)\n"
               << "  -e, --eqtl <path>           Path to the Expression Quantitative Trait Loci file (.txt or .tsv)\n"
-              << "  -k, --kinship <path>         Path to the kinship matrix file (.txt or .tsv)\n"
+              << "  -k, --kinship <path>        Path to the kinship matrix file (.txt or .tsv)\n"
               << "  --make-bed                  Create a plink format files (.bed, .bim, bed)\n"
               << "  --maf                       Add a maf (Minimum allele frequency) thresold (defauld : 0.01)\n"
               << "  -o, --output <name>         Output dir name\n"
@@ -84,7 +84,7 @@ int main(int argc, char* argv[]) {
         } else if ((arg == "--chr") && i + 1 < argc) {
             chromosome_path = argv[++i];
             check_file(chromosome_path);
-        } else if ((arg == "--make-bed") && i + 1 < argc) {
+        } else if ((arg == "--make-bed")) {
             make_bed=true;
         } else if ((arg == "--children") && i + 1 < argc) {
             children_threshold = std::stoi(argv[++i]);
@@ -265,9 +265,9 @@ int main(int argc, char* argv[]) {
             pheno.push_back({sample, -9}); // initilize all phenotypes to -9
         }
 
-        const std::string output_fam = output_dir + "/genotype.fam";
+        const std::string output_fam = output_dir + ".fam";
         create_fam(pheno, output_fam);
-        // chromosome_chuck_make_bed(ptr_vcf, hdr, rec, list_samples, snarls_chr, output_dir);
+        chromosome_chuck_make_bed(ptr_vcf, hdr, rec, list_samples, snarls_chr, output_dir);
 
         auto end_1 = std::chrono::high_resolution_clock::now();
         std::cout << "Time genotype plink files creations : " << std::chrono::duration<double>(end_1 - start_1).count() << " s" << std::endl;
@@ -317,3 +317,11 @@ int main(int argc, char* argv[]) {
 
 // QUANTITATIVE
 // ./stoat_cxx -p ../data/quantitative/pg.pg -d ../data/quantitative/pg.dist -v ../data/quantitative/merged_output.vcf.gz -q ../data/quantitative/phenotype.tsv
+
+// BINARY-PLINK
+// ./stoat_cxx -p ../data/binary/pg.pg -d ../data/binary/pg.dist -v ../data/binary/merged_output.vcf.gz --make-bed
+
+// QUANTITATIVE-PLINK
+// ./stoat_cxx -p ../data/quantitative/pg.pg -d ../data/quantitative/pg.dist -v ../data/quantitative/merged_output.vcf.gz --make-bed
+
+// plink --bfile ../output --pheno ../data/binary/phenotype.tsv --pheno-name PHENO --assoc --allow-no-sex --allow-extra-chr --out ../output/plink

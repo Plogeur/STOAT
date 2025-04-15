@@ -45,9 +45,9 @@ public:
                             const double& maf, const KinshipMatrix& kinship, const size_t& num_threads, std::ofstream& outf);
 
     void create_bim_bed(const std::vector<std::tuple<string, vector<string>, string, vector<string>>>& snarls, 
-                                    string chromosome, const std::string& output_bim, const std::string& output_bed);
-    std::vector<int> create_table_short_path(const std::string& list_path_snarl);
+        string chromosome, std::ofstream& outbim, std::ofstream& outbed);
 
+    std::pair<std::vector<size_t>, std::vector<size_t>> create_table_short_path(const vector<std::string>& list_path_snarl);
 };
 
 // void chromosome_chuck_eqtl(htsFile* &ptr_vcf, bcf_hdr_t* &hdr, bcf1_t* &rec, 
@@ -74,7 +74,7 @@ void chromosome_chuck_quantitative(htsFile* &ptr_vcf, bcf_hdr_t* &hdr, bcf1_t* &
 void chromosome_chuck_make_bed(htsFile* &ptr_vcf, bcf_hdr_t* &hdr, bcf1_t* &rec, 
     const std::vector<std::string> &list_samples,
     unordered_map<string, std::vector<std::tuple<string, vector<string>, string, vector<string>>>> &snarl_chr,
-    const unordered_map<string, double>& pheno, string output_dir);
+    string& output_dir);
 
 std::tuple<htsFile*, bcf_hdr_t*, bcf1_t*> parse_vcf(const std::string& vcf_path);
 
@@ -95,11 +95,13 @@ std::pair<int, std::string> determine_str(const std::string& s, size_t length_s,
 // Function to decompose a list of snarl strings
 const std::vector<std::vector<std::string>> decompose_snarl(const std::vector<std::string>& lst);
 
-std::vector<int> identify_correct_path(const std::vector<std::string>& decomposed_snarl, 
-                                        const std::unordered_map<std::string, 
-                                        size_t>& row_headers_dict, 
-                                        const Matrix& matrix, 
+std::vector<int> identify_correct_path(const std::vector<std::string>& decomposed_snarl,
+                                        const Matrix& matrix,
                                         const size_t num_cols);
+
+std::vector<std::vector<size_t>> transpose_matrix(const std::vector<std::vector<size_t>>& matrix);
+
+void find_two_largest_indices(const std::vector<size_t>& vec, size_t& major_index_1, size_t& major_index_2);
 
 std::unordered_map<std::string, std::vector<double>> convertBinaryGroups(
                                         const std::unordered_map<std::string, bool>& binary_groups);

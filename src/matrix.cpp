@@ -17,6 +17,21 @@ const std::vector<uint8_t>& Matrix::get_matrix() const {
 }
 
 // Getter for row header
+std::unordered_map<std::string, size_t>::const_iterator Matrix::find_snarl(const std::string& snarl) const {
+    return row_header.find(snarl);
+}
+
+// Getter for row header
+std::unordered_map<std::string, size_t>::const_iterator Matrix::get_end_dict() const {
+    return row_header_end;
+}
+
+// Getter for row header
+void Matrix::set_end_dict() {
+    row_header_end = row_header.end();
+}
+
+// Getter for row header
 const std::unordered_map<std::string, size_t>& Matrix::get_row_header() const {
     return row_header;
 }

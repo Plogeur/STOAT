@@ -23,8 +23,8 @@ using namespace bdsg;
 
 std::pair<double, double> calcul_proportion_signi(int number_ind_group0, int number_ind_group1, double p_value);
 std::string addSuffixToFilename(const std::string& filename, const std::string& suffix);
-void writeGafLines(const std::string& sequenceName, const std::string& path, int length, double prop, std::ofstream& outfile);
 string add_suffix_to_filename(const string& filename, const string& suffix);
+void write_gaf_lines(const string& sequence_name, const string& path, int length, double prop, ofstream& outfile);
 
 vector<int> decompose_snarl(const string& snarl);
 int calcul_path_length(PackedGraph& pg, const string& snarl);
