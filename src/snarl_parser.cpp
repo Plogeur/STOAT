@@ -434,10 +434,8 @@ std::vector<int> identify_correct_path(
             idx_srr_save.push_back(static_cast<int>(col));
         }
     }
-
     return idx_srr_save;
 }
-
 
 void SnarlParser::binary_table(const std::vector<std::tuple<std::string, std::vector<std::string>, std::string, std::vector<std::string>>>& snarls,
                                const std::unordered_map<std::string, bool>& binary_groups, const std::string& chr,

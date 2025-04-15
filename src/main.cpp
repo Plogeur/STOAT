@@ -259,8 +259,8 @@ int main(int argc, char* argv[]) {
     // pvalue, index
     std::vector<std::tuple<double, double, size_t>> pvalue_vector;
     if (make_bed) {
+
         std::vector<std::pair<std::string, int>> pheno;
-        
         for (const auto& sample : list_samples) {
             pheno.push_back({sample, -9}); // initilize all phenotypes to -9
         }
@@ -297,6 +297,7 @@ int main(int argc, char* argv[]) {
         add_BH_adjusted_column(output_quantitive, output_significative, phenotype_type);
 
     } else if (!eqtl_path.empty()) {
+
         string eqtl_output = output_dir + "/eqtl_gwas.tsv";
         std::ofstream outf(eqtl_output, std::ios::binary);
         std::string headers = "CHR\tPOS\tSNARL\tTYPE\tSE\tBETA\tP\n";

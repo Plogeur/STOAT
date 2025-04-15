@@ -87,9 +87,9 @@ std::unordered_map<std::string, bool> parse_binary_pheno(const std::string& file
         } catch (const std::invalid_argument& e) {
             throw std::runtime_error("Bad phenotype type : " + phenoStr);
         }
-        if (pheno == 1) {
+        if (pheno == 0) {
             count_controls++;
-        } else if (pheno == 2) {
+        } else if (pheno == 1) {
             count_cases++;
         } else {
             throw std::runtime_error("Error: Phenotype must be 1 or 2");
@@ -100,6 +100,7 @@ std::unordered_map<std::string, bool> parse_binary_pheno(const std::string& file
     << " (Control : " << count_controls
     << ", Case : " << count_cases << ")" << endl;
     file.close();
+
     return parsed_pheno;
 }
 
