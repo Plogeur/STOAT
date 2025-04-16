@@ -325,4 +325,8 @@ int main(int argc, char* argv[]) {
 // QUANTITATIVE-PLINK
 // ./stoat_cxx -p ../data/quantitative/pg.pg -d ../data/quantitative/pg.dist -v ../data/quantitative/merged_output.vcf.gz --make-bed
 
-// plink --bfile ../output --pheno ../data/binary/phenotype.tsv --pheno-name PHENO --assoc --allow-no-sex --allow-extra-chr --out ../output/plink
+// SIMULATION NEW
+// ./stoat_cxx -v ../data/simu/variants.vcf -s ../data/simu/paths_snarl.tsv -b ../data/simu/phenotypes.txt
+ 
+// plink --vcf ../data/simu/variants.vcf --make-bed --allow-extra-chr --out ../output/genotype
+// plink --bfile ../output/genotype --pheno ../data/simu/phenotypes.txt --pheno-name PHENO --assoc --allow-no-sex --allow-extra-chr --out ../output/plink

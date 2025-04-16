@@ -243,8 +243,8 @@ void SnarlParser::create_bim_bed(const std::vector<std::tuple<string, vector<str
         const size_t sample_number = sampleNames.size();  // Number of individuals
 
         // Generate a genotype table for this snarl
-        auto [allele_vector_0, allele_vector_1] = create_table_short_path(list_snarl);  // 2D vector, each row = SNP, each col = sample alleles
-
+        auto [allele_vector_0, allele_vector_1] = create_table_short_path(list_snarl);
+        
         std::string allele1 = "A";  // Placeholder for allele 1
         std::string allele2 = "T";  // Placeholder for allele 2
 

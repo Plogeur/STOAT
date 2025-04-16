@@ -57,9 +57,8 @@ def generate_vcf_and_paths(num_samples, num_variants, vcf_file, paths_file):
                 var_id = f"{chrom}_{i+1}"
                 vcf.write(f"{chrom}\t{pos}\trs{var_id}\t{ref}\t{alt}\t.\tPASS\t{at_info}\t{fmt}\t" + "\t".join(genotypes) + "\n")
 
-                snarl = f">{'>'.join(ref_path)}"
                 all_paths = f">{'>'.join(ref_path)},>{'>'.join(alt_path)}"
-                paths.write(f"{chrom}\t{pos}\t{snarl}\t{all_paths}\t{ref},{alt}\n")
+                paths.write(f"{chrom}\t{pos}\trs{var_id}\t{all_paths}\t{ref},{alt}\n")
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Generate phenotype, VCF, and path info for simulated pangenome variants.")
