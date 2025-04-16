@@ -5,22 +5,20 @@ def generate_phenotypes(num_samples, output_file="phenotypes.txt"):
     with open(output_file, "w") as f:
         f.write("FID\tIID\tPHENO\n")
         phenos = [1] * (num_samples // 2) + [2] * (num_samples - num_samples // 2)
-        random.shuffle(phenos)
         for i in range(num_samples):
             fid = iid = f"sample{i+1}"
             f.write(f"{fid}\t{iid}\t{phenos[i]}\n")
 
-def random_base(exclude=None):
-    bases = ['A', 'C', 'G', 'T']
-    if exclude:
-        bases.remove(exclude)
-    return random.choice(bases)
+def random_genotype():
+    genotype = ['0/0', '1/0', '0/1', '1/1']
+    return random.choice(genotype)
 
 def generate_paths(start_node):
     # Each path is 3 nodes long: ref and alt share first and last node, differ in the middle
-    ref_path = [str(start_node), str(start_node + 2), str(start_node + 3)]
-    alt_path = [str(start_node), str(start_node + 1), str(start_node + 3)]
-    return ref_path, alt_path, start_node + 4
+    ref_path = f">{str(start_node)}>{str(start_node + 2)}>{str(start_node + 3)}"
+    alt_path = f">{str(start_node)}>{str(start_node + 1)}>{str(start_node + 3)}"
+    paths = f"{ref_path},{alt_path}"
+    return paths, start_node + 4
 
 def generate_vcf_and_paths(num_samples, num_variants, vcf_file, paths_file):
     with open(vcf_file, "w") as vcf, open(paths_file, "w") as paths:
@@ -43,21 +41,19 @@ def generate_vcf_and_paths(num_samples, num_variants, vcf_file, paths_file):
         current_node = 2
         variants_per_chrom = num_variants // 10
         chroms = [str(i+1) for i in range(10)]
+        ref = "A"
+        alt = "T"
+        fmt = "GT"
 
         for chrom in chroms:
             for i in range(variants_per_chrom):
-                pos = (i + 1) * 100
-                ref = random.choice(['A', 'C', 'G', 'T'])
-                alt = random_base(exclude=ref)
-                ref_path, alt_path, current_node = generate_paths(current_node)
-                at_info = f"AT=>{'>'.join(ref_path)},>{'>'.join(alt_path)}"
+                pos = (i + 1) * 10
+                all_paths, current_node = generate_paths(current_node)
+                at_info = f"AT={all_paths}"
 
-                fmt = "GT"
-                genotypes = ["0/1" for _ in range(num_samples)]
+                genotypes = '\t'.join([random_genotype() for _ in range(num_samples)])
                 var_id = f"{chrom}_{i+1}"
-                vcf.write(f"{chrom}\t{pos}\trs{var_id}\t{ref}\t{alt}\t.\tPASS\t{at_info}\t{fmt}\t" + "\t".join(genotypes) + "\n")
-
-                all_paths = f">{'>'.join(ref_path)},>{'>'.join(alt_path)}"
+                vcf.write(f"{chrom}\t{pos}\trs{var_id}\t{ref}\t{alt}\t.\tPASS\t{at_info}\t{fmt}\t{genotypes}\n")
                 paths.write(f"{chrom}\t{pos}\trs{var_id}\t{all_paths}\t{ref},{alt}\n")
 
 if __name__ == "__main__":
@@ -77,4 +73,4 @@ if __name__ == "__main__":
 
     print(f"Files generated:\n- {args.pheno_file}\n- {args.vcf_file}\n- {args.paths_file}")
 
-# python3 tests/create_dataset.py 200 1000 --pheno_file tests/simu/phenotypes.txt --vcf_file tests/simu/variants.vcf --paths_file tests/simu/paths_snarl.tsv
+# python3 tests/create_dataset.py 200 1000 --pheno_file data/simu/phenotypes.txt --vcf_file data/simu/variants.vcf --paths_file data/simu/paths_snarl.tsv
