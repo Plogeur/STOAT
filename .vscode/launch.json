@@ -2,12 +2,28 @@
   "version": "0.2.0",
   "configurations": [
     {
-      "name": "C/C++ Runner: Debug Session",
-      "type": "lldb",
+      "name": "Debug stoat_cxx",
+      "type": "cppdbg",
       "request": "launch",
-      "args": [],
-      "cwd": "/Users/aliasmatis/Desktop/stoat_cxx/src",
-      "program": "/Users/aliasmatis/Desktop/stoat_cxx/src/build/Debug/outDebug"
+      "program": "${workspaceFolder}/build/stoat_cxx",
+      "args": [
+        "-v", "../data/simu/variants.vcf",
+        "-s", "../data/simu/paths_snarl.tsv",
+        "-b", "../data/simu/phenotypes.txt"
+      ],
+      "stopAtEntry": false,
+      "cwd": "${workspaceFolder}",
+      "environment": [],
+      "externalConsole": false,
+      "MIMode": "lldb",
+      "miDebuggerPath": "/usr/bin/lldb",
+      "setupCommands": [
+        {
+          "description": "Enable pretty-printing for gdb",
+          "text": "-enable-pretty-printing",
+          "ignoreFailures": true
+        }
+      ]
     }
   ]
 }
