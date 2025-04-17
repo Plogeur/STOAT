@@ -512,8 +512,10 @@ void SnarlParser::binary_table(const std::vector<std::tuple<std::string, std::ve
             for (size_t itr = start; itr < end; ++itr) {
                 const auto& [snarl, list_snarl, pos, type_var] = snarls[itr];
                 
-                std::vector<std::vector<size_t>> df;
-                bool df_filtration = create_binary_table_with_maf_check(df, binary_groups, list_snarl, sampleNames, matrix, maf);
+                size_t length_column_headers = list_snarl.size();
+                std::vector<size_t> g0(length_column_headers, 0); // can be replace by size_t arr[length_column_headers] = {0};
+                std::vector<size_t> g1(length_column_headers, 0); // can be replace by size_t arr[length_column_headers] = {0};
+                bool df_filtration = create_binary_table(g0, g1, binary_groups, list_snarl, sampleNames, matrix, maf);
 
                 std::ostringstream oss;
                 for (size_t i = 0; i < type_var.size(); ++i) {
@@ -534,7 +536,7 @@ void SnarlParser::binary_table(const std::vector<std::tuple<std::string, std::ve
                 } else {
                     // Binary analysis single test
                     if (!df_filtration) { // good df
-                        binary_stat_test(df, fastfisher_p_value, chi2_p_value, group_paths,
+                        binary_stat_test(g0, g1, fastfisher_p_value, chi2_p_value, group_paths,
                             allele_number_str, min_row_index_str, numb_colum_str, inter_group_str, average_str);
                     }
 
@@ -613,29 +615,6 @@ void SnarlParser::quantitative_table(const std::vector<std::tuple<string, vector
 
         outf.write(data.str().c_str(), data.str().size());
     }
-}
-
-bool check_MAF_threshold_binary(const std::vector<std::vector<size_t>>& df, const double& maf) {
-
-    int n = df[0].size(); // Number of columns (paths)
-    int totalSum = 0;
-    
-    // Compute total sum of all elements in the matrix
-    for (int i = 0; i < 2; ++i) {
-        for (int j = 0; j < n; ++j) {
-            totalSum += df[i][j];
-        }
-    }
-    
-    // Check if any column's sum exceeds the threshold relative to total sum
-    for (int i = 0; i < n; ++i) {
-        int columnSum = df[0][i] + df[1][i];
-        if (static_cast<double>(columnSum) / totalSum >= maf) {
-            return true; // If any column's sum proportion meets or exceeds the threshold, return false
-        }
-    }
-
-    return false; // If no column exceeds the threshold, return true
 }
 
 bool check_MAF_threshold_quantitative(const std::unordered_map<std::string, std::vector<size_t>>& df, const double& maf) {    

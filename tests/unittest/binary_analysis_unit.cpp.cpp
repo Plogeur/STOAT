@@ -3,20 +3,16 @@
 
 TEST_CASE("Chi-square & Fisher test function", "[chi2Test]") {
     SECTION("Valid chi-square test & not valid Fisher test calculation") {
-        std::vector<std::vector<size_t>> observed = {
-            {10, 20, 30},
-            {20, 30, 40}
-        };
-        REQUIRE(chi2Test(observed) != "");
-        REQUIRE(fastFishersExactTest(observed) == "NA");
+        std::vector<size_t> g0 = {10, 20, 30};
+        std::vector<size_t> g1 = {20, 30, 40};
+        REQUIRE(chi2Test(g0, g1) != "");
+        REQUIRE(fastFishersExactTest(g0, g1) == "NA");
     }
 
     SECTION("Chi-square fail & Fisher test valid (zero row)") {
-        std::vector<std::vector<size_t>> zero_row_matrix = {
-            {0, 0},
-            {4, 5}
-        };
-        REQUIRE(chi2Test(zero_row_matrix) == "1.0000");
-        REQUIRE(fastFishersExactTest(zero_row_matrix) != "");
+        std::vector<size_t> g0 = {0, 0};
+        std::vector<size_t> g1 = {20, 30};
+        REQUIRE(chi2Test(g0, g1) == "1.0000");
+        REQUIRE(fastFishersExactTest(g0, g1) != "");
     }
 }

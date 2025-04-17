@@ -28,24 +28,24 @@ std::vector<std::string> LMM_binary(
 // ------------------------ Chi2 test ------------------------
 
 // Function to perform the Chi-square test
-std::string chi2Test(const std::vector<std::vector<size_t>>& observed);
+std::string chi2Test(const std::vector<size_t>& g0, const std::vector<size_t>& g1);
 
 // ------------------------ Fisher exact test ------------------------
 
 // Function to perform Fisher's exact test
-std::string fastFishersExactTest(const std::vector<std::vector<size_t>>& table);
+std::string fastFishersExactTest(const std::vector<size_t>& g0, const std::vector<size_t>& g1);
 
 // ------------------------ Binary table ------------------------
 
-std::string format_group_paths(const std::vector<std::vector<size_t>>& df);
+std::string format_group_paths(const std::vector<size_t>& g0, const std::vector<size_t>& g1);
 
-void binary_stat_test(const std::vector<std::vector<size_t>>& df, 
+void binary_stat_test(const std::vector<size_t>& g0, const std::vector<size_t>& g1, 
     string& fastfisher_p_value, string& chi2_p_value, string& group_paths,
     string& allele_number_str, string& min_row_index_str, string& numb_colum_str, 
     string& inter_group_str, string& average_str);
 
-bool create_binary_table_with_maf_check(
-    std::vector<std::vector<size_t>>& df,
+bool create_binary_table(
+    std::vector<size_t>& g0, std::vector<size_t>& g1,
     const std::unordered_map<std::string, bool>& groups, 
     const std::vector<std::string>& list_path_snarl, 
     const std::vector<std::string>& list_samples, 
