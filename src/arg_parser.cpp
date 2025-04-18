@@ -94,7 +94,7 @@ std::unordered_map<std::string, bool> parse_binary_pheno(const std::string& file
             count_cases++;
             parsed_pheno[iid] = static_cast<bool>(true);
         } else {
-            throw std::runtime_error("Error: Phenotype must be 1 or 2");
+            throw std::runtime_error("Error: Binary phenotype must be 1 or 2");
         }
     }
     cout << "Binary phenotypes founds : " << count_controls+count_cases

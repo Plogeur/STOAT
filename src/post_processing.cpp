@@ -65,7 +65,8 @@ void add_BH_adjusted_column(
 
         double pval = 1.0;
         if (phenotype_type == "binary") {
-            pval = mean_pvalue_from_strings(columns[4], columns[5]);
+            // pval = mean_pvalue_from_strings(columns[4], columns[5]);
+            pval = string_to_pvalue(columns[5]);
         } else if (phenotype_type == "quantitative") {
             pval = string_to_pvalue(columns[4]);
         }
