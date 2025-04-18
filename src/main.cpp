@@ -42,6 +42,7 @@ void print_help() {
               << "  -g, --gaf                   Make a GAF file from the GWAS analysis\n"
               << "  -q, --quantitative <path>   Path to the quantitative phenotype file (.txt or .tsv)\n"
               << "  --covariate <path>          Path to the covariate file (.txt or .tsv)\n"
+              << "  --covar-name <string>       Covariate column name used in the gwas analyse\n"
               << "  -e, --eqtl <path>           Path to the Expression Quantitative Trait Loci file (.txt or .tsv)\n"
               << "  -k, --kinship <path>        Path to the kinship matrix file (.txt or .tsv)\n"
               << "  --make-bed                  Create a plink format files (.bed, .bim, bed)\n"
@@ -60,6 +61,8 @@ int main(int argc, char* argv[]) {
     size_t num_threads=1;
     size_t phenotype=0;
     size_t children_threshold = 50;
+    std::vector<std::string> covar_names;
+
     double maf = 0.99;
     bool gaf = false;
     bool only_snarl_parsing = false;
@@ -101,6 +104,14 @@ int main(int argc, char* argv[]) {
         } else if ((arg == "--covariate") && i + 1 < argc) {
             covariate_path = argv[++i];
             check_file(covariate_path);
+        } else if ((arg == "--covar-name") && i + 1 < argc) {
+            std::string covar_arg = argv[++i];
+            // Split by comma if multiple names provided
+            std::stringstream ss(covar_arg);
+            std::string token;
+            while (std::getline(ss, token, ',')) {
+                covar_names.push_back(token);
+            }
         } else if ((arg == "-k" || arg == "--kinship") && i + 1 < argc) {
             kinship_path = argv[++i];
             check_file(kinship_path);
@@ -195,7 +206,7 @@ int main(int argc, char* argv[]) {
     std::unordered_map<std::string, std::vector<double>> covariate;
     if (!covariate_path.empty()) {
         check_format_covariate(covariate_path);
-        covariate = parseCovariate(covariate_path);
+        covariate = parse_covariates(covariate_path, covar_names);
     }
 
     KinshipMatrix kinship;

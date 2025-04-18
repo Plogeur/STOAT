@@ -25,6 +25,18 @@ std::vector<std::string> LMM_binary(
     const std::vector<std::vector<size_t>>& df,
     const std::unordered_map<std::string, std::vector<double>>& covariate);
 
+// ------------------------ Logistic regression ------------------------
+
+double sigmoid(double z);
+double dot(const std::vector<double>& a, const std::vector<double>& b);
+double normal_p_value(double z);
+
+std::tuple<string, string, string, string> logistic_regression(
+    const std::unordered_map<std::string, std::vector<size_t>>& variant_data,
+    const std::unordered_map<std::string, bool>& phenotype,
+    const std::unordered_map<std::string, std::vector<double>>& covariates,
+    double tol, size_t max_iter);
+
 // ------------------------ Chi2 test ------------------------
 
 // Function to perform the Chi-square test

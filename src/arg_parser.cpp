@@ -333,32 +333,68 @@ void check_format_covariate(const std::string& filename) {
 }
 
 // Function to parse covariates into an unordered_map
-std::unordered_map<std::string, std::vector<double>> parseCovariate(const std::string& filename) {
+
+std::unordered_map<std::string, std::vector<double>> parse_covariates(
+    const std::string& filename, const std::vector<std::string>& covar_names) {
+
     std::ifstream file(filename);
-    if (!file.is_open()) {
-        std::cerr << "Error: Cannot open file " << filename << std::endl;
-        return {};
+    std::string line;
+    std::unordered_map<std::string, std::vector<double>> covariateMap;
+
+    // Read header
+    std::getline(file, line);
+    std::istringstream headerStream(line);
+    std::vector<std::string> headers;
+    std::string col;
+    while (headerStream >> col) {
+        headers.push_back(col);
     }
 
-    std::unordered_map<std::string, std::vector<double>> covariates;
-    std::string line;
-    
-    while (std::getline(file, line)) {
-        std::stringstream ss(line);
-        std::string sample_id;
-        ss >> sample_id;
+    // Check for required columns
+    auto it_iid = std::find(headers.begin(), headers.end(), "IID");
+    if (it_iid == headers.end()) {
+        std::cerr << "Error: header must include 'IID' column.\n";
+        return covariateMap;
+    }
+    size_t iid_index = std::distance(headers.begin(), it_iid);
 
-        std::vector<double> values;
-        double value;
-        while (ss >> value) {
-            values.push_back(value);
+    std::unordered_map<std::string, size_t> col_index;
+    for (size_t i = 0; i < headers.size(); ++i) {
+        col_index[headers[i]] = i;
+    }
+
+    // Validate requested covariates
+    for (const auto& name : covar_names) {
+        if (col_index.find(name) == col_index.end()) {
+            std::cerr << "Error: covariate column '" << name << "' not found in file.\n";
+            return covariateMap;
+        }
+    }
+
+    // Read data
+    while (std::getline(file, line)) {
+        std::istringstream lineStream(line);
+        std::vector<std::string> tokens;
+        std::string token;
+        while (lineStream >> token) {
+            tokens.push_back(token);
         }
 
-        covariates[sample_id] = values;
+        if (tokens.size() <= iid_index) continue;
+        std::string iid = tokens[iid_index];
+
+        std::vector<double> selected;
+        try {
+            for (const auto& name : covar_names) {
+                double val = std::stod(tokens[col_index[name]]);
+                selected.push_back(val);
+            }
+        } catch (...) {
+            std::cerr << "Error: Individual " << iid << " got an non-numeric value\n";
+        }
+        covariateMap[iid] = selected;
     }
-    
-    file.close();
-    return covariates;
+    return covariateMap;
 }
 
 template void check_phenotype_covariate<double>(const std::unordered_map<std::string, double>& phenotype, 

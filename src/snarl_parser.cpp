@@ -491,14 +491,13 @@ std::vector<int> identify_correct_path(
 }
 
 void SnarlParser::binary_table(const std::vector<std::tuple<std::string, std::vector<std::string>, std::string, std::vector<std::string>>>& snarls,
-                               const std::unordered_map<std::string, bool>& binary_groups, const std::string& chr,
+                               const std::unordered_map<std::string, bool>& binary_phenotype, const std::string& chr,
                                const std::unordered_map<std::string, std::vector<double>>& covar,
                                const double& maf, const KinshipMatrix& kinship, 
                                const size_t& num_threads, std::ofstream& outf) {
 
     const size_t total = snarls.size();
     size_t chunk_size = (total + num_threads - 1) / num_threads;
-
     std::mutex mutex_pvalues;
     std::mutex mutex_file;
     std::vector<std::thread> threads;
@@ -512,11 +511,6 @@ void SnarlParser::binary_table(const std::vector<std::tuple<std::string, std::ve
             for (size_t itr = start; itr < end; ++itr) {
                 const auto& [snarl, list_snarl, pos, type_var] = snarls[itr];
                 
-                size_t length_column_headers = list_snarl.size();
-                std::vector<size_t> g0(length_column_headers, 0); // can be replace by size_t arr[length_column_headers] = {0};
-                std::vector<size_t> g1(length_column_headers, 0); // can be replace by size_t arr[length_column_headers] = {0};
-                bool df_filtration = create_binary_table(g0, g1, binary_groups, list_snarl, sampleNames, matrix, maf);
-
                 std::ostringstream oss;
                 for (size_t i = 0; i < type_var.size(); ++i) {
                     if (i != 0) oss << ",";
@@ -524,16 +518,44 @@ void SnarlParser::binary_table(const std::vector<std::tuple<std::string, std::ve
                 }
 
                 std::string type_var_str = oss.str();
-                std::vector<std::string> stats;
                 std::stringstream data;
 
-                std::string fastfisher_p_value = "NA", chi2_p_value = "NA",
-                group_paths = "NA", allele_number_str = "NA", min_row_index_str = "NA",
-                numb_colum_str = "NA", inter_group_str = "NA", average_str = "NA";
-
                 if (!covar.empty()) {
-                    // Placeholder for LMM (not implemented yet)
+                    // Logistic regression
+                    auto [df, allele_number] = create_quantitative_table(sampleNames, list_snarl, matrix);
+                    bool df_filtration = false;
+                    bool df_empty = false;
+            
+                    if (allele_number < 2) {
+                        df_empty = true;
+                    } else {
+                        df_filtration = check_MAF_threshold_quantitative(df, maf);
+                    }
+                    
+                    // chr, pos, snarl, type, p_value, p_adjusted, r2, beta, se, allele_number
+                    if (df_empty || !df_filtration) {
+                        data << chr << "\t" << pos << "\t" << snarl << "\t" << type_var_str
+                        << "\t" << "NA" << "\t" << "NA" << "\t" << "NA" << "\t" << "NA"
+                        << "\t" << "NA" << "\t" << allele_number << "\n";
+                    } else {
+                        const auto& [z, beta, se, p_value] = logistic_regression(df, binary_phenotype, covar, 1e-6, 25);
+            
+                        // chr, pos, snarl, type, p_value, p_adjusted, t-dist, beta, se, allele_number
+                        data << chr << "\t" << pos << "\t" << snarl << "\t" << type_var_str
+                        << "\t" << p_value << "\t" << "" << "\t" << z << "\t" 
+                        << beta << "\t" << se << "\t" << allele_number << "\n";
+                    }
+
                 } else {
+                    size_t length_column_headers = list_snarl.size();
+                    std::vector<size_t> g0(length_column_headers, 0); // can be replace by size_t arr[length_column_headers] = {0};
+                    std::vector<size_t> g1(length_column_headers, 0); // can be replace by size_t arr[length_column_headers] = {0};
+                    bool df_filtration = create_binary_table(g0, g1, binary_phenotype, list_snarl, sampleNames, matrix, maf);
+
+                    std::string fastfisher_p_value = "NA", chi2_p_value = "NA",
+                    group_paths = "NA", allele_number_str = "NA", min_row_index_str = "NA",
+                    numb_colum_str = "NA", inter_group_str = "NA", average_str = "NA";
+    
                     // Binary analysis single test
                     if (!df_filtration) { // good df
                         binary_stat_test(g0, g1, fastfisher_p_value, chi2_p_value, group_paths,
@@ -641,11 +663,11 @@ bool check_MAF_threshold_quantitative(const std::unordered_map<std::string, std:
 }
 
 std::unordered_map<std::string, std::vector<double>> convertBinaryGroups(
-    const std::unordered_map<std::string, bool>& binary_groups) {
+    const std::unordered_map<std::string, bool>& binary_phenotype) {
 
     std::unordered_map<std::string, std::vector<double>> converted_map;
 
-    for (const auto& entry : binary_groups) {
+    for (const auto& entry : binary_phenotype) {
         const std::string& sample_id = entry.first;
         bool group_value = entry.second;
 

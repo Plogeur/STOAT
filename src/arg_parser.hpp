@@ -60,7 +60,8 @@ template <typename T>
 void check_phenotype_covariate(const std::unordered_map<std::string, T>& phenotype, 
     const std::unordered_map<std::string, std::vector<double>>& covariates);
 
-std::unordered_map<std::string, std::vector<double>> parseCovariate(const std::string& filename);
+std::unordered_map<std::string, std::vector<double>> parse_covariates(
+    const std::string& filename, const std::vector<std::string>& covar_names);
 
 // Parses the group file and fills the group_0 and group_1 maps with sample data.
 std::unordered_map<std::string, bool> parse_binary_pheno(const std::string& binary_pheno);

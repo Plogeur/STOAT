@@ -84,6 +84,119 @@ std::vector<std::string> LMM_binary(const std::vector<std::vector<size_t>>& df,
     return {std::to_string(beta.mean()), std::to_string(se.mean()), std::to_string(p_value.mean())};
 }
 
+// ------------------------ Logistic regression + covariate test ------------------------
+
+// Sigmoid function
+double sigmoid(double z) {
+    return 1.0 / (1.0 + std::exp(-z));
+}
+
+// Dot product
+double dot(const std::vector<double>& a, const std::vector<double>& b) {
+    return std::inner_product(a.begin(), a.end(), b.begin(), 0.0);
+}
+
+// Compute p-value from z-score using normal distribution
+double normal_p_value(double z) {
+    return 2.0 * (1.0 - 0.5 * std::erfc(-z / std::sqrt(2)));
+}
+
+// Logistic regression returning test-stat, beta, se, p-value
+std::tuple<string, string, string, string> logistic_regression(
+    const std::unordered_map<std::string, std::vector<size_t>>& variant_data,
+    const std::unordered_map<std::string, bool>& phenotype,
+    const std::unordered_map<std::string, std::vector<double>>& covariates,
+    double tol, size_t max_iter) {
+
+    std::vector<std::vector<double>> X;
+    std::vector<bool> y;
+
+    // Expect only one variant
+    const auto& genotype_pair = *variant_data.begin();
+    const auto& genotype_map = variant_data;
+
+    for (const auto& [sample, gt_vec] : genotype_map) {
+        if (phenotype.count(sample) == 0 || covariates.count(sample) == 0)
+            continue;
+
+        for (size_t i = 0; i < gt_vec.size(); ++i) {
+            std::vector<double> features;
+            features.push_back(static_cast<double>(gt_vec[i])); // allele dosage
+            const auto& cov = covariates.at(sample);
+            features.insert(features.end(), cov.begin(), cov.end());
+            X.push_back(features);
+            y.push_back(phenotype.at(sample));
+        }
+    }
+
+    size_t n = X.size();
+    if (n == 0) throw std::runtime_error("No valid samples found.");
+    size_t p = X[0].size(); // number of features including genotype
+    std::vector<double> beta(p, 0.0); // Initial coefficients
+    std::vector<std::vector<double>> hessian(p, std::vector<double>(p, 0.0));
+
+    for (size_t iter = 0; iter < max_iter; ++iter) {
+        std::vector<double> gradient(p, 0.0);
+        std::fill(hessian.begin(), hessian.end(), std::vector<double>(p, 0.0));
+
+        for (size_t i = 0; i < n; ++i) {
+            double pred = sigmoid(dot(beta, X[i]));
+            double error = y[i] - pred;
+
+            for (size_t j = 0; j < p; ++j) {
+                gradient[j] += X[i][j] * error;
+                for (size_t k = 0; k < p; ++k) {
+                    hessian[j][k] += X[i][j] * X[i][k] * pred * (1 - pred);
+                }
+            }
+        }
+
+        // Solve H * delta = grad (simple Gauss-Seidel or pseudo-inverse for small p)
+        std::vector<double> delta(p, 0.0);
+        // Naive inversion for 2x2 or small p
+        if (p == 1) {
+            if (hessian[0][0] != 0)
+                delta[0] = gradient[0] / hessian[0][0];
+        } else {
+            // Use pseudo-inverse for small p (only suitable for small problems)
+            for (size_t i = 0; i < p; ++i) {
+                delta[i] = gradient[i];
+                for (size_t j = 0; j < p; ++j) {
+                    if (i != j) delta[i] -= hessian[i][j] * beta[j];
+                }
+                if (hessian[i][i] != 0)
+                    delta[i] /= hessian[i][i];
+            }
+        }
+
+        // Update beta
+        double max_change = 0;
+        for (size_t i = 0; i < p; ++i) {
+            beta[i] += delta[i];
+            max_change = std::max(max_change, std::abs(delta[i]));
+        }
+
+        if (max_change < tol) break;
+    }
+
+    // Compute standard error from Hessian (inverse diag elements)
+    std::vector<double> se(p, 0.0);
+    for (size_t j = 0; j < p; ++j) {
+        if (hessian[j][j] != 0)
+            se[j] = std::sqrt(1.0 / hessian[j][j]);
+        else
+            se[j] = std::numeric_limits<double>::infinity();
+    }
+
+    double beta_means = std::accumulate(beta.begin(), beta.end(), 0.0) / beta.size();
+    double se_means = std::accumulate(se.begin(), se.end(), 0.0) / se.size();
+    double z = beta_means / se_means;
+    double p_value = normal_p_value(z);
+
+    return {set_precision(z), set_precision(beta_means), 
+        set_precision(se_means), set_precision(p_value)};
+}
+
 // ------------------------ Chi2 test ------------------------
 
 // Check if the observed matrix is valid (no zero rows/columns)

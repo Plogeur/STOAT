@@ -34,7 +34,7 @@ public:
     void push_matrix(const std::string& decomposedSnarl, std::unordered_map<std::string, size_t>& rowHeaderDict, size_t indexColumn);
     
     void binary_table(const std::vector<std::tuple<std::string, std::vector<std::string>, std::string, std::vector<std::string>>>& snarls,
-        const std::unordered_map<std::string, bool>& binary_groups, const std::string& chr,
+        const std::unordered_map<std::string, bool>& binary_phenotype, const std::string& chr,
         const std::unordered_map<std::string, std::vector<double>>& covar,
         const double& maf, const KinshipMatrix& kinship, 
         const size_t& num_threads, std::ofstream& outf);
@@ -104,6 +104,6 @@ std::vector<std::vector<size_t>> transpose_matrix(const std::vector<std::vector<
 void find_two_largest_indices(const std::vector<size_t>& vec, size_t& major_index_1, size_t& major_index_2);
 
 std::unordered_map<std::string, std::vector<double>> convertBinaryGroups(
-                                        const std::unordered_map<std::string, bool>& binary_groups);
+                                        const std::unordered_map<std::string, bool>& binary_phenotype);
 
 #endif
