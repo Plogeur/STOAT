@@ -87,20 +87,20 @@ std::vector<std::string> LMM_binary(const std::vector<std::vector<size_t>>& df,
 // ------------------------ Chi2 test ------------------------
 
 // Check if the observed matrix is valid (no zero rows/columns)
-std::string chi2Test(const std::vector<size_t>& g0, const std::vector<size_t>& g1) {
+std::string chi2Test(const std::vector<std::vector<size_t>>& observed) {
     
-    size_t cols = g0.size();
+    size_t cols = observed[0].size();
     std::vector<double> col_sums(cols, 0.0);
     double row_sum0 = 0.0, row_sum1 = 0.0, total = 0.0;
 
     // Precompute row sums and column sums
     for (size_t j = 0; j < cols; ++j) {
-        size_t a = g1[j];
-        size_t b = g0[j];
+        double a = observed[0][j];
+        double b = observed[1][j];
         row_sum0 += a;
         row_sum1 += b;
         col_sums[j] = a + b;
-        total += col_sums[j];
+        total += a + b;
     }
 
     if (total == 0.0) return "0.0";
@@ -111,34 +111,33 @@ std::string chi2Test(const std::vector<size_t>& g0, const std::vector<size_t>& g
         double expected0 = (row_sum0 * col_sums[j]) / total;
         double expected1 = (row_sum1 * col_sums[j]) / total;
 
-        double diff0 = g0[j] - expected0;
-        double diff1 = g1[j] - expected1;
+        double diff0 = observed[0][j] - expected0;
+        double diff1 = observed[1][j] - expected1;
 
         if (expected0 > 0) chi2 += (diff0 * diff0) / expected0;
         if (expected1 > 0) chi2 += (diff1 * diff1) / expected1;
     }
 
-    size_t df_size = (cols - 1);
-    size_t df = df_size * df_size;
+    size_t df = (observed.size() - 1) * (observed[0].size() - 1);
     boost::math::chi_squared dist(df);
     return set_precision(boost::math::cdf(boost::math::complement(dist, chi2)));
 }
 
 // ------------------------ Fisher exact test ------------------------
 
-std::string fastFishersExactTest(const std::vector<size_t>& g0, const std::vector<size_t>& g1) {
+std::string fastFishersExactTest(const std::vector<std::vector<size_t>>& table) {
 // plink 1.9 fisher22 implementation
 
     // Ensure the table is 2x2
-    if (g0.size() != 2 || g1.size() != 2) {
+    if (table.size() != 2 || table[0].size() != 2 || table[1].size() != 2) {
         return "NA";
     }
 
     // Extract values from the table
-    size_t m11 = g0[0];
-    size_t m12 = g0[1];
-    size_t m21 = g1[0];
-    size_t m22 = g1[1];
+    size_t m11 = table[0][0];
+    size_t m12 = table[0][1];
+    size_t m21 = table[1][0];
+    size_t m22 = table[1][1];
 
     double tprob = (1 - kExactTestEpsilon2) * kExactTestBias;
     double cur_prob = tprob;
@@ -178,11 +177,11 @@ std::string fastFishersExactTest(const std::vector<size_t>& g0, const std::vecto
         cur12 -= 1;
         cur21 -= 1;
         if (cur_prob > DBL_MAX) {
-        return "0.0";
+            return "0.0";
         }
         if (cur_prob < kExactTestBias) {
-        tprob += cur_prob;
-        break;
+            tprob += cur_prob;
+            break;
         }
         cprob += cur_prob;
     }
@@ -229,7 +228,7 @@ std::string fastFishersExactTest(const std::vector<size_t>& g0, const std::vecto
 
 // ------------------------ Binary table & stats ------------------------
 
-void binary_stat_test(const std::vector<size_t>& g0, const std::vector<size_t>& g1,
+void binary_stat_test(const std::vector<std::vector<size_t>>& df, 
     string& fastfisher_p_value, string& chi2_p_value, string& group_paths,
     string& allele_number_str, string& min_row_index_str, string& numb_colum_str, 
     string& inter_group_str, string& average_str) {
@@ -237,28 +236,29 @@ void binary_stat_test(const std::vector<size_t>& g0, const std::vector<size_t>& 
     // Compute derived statistics
     int allele_number = 0;
     int inter_group = 0;
-    int numb_colum = g0.size();
+    int numb_colum = df.empty() ? 0 : df[0].size();
     int min_row_index = INT_MAX;
 
-    for (size_t i = 0; i < g0.size(); ++i) {
-        int row_sum = static_cast<int>(g0[i] + g1[i]);
+    for (const auto& row : df) {
+        int row_sum = std::accumulate(row.begin(), row.end(), 0);
         allele_number += row_sum;
         min_row_index = std::min(min_row_index, row_sum);
     }
-
+    
     for (int col=0; col < numb_colum; ++col) {
         size_t col_min = INT_MAX;
-        col_min = std::min(col_min, g0[col]);
-        col_min = std::min(col_min, g1[col]);
+        for (const auto& row : df) {
+            col_min = std::min(col_min, row[col]);
+        }
         inter_group += col_min;
     }
     
     int average = static_cast<double>(allele_number) / numb_colum; // get 200 instead of 200.00000
 
     // Compute  Fisher's exact & Chi-squared test p-value
-    chi2_p_value = chi2Test(g0, g1);
-    fastfisher_p_value = fastFishersExactTest(g0, g1);
-    group_paths = format_group_paths(g0, g1);
+    chi2_p_value = chi2Test(df);
+    fastfisher_p_value = fastFishersExactTest(df);
+    group_paths = format_group_paths(df);
     allele_number_str = std::to_string(allele_number);
     min_row_index_str = std::to_string(min_row_index);
     numb_colum_str = std::to_string(numb_colum);
@@ -266,21 +266,23 @@ void binary_stat_test(const std::vector<size_t>& g0, const std::vector<size_t>& 
     average_str = std::to_string(average);
 }
 
-std::string format_group_paths(const std::vector<size_t>& g0, const std::vector<size_t>& g1) {
+std::string format_group_paths(const std::vector<std::vector<size_t>>& matrix) {
 
     std::string result;
-    size_t numb_col = g0.size();
-    for (size_t index_col = 0; index_col < numb_col; ++index_col) {
-        result += std::to_string(g0[index_col]) + ":" + std::to_string(g1[index_col]);
-        if (index_col < numb_col - 1) {
+    size_t rows = matrix.size();
+
+    for (size_t row = 0; row < rows; ++row) {
+        result += std::to_string(matrix[row][0]) + ":" + std::to_string(matrix[row][1]);
+        if (row < rows - 1) {
             result += ","; // Separate row pairs with ','
         }
     }
+
     return result;
 }
 
-bool create_binary_table(
-    std::vector<size_t>& g0, std::vector<size_t>& g1,
+bool create_binary_table_with_maf_check(
+    std::vector<std::vector<size_t>>& df,
     const std::unordered_map<std::string, bool>& groups, 
     const std::vector<std::string>& list_path_snarl, 
     const std::vector<std::string>& list_samples, 
@@ -288,6 +290,8 @@ bool create_binary_table(
     const double& maf) {
 
     size_t length_column_headers = list_path_snarl.size();
+    std::vector<size_t> g0(length_column_headers, 0);
+    std::vector<size_t> g1(length_column_headers, 0);
     size_t totalSum = 0;
 
     for (size_t idx_g = 0; idx_g < list_path_snarl.size(); ++idx_g) {
@@ -318,5 +322,6 @@ bool create_binary_table(
         }
     }
 
+    df = {g0, g1};
     return false; // No column met MAF threshold
 }
