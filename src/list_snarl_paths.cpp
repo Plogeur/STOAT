@@ -376,7 +376,7 @@ std::unordered_map<std::string, std::vector<std::tuple<string, vector<string>, s
         
         stree.for_each_child(snarl, count_children);
         if (children[0] > children_threshold) {
-            out_fail << snarl_id << "\ttoo_many_children\n";
+            out_fail << snarl_id << "\ttoo_many_children = " << children[0] << " children(s)" << "\n";
             continue;
         }
         
@@ -388,7 +388,7 @@ std::unordered_map<std::string, std::vector<std::tuple<string, vector<string>, s
             paths.pop_back();
 
             if (itr > itr_thresold) {
-                out_fail << snarl_id << "\titeration_calculation_out\n";
+                out_fail << snarl_id << "\titeration_calculation_out = " << children[0] << " children(s)" << "\n";
                 not_break = false;
                 break;
             }

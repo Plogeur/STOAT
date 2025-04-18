@@ -136,13 +136,13 @@ int main(int argc, char* argv[]) {
         }
     }
 
-    if (show_help) {
+    if (show_help || argc == 1) {
         print_help();
-        return EXIT_FAILURE;    
+        return EXIT_FAILURE;
     }
     
     if (output_dir.empty()) {
-        output_dir = "../output";
+        output_dir = "output";
     }
 
     auto start_1 = std::chrono::high_resolution_clock::now();
