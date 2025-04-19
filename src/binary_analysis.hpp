@@ -37,9 +37,11 @@ std::tuple<std::string, std::string, std::string> logistic_regression(
 
 // ------------------------ Chi2 test ------------------------
 
-// Function to perform the Chi-square test
-std::string chi2Test(const std::vector<size_t>& g0, const std::vector<size_t>& g1);
+// Function to perform the Chi-square test on row size > 2 
+std::string chi2_2xN(const std::vector<size_t>& g0, const std::vector<size_t>& g1);
 
+// Function to perform the Chi-square test on row size == 2 
+std::string chi2_2x2(const std::vector<size_t>& g0, const std::vector<size_t>& g1);
 // ------------------------ Fisher exact test ------------------------
 
 // Function to perform Fisher's exact test

@@ -228,42 +228,79 @@ std::tuple<std::string, std::string, std::string> logistic_regression(
 
 // ------------------------ Chi2 test ------------------------
 
-// Check if the observed matrix is valid (no zero rows/columns)
-std::string chi2Test(const std::vector<size_t>& g0, const std::vector<size_t>& g1) {
+std::string chi2_2x2(const std::vector<size_t>& g0, const std::vector<size_t>& g1) {
     
+    bool yates_correction = true;
+
+    int a = g0[0];
+    int b = g0[1];
+    int c = g1[0];
+    int d = g1[1];
+
+    int row1 = a + b;
+    int row2 = c + d;
+    int col1 = a + c;
+    int col2 = b + d;
+    int total = row1 + row2;
+
+    if (row1 == 0 || row2 == 0 || col1 == 0 || col2 == 0) {
+        return "NA";
+    }
+
+    double numerator = static_cast<double>(a * d - b * c);
+    if (yates_correction) {
+        numerator = std::abs(numerator) - 0.5 * total;
+        numerator = std::max(0.0, numerator); // Prevent negative square root
+    }
+
+    numerator *= numerator;
+    double denominator = static_cast<double>(row1 * row2 * col1 * col2) / total;
+
+    double chi2_stat = numerator / denominator;
+
+    // Get p-value using chi-squared distribution with 1 degree of freedom
+    boost::math::chi_squared dist(1);
+    double p_value = 1.0 - boost::math::cdf(dist, chi2_stat);
+
+    return set_precision(p_value);
+}
+
+// Check if the observed matrix is valid (no zero rows/columns)
+std::string chi2_2xN(const std::vector<size_t>& g0, const std::vector<size_t>& g1) {
+
     size_t cols = g0.size();
-    std::vector<double> col_sums(cols, 0.0);
-    double row_sum0 = 0.0, row_sum1 = 0.0, total = 0.0;
+    std::vector<size_t> col_totals(cols);
+    size_t total = 0;
+    size_t row_total_0 = 0;
+    size_t row_total_1 = 0;
 
-    // Precompute row sums and column sums
-    for (size_t j = 0; j < cols; ++j) {
-        size_t a = g1[j];
-        size_t b = g0[j];
-        row_sum0 += a;
-        row_sum1 += b;
-        col_sums[j] = a + b;
-        total += col_sums[j];
+    for (size_t i = 0; i < cols; ++i) {
+        col_totals[i] = g0[i] + g1[i];
+        total += col_totals[i];
+        row_total_0 += g0[i];
+        row_total_1 += g1[i];
     }
 
-    if (total == 0.0) return "0.0";
+    if (total == 0)
+        return "NA";
+    if (row_total_0 == 0 || row_total_1 == 0)
+        return "NA";
+    if (std::any_of(col_totals.begin(), col_totals.end(), [](int x){ return x == 0; }))
+        return "NA";
 
-    // Compute chi-squared statistic
+    // Compute chi-squared
     double chi2 = 0.0;
-    for (size_t j = 0; j < cols; ++j) {
-        double expected0 = (row_sum0 * col_sums[j]) / total;
-        double expected1 = (row_sum1 * col_sums[j]) / total;
+    for (size_t i = 0; i < cols; ++i) {
+        double expected_0 = static_cast<double>(row_total_0) * col_totals[i] / total;
+        double expected_1 = static_cast<double>(row_total_1) * col_totals[i] / total;
 
-        double diff0 = g0[j] - expected0;
-        double diff1 = g1[j] - expected1;
-
-        if (expected0 > 0) chi2 += (diff0 * diff0) / expected0;
-        if (expected1 > 0) chi2 += (diff1 * diff1) / expected1;
+        chi2 += (g0[i] - expected_0) * (g0[i] - expected_0) / expected_0;
+        chi2 += (g1[i] - expected_1) * (g1[i] - expected_1) / expected_1;
     }
 
-    size_t df_size = (cols - 1);
-    size_t df = df_size * df_size;
+    size_t df = cols - 1;
     boost::math::chi_squared dist(df);
-    return set_precision(boost::math::cdf(boost::math::complement(dist, chi2)));
+    return set_precision(1.0 - boost::math::cdf(dist, chi2));
 }
 
 // ------------------------ Fisher exact test ------------------------
@@ -271,17 +308,17 @@ std::string chi2Test(const std::vector<size_t>& g0, const std::vector<size_t>& g
 std::string fastFishersExactTest(const std::vector<size_t>& g0, const std::vector<size_t>& g1) {
 // plink 1.9 fisher22 implementation
 
-    // Ensure the table is 2x2
-    if (g0.size() != 2 || g1.size() != 2) {
-        return "NA";
-    }
-
     // Extract values from the table
     size_t m11 = g0[0];
     size_t m12 = g0[1];
     size_t m21 = g1[0];
     size_t m22 = g1[1];
 
+    // Check for any full-zero row or column
+    if ((m11 | m12) == 0 || (m21 | m22) == 0 || (m11 | m21) == 0 || (m12 | m22) == 0) {
+        return "NA";
+    }
+    
     double tprob = (1 - kExactTestEpsilon2) * kExactTestBias;
     double cur_prob = tprob;
     double cprob = 0;
@@ -330,7 +367,7 @@ std::string fastFishersExactTest(const std::vector<size_t>& g0, const std::vecto
     }
 
     if (cprob == 0) {
-        return "1.0";
+        return "1.0000";
     }
 
     while (cur12 > 0.5) {
@@ -398,8 +435,12 @@ void binary_stat_test(const std::vector<size_t>& g0, const std::vector<size_t>& 
     int average = static_cast<double>(allele_number) / numb_colum; // get 200 instead of 200.00000
 
     // Compute  Fisher's exact & Chi-squared test p-value
-    chi2_p_value = chi2Test(g0, g1);
-    fastfisher_p_value = fastFishersExactTest(g0, g1);
+    if (g0.size() == 2) {
+        chi2_p_value = chi2_2x2(g0, g1);
+        fastfisher_p_value = fastFishersExactTest(g0, g1);
+    } else {
+        chi2_p_value = chi2_2xN(g0, g1);
+    }
     group_paths = format_group_paths(g0, g1);
     allele_number_str = std::to_string(allele_number);
     min_row_index_str = std::to_string(min_row_index);

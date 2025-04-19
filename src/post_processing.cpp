@@ -117,7 +117,6 @@ void add_BH_adjusted_column(
             }
             outfile_significant << '\n';
         }
-
         ++line_index;
     }
 
