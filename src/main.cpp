@@ -38,6 +38,7 @@ void print_help() {
               << "  -d, --dist <path>           Path to the dist file (.dist)\n"
               << "  -r, --chr <path>            Path to the chromosome reference file (.txt)\n"
               << "  --children <int>            Max number of children for a snarl in the snarl decomposition process (default = 50)\n"
+              << "  --path-length <int>         Max length for a path snarl in the snarl decomposition process (default = 10 000)\n"
               << "  -b, --binary <path>         Path to the binary group file (.txt or .tsv)\n"
               << "  -g, --gaf                   Make a GAF file from the GWAS analysis\n"
               << "  -q, --quantitative <path>   Path to the quantitative phenotype file (.txt or .tsv)\n"
@@ -45,7 +46,7 @@ void print_help() {
               << "  --covar-name <string>       Covariate column name used in the gwas analyse\n"
               << "  -e, --eqtl <path>           Path to the Expression Quantitative Trait Loci file (.txt or .tsv)\n"
               << "  -k, --kinship <path>        Path to the kinship matrix file (.txt or .tsv)\n"
-              << "  --make-bed                  Create a plink format files (.bed, .bim, bed)\n"
+              << "  --make-bed                  Create a plink format files (.bed, .bim, .fam)\n"
               << "  --maf                       Add a maf (Minimum allele frequency) thresold (defauld : 0.01)\n"
               << "  -o, --output <name>         Output dir name\n"
               << "  -t, --thread <int>          Number of threads\n"
@@ -61,6 +62,7 @@ int main(int argc, char* argv[]) {
     size_t num_threads=1;
     size_t phenotype=0;
     size_t children_threshold = 50;
+    size_t path_length_threshold = 10000;
     std::vector<std::string> covar_names;
 
     double maf = 0.99;
@@ -93,6 +95,12 @@ int main(int argc, char* argv[]) {
             children_threshold = std::stoi(argv[++i]);
             if (children_threshold < 2) {
                 std::cerr << "Error: Number of children must be a positive integer > 1\n";
+                return EXIT_FAILURE;
+            }
+        } else if ((arg == "--path-length") && i + 1 < argc) {
+            path_length_threshold = std::stoi(argv[++i]);
+            if (path_length_threshold < 2) {
+                std::cerr << "Error: Number of path length must be a positive integer > 1\n";
                 return EXIT_FAILURE;
             }
         } else if ((arg == "-b" || arg == "--binary") && i + 1 < argc) {
@@ -156,6 +164,12 @@ int main(int argc, char* argv[]) {
         output_dir = "output";
     }
 
+    if (!covariate_path.empty() && covar_names.empty()) {
+        std::cerr << "If --covariate path is provided you must add the column name(s) to parse using --covar-name" << "\n";
+        print_help();
+        return EXIT_FAILURE;
+    }
+
     auto start_1 = std::chrono::high_resolution_clock::now();
     std::filesystem::create_directory(output_dir);
     std::unordered_set<std::string> ref_chr = (!chromosome_path.empty()) ? parse_chromosome_reference(chromosome_path) : std::unordered_set<std::string>{"ref"};
@@ -184,7 +198,7 @@ int main(int argc, char* argv[]) {
     }
 
     if ((gaf == true && binary_path.empty()) || (gaf == true && pg_path.empty())) {
-        cerr << "GAF file can be generated only with binary phenotype AND with the pg graph";
+        std::cerr << "GAF file can be generated only with binary phenotype AND with the pg graph" << std::endl;
         print_help();
         return EXIT_FAILURE;
     }
@@ -253,7 +267,7 @@ int main(int argc, char* argv[]) {
         string output_snarl_not_analyse = output_dir + "/snarl_not_analyse.tsv";
         string output_file = output_dir + "/snarl_analyse.tsv";
 
-        snarls_chr = loop_over_snarls_write(*stree, snarls, *pg, output_file, output_snarl_not_analyse, children_threshold, only_snarl_parsing);
+        snarls_chr = loop_over_snarls_write(*stree, snarls, *pg, output_file, output_snarl_not_analyse, children_threshold, path_length_threshold, only_snarl_parsing);
         auto end_0 = std::chrono::high_resolution_clock::now();
         std::cout << "Snarl decomposition : " << std::chrono::duration<double>(end_0 - start_0).count() << " s" << std::endl;
         if (only_snarl_parsing) {
@@ -325,21 +339,21 @@ int main(int argc, char* argv[]) {
 }
 
 // BINARY
-// ./stoat_cxx -p ../data/binary/pg.pg -d ../data/binary/pg.dist -v ../data/binary/merged_output.vcf.gz -b ../data/binary/phenotype.tsv
+// ./stoat_cxx -p ../data/binary/pg.pg -d ../data/binary/pg.dist -v ../data/binary/merged_output.vcf.gz -b ../data/binary/phenotype.tsv --output ../output
 
 // QUANTITATIVE
-// ./stoat_cxx -p ../data/quantitative/pg.pg -d ../data/quantitative/pg.dist -v ../data/quantitative/merged_output.vcf.gz -q ../data/quantitative/phenotype.tsv
+// ./stoat_cxx -p ../data/quantitative/pg.pg -d ../data/quantitative/pg.dist -v ../data/quantitative/merged_output.vcf.gz -q ../data/quantitative/phenotype.tsv --output ../output
 
 // BINARY-PLINK
-// ./stoat_cxx -p ../data/binary/pg.pg -d ../data/binary/pg.dist -v ../data/binary/merged_output.vcf.gz --make-bed
+// ./stoat_cxx -p ../data/binary/pg.pg -d ../data/binary/pg.dist -v ../data/binary/merged_output.vcf.gz --make-bed --output ../output
 
 // QUANTITATIVE-PLINK
-// ./stoat_cxx -p ../data/quantitative/pg.pg -d ../data/quantitative/pg.dist -v ../data/quantitative/merged_output.vcf.gz --make-bed
+// ./stoat_cxx -p ../data/quantitative/pg.pg -d ../data/quantitative/pg.dist -v ../data/quantitative/merged_output.vcf.gz --make-bed --output ../output
 
 // SIMULATION NEW
-// ./stoat_cxx -v ../data/simu/variants.vcf -s ../data/simu/paths_snarl.tsv -b ../data/simu/phenotypes.txt
+// ./stoat_cxx -v ../data/simu/variants.vcf -s ../data/simu/paths_snarl.tsv -b ../data/simu/phenotypes.txt --covariate ../data/simu/covar.tsv --covar-name AGE,SEX,PC1,PC2 --output ../output
 
-// ./stoat_cxx -v ../data/simu/variants.vcf -s ../data/simu/paths_snarl.tsv -b ../data/simu/phenotypes.txt --make-bed
+// ./stoat_cxx -v ../data/simu/variants.vcf -s ../data/simu/paths_snarl.tsv -b ../data/simu/phenotypes.txt --make-bed --output ../output
 // plink --bfile ../output/output --pheno ../data/simu/phenotypes.txt --pheno-name PHENO --assoc --allow-no-sex --allow-extra-chr --out ../output/stoat_plink
 
 // // PLINK

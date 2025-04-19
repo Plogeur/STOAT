@@ -346,7 +346,8 @@ std::unordered_map<std::string, std::vector<std::tuple<string, vector<string>, s
         PackedGraph& pg, 
         const string& output_file,
         const string& output_snarl_not_analyse,
-        size_t children_threshold = 50, 
+        size_t children_threshold = 50,
+        size_t path_length_threshold = 10000, 
         bool bool_return = true) {
 
     ofstream out_snarl(output_file);
@@ -358,7 +359,6 @@ std::unordered_map<std::string, std::vector<std::tuple<string, vector<string>, s
     std::vector<std::tuple<string, vector<string>, string, vector<string>>> snarl_paths;
     unordered_map<string, std::vector<std::tuple<string, vector<string>, string, vector<string>>>> chr_snarl_matrix;
     size_t paths_number_analysis = 0;
-    size_t itr_thresold = 10000; // TODO change it 
     string save_chr = "";
 
     std::vector<size_t> children = {0};
@@ -387,7 +387,7 @@ std::unordered_map<std::string, std::vector<std::tuple<string, vector<string>, s
             auto path = paths.back();
             paths.pop_back();
 
-            if (itr > itr_thresold) {
+            if (itr > path_length_threshold) {
                 out_fail << snarl_id << "\titeration_calculation_out = " << children[0] << " children(s)" << "\n";
                 not_break = false;
                 break;

@@ -130,7 +130,7 @@ void chromosome_chuck_binary(htsFile* &ptr_vcf, bcf_hdr_t* &hdr, bcf1_t* &rec,
     std::ofstream outf(output_binary, std::ios::binary);
     std::string headers;
     if (covar.size() > 0) {
-        headers = "CHR\tPOS\tSNARL\tTYPE\tP\tBETA\tSE\n";
+        headers = "CHR\tPOS\tSNARL\tTYPE\tP\tP_ADJUSTED\tBETA\tSE\tALLELE_NUM\n";
     } else {
         headers = "CHR\tPOS\tSNARL\tTYPE\tP_FISHER\tP_CHI2\tP_ADJUSTED\tALLELE_NUM\tMIN_ROW_INDEX\tNUM_COLUM\tINTER_GROUP\tAVERAGE\tGROUP_PATHS\n";
     }
@@ -538,12 +538,12 @@ void SnarlParser::binary_table(const std::vector<std::tuple<std::string, std::ve
                         << "\t" << "NA" << "\t" << "NA" << "\t" << "NA" << "\t" << "NA"
                         << "\t" << "NA" << "\t" << allele_number << "\n";
                     } else {
-                        const auto& [z, beta, se, p_value] = logistic_regression(df, binary_phenotype, covar, 1e-6, 25);
+                        const auto& [beta, se, p_value] = logistic_regression(df, binary_phenotype, covar);
             
                         // chr, pos, snarl, type, p_value, p_adjusted, t-dist, beta, se, allele_number
                         data << chr << "\t" << pos << "\t" << snarl << "\t" << type_var_str
-                        << "\t" << p_value << "\t" << "" << "\t" << z << "\t" 
-                        << beta << "\t" << se << "\t" << allele_number << "\n";
+                        << "\t" << p_value << "\t" << "" << "\t" << beta << "\t" << se 
+                        << "\t" << allele_number << "\n";
                     }
 
                 } else {

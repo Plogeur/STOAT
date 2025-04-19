@@ -98,7 +98,8 @@ std::unordered_map<std::string, std::vector<std::tuple<string, vector<string>, s
                             PackedGraph& pg, 
                             const string& output_file, 
                             const string& output_snarl_not_analyse, 
-                            size_t children_treshold, 
+                            size_t children_treshold,
+                            size_t path_length_threshold,
                             bool bool_return);
 
 #endif

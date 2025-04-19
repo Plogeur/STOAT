@@ -1,13 +1,26 @@
 import random
 import argparse
 
-def generate_phenotypes(num_samples, output_file="phenotypes.txt"):
-    with open(output_file, "w") as f:
+def generate_pheno(num_samples, output_pheno):
+    with open(output_pheno, "w") as f:
         f.write("FID\tIID\tPHENO\n")
         phenos = [1] * (num_samples // 2) + [2] * (num_samples - num_samples // 2)
         for i in range(num_samples):
             fid = iid = f"sample{i+1}"
             f.write(f"{fid}\t{iid}\t{phenos[i]}\n")
+
+def generate_covar(num_samples, output_covar):
+    age_list = [age for age in range(0, 100)]
+    with open(output_covar, "w") as f:
+        f.write("FID\tIID\tSEX\tAGE\tPC1\tPC2\tPC3\n")
+        for i in range(num_samples):
+            fid = iid = f"sample{i+1}"
+            age = random.choice(age_list)
+            sex = 1 if i % 2 == 0 else 2 
+            pc1 = random.uniform(-1, 1)
+            pc2 = random.uniform(-1, 1)
+            pc3 = random.uniform(-1, 1)
+            f.write(f"{fid}\t{iid}\t{sex}\t{age}\t{pc1}\t{pc2}\t{pc3}\n")
 
 def random_genotype():
     genotype = ['0/0', '1/0', '0/1', '1/1']
@@ -60,17 +73,20 @@ if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Generate phenotype, VCF, and path info for simulated pangenome variants.")
     parser.add_argument("num_samples", type=int, help="Number of samples")
     parser.add_argument("num_variants", type=int, help="Total number of variants (must be divisible by 10)")
-    parser.add_argument("--pheno_file", default="phenotypes.txt", help="Output phenotype file name")
-    parser.add_argument("--vcf_file", default="variants.vcf", help="Output VCF file name")
-    parser.add_argument("--paths_file", default="paths_snarl.tsv", help="Output paths/snarl summary file")
+    parser.add_argument("--pheno_file", default="phenotypes.txt", help="Output phenotype file")
+    parser.add_argument("--vcf_file", default="variants.vcf", help="Output VCF file")
+    parser.add_argument("--paths_file", default="paths_snarl.tsv", help="Output paths/snarl file")
+    parser.add_argument("--covar_file", default="covar.tsv", help="Output covariate file")
+
     args = parser.parse_args()
 
     if args.num_variants % 10 != 0:
         parser.error("Number of variants must be divisible by 10 (for 10 chromosomes).")
 
-    generate_phenotypes(args.num_samples, args.pheno_file)
+    generate_pheno(args.num_samples, args.pheno_file)
+    generate_covar(args.num_samples, args.covar_file)
     generate_vcf_and_paths(args.num_samples, args.num_variants, args.vcf_file, args.paths_file)
 
-    print(f"Files generated:\n- {args.pheno_file}\n- {args.vcf_file}\n- {args.paths_file}")
+    print(f"Files generated:\n- {args.pheno_file}\n- {args.vcf_file}\n- {args.paths_file}\n- {args.covar_file}")
 
-# python3 tests/create_dataset.py 200 1000 --pheno_file data/simu/phenotypes.txt --vcf_file data/simu/variants.vcf --paths_file data/simu/paths_snarl.tsv
+# python3 tests/create_dataset.py 200 1000 --pheno_file data/simu/phenotypes.txt --vcf_file data/simu/variants.vcf --paths_file data/simu/paths_snarl.tsv --covar_file data/simu/covar.tsv

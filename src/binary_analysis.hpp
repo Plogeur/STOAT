@@ -28,14 +28,12 @@ std::vector<std::string> LMM_binary(
 // ------------------------ Logistic regression ------------------------
 
 double sigmoid(double z);
-double dot(const std::vector<double>& a, const std::vector<double>& b);
-double normal_p_value(double z);
+std::vector<double> solve_linear_system(std::vector<std::vector<double>> A, std::vector<double> b);
 
-std::tuple<string, string, string, string> logistic_regression(
+std::tuple<std::string, std::string, std::string> logistic_regression(
     const std::unordered_map<std::string, std::vector<size_t>>& variant_data,
     const std::unordered_map<std::string, bool>& phenotype,
-    const std::unordered_map<std::string, std::vector<double>>& covariates,
-    double tol, size_t max_iter);
+    const std::unordered_map<std::string, std::vector<double>>& covariates);
 
 // ------------------------ Chi2 test ------------------------
 

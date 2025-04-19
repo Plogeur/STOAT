@@ -306,11 +306,8 @@ QTL parseExpressionFile(const std::string& filename) {
 
 // Function to check covariate format
 void check_format_covariate(const std::string& filename) {
+    
     std::ifstream file(filename);
-    if (!file.is_open()) {
-        std::cerr << "Error: Cannot open file " << filename << std::endl;
-    }
-
     std::string line;
     int numCols = -1; // Store column count
     int lineCount = 0;

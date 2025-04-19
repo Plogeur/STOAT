@@ -91,110 +91,139 @@ double sigmoid(double z) {
     return 1.0 / (1.0 + std::exp(-z));
 }
 
-// Dot product
-double dot(const std::vector<double>& a, const std::vector<double>& b) {
-    return std::inner_product(a.begin(), a.end(), b.begin(), 0.0);
+// Simple Gaussian elimination to solve Ax = b
+std::vector<double> solve_linear_system(std::vector<std::vector<double>> A, std::vector<double> b) {
+    size_t n = A.size();
+
+    for (size_t i = 0; i < n; ++i) {
+        // Pivot
+        size_t max_row = i;
+        for (size_t k = i + 1; k < n; ++k) {
+            if (std::abs(A[k][i]) > std::abs(A[max_row][i])) {
+                max_row = k;
+            }
+        }
+        std::swap(A[i], A[max_row]);
+        std::swap(b[i], b[max_row]);
+
+        // Eliminate
+        for (size_t k = i + 1; k < n; ++k) {
+            double factor = A[k][i] / A[i][i];
+            for (size_t j = i; j < n; ++j) {
+                A[k][j] -= factor * A[i][j];
+            }
+            b[k] -= factor * b[i];
+        }
+    }
+
+    // Back substitution
+    std::vector<double> x(n, 0.0);
+    for (int i = n - 1; i >= 0; --i) {
+        x[i] = b[i];
+        for (size_t j = i + 1; j < n; ++j) {
+            x[i] -= A[i][j] * x[j];
+        }
+        x[i] /= A[i][i];
+    }
+    return x;
 }
 
-// Compute p-value from z-score using normal distribution
-double normal_p_value(double z) {
-    return 2.0 * (1.0 - 0.5 * std::erfc(-z / std::sqrt(2)));
-}
-
-// Logistic regression returning test-stat, beta, se, p-value
-std::tuple<string, string, string, string> logistic_regression(
+// Logistic regression using IRLS for a single variant
+std::tuple<std::string, std::string, std::string> logistic_regression(
     const std::unordered_map<std::string, std::vector<size_t>>& variant_data,
     const std::unordered_map<std::string, bool>& phenotype,
-    const std::unordered_map<std::string, std::vector<double>>& covariates,
-    double tol, size_t max_iter) {
+    const std::unordered_map<std::string, std::vector<double>>& covariates) {
 
-    std::vector<std::vector<double>> X;
-    std::vector<bool> y;
+    const size_t max_iter = 25;
+    const double tol = 1e-6;
 
-    // Expect only one variant
-    const auto& genotype_pair = *variant_data.begin();
-    const auto& genotype_map = variant_data;
-
-    for (const auto& [sample, gt_vec] : genotype_map) {
-        if (phenotype.count(sample) == 0 || covariates.count(sample) == 0)
-            continue;
-
-        for (size_t i = 0; i < gt_vec.size(); ++i) {
-            std::vector<double> features;
-            features.push_back(static_cast<double>(gt_vec[i])); // allele dosage
-            const auto& cov = covariates.at(sample);
-            features.insert(features.end(), cov.begin(), cov.end());
-            X.push_back(features);
-            y.push_back(phenotype.at(sample));
+    std::vector<std::string> ids;
+    for (const auto& [id, _] : phenotype) {
+        if (variant_data.count(id) && covariates.count(id)) {
+            ids.push_back(id);
         }
     }
 
-    size_t n = X.size();
-    if (n == 0) throw std::runtime_error("No valid samples found.");
-    size_t p = X[0].size(); // number of features including genotype
-    std::vector<double> beta(p, 0.0); // Initial coefficients
-    std::vector<std::vector<double>> hessian(p, std::vector<double>(p, 0.0));
+    size_t n = ids.size();
+    size_t num_cov = covariates.begin()->second.size();
+    size_t p = 1 + 1 + num_cov; // intercept + genotype + covariates
+
+    // Build X and y
+    std::vector<std::vector<double>> X(n, std::vector<double>(p));
+    std::vector<double> y(n);
+
+    for (size_t i = 0; i < n; ++i) {
+        const std::string& id = ids[i];
+        y[i] = phenotype.at(id) ? 1.0 : 0.0;
+
+        X[i][0] = 1.0; // intercept
+        X[i][1] = static_cast<double>(variant_data.at(id)[0]); // single variant genotype
+
+        const auto& cov = covariates.at(id);
+        for (size_t j = 0; j < num_cov; ++j) {
+            X[i][2 + j] = cov[j];
+        }
+    }
+
+    std::vector<double> beta(p, 0.0);
 
     for (size_t iter = 0; iter < max_iter; ++iter) {
-        std::vector<double> gradient(p, 0.0);
-        std::fill(hessian.begin(), hessian.end(), std::vector<double>(p, 0.0));
+        std::vector<double> eta(n), mu(n), W(n), z(n);
+        for (size_t i = 0; i < n; ++i) {
+            for (size_t j = 0; j < p; ++j) {
+                eta[i] += X[i][j] * beta[j];
+            }
+            mu[i] = sigmoid(eta[i]);
+            W[i] = mu[i] * (1 - mu[i]);
+            z[i] = eta[i] + (y[i] - mu[i]) / W[i];
+        }
+
+        // Build weighted least squares system
+        std::vector<std::vector<double>> XtWX(p, std::vector<double>(p, 0.0));
+        std::vector<double> XtWz(p, 0.0);
 
         for (size_t i = 0; i < n; ++i) {
-            double pred = sigmoid(dot(beta, X[i]));
-            double error = y[i] - pred;
-
             for (size_t j = 0; j < p; ++j) {
-                gradient[j] += X[i][j] * error;
                 for (size_t k = 0; k < p; ++k) {
-                    hessian[j][k] += X[i][j] * X[i][k] * pred * (1 - pred);
+                    XtWX[j][k] += X[i][j] * W[i] * X[i][k];
                 }
+                XtWz[j] += X[i][j] * W[i] * z[i];
             }
         }
 
-        // Solve H * delta = grad (simple Gauss-Seidel or pseudo-inverse for small p)
-        std::vector<double> delta(p, 0.0);
-        // Naive inversion for 2x2 or small p
-        if (p == 1) {
-            if (hessian[0][0] != 0)
-                delta[0] = gradient[0] / hessian[0][0];
-        } else {
-            // Use pseudo-inverse for small p (only suitable for small problems)
-            for (size_t i = 0; i < p; ++i) {
-                delta[i] = gradient[i];
-                for (size_t j = 0; j < p; ++j) {
-                    if (i != j) delta[i] -= hessian[i][j] * beta[j];
-                }
-                if (hessian[i][i] != 0)
-                    delta[i] /= hessian[i][i];
+        std::vector<double> new_beta = solve_linear_system(XtWX, XtWz);
+
+        double diff = 0.0;
+        for (size_t j = 0; j < p; ++j) {
+            diff += std::abs(new_beta[j] - beta[j]);
+        }
+
+        beta = new_beta;
+        if (diff < tol) break;
+    }
+
+    // Estimate standard error for genotype coefficient
+    std::vector<std::vector<double>> XtWX(p, std::vector<double>(p, 0.0));
+    for (size_t i = 0; i < n; ++i) {
+        double mu_i = sigmoid(std::inner_product(X[i].begin(), X[i].end(), beta.begin(), 0.0));
+        double wi = mu_i * (1 - mu_i);
+        for (size_t j = 0; j < p; ++j) {
+            for (size_t k = 0; k < p; ++k) {
+                XtWX[j][k] += X[i][j] * wi * X[i][k];
             }
         }
-
-        // Update beta
-        double max_change = 0;
-        for (size_t i = 0; i < p; ++i) {
-            beta[i] += delta[i];
-            max_change = std::max(max_change, std::abs(delta[i]));
-        }
-
-        if (max_change < tol) break;
     }
 
-    // Compute standard error from Hessian (inverse diag elements)
-    std::vector<double> se(p, 0.0);
-    for (size_t j = 0; j < p; ++j) {
-        if (hessian[j][j] != 0)
-            se[j] = std::sqrt(1.0 / hessian[j][j]);
-        else
-            se[j] = std::numeric_limits<double>::infinity();
-    }
+    std::vector<double> unit(p, 0.0);
+    unit[1] = 1.0; // genotype coefficient
+    std::vector<double> var_column = solve_linear_system(XtWX, unit);
 
+    double se = std::sqrt(var_column[1]);
     double beta_means = std::accumulate(beta.begin(), beta.end(), 0.0) / beta.size();
-    double se_means = std::accumulate(se.begin(), se.end(), 0.0) / se.size();
-    double z = beta_means / se_means;
-    double p_value = normal_p_value(z);
+    double z = beta_means / se;
+    double p_value = std::erfc(std::abs(z) / std::sqrt(2));
 
-    return {set_precision(z), set_precision(beta_means), 
-        set_precision(se_means), set_precision(p_value)};
+    return {set_precision(beta_means), set_precision(se), set_precision(p_value)};
 }
 
 // ------------------------ Chi2 test ------------------------
