@@ -1,8 +1,7 @@
 #include "matrix.hpp"
 
 // Constructor implementation
-Matrix::Matrix(size_t rows, size_t cols) 
-    : cols_(cols) {
+Matrix::Matrix(size_t rows, size_t cols) : cols_(cols) {
 
     size_t length_matrix = (rows * cols + 7) / 8;
     MaxElement = (length_matrix * 8) / cols_; // get the number of element in the matrix

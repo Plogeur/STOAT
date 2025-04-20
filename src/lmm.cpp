@@ -5,7 +5,6 @@ double normal_cdf(double x) {
     return 0.5 * std::erfc(-x / std::sqrt(2));
 }
 
-// Updated LMM function accepting new data structures
 std::tuple<string, string, string, string> lmm_quantitative(
     const std::unordered_map<std::string, std::vector<size_t>>& df,                  
     const std::unordered_map<std::string, double>& phenotype_table,      

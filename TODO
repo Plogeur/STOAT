@@ -6,8 +6,24 @@ OPTIMIZE STOAT USING :
 
 ADD MULTI-THREADING QUANTITATIVE
 ADD FONCTIONNAL TEST
-ADD CHUNK SUPERPOSITION
+
+ADD CHUNK :
+- Define a chunk struct for list snarl path :
+    - id node start replace the id chr 
+    - Add the number of sub path (used in matrix size reshape/reserve)
+    - other info
+- a chunk beginning to the first node pagenome graph or the last node from a chunk
+    & finish by a node that is passing throught all haplotype in the graph (and in lvl 0).
+- The size of the chunk is correlated with the size of the matrix so it will be at least 
+    >= 2 Mo, parse the list sample first to know the minimun length of this chunk and make a 
+    function that return the minimun number of subpath that you can parse that will form a chunk.
+- Reshape matrix size reshape/reserve by the optimal number
+
+ADD chi2 + fisher P adjusted with fisher comparation pvalue (means something).
 USE LIBDSG FIND REF CHR
 ADD LMM + TEST
-ADD EQTL + TEST
-ADD CHUNK ANALYSIS : NUMBER OF PATHS PER CHR THAT CAN BE USED AS LENGTH FOR THE MATRIX 
+
+ADD EQTL + TEST :
+- Parse a file that containt the position of gene
+- Identify if the variation hit a gene.
+- Read note to get more info 
