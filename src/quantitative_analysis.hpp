@@ -26,6 +26,11 @@ std::tuple<string, string, string, string> linear_regression(
     const std::unordered_map<std::string, std::vector<size_t>>& df,
     const std::unordered_map<std::string, double>& quantitative_phenotype);
 
+std::tuple<std::string, std::string, std::string, std::string> glm_quantitative(
+    const std::unordered_map<std::string, std::vector<size_t>>& df,
+    const std::unordered_map<std::string, double>& quantitative_phenotype,
+    const std::unordered_map<std::string, std::vector<double>>& covar);
+
 std::pair<std::unordered_map<std::string, std::vector<size_t>>, size_t> create_quantitative_table(
     const std::vector<std::string>& list_samples, 
     const std::vector<std::string>& column_headers,

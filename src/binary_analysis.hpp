@@ -30,7 +30,7 @@ std::vector<std::string> LMM_binary(
 double sigmoid(double z);
 std::vector<double> solve_linear_system(std::vector<std::vector<double>> A, std::vector<double> b);
 
-std::tuple<std::string, std::string, std::string> logistic_regression(
+std::tuple<std::string, std::string, std::string, std::string> logistic_regression(
     const std::unordered_map<std::string, std::vector<size_t>>& variant_data,
     const std::unordered_map<std::string, bool>& phenotype,
     const std::unordered_map<std::string, std::vector<double>>& covariates);

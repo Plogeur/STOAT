@@ -25,4 +25,10 @@ std::tuple<string, string, string, string> lmm_quantitative(
     const KinshipMatrix& kinship,                                              
     const std::unordered_map<std::string, std::vector<double>>& covariates);
 
+std::tuple<string, string, string, string> lmm_binary(
+    const std::unordered_map<std::string, std::vector<size_t>>& df,                  
+    const std::unordered_map<std::string, bool>& phenotype_binary,      
+    const KinshipMatrix& kinship,                                              
+    const std::unordered_map<std::string, std::vector<double>>& covariates);
+
 #endif 

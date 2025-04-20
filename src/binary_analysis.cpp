@@ -129,7 +129,7 @@ std::vector<double> solve_linear_system(std::vector<std::vector<double>> A, std:
 }
 
 // Logistic regression using IRLS for a single variant
-std::tuple<std::string, std::string, std::string> logistic_regression(
+std::tuple<std::string, std::string, std::string, std::string> logistic_regression(
     const std::unordered_map<std::string, std::vector<size_t>>& variant_data,
     const std::unordered_map<std::string, bool>& phenotype,
     const std::unordered_map<std::string, std::vector<double>>& covariates) {
@@ -223,7 +223,7 @@ std::tuple<std::string, std::string, std::string> logistic_regression(
     double z = beta_means / se;
     double p_value = std::erfc(std::abs(z) / std::sqrt(2));
 
-    return {set_precision(beta_means), set_precision(se), set_precision(p_value)};
+    return {set_precision(z), set_precision(beta_means), set_precision(se), set_precision(p_value)};
 }
 
 // ------------------------ Chi2 test ------------------------

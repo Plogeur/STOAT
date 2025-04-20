@@ -5,6 +5,16 @@ double normal_cdf(double x) {
     return 0.5 * std::erfc(-x / std::sqrt(2));
 }
 
+
+std::tuple<string, string, string, string> lmm_binary(
+    const std::unordered_map<std::string, std::vector<size_t>>& df,                  
+    const std::unordered_map<std::string, bool>& phenotype_binary,      
+    const KinshipMatrix& kinship,                                              
+    const std::unordered_map<std::string, std::vector<double>>& covariates) {
+
+    return {"NA", "NA", "NA", "NA"};
+}
+
 std::tuple<string, string, string, string> lmm_quantitative(
     const std::unordered_map<std::string, std::vector<size_t>>& df,                  
     const std::unordered_map<std::string, double>& phenotype_table,      

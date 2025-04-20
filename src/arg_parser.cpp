@@ -37,6 +37,10 @@ KinshipMatrix parseKinshipMatrix(const std::string& filename) {
     return km;
 }
 
+const bool KinshipMatrix::empty() const {
+    return ids.empty() || matrix.empty();
+}
+
 std::unordered_set<std::string> parse_chromosome_reference(const string& file_path) {
     std::unordered_set<std::string> reference;
     ifstream file(file_path);

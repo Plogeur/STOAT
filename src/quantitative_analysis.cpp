@@ -43,12 +43,8 @@ std::tuple<string, string, string, string> linear_regression(
 
     // Compute F-statistic
     double f_stat = (r2 / df_reg) / ((1 - r2) / df_res);
-    
-    double p_value = 1.0f;
-    if (f_stat > 0) {
-        boost::math::fisher_f dist(df_reg, df_res);
-        p_value = boost::math::cdf(boost::math::complement(dist, f_stat));
-    }
+    boost::math::fisher_f dist(df_reg, df_res);
+    double p_value = boost::math::cdf(boost::math::complement(dist, std::abs(f_stat)));
 
     // set precision : 4 digit
     string r2_str = set_precision(r2);
@@ -56,6 +52,69 @@ std::tuple<string, string, string, string> linear_regression(
     string se_mean_str = set_precision(se.mean());
     string p_value_str = set_precision(p_value);
     return {r2_str, bete_mean_str, se_mean_str, p_value_str};
+}
+
+std::tuple<std::string, std::string, std::string, std::string> glm_quantitative(
+    const std::unordered_map<std::string, std::vector<size_t>>& df,
+    const std::unordered_map<std::string, double>& quantitative_phenotype,
+    const std::unordered_map<std::string, std::vector<double>>& covar) {
+
+    size_t num_samples = df.size();
+    size_t num_features = df.begin()->second.size();
+
+    // Assuming all covariates are of the same size
+    size_t num_covariates = covar.begin()->second.size();
+
+    Eigen::MatrixXd X(num_samples, num_features + num_covariates);
+    X.setZero();
+    Eigen::VectorXd y(num_samples);
+
+    int row = 0;
+    for (const auto& [sample, features] : df) {
+        y(row) = quantitative_phenotype.at(sample);
+
+        // Add features (e.g., genotype/path values)
+        for (size_t col = 0; col < features.size(); ++col) {
+            X(row, col) = features[col];
+        }
+
+        // Add covariates
+        if (covar.find(sample) != covar.end()) {
+            const auto& covariate_values = covar.at(sample);
+            for (size_t i = 0; i < covariate_values.size(); ++i) {
+                X(row, num_features + i) = covariate_values[i];
+            }
+        }
+
+        ++row;
+    }
+
+    Eigen::VectorXd beta = (X.transpose() * X).ldlt().solve(X.transpose() * y);
+    Eigen::VectorXd y_pred = X * beta;
+    Eigen::VectorXd residuals = y - y_pred;
+
+    double rss = residuals.squaredNorm();
+    double tss = (y.array() - y.mean()).matrix().squaredNorm();
+    double r2 = 1 - (rss / tss);
+
+    int df_reg = num_features + num_covariates - 1;
+    int df_res = num_samples - (num_features + num_covariates);
+    double mse = rss / df_res;
+
+    Eigen::MatrixXd cov_matrix = (X.transpose() * X).inverse();
+    Eigen::VectorXd se = (cov_matrix.diagonal() * mse).array().sqrt().matrix();
+
+    double f_stat = (r2 / df_reg) / ((1 - r2) / df_res);
+    boost::math::fisher_f dist(df_reg, df_res);
+    double p_value = boost::math::cdf(boost::math::complement(dist, std::abs(f_stat)));
+
+    // set precision : 4 digits
+    std::string r2_str = set_precision(r2);
+    std::string beta_mean_str = set_precision(beta.mean());
+    std::string se_mean_str = set_precision(se.mean());
+    std::string p_value_str = set_precision(p_value);
+
+    return {r2_str, beta_mean_str, se_mean_str, p_value_str};
 }
 
 // Function to create the quantitative table

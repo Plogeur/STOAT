@@ -532,20 +532,22 @@ void SnarlParser::binary_table(const std::vector<std::tuple<std::string, std::ve
                         df_filtration = check_MAF_threshold_quantitative(df, maf);
                     }
                     
+                    std::string p_value = "NA", beta = "NA", se = "NA", r2 = "NA";
+
                     // chr, pos, snarl, type, p_value, p_adjusted, r2, beta, se, allele_number
                     if (df_empty || !df_filtration) {
-                        data << chr << "\t" << pos << "\t" << snarl << "\t" << type_var_str
-                        << "\t" << "NA" << "\t" << "NA" << "\t" << "NA" << "\t" << "NA"
-                        << "\t" << "NA" << "\t" << allele_number << "\n";
-                    } else {
-                        const auto& [beta, se, p_value] = logistic_regression(df, binary_phenotype, covar);
-            
-                        // chr, pos, snarl, type, p_value, p_adjusted, t-dist, beta, se, allele_number
-                        data << chr << "\t" << pos << "\t" << snarl << "\t" << type_var_str
-                        << "\t" << p_value << "\t" << "" << "\t" << beta << "\t" << se 
-                        << "\t" << allele_number << "\n";
+                        // do nothing
+                    } else if (!kinship.empty()) { // logistic regression + covar
+                        const auto& [r2, beta, se, p_value] = logistic_regression(df, binary_phenotype, covar);
+                    } else { // lmm
+                        const auto& [r2, beta, se, p_value] = lmm_binary(df, binary_phenotype, kinship, covar);
                     }
 
+                    // chr, pos, snarl, type, p_value, p_adjusted, t-dist, beta, se, allele_number
+                    data << chr << "\t" << pos << "\t" << snarl << "\t" << type_var_str
+                    << "\t" << p_value << "\t" << "" << "\t" << r2 << "\t" << beta << "\t" << se 
+                    << "\t" << allele_number << "\n";
+                                
                 } else {
                     size_t length_column_headers = list_snarl.size();
                     std::vector<size_t> g0(length_column_headers, 0); // can be replace by size_t arr[length_column_headers] = {0};
@@ -555,7 +557,7 @@ void SnarlParser::binary_table(const std::vector<std::tuple<std::string, std::ve
                     std::string fastfisher_p_value = "NA", chi2_p_value = "NA",
                     group_paths = "NA", allele_number_str = "NA", min_row_index_str = "NA",
                     numb_colum_str = "NA", inter_group_str = "NA", average_str = "NA";
-    
+
                     // Binary analysis single test
                     if (!df_filtration) { // good df
                         binary_stat_test(g0, g1, fastfisher_p_value, chi2_p_value, group_paths,
@@ -587,55 +589,74 @@ void SnarlParser::binary_table(const std::vector<std::tuple<std::string, std::ve
 void SnarlParser::quantitative_table(const std::vector<std::tuple<string, vector<string>, string, vector<string>>>& snarls,
                                         const std::unordered_map<std::string, double>& quantitative_phenotype, const string &chr,
                                         const std::unordered_map<std::string, std::vector<double>>& covar,
-                                        const double& maf, const KinshipMatrix& kinship, const size_t& num_threads, std::ofstream& outf) {
+                                        const double& maf, const KinshipMatrix& kinship, 
+                                        const size_t& num_threads, std::ofstream& outf) {
 
-    // Iterate over each snarl
-    for (size_t itr = 0; itr < snarls.size(); ++itr) {
-        const auto& [snarl, list_snarl, pos, type_var] = snarls[itr];
+    const size_t total = snarls.size();
+    size_t chunk_size = (total + num_threads - 1) / num_threads;
+    std::mutex mutex_pvalues;
+    std::mutex mutex_file;
+    std::vector<std::thread> threads;
 
-        auto [df, allele_number] = create_quantitative_table(sampleNames, list_snarl, matrix);
-        bool df_filtration = false;
-        bool df_empty = false;
+    for (size_t thread_id = 0; thread_id < num_threads; ++thread_id) {
+        threads.emplace_back([&, thread_id]() {
+            size_t start = thread_id * chunk_size;
+            size_t end = std::min(start + chunk_size, total);
+            std::stringstream local_buffer;
 
-        if (allele_number < 2) {
-            df_empty = true;
-        } else {
-            df_filtration = check_MAF_threshold_quantitative(df, maf);
-        }
+            // Iterate over each snarl
+            for (size_t itr = 0; itr < snarls.size(); ++itr) {
+                const auto& [snarl, list_snarl, pos, type_var] = snarls[itr];
 
-        // make a string separated by ',' from a vector of string
-        std::ostringstream oss;
-        for (size_t i = 0; i < type_var.size(); ++i) {
-            if (i != 0) oss << ","; // Add comma before all elements except the first
-            oss << type_var[i];
-        }
-        std::string type_var_str = oss.str();
-        std::stringstream data;
+                auto [df, allele_number] = create_quantitative_table(sampleNames, list_snarl, matrix);
+                bool df_filtration = false;
+                bool df_empty = false;
 
-        // chr, pos, snarl, type, p_value, p_adjusted, r2, beta, se, allele_number
-        if (df_empty || !df_filtration) {
-            data << chr << "\t" << pos << "\t" << snarl << "\t" << type_var_str
-            << "\t" << "NA" << "\t" << "NA" << "\t" << "NA" << "\t" << "NA"
-            << "\t" << "NA" << "\t" << allele_number << "\n";
-         
-        } else if (covar.size() > 0) { // lmm
-            const auto& [t_dist, beta, se, p_value] = lmm_quantitative(df, quantitative_phenotype, kinship, covar);
+                if (allele_number < 2) {
+                    df_empty = true;
+                } else {
+                    df_filtration = check_MAF_threshold_quantitative(df, maf);
+                }
 
-            // chr, pos, snarl, type, p_value, p_adjusted, t-dist, beta, se, allele_number
-            data << chr << "\t" << pos << "\t" << snarl << "\t" << type_var_str
-            << "\t" << p_value << "\t" << "" << "\t" << t_dist << "\t" 
-            << beta << "\t" << se << "\t" << allele_number << "\n";
+                // make a string separated by ',' from a vector of string
+                std::ostringstream oss;
+                for (size_t i = 0; i < type_var.size(); ++i) {
+                    if (i != 0) oss << ","; // Add comma before all elements except the first
+                    oss << type_var[i];
+                }
+                std::string type_var_str = oss.str();
+                std::stringstream data;
 
-        } else { // single test
-            const auto& [r2, beta, se, p_value] = linear_regression(df, quantitative_phenotype);
+                std::string p_value = "NA", beta = "NA", se = "NA", r2 = "NA";
 
-            // chr, pos, snarl, type, p_value, p_adjusted, r2, beta, se, allele_number
-            data << chr << "\t" << pos << "\t" << snarl << "\t" << type_var_str
-            << "\t" << p_value  << "\t" << "" << "\t" <<r2 << "\t" << beta << "\t" << se 
-            << "\t" << allele_number << "\n";
-        }
+                if (df_empty || !df_filtration) { // filtred variant
+                    // do nothing
+                } else if (covar.size() > 0 && !kinship.empty()) { // lmm
+                    const auto& [r2, beta, se, p_value] = lmm_quantitative(df, quantitative_phenotype, kinship, covar);
 
-        outf.write(data.str().c_str(), data.str().size());
+                } else if (covar.size() > 0 && kinship.empty()) { // glm
+                    const auto& [r2, beta, se, p_value] = glm_quantitative(df, quantitative_phenotype, covar);
+
+                } else { // single test
+                    const auto& [r2, beta, se, p_value] = linear_regression(df, quantitative_phenotype);
+                }
+
+                // chr, pos, snarl, type, p_value, p_adjusted, r2, beta, se, allele_number
+                data << chr << "\t" << pos << "\t" << snarl << "\t" << type_var_str
+                << "\t" << p_value  << "\t" << "" << "\t" << r2 << "\t" << beta << "\t" << se 
+                << "\t" << allele_number << "\n";
+                local_buffer << data.str();
+            }
+
+            {
+                std::lock_guard<std::mutex> lock(mutex_file);
+                outf.write(local_buffer.str().c_str(), local_buffer.str().size());
+            }
+        });
+    }
+
+    for (auto& t : threads) {
+        t.join();
     }
 }
 
