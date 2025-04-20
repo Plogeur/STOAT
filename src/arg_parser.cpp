@@ -9,10 +9,6 @@ KinshipMatrix parseKinshipMatrix(const std::string& filename) {
     std::ifstream file(filename);
     std::string line;
 
-    if (!file.is_open()) {
-        throw std::runtime_error("Could not open file.");
-    }
-
     // Parse header line for IDs
     if (std::getline(file, line)) {
         std::stringstream ss(line);
@@ -152,9 +148,6 @@ std::unordered_map<std::string, double> parse_quantitative_pheno(const std::stri
 std::tuple<htsFile*, bcf_hdr_t*, bcf1_t*> parse_vcf(const std::string& vcf_path) {
     // Open the VCF file
     htsFile *ptr_vcf = bcf_open(vcf_path.c_str(), "r");
-    if (!ptr_vcf) {
-        throw std::runtime_error("Error: Could not open VCF file: " + vcf_path);
-    }
 
     // Read the VCF header
     bcf_hdr_t *hdr = bcf_hdr_read(ptr_vcf);
@@ -263,10 +256,6 @@ QTL parseExpressionFile(const std::string& filename) {
     std::ifstream file(filename);
     std::string line;
 
-    if (!file.is_open()) {
-        throw std::runtime_error("Cannot open file: " + filename);
-    }
-
     // Parse header line for sample IDs
     if (std::getline(file, line)) {
         std::stringstream ss(line);
@@ -322,7 +311,9 @@ void check_format_covariate(const std::string& filename) {
         if (numCols == -1) {
             numCols = colCount; // Set number of columns from first line
         } else if (colCount != numCols) {
-            std::cerr << "Error: Inconsistent column count in row " << lineCount + 1 << std::endl;
+            int error_lineCount = lineCount + 1;
+
+            throw std::runtime_error("Error: Inconsistent column count in row " + std::to_string(error_lineCount));
         }
         lineCount++;
     }
@@ -350,7 +341,7 @@ std::unordered_map<std::string, std::vector<double>> parse_covariates(
     // Check for required columns
     auto it_iid = std::find(headers.begin(), headers.end(), "IID");
     if (it_iid == headers.end()) {
-        std::cerr << "Error: header must include 'IID' column.\n";
+        throw std::runtime_error("Error: header must include 'IID' column.\n");
         return covariateMap;
     }
     size_t iid_index = std::distance(headers.begin(), it_iid);
@@ -363,7 +354,7 @@ std::unordered_map<std::string, std::vector<double>> parse_covariates(
     // Validate requested covariates
     for (const auto& name : covar_names) {
         if (col_index.find(name) == col_index.end()) {
-            std::cerr << "Error: covariate column '" << name << "' not found in file.\n";
+            throw std::runtime_error("Error: covariate column '" + name + "' not found in file.\n");
             return covariateMap;
         }
     }
@@ -387,7 +378,7 @@ std::unordered_map<std::string, std::vector<double>> parse_covariates(
                 selected.push_back(val);
             }
         } catch (...) {
-            std::cerr << "Error: Individual " << iid << " got an non-numeric value\n";
+            throw std::runtime_error("Error: Individual " + iid + " got an non-numeric value\n");
         }
         covariateMap[iid] = selected;
     }
@@ -408,7 +399,7 @@ void check_phenotype_covariate(const std::unordered_map<std::string, T>& phenoty
         // Check if all phenotype samples are present in covariates
         for (const auto& pair : phenotype) {
         if (covariates.find(pair.first) == covariates.end()) {
-            std::cerr << "Error: Missing covariate data for sample " << pair.first << std::endl;
+            throw std::runtime_error("Error: Missing covariate data for sample " + pair.first);
             EXIT_FAILURE;
         }
     }

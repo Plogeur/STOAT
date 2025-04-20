@@ -69,6 +69,7 @@ add_executable(unit_tests
     tests/unittest/list_snarl_paths_unit.cpp
     tests/unittest/matrix_unit.cpp
     tests/unittest/quantitative_analysis_unit.cpp
+    tests/unittest/arg_parsing_unit.cpp
 
     src/utils.cpp
     src/arg_parser.cpp
