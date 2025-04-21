@@ -14,10 +14,15 @@
 #include <iomanip>
 #include <Eigen/Dense>
 
+#include <boost/math/distributions/chi_squared.hpp>
+#include <boost/multiprecision/cpp_dec_float.hpp>
+
 using namespace std;
 
-std::string set_precision(double value);
-double mean_pvalue_from_strings(const std::string& p1, const std::string& p2);
+std::string set_precision(const double& value);
+std::string set_precision_chi2(const boost::multiprecision::cpp_dec_float_50& value);
+
+double combine_pvalue_from_strings(const std::string& p1, const std::string& p2);
 bool is_na(const std::string& s);
 double string_to_pvalue(const std::string& p1);
 

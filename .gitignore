@@ -6,3 +6,10 @@ src/CMakeFiles/*
 src/output/*
 .docker/
 docker-compose.override.yml
+tests/unittest/chi2_test
+tests/unittest/chi2_test_copy
+tests/unittest/chi2_test_copy.cpp
+tests/unittest/chi2_test.cpp
+tests/unittest/test_stats.py
+.gitignore
+.vscode/settings.json

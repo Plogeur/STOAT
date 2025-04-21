@@ -159,7 +159,9 @@
     "hash_map": "cpp",
     "shared_mutex": "cpp",
     "*.ipp": "cpp",
-    "core": "cpp"
+    "core": "cpp",
+    "filesystem": "cpp",
+    "__memory": "cpp"
   },
   "C_Cpp.errorSquiggles": "disabled",
   "C_Cpp.default.compilerPath": "/usr/bin/clang++"

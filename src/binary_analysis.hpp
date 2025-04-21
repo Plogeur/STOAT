@@ -14,6 +14,7 @@
 #include <Eigen/Dense>
 #include <boost/math/distributions/chi_squared.hpp>
 #include <boost/math/distributions/hypergeometric.hpp>
+#include <boost/multiprecision/cpp_dec_float.hpp>
 
 #include "matrix.hpp"
 #include "snarl_parser.hpp"

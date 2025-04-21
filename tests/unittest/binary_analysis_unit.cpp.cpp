@@ -66,4 +66,18 @@ TEST_CASE("Chi-square & Fisher test function", "[chi2_2xN]") {
         REQUIRE(chi2_2x2(g0, g1) == "1.0000");
         REQUIRE(fastFishersExactTest(g0, g1) == "1.0000");
     }
+
+    SECTION("Chi-square & Fisher test (strange but correct)") {
+        std::vector<size_t> g0 = {79, 18};
+        std::vector<size_t> g1 = {96, 23};
+        REQUIRE(chi2_2x2(g0, g1) == "1.0000");
+        REQUIRE(fastFishersExactTest(g0, g1) == "1.0000");
+    }
+
+    SECTION("Chi-square & Fisher test (very significative)") {
+        std::vector<size_t> g0 = {122, 78};
+        std::vector<size_t> g1 = {27, 173};
+        REQUIRE(chi2_2x2(g0, g1) == "2.4445e-22");
+        REQUIRE(fastFishersExactTest(g0, g1) == "1.4799e-23");
+    }
 }

@@ -23,6 +23,9 @@
 #include <Eigen/Dense>
 #include <cmath>
 
+using boost::multiprecision::cpp_dec_float_50;
+using boost::math::chi_squared_distribution;
+
 // Fisher's Exact Test for 2x2 contingency table
 #ifndef DBL_MAX
 #  define DBL_MAX 1.7976931348623157e308
@@ -256,13 +259,12 @@ std::string chi2_2x2(const std::vector<size_t>& g0, const std::vector<size_t>& g
     numerator *= numerator;
     double denominator = static_cast<double>(row1 * row2 * col1 * col2) / total;
 
-    double chi2_stat = numerator / denominator;
+    cpp_dec_float_50 chi2_stat = numerator / denominator;
 
     // Get p-value using chi-squared distribution with 1 degree of freedom
-    boost::math::chi_squared dist(1);
-    double p_value = 1.0 - boost::math::cdf(dist, chi2_stat);
-
-    return set_precision(p_value);
+    chi_squared_distribution<cpp_dec_float_50> dist(1);
+    cpp_dec_float_50 p_value = 1.0 - boost::math::cdf(dist, chi2_stat);
+    return set_precision_chi2(p_value);
 }
 
 // Check if the observed matrix is valid (no zero rows/columns)
@@ -289,7 +291,7 @@ std::string chi2_2xN(const std::vector<size_t>& g0, const std::vector<size_t>& g
         return "NA";
 
     // Compute chi-squared
-    double chi2 = 0.0;
+    cpp_dec_float_50 chi2 = 0.0;
     for (size_t i = 0; i < cols; ++i) {
         double expected_0 = static_cast<double>(row_total_0) * col_totals[i] / total;
         double expected_1 = static_cast<double>(row_total_1) * col_totals[i] / total;
@@ -299,8 +301,9 @@ std::string chi2_2xN(const std::vector<size_t>& g0, const std::vector<size_t>& g
     }
 
     size_t df = cols - 1;
-    boost::math::chi_squared dist(df);
-    return set_precision(1.0 - boost::math::cdf(dist, chi2));
+    chi_squared_distribution<cpp_dec_float_50> dist(df);
+    cpp_dec_float_50 pvalue = 1.0 - boost::math::cdf(dist, chi2);
+    return set_precision_chi2(pvalue);
 }
 
 // ------------------------ Fisher exact test ------------------------
