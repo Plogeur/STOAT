@@ -99,15 +99,14 @@ pair<vector<string>, size_t> calcul_pos_type_variant(const vector<vector<string>
             just_snp = false;
         } else if (path_lengths.size() == 3) { // Case simple path len 3
             if (path_lengths[1].size() == 1) {
-                list_type_variant.push_back(path_lengths[1]); // add node str snp 
+                list_type_variant.push_back("1"); // add size str SNP 
             } else {
-                // vector string path_lengths
-                string ins_seq = (path_lengths[1].size() > 3) ? "INS" : path_lengths[1];
+                string ins_seq = std::to_string(path_lengths[1].size()); // size str INSERTION
                 list_type_variant.push_back(ins_seq);
                 just_snp = false;
             }
         } else if (path_lengths.size() == 2) { // Deletion
-            list_type_variant.push_back("DEL");
+            list_type_variant.push_back("0");
             just_snp = false;
         } else { // Case path_lengths is empty
             cerr << "path_lengths is empty" << endl;

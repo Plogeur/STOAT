@@ -6,9 +6,10 @@
 using namespace std;
 
 // Linear regression function OLS
-std::tuple<string, string, string, string> linear_regression(
+void linear_regression(
     const std::unordered_map<std::string, std::vector<size_t>>& df,
-    const std::unordered_map<std::string, double>& quantitative_phenotype) {
+    const std::unordered_map<std::string, double>& quantitative_phenotype,
+    std::string& p_value_str, std::string& beta_str, std::string& se_str, std::string& r2_str) {
 
     size_t num_samples = df.size();
     size_t max_paths = df.begin()->second.size();
@@ -47,17 +48,17 @@ std::tuple<string, string, string, string> linear_regression(
     double p_value = boost::math::cdf(boost::math::complement(dist, std::abs(f_stat)));
 
     // set precision : 4 digit
-    string r2_str = set_precision(r2);
-    string bete_mean_str = set_precision(beta.mean());
-    string se_mean_str = set_precision(se.mean());
-    string p_value_str = set_precision(p_value);
-    return {r2_str, bete_mean_str, se_mean_str, p_value_str};
+    r2_str = set_precision(r2);
+    beta_str = set_precision(beta.mean());
+    se_str = set_precision(se.mean());
+    p_value_str = set_precision(p_value);
 }
 
-std::tuple<std::string, std::string, std::string, std::string> glm_quantitative(
+void glm_quantitative(
     const std::unordered_map<std::string, std::vector<size_t>>& df,
     const std::unordered_map<std::string, double>& quantitative_phenotype,
-    const std::unordered_map<std::string, std::vector<double>>& covar) {
+    const std::unordered_map<std::string, std::vector<double>>& covar,
+    std::string& p_value_str, std::string& beta_str, std::string& se_str, std::string& r2_str) {
 
     size_t num_samples = df.size();
     size_t num_features = df.begin()->second.size();
@@ -109,12 +110,11 @@ std::tuple<std::string, std::string, std::string, std::string> glm_quantitative(
     double p_value = boost::math::cdf(boost::math::complement(dist, std::abs(f_stat)));
 
     // set precision : 4 digits
-    std::string r2_str = set_precision(r2);
-    std::string beta_mean_str = set_precision(beta.mean());
-    std::string se_mean_str = set_precision(se.mean());
-    std::string p_value_str = set_precision(p_value);
+    r2_str = set_precision(r2);
+    beta_str = set_precision(beta.mean());
+    se_str = set_precision(se.mean());
+    p_value_str = set_precision(p_value);
 
-    return {r2_str, beta_mean_str, se_mean_str, p_value_str};
 }
 
 // Function to create the quantitative table

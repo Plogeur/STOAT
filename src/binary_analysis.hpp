@@ -20,21 +20,16 @@
 #include "snarl_parser.hpp"
 #include "utils.hpp"
 
-// ------------------------ LMM BINARY ------------------------
-
-std::vector<std::string> LMM_binary(
-    const std::vector<std::vector<size_t>>& df,
-    const std::unordered_map<std::string, std::vector<double>>& covariate);
-
 // ------------------------ Logistic regression ------------------------
 
 double sigmoid(double z);
 std::vector<double> solve_linear_system(std::vector<std::vector<double>> A, std::vector<double> b);
 
-std::tuple<std::string, std::string, std::string, std::string> logistic_regression(
+void logistic_regression(
     const std::unordered_map<std::string, std::vector<size_t>>& variant_data,
     const std::unordered_map<std::string, bool>& phenotype,
-    const std::unordered_map<std::string, std::vector<double>>& covariates);
+    const std::unordered_map<std::string, std::vector<double>>& covariates, 
+    std::string& p_value_str, std::string& beta_str, std::string& se_str, std::string& r2_str);
 
 // ------------------------ Chi2 test ------------------------
 

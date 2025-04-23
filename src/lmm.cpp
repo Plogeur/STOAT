@@ -6,20 +6,25 @@ double normal_cdf(double x) {
 }
 
 
-std::tuple<string, string, string, string> lmm_binary(
+void lmm_binary(
     const std::unordered_map<std::string, std::vector<size_t>>& df,                  
     const std::unordered_map<std::string, bool>& phenotype_binary,      
     const KinshipMatrix& kinship,                                              
-    const std::unordered_map<std::string, std::vector<double>>& covariates) {
-
-    return {"NA", "NA", "NA", "NA"};
+    const std::unordered_map<std::string, std::vector<double>>& covariates,
+    std::string& p_value_str, std::string& beta_str, std::string& se_str, std::string& r2_str) {
+    
+    p_value_str = "NA";
+    beta_str = "NA";
+    se_str = "NA";
+    r2_str = "NA";
 }
 
-std::tuple<string, string, string, string> lmm_quantitative(
+void lmm_quantitative(
     const std::unordered_map<std::string, std::vector<size_t>>& df,                  
     const std::unordered_map<std::string, double>& phenotype_table,      
     const KinshipMatrix& kinship,                                              
-    const std::unordered_map<std::string, std::vector<double>>& covariates) {
+    const std::unordered_map<std::string, std::vector<double>>& covariates,
+    std::string& p_value_str, std::string& beta_str, std::string& se_str, std::string& r2_str) {
 
     const int N = kinship.ids.size();  // Number of samples
 
@@ -88,11 +93,9 @@ std::tuple<string, string, string, string> lmm_quantitative(
     double t_stat = beta / se;
     double p_val = 2.0 * (1.0 - normal_cdf(std::fabs(t_stat)));
 
-    string beta_str = set_precision(beta);
-    string se_str = set_precision(se);
-    string t_stat_str = set_precision(t_stat);
-    string p_val_str = set_precision(p_val);
-
-    return {t_stat_str, beta_str, se_str, p_val_str};
+    beta_str = set_precision(beta);
+    se_str = set_precision(se);
+    r2_str = set_precision(t_stat); // TODO correct
+    p_value_str = set_precision(p_val);
 }
 

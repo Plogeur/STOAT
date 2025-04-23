@@ -41,52 +41,6 @@ using boost::math::chi_squared_distribution;
 static const double kExactTestEpsilon2 = 0.0000000000009094947017729282379150390625;
 static const double kExactTestBias = 0.00000000000000000000000010339757656912845935892608650874535669572651386260986328125;
 
-// ------------------------ LMM BINARY ------------------------
-
-// LMM Model fitting function
-std::vector<std::string> LMM_binary(const std::vector<std::vector<size_t>>& df,
-    const std::unordered_map<std::string, std::vector<double>>& covariate) {
-
-    int num_samples = df[0].size();
-
-    // Convert df to Eigen matrix (phenotype)
-    Eigen::VectorXd Y(num_samples);
-    for (int i = 0; i < num_samples; ++i) {
-        Y(i) = df[1][i];  // Group 1 (affected cases)
-    }
-
-    // Covariate matrix
-    int num_covariates = covariate.size();
-    Eigen::MatrixXd X(num_samples, num_covariates + 1); // Include intercept
-
-    // Set intercept
-    X.col(0) = Eigen::VectorXd::Ones(num_samples);
-
-    // Fill in covariates
-    int col_idx = 1;
-    for (const auto& [key, values] : covariate) {
-        for (int i = 0; i < num_samples; ++i) {
-            X(i, col_idx) = values[i];
-        }
-        col_idx++;
-    }
- 
-    // Fit LMM (simplified REML method)
-    Eigen::VectorXd beta = (X.transpose() * X).ldlt().solve(X.transpose() * Y);
-    Eigen::VectorXd residuals = Y - (X * beta);
-    double sigma2 = (residuals.transpose() * residuals)(0, 0) / (num_samples - num_covariates - 1);
-
-    // Standard errors (diagonal of covariance matrix)
-    Eigen::VectorXd se = (X.transpose() * X).inverse().diagonal().array().sqrt() * std::sqrt(sigma2);
-
-    // Compute p-value using likelihood ratio test (LRT)
-    Eigen::VectorXd chi2_stat = (beta.array().square() / se.array().square());
-    Eigen::VectorXd p_value = (-0.5 * chi2_stat.array()).exp(); // Approximation
-
-    // Convert to strings for output
-    return {std::to_string(beta.mean()), std::to_string(se.mean()), std::to_string(p_value.mean())};
-}
-
 // ------------------------ Logistic regression + covariate test ------------------------
 
 // Sigmoid function
@@ -132,10 +86,11 @@ std::vector<double> solve_linear_system(std::vector<std::vector<double>> A, std:
 }
 
 // Logistic regression using IRLS for a single variant
-std::tuple<std::string, std::string, std::string, std::string> logistic_regression(
+void logistic_regression(
     const std::unordered_map<std::string, std::vector<size_t>>& variant_data,
     const std::unordered_map<std::string, bool>& phenotype,
-    const std::unordered_map<std::string, std::vector<double>>& covariates) {
+    const std::unordered_map<std::string, std::vector<double>>& covariates,
+    std::string& p_value_str, std::string& beta_str, std::string& se_str, std::string& r2_str) {
 
     const size_t max_iter = 25;
     const double tol = 1e-6;
@@ -226,7 +181,10 @@ std::tuple<std::string, std::string, std::string, std::string> logistic_regressi
     double z = beta_means / se;
     double p_value = std::erfc(std::abs(z) / std::sqrt(2));
 
-    return {set_precision(z), set_precision(beta_means), set_precision(se), set_precision(p_value)};
+    r2_str = set_precision(z); // TODO correct 
+    beta_str = set_precision(beta_means);
+    se_str = set_precision(se);
+    p_value_str = set_precision(p_value);
 }
 
 // ------------------------ Chi2 test ------------------------

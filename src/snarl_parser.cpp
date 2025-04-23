@@ -529,7 +529,7 @@ void SnarlParser::binary_table(const std::vector<std::tuple<std::string, std::ve
                     if (allele_number < 2) {
                         df_empty = true;
                     } else {
-                        df_filtration = check_MAF_threshold_quantitative(df, maf);
+                        // df_filtration = check_MAF_threshold_quantitative(df, maf); //error correct 
                     }
                     
                     std::string p_value = "NA", beta = "NA", se = "NA", r2 = "NA";
@@ -538,9 +538,9 @@ void SnarlParser::binary_table(const std::vector<std::tuple<std::string, std::ve
                     if (df_empty || !df_filtration) {
                         // do nothing
                     } else if (!kinship.empty()) { // logistic regression + covar
-                        const auto& [r2, beta, se, p_value] = logistic_regression(df, binary_phenotype, covar);
+                        logistic_regression(df, binary_phenotype, covar, p_value, beta, se, r2);
                     } else { // lmm
-                        const auto& [r2, beta, se, p_value] = lmm_binary(df, binary_phenotype, kinship, covar);
+                        lmm_binary(df, binary_phenotype, kinship, covar, p_value, beta, se, r2);
                     }
 
                     // chr, pos, snarl, type, p_value, p_adjusted, t-dist, beta, se, allele_number
@@ -615,7 +615,7 @@ void SnarlParser::quantitative_table(const std::vector<std::tuple<string, vector
                 if (allele_number < 2) {
                     df_empty = true;
                 } else {
-                    df_filtration = check_MAF_threshold_quantitative(df, maf);
+                    // df_filtration = check_MAF_threshold_quantitative(df, maf); //error correct
                 }
 
                 // make a string separated by ',' from a vector of string
@@ -626,19 +626,18 @@ void SnarlParser::quantitative_table(const std::vector<std::tuple<string, vector
                 }
                 std::string type_var_str = oss.str();
                 std::stringstream data;
-
                 std::string p_value = "NA", beta = "NA", se = "NA", r2 = "NA";
 
-                if (df_empty || !df_filtration) { // filtred variant
+                if (df_empty || df_filtration) { // filtred variant
                     // do nothing
                 } else if (covar.size() > 0 && !kinship.empty()) { // lmm
-                    const auto& [r2, beta, se, p_value] = lmm_quantitative(df, quantitative_phenotype, kinship, covar);
+                    lmm_quantitative(df, quantitative_phenotype, kinship, covar, p_value, beta, se, r2);
 
                 } else if (covar.size() > 0 && kinship.empty()) { // glm
-                    const auto& [r2, beta, se, p_value] = glm_quantitative(df, quantitative_phenotype, covar);
+                    glm_quantitative(df, quantitative_phenotype, covar, p_value, beta, se, r2);
 
                 } else { // single test
-                    const auto& [r2, beta, se, p_value] = linear_regression(df, quantitative_phenotype);
+                    linear_regression(df, quantitative_phenotype, p_value, beta, se, r2);
                 }
 
                 // chr, pos, snarl, type, p_value, p_adjusted, r2, beta, se, allele_number

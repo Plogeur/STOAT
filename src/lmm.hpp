@@ -19,16 +19,18 @@
 
 double normal_cdf(double x);
 
-std::tuple<string, string, string, string> lmm_quantitative(
+void lmm_quantitative(
     const std::unordered_map<std::string, std::vector<size_t>>& df,                  
     const std::unordered_map<std::string, double>& phenotype_table,      
     const KinshipMatrix& kinship,                                              
-    const std::unordered_map<std::string, std::vector<double>>& covariates);
+    const std::unordered_map<std::string, std::vector<double>>& covariates,
+    std::string& p_value, std::string& beta, std::string& se, std::string& r2);
 
-std::tuple<string, string, string, string> lmm_binary(
+void lmm_binary(
     const std::unordered_map<std::string, std::vector<size_t>>& df,                  
     const std::unordered_map<std::string, bool>& phenotype_binary,      
     const KinshipMatrix& kinship,                                              
-    const std::unordered_map<std::string, std::vector<double>>& covariates);
+    const std::unordered_map<std::string, std::vector<double>>& covariates,
+    std::string& p_value, std::string& beta, std::string& se, std::string& r2);
 
 #endif 
