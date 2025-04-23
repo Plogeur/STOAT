@@ -45,6 +45,7 @@ void print_help() {
               << "  --covariate <path>          Path to the covariate file (.txt or .tsv)\n"
               << "  --covar-name <string>       Covariate column name used in the gwas analyse\n"
               << "  -e, --eqtl <path>           Path to the Expression Quantitative Trait Loci file (.txt or .tsv)\n"
+              << "  --gene-position <path>      Path to the Gene position file (.txt or .tsv)\n"
               << "  -k, --kinship <path>        Path to the kinship matrix file (.txt or .tsv)\n"
               << "  --make-bed                  Create a plink format files (.bed, .bim, .fam)\n"
               << "  --maf                       Add a maf (Minimum allele frequency) thresold (defauld : 0.01)\n"
@@ -57,7 +58,8 @@ int main(int argc, char* argv[]) {
     // Declare variables to hold argument values
     std::string vcf_path, snarl_path, pg_path, dist_path, 
         chromosome_path, binary_path, quantitative_path, 
-        eqtl_path, covariate_path, kinship_path, output_dir;
+        eqtl_path, covariate_path, gene_position_path, 
+        kinship_path, output_dir;
 
     size_t num_threads=1;
     size_t phenotype=0;
@@ -112,6 +114,9 @@ int main(int argc, char* argv[]) {
         } else if ((arg == "--covariate") && i + 1 < argc) {
             covariate_path = argv[++i];
             check_file(covariate_path);
+        } else if ((arg == "--gene-position") && i + 1 < argc) {
+            gene_position_path = argv[++i];
+            check_file(gene_position_path);
         } else if ((arg == "--covar-name") && i + 1 < argc) {
             std::string covar_arg = argv[++i];
             // Split by comma if multiple names provided
@@ -170,6 +175,12 @@ int main(int argc, char* argv[]) {
         return EXIT_FAILURE;
     }
 
+    if ((!eqtl_path.empty() && gene_position_path.empty()) || (eqtl_path.empty() && !gene_position_path.empty())) {
+        std::cerr << "eqtl phenotype file and gene position file must be provided together" << "\n";
+        print_help();
+        return EXIT_FAILURE;
+    }
+
     auto start_1 = std::chrono::high_resolution_clock::now();
     std::filesystem::create_directory(output_dir);
     std::unordered_set<std::string> ref_chr = (!chromosome_path.empty()) ? parse_chromosome_reference(chromosome_path) : std::unordered_set<std::string>{"ref"};
@@ -215,18 +226,15 @@ int main(int argc, char* argv[]) {
 
     std::unordered_map<std::string, bool> binary;
     std::unordered_map<std::string, double> quantitative;
-    //std::vector<QTLRecord> eqtl;
-
+    std::unordered_map<std::string, std::vector<double>> eqtl;
+    std::unordered_map<std::string, std::tuple<std::string, int, int>> gene_position;
     std::unordered_map<std::string, std::vector<double>> covariate;
+
     if (!covariate_path.empty()) {
         check_format_covariate(covariate_path);
         covariate = parse_covariates(covariate_path, covar_names);
-    }
-
-    KinshipMatrix kinship;
-    if (!kinship_path.empty()) {
-        // check_format_kinship(kinship_path);
-        kinship = parseKinshipMatrix(kinship_path);
+        // no need because we will check with phenotype
+        // check_match_samples(covariate, list_samples);
     }
 
     if (!binary_path.empty()) {
@@ -243,9 +251,17 @@ int main(int argc, char* argv[]) {
             check_phenotype_covariate(quantitative, covariate);
         }
 
-    } else if (!eqtl_path.empty()) {
-        //eqtl = parseQTLFile(eqtl_path);
-        //check_match_samples_eqtl(eqtl, list_samples);
+    } else if (!eqtl_path.empty() && !gene_position_path.empty()) {
+        eqtl = parse_qtl_file(eqtl_path);
+        gene_position = parse_gene_positions(gene_position_path);
+        check_match_samples(eqtl, list_samples);
+        check_match_samples(gene_position, list_samples);
+    }
+
+    KinshipMatrix kinship;
+    if (!kinship_path.empty()) {
+        // check_format_kinship(kinship_path);
+        kinship = parseKinshipMatrix(kinship_path);
     }
 
     // scope declaration
@@ -327,7 +343,6 @@ int main(int argc, char* argv[]) {
         std::ofstream outf(eqtl_output, std::ios::binary);
         std::string headers = "CHR\tPOS\tSNARL\tTYPE\tSE\tBETA\tP\n";
         outf.write(headers.c_str(), headers.size());
-
         // chromosome_chuck_eqtl(ptr_vcf, hdr, rec, list_samples, snarls_chr, eqtl, outf);
     }
     

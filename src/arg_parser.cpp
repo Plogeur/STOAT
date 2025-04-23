@@ -187,6 +187,8 @@ std::tuple<std::vector<std::string>, htsFile*, bcf_hdr_t*, bcf1_t*> parseHeader(
 // Explicit instantiation for specific types
 template void check_match_samples<bool>(const std::unordered_map<std::string, bool>&, const std::vector<std::string>&);
 template void check_match_samples<double>(const std::unordered_map<std::string, double>&, const std::vector<std::string>&);
+template void check_match_samples<std::vector<double>>(const std::unordered_map<std::string, std::vector<double>>&, const std::vector<std::string>&);
+template void check_match_samples<std::tuple<std::string, int, int>>(const std::unordered_map<std::string, std::tuple<std::string, int, int>>&, const std::vector<std::string>&);
 
 template <typename T>
 void check_match_samples(const std::unordered_map<std::string, T>& map, const std::vector<std::string>& keys) {
@@ -255,46 +257,90 @@ std::unordered_map<std::string, std::vector<std::tuple<string, vector<string>, s
     return chr_snarl_matrix;
 }
 
-QTL parseExpressionFile(const std::string& filename) {
-    QTL data;
+void check_qtl_gene_position(
+    const std::unordered_map<std::string, std::vector<double>>& qtl,
+    const std::unordered_map<std::string, std::tuple<std::string, int, int>>& gene_position) {
+
+    // Check genes in QTL that are missing from gene positions
+    for (const auto& [gene, _] : qtl) {
+        if (gene_position.find(gene) == gene_position.end()) {
+            std::cerr << "Error: Gene \"" << gene << "\" found in QTL data but not in gene positions." << std::endl;
+            exit(1);
+        }
+    }
+
+    // Warn if gene_position has more genes than qtl
+    if (gene_position.size() > qtl.size()) {
+        std::cerr << "Warning: More genes in the gene position file than in the QTL data." << std::endl;
+    }
+}
+
+std::unordered_map<std::string, std::tuple<std::string, int, int>> parse_gene_positions(
+    const std::string& filename) {
+
+    std::unordered_map<std::string, std::tuple<std::string, int, int>> geneMap;
     std::ifstream file(filename);
     std::string line;
 
-    // Parse header line for sample IDs
-    if (std::getline(file, line)) {
-        std::stringstream ss(line);
-        std::string token;
-
-        // First column is "Gene_ID", skip it
-        std::getline(ss, token, '\t');
-
-        // Sample IDs
-        while (std::getline(ss, token, '\t')) {
-            data.sample_ids.push_back(token);
-        }
-    }
-
-    // Parse gene expression rows
     while (std::getline(file, line)) {
+        if (line.empty()) continue;
+
         std::stringstream ss(line);
-        std::string gene_id;
-        std::string value;
-        std::vector<double> expression_values;
+        std::string chrom, startStr, endStr, gene;
+        std::getline(ss, chrom, '\t');
+        std::getline(ss, startStr, '\t');
+        std::getline(ss, endStr, '\t');
+        std::getline(ss, gene, '\t');
 
-        // First column: gene ID
-        std::getline(ss, gene_id, '\t');
-        data.gene_ids.push_back(gene_id);
-
-        // Remaining columns: expression values
-        while (std::getline(ss, value, '\t')) {
-            expression_values.push_back(std::stod(value));
+        try {
+            int start = std::stoi(startStr);
+            int end = std::stoi(endStr);
+            geneMap[gene] = std::make_tuple(chrom, start, end);
+        } catch (...) {
+            std::cerr << "Invalid line: " << line << std::endl;
+            exit(1);
         }
-
-        data.expression_matrix.push_back(expression_values);
     }
 
     file.close();
-    return data;
+    return geneMap;
+}
+
+// Function to parse the phenotype file
+std::unordered_map<std::string, std::vector<double>> parse_qtl_file(const std::string& filename) {
+    std::ifstream file(filename);
+    std::unordered_map<std::string, std::vector<double>> geneExpressions;
+
+    std::string line;
+    bool isHeader = true;
+
+    while (std::getline(file, line)) {
+        std::stringstream ss(line);
+        std::string token;
+
+        if (isHeader) {
+            isHeader = false;  // Skip header
+            continue;
+        }
+
+        std::string geneName;
+        std::vector<double> expressions;
+
+        std::getline(ss, geneName, '\t');
+        while (std::getline(ss, token, '\t')) {
+            try {
+                expressions.push_back(std::stod(token));
+            } catch (...) {
+                std::cerr << "Invalid expression value for gene " << geneName << ": " << token << std::endl;
+                exit(1);
+            }
+        }
+
+        geneExpressions[geneName] = expressions;
+    }
+
+    file.close();
+    return geneExpressions;
 }
 
 // Function to check covariate format

@@ -53,7 +53,7 @@ public:
 // void chromosome_chuck_eqtl(htsFile* &ptr_vcf, bcf_hdr_t* &hdr, bcf1_t* &rec, 
 //     const std::vector<std::string> &list_samples,
 //     unordered_map<string, std::vector<std::tuple<string, vector<string>, string, vector<string>>>> &snarl_chr,
-//     const vector<QTLRecord> pheno, std::ofstream& outf);
+//     const std::unordered_map<std::string, std::vector<double>>& eqtl_pheno, std::ofstream& outf);
 
 bool check_MAF_threshold_quantitative(const std::unordered_map<std::string, std::vector<size_t>>& df, const double& maf);
 

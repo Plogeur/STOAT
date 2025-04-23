@@ -60,7 +60,7 @@ TEST_CASE("Chi-square & Fisher test function", "[chi2_2xN]") {
         REQUIRE(fastFishersExactTest(g0, g1) == "NA");
     }
 
-    SECTION("Chi-square & Fisher test (zero / zero)") {
+    SECTION("Chi-square & Fisher test (1/0 0/1)") {
         std::vector<size_t> g0 = {1, 0};
         std::vector<size_t> g1 = {0, 1};
         REQUIRE(chi2_2x2(g0, g1) == "1.0000");

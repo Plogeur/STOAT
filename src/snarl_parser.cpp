@@ -94,7 +94,7 @@ void chromosome_chuck_quantitative(htsFile* &ptr_vcf, bcf_hdr_t* &hdr, bcf1_t* &
 // void chromosome_chuck_eqtl(htsFile* &ptr_vcf, bcf_hdr_t* &hdr, bcf1_t* &rec, 
 //     const std::vector<std::string> &list_samples,
 //     unordered_map<string, std::vector<std::tuple<string, vector<string>, string, vector<string>>>> &snarl_chr,
-//     const vector<QTL> qtl_pheno, std::ofstream& outf) {
+//     const std::unordered_map<std::string, std::vector<double>>& eqtl_pheno, std::ofstream& outf) {
 
 //     std::cout << "GWAS analysis for chromosome : " << std::endl;
 //     while (bcf_read(ptr_vcf, hdr, rec) >= 0) {
@@ -112,7 +112,7 @@ void chromosome_chuck_quantitative(htsFile* &ptr_vcf, bcf_hdr_t* &hdr, bcf1_t* &
 //         auto& snarl = snarl_chr[chr];
 
 //         // Gwas analysis by chromosome
-//         // vcf_object.eqtl_table(snarl, pheno, chr, outf);
+//         // vcf_object.eqtl_table(snarl, eqtl_pheno, chr, outf);
 //     }
 //     // Cleanup
 //     bcf_destroy(rec);

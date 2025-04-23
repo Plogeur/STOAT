@@ -22,21 +22,6 @@
 
 using namespace std;
 
-// Struct to store parsed eQTL data// QTL struct
-struct QTL {
-    std::vector<std::string> sample_ids;
-    std::vector<std::string> gene_ids;
-    std::vector<std::vector<double>> expression_matrix;
-
-    // Default constructor
-    QTL() = default;
-    
-    QTL(const std::vector<std::string>& sample_ids,
-        const std::vector<std::string>& gene_ids,
-        const std::vector<std::vector<double>>& expression_matrix)
-        : sample_ids(sample_ids), gene_ids(gene_ids), expression_matrix(expression_matrix) {}
-};
-
 // KinshipMatrix struct
 struct KinshipMatrix {
     std::vector<std::string> ids;
@@ -54,8 +39,10 @@ struct KinshipMatrix {
 };
 
 KinshipMatrix parseKinshipMatrix(const std::string& filename);
-QTL parseExpressionFile(const std::string& filename);
+std::unordered_map<std::string, std::vector<double>> parse_qtl_file(const std::string& filename);
+std::unordered_map<std::string, std::tuple<std::string, int, int>> parse_gene_positions(const std::string& filename);
 
+void check_qtl_gene_position(const std::unordered_map<std::string, std::vector<double>>& qtl, const std::unordered_map<std::string, std::tuple<std::string, int, int>>& gene_position);
 void check_format_covariate(const std::string& filename);
 
 template <typename T>
