@@ -190,8 +190,6 @@ void logistic_regression(
 // ------------------------ Chi2 test ------------------------
 
 std::string chi2_2x2(const std::vector<size_t>& g0, const std::vector<size_t>& g1) {
-    
-    bool yates_correction = true;
 
     int a = g0[0];
     int b = g0[1];
@@ -209,20 +207,22 @@ std::string chi2_2x2(const std::vector<size_t>& g0, const std::vector<size_t>& g
     }
 
     double numerator = static_cast<double>(a * d - b * c);
-    if (yates_correction) {
-        numerator = std::abs(numerator) - 0.5 * total;
-        numerator = std::max(0.0, numerator); // Prevent negative square root
-    }
-
+    numerator = std::abs(numerator) - 0.5 * total;
+    numerator = std::max(0.0, numerator);
     numerator *= numerator;
     double denominator = static_cast<double>(row1 * row2 * col1 * col2) / total;
+    long double chi2_stat = numerator / denominator;
 
-    cpp_dec_float_50 chi2_stat = numerator / denominator;
+    if (chi2_stat > 85.0) {
+        cpp_dec_float_50 chi2_stat_float_50 = chi2_stat;
+        chi_squared_distribution<cpp_dec_float_50> dist(1);
+        cpp_dec_float_50 p_value = 1.0 - boost::math::cdf(dist, chi2_stat_float_50);
+        return set_precision_chi2(p_value);
+    }
 
-    // Get p-value using chi-squared distribution with 1 degree of freedom
-    chi_squared_distribution<cpp_dec_float_50> dist(1);
-    cpp_dec_float_50 p_value = 1.0 - boost::math::cdf(dist, chi2_stat);
-    return set_precision_chi2(p_value);
+    boost::math::chi_squared dist(1);
+    long double p_value = 1.0 - boost::math::cdf(dist, chi2_stat);
+    return set_precision(p_value);
 }
 
 // Check if the observed matrix is valid (no zero rows/columns)
@@ -249,7 +249,7 @@ std::string chi2_2xN(const std::vector<size_t>& g0, const std::vector<size_t>& g
         return "NA";
 
     // Compute chi-squared
-    cpp_dec_float_50 chi2 = 0.0;
+    double chi2 = 0.0;
     for (size_t i = 0; i < cols; ++i) {
         double expected_0 = static_cast<double>(row_total_0) * col_totals[i] / total;
         double expected_1 = static_cast<double>(row_total_1) * col_totals[i] / total;
@@ -258,10 +258,17 @@ std::string chi2_2xN(const std::vector<size_t>& g0, const std::vector<size_t>& g
         chi2 += (g1[i] - expected_1) * (g1[i] - expected_1) / expected_1;
     }
 
+    if (chi2 > 85.0) { // avoiding case 0.000+00 precision
+        cpp_dec_float_50 chi2_stat_float_50 = chi2;
+        chi_squared_distribution<cpp_dec_float_50> dist(1);
+        cpp_dec_float_50 p_value = 1.0 - boost::math::cdf(dist, chi2_stat_float_50);
+        return set_precision_chi2(p_value);
+    }
+
     size_t df = cols - 1;
-    chi_squared_distribution<cpp_dec_float_50> dist(df);
-    cpp_dec_float_50 pvalue = 1.0 - boost::math::cdf(dist, chi2);
-    return set_precision_chi2(pvalue);
+    boost::math::chi_squared dist(df);
+    double pvalue = 1.0 - boost::math::cdf(dist, chi2);
+    return set_precision(pvalue);
 }
 
 // ------------------------ Fisher exact test ------------------------

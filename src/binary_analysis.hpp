@@ -38,6 +38,11 @@ std::string chi2_2xN(const std::vector<size_t>& g0, const std::vector<size_t>& g
 
 // Function to perform the Chi-square test on row size == 2 
 std::string chi2_2x2(const std::vector<size_t>& g0, const std::vector<size_t>& g1);
+
+double chi2_pval_1df_approx(const double& x);
+double normal_upper_tail_approx(const double& z);
+double chi2_pval_approx(const double& x, const double& df);
+
 // ------------------------ Fisher exact test ------------------------
 
 // Function to perform Fisher's exact test

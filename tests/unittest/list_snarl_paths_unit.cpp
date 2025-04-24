@@ -47,9 +47,9 @@ TEST_CASE("Test de calcul_pos_type_variant", "[calcul_pos_type_variant]") {
         };
         auto [types, padding] = calcul_pos_type_variant(list_paths);
         REQUIRE(types.size() == 3);
-        REQUIRE(types[0] == "T");
-        REQUIRE(types[1] == "TT");
-        REQUIRE(types[2] == "DEL");
+        REQUIRE(types[0] == "1");
+        REQUIRE(types[1] == "2");
+        REQUIRE(types[2] == "0");
         REQUIRE(padding == 0);
     }
 
@@ -60,8 +60,8 @@ TEST_CASE("Test de calcul_pos_type_variant", "[calcul_pos_type_variant]") {
         };
         auto [types, padding] = calcul_pos_type_variant(list_paths);
         REQUIRE(types.size() == 2);
-        REQUIRE(types[0] == "T");
-        REQUIRE(types[1] == "G");
+        REQUIRE(types[0] == "1");
+        REQUIRE(types[1] == "1");
         REQUIRE(padding == 1);
     }
 
@@ -74,8 +74,8 @@ TEST_CASE("Test de calcul_pos_type_variant", "[calcul_pos_type_variant]") {
         auto [types, padding] = calcul_pos_type_variant(list_paths);
         REQUIRE(types.size() == 3);
         REQUIRE(types[0] == "CPX");
-        REQUIRE(types[1] == "INS");
-        REQUIRE(types[2] == "DEL");
+        REQUIRE(types[1] == "4");
+        REQUIRE(types[2] == "0");
         REQUIRE(padding == 0);
     }
 }

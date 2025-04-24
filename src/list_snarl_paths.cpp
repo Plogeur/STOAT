@@ -289,9 +289,7 @@ tuple<vector<string>, vector<string>, size_t> fill_pretty_paths(
             
             // Node case
             if (stree.is_node(net)) {
-                ppath.addNodeHandle(net, stree);
-                //length_net.push_back(stree.node_length(net));
-                
+                ppath.addNodeHandle(net, stree);                
                 nid_t node_start_id = stree.node_id(net);
                 handle_t node_handle = pg.get_handle(node_start_id);
                 string seq_node = pg.get_sequence(node_handle);
@@ -302,8 +300,8 @@ tuple<vector<string>, vector<string>, size_t> fill_pretty_paths(
             else if (stree.is_trivial_chain(net)) {
                 ppath.addNodeHandle(net, stree);
                 auto stn_start = stree.starts_at_start(net) ? stree.get_bound(net, false, true) : stree.get_bound(net, true, true);
-                auto node_start_id = stree.node_id(stn_start);
-                auto net_trivial_chain = pg.get_handle(node_start_id);
+                nid_t node_start_id = stree.node_id(stn_start);
+                handle_t net_trivial_chain = pg.get_handle(node_start_id);
                 string seq_trivial_chain = pg.get_sequence(net_trivial_chain);
                 seq_net.push_back(seq_trivial_chain);
             }
@@ -345,8 +343,8 @@ std::unordered_map<std::string, std::vector<std::tuple<string, vector<string>, s
         PackedGraph& pg, 
         const string& output_file,
         const string& output_snarl_not_analyse,
-        size_t children_threshold = 50,
-        size_t path_length_threshold = 10000, 
+        size_t& children_threshold,
+        size_t& path_length_threshold, 
         bool bool_return = true) {
 
     ofstream out_snarl(output_file);
@@ -402,12 +400,12 @@ std::unordered_map<std::string, std::vector<std::tuple<string, vector<string>, s
 
             // Convert pretty_paths (vector<string>) into a comma-separated string
             for (size_t i = 0; i < pretty_paths.size(); ++i) {
-                if (i > 0) pretty_paths_stream << ",";
+                if (i > 0) {pretty_paths_stream << ",";}
                 pretty_paths_stream << pretty_paths[i];
             }
  
             for (size_t i = 0; i < type_variants.size(); ++i) {
-                if (i > 0) type_variants_stream << ",";  // Add a comma and space between strings
+                if (i > 0) {type_variants_stream << ",";}  // Add a comma and space between strings
                 type_variants_stream << type_variants[i];
             }
 
@@ -439,7 +437,7 @@ std::unordered_map<std::string, std::vector<std::tuple<string, vector<string>, s
     }
 
     // Print the size of snarl_paths
-    cout << "Final snarl_paths size : " << paths_number_analysis << endl;
+    cout << "Number of paths : " << paths_number_analysis << endl;
 
     // Print chr_snarl_matrix
     for (const auto& chr_snarl : chr_snarl_matrix) {
