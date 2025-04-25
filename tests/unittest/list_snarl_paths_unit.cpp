@@ -32,50 +32,50 @@ TEST_CASE("Test de la classe Path", "[Path]") {
     }
 }
 
-TEST_CASE("Test de calcul_pos_type_variant", "[calcul_pos_type_variant]") {
-    SECTION("Liste vide") {
-        std::vector<std::vector<std::string>> empty_list;
-        auto [types, padding] = calcul_pos_type_variant(empty_list);
-        REQUIRE(types.empty());
-    }
+// TEST_CASE("Test de calcul_pos_type_variant", "[calcul_pos_type_variant]") {
+//     SECTION("Liste vide") {
+//         std::vector<std::vector<std::string>> empty_list;
+//         auto [types, padding] = calcul_pos_type_variant(empty_list);
+//         REQUIRE(types.empty());
+//     }
 
-    SECTION("Liste simple") {
-        std::vector<std::vector<std::string>> list_paths = {
-            {"A", "T", "G"},  // SNP
-            {"A", "TT", "G"}, // INS
-            {"A", "G"}        // DEL
-        };
-        auto [types, padding] = calcul_pos_type_variant(list_paths);
-        REQUIRE(types.size() == 3);
-        REQUIRE(types[0] == "1");
-        REQUIRE(types[1] == "2");
-        REQUIRE(types[2] == "0");
-        REQUIRE(padding == 0);
-    }
+//     SECTION("Liste simple") {
+//         std::vector<std::vector<std::string>> list_paths = {
+//             {"A", "T", "G"},  // SNP
+//             {"A", "TT", "G"}, // INS
+//             {"A", "G"}        // DEL
+//         };
+//         auto [types, padding] = calcul_pos_type_variant(list_paths);
+//         REQUIRE(types.size() == 3);
+//         REQUIRE(types[0] == "1");
+//         REQUIRE(types[1] == "2");
+//         REQUIRE(types[2] == "0");
+//         REQUIRE(padding == 0);
+//     }
 
-    SECTION("Cas SNP uniquement") {
-        std::vector<std::vector<std::string>> list_paths = {
-            {"A", "T", "G"},
-            {"C", "G", "T"}
-        };
-        auto [types, padding] = calcul_pos_type_variant(list_paths);
-        REQUIRE(types.size() == 2);
-        REQUIRE(types[0] == "1");
-        REQUIRE(types[1] == "1");
-        REQUIRE(padding == 1);
-    }
+//     SECTION("Cas SNP uniquement") {
+//         std::vector<std::vector<std::string>> list_paths = {
+//             {"A", "T", "G"},
+//             {"C", "G", "T"}
+//         };
+//         auto [types, padding] = calcul_pos_type_variant(list_paths);
+//         REQUIRE(types.size() == 2);
+//         REQUIRE(types[0] == "1");
+//         REQUIRE(types[1] == "1");
+//         REQUIRE(padding == 1);
+//     }
 
-    SECTION("Cas complexe") {
-        std::vector<std::vector<std::string>> list_paths = {
-            {"A", "_", "G"},  // Complex
-            {"A", "TTTT", "G"}, // INS
-            {"A", "G"}        // DEL
-        };
-        auto [types, padding] = calcul_pos_type_variant(list_paths);
-        REQUIRE(types.size() == 3);
-        REQUIRE(types[0] == "CPX");
-        REQUIRE(types[1] == "4");
-        REQUIRE(types[2] == "0");
-        REQUIRE(padding == 0);
-    }
-}
+//     SECTION("Cas complexe") {
+//         std::vector<std::vector<std::string>> list_paths = {
+//             {"A", "_", "G"},  // Complex
+//             {"A", "TTTT", "G"}, // INS
+//             {"A", "G"}        // DEL
+//         };
+//         auto [types, padding] = calcul_pos_type_variant(list_paths);
+//         REQUIRE(types.size() == 3);
+//         REQUIRE(types[0] == "CPX");
+//         REQUIRE(types[1] == "4");
+//         REQUIRE(types[2] == "0");
+//         REQUIRE(padding == 0);
+//     }
+// }

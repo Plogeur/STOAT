@@ -15,7 +15,7 @@ void Path::addNode(const std::string& node, char orient) {
 }
 
 // Add a node handle and extract information using the string representation
-void Path::addNodeHandle(const net_handle_t& node_h, const SnarlDistanceIndex& stree) {
+bool Path::addNodeHandle(const net_handle_t& node_h, const SnarlDistanceIndex& stree) {
     std::string node_s = stree.net_handle_as_string(node_h);
 
     // Handle trivial chain modifications
@@ -54,6 +54,7 @@ void Path::addNodeHandle(const net_handle_t& node_h, const SnarlDistanceIndex& s
     // Add node to path
     nodes.push_back(node_s);
     orients.push_back(node_o);
+    return node_o == '>' ? true : false;
 }
 
 // Get the string representation of the path
@@ -88,24 +89,31 @@ size_t Path::nreversed() const {
 }
 
 // Function to calculate the type of variant
-pair<vector<string>, size_t> calcul_pos_type_variant(const vector<vector<string>>& list_list_length_paths) {
+pair<vector<string>, size_t> calcul_pos_type_variant(const vector<tuple<string, size_t, size_t, size_t>>& list_length_paths) {
     vector<string> list_type_variant;
     size_t padding = 0;
     bool just_snp = true;
 
-    for (const auto& path_lengths : list_list_length_paths) {
-        if (path_lengths.size() > 3 || path_lengths[1] == "_") { // Case snarl in snarl / Indel
-            list_type_variant.push_back("CPX"); // COMPLEX
+    for (const auto& tuple_info : list_length_paths) {
+        size_t path_length = std::get<3>(tuple_info);
+        if (path_length > 3) { // Case complex
+            string complex = "CPX:"+ to_string(std::get<1>(tuple_info)) + "/" + to_string(std::get<2>(tuple_info));
+            list_type_variant.push_back(complex); // COMPLEX
             just_snp = false;
-        } else if (path_lengths.size() == 3) { // Case simple path len 3
-            if (path_lengths[1].size() == 1) {
-                list_type_variant.push_back("1"); // add size str SNP 
-            } else {
-                string ins_seq = std::to_string(path_lengths[1].size()); // size str INSERTION
-                list_type_variant.push_back(ins_seq);
+
+        } else if (path_length == 3) { // Case simple path len 3
+            string seq = std::get<0>(tuple_info);
+            size_t seq_length = seq.length();
+            if (seq_length > 1) { // case INSERTION
+                list_type_variant.push_back(to_string(seq_length));
                 just_snp = false;
+            } else if (seq_length == 1) { // case SNP
+                list_type_variant.push_back(seq); // add seq str SNP
+            } else { // Case path_lengths is empty
+                cerr << "error in seq type : " << seq << endl;
             }
-        } else if (path_lengths.size() == 2) { // Deletion
+        
+        } else if (path_length == 2) { // case Deletion
             list_type_variant.push_back("0");
             just_snp = false;
         } else { // Case path_lengths is empty
@@ -192,20 +200,20 @@ void follow_edges(SnarlDistanceIndex& stree,
     }
 }
 
-vector<tuple<net_handle_t, string, size_t>> save_snarls(
+vector<tuple<net_handle_t, string, size_t, bool>> save_snarls(
                                 SnarlDistanceIndex& stree, 
                                 net_handle_t& root,
                                 PackedGraph& pg, 
                                 unordered_set<string>& ref_chr,
                                 PackedPositionOverlay& ppo) {
 
-    vector<tuple<net_handle_t, string, size_t>> snarls;
-    unordered_map<string, pair<string, size_t>> snarls_pos;
+    vector<tuple<net_handle_t, string, size_t, bool>> snarls;
+    unordered_map<string, tuple<string, size_t, bool>> snarls_pos;
 
     // Given a node handle (dist index), return a position on a chr reference path
-    auto get_node_position = [&](net_handle_t node) -> pair<string, size_t> { // node : net_handle_t
+    auto get_node_position = [&](net_handle_t node) -> tuple<string, size_t, bool> { // node : net_handle_t
         handle_t node_h = stree.get_handle(node, &pg);
-        pair<string, size_t> ret_pos; // pair<string, size_t> path_name, position
+        tuple<string, size_t, bool> ret_pos("", 0, true); // tuple<string, size_t, bool> path_name, position, reference_path_bool
 
         auto step_callback = [&](const step_handle_t& step_handle) {
             path_handle_t path_handle = pg.get_path_handle_of_step(step_handle);
@@ -213,11 +221,14 @@ vector<tuple<net_handle_t, string, size_t>> save_snarls(
             
             // check if chr_path is in ref_chr
             if (ref_chr.find(chr_path) != ref_chr.end()) {
-                ret_pos.first = chr_path;
-                ret_pos.second = ppo.get_position_of_step(step_handle) + stree.node_length(node); // position + length_node
-                // cout << stree.net_handle_as_string(node) << " : " << pg.get_sequence(stree.get_handle(node, &pg)) << endl;
+                std::get<0>(ret_pos) = chr_path;
+                std::get<1>(ret_pos) = ppo.get_position_of_step(step_handle) + stree.node_length(node); // position + length_node
                 return (false); // Stop iteration once a reference chr is found
+            } else { // case of non-reference path
+                cout << "chr_path : " << chr_path << " is not in reference path" << endl;
+                std::get<2>(ret_pos) = false; // Not a reference path
             }
+
             return (true); // Continue iteration
         };
 
@@ -225,38 +236,39 @@ vector<tuple<net_handle_t, string, size_t>> save_snarls(
         return ret_pos;
     };
 
-    auto get_net_start_position = [&](net_handle_t net) -> pair<string, size_t> {
+    auto get_net_start_position = [&](net_handle_t net) -> tuple<string, size_t, bool> {
 
         if (stree.is_node(net)) {
             return get_node_position(net);
         }
 
         net_handle_t bnode1 = stree.get_bound(net, true, false);
-        pair<string, size_t> bnode1_p = get_node_position(bnode1);
+        tuple<string, size_t, bool> bnode1_p = get_node_position(bnode1);
+
         net_handle_t bnode2 = stree.get_bound(net, false, false);
-        pair<string, size_t> bnode2_p = get_node_position(bnode2);
+        tuple<string, size_t, bool> bnode2_p = get_node_position(bnode2);
 
         // Check if the string part of the pair is empty
-        if (bnode1_p.first.empty()) return bnode1_p;
-        if (bnode2_p.first.empty()) return bnode2_p;
+        if (std::get<0>(bnode1_p).empty()) return bnode1_p;
+        if (std::get<0>(bnode2_p).empty()) return bnode2_p;
 
-        assert(bnode1_p.first == bnode2_p.first); // Ensure they are on the same reference path
+        assert(std::get<0>(bnode1_p) == std::get<0>(bnode2_p)); // Ensure they are on the same reference path
 
         // Return the boundary with the smaller numerical position
-        return (bnode1_p.second < bnode2_p.second) ? bnode1_p : bnode2_p;
+        return (std::get<1>(bnode1_p) < std::get<1>(bnode2_p)) ? bnode1_p : bnode2_p;
     };
 
     function<void(net_handle_t)> save_snarl_tree_node;
     save_snarl_tree_node = [&](net_handle_t net) {
-        pair<string, size_t> snarl_pos = get_net_start_position(net);
-        if (snarl_pos.first.empty()) {
+        tuple<string, size_t, bool> snarl_pos = get_net_start_position(net);
+        if (std::get<0>(snarl_pos).empty()) {
             auto par_net = stree.get_parent(net);
             snarl_pos = snarls_pos[stree.net_handle_as_string(par_net)];
         }
  
         snarls_pos[stree.net_handle_as_string(net)] = snarl_pos;
         if (stree.is_snarl(net)) {
-            snarls.push_back(std::make_tuple(net, snarl_pos.first, snarl_pos.second));
+            snarls.push_back(std::make_tuple(net, std::get<0>(snarl_pos), std::get<1>(snarl_pos), std::get<2>(snarl_pos)));
         }
 
         if (!stree.is_node(net) && !stree.is_sentinel(net)) {
@@ -266,7 +278,6 @@ vector<tuple<net_handle_t, string, size_t>> save_snarls(
     
     stree.for_each_child(root, save_snarl_tree_node);
     cout << "Number of snarls : " << snarls.size() << endl;
-
     return snarls;
 }
 
@@ -275,12 +286,22 @@ tuple<vector<string>, vector<string>, size_t> fill_pretty_paths(
     PackedGraph& pg, 
     vector<vector<net_handle_t>>& finished_paths) {
     
+    // list of paths
     vector<string> pretty_paths;
-    vector<vector<string>> seq_net_paths;
+
+    // seq_net, minimum_distance, maximum_distance
+    vector<tuple<string, size_t, size_t, size_t>> seq_net_paths;
 
     for (const auto& path : finished_paths) {
         Path ppath;
-        vector<string> seq_net;
+        string seq_net;
+        size_t size_start_node = 0;
+        bool start_is_reverse = false;
+        bool end_is_reverse = false;
+        nid_t complex_start_id;
+        nid_t complex_end_id;
+        size_t minimum_distance;
+        size_t maximun_distance;
 
         for (auto net : path) {
             if (stree.is_sentinel(net)) {
@@ -289,21 +310,35 @@ tuple<vector<string>, vector<string>, size_t> fill_pretty_paths(
             
             // Node case
             if (stree.is_node(net)) {
-                ppath.addNodeHandle(net, stree);                
+                bool rev = ppath.addNodeHandle(net, stree);
                 nid_t node_start_id = stree.node_id(net);
                 handle_t node_handle = pg.get_handle(node_start_id);
-                string seq_node = pg.get_sequence(node_handle);
-                seq_net.push_back(seq_node);
+                if (ppath.size() == 2) { // add only the node seq in position 2 on the snarl (ex : X>P>Q, P is in position 2)
+                    seq_net = pg.get_sequence(node_handle);
+                } else if (ppath.size() == 1) {
+                    complex_start_id = stree.node_id(net);
+                    size_start_node = pg.get_sequence(node_handle).size();
+                    start_is_reverse = rev;
+                } else { // last element
+                    complex_end_id = stree.node_id(net);
+                    end_is_reverse = rev;
+                }
             }
 
             // Trivial chain case
             else if (stree.is_trivial_chain(net)) {
-                ppath.addNodeHandle(net, stree);
+                bool rev = ppath.addNodeHandle(net, stree);
                 auto stn_start = stree.starts_at_start(net) ? stree.get_bound(net, false, true) : stree.get_bound(net, true, true);
                 nid_t node_start_id = stree.node_id(stn_start);
                 handle_t net_trivial_chain = pg.get_handle(node_start_id);
-                string seq_trivial_chain = pg.get_sequence(net_trivial_chain);
-                seq_net.push_back(seq_trivial_chain);
+                if (ppath.size() == 2) {
+                    seq_net = pg.get_sequence(net_trivial_chain);
+                } else if (ppath.size() == 1) {
+                    size_start_node = pg.get_sequence(net_trivial_chain).size(); // optimizable using get_length
+                    complex_start_id = stree.node_id(net);
+                } else {
+                    complex_end_id = stree.node_id(net);
+                }
             }
 
             // Chain case
@@ -319,16 +354,24 @@ tuple<vector<string>, vector<string>, size_t> fill_pretty_paths(
                 ppath.addNodeHandle(nodl, stree);
                 ppath.addNode("*", '>');
                 ppath.addNodeHandle(nodr, stree);
-                seq_net.push_back("_");
             }
         }
 
         if (ppath.nreversed() > ppath.size() / 2) {
             ppath.flip();
-            std::reverse(seq_net.begin(), seq_net.end());
+            start_is_reverse = !start_is_reverse;
+            end_is_reverse = !end_is_reverse;
         }
+
+        // Case of complex found
+        if (seq_net.empty()) {
+            minimum_distance = stree.minimum_distance(complex_start_id, start_is_reverse, size_start_node, complex_end_id, end_is_reverse, 0);
+            maximun_distance = stree.maximum_distance(complex_start_id, start_is_reverse, size_start_node, complex_end_id, end_is_reverse, 0);
+        }
+
         pretty_paths.push_back(ppath.print());
-        seq_net_paths.push_back(seq_net);
+        size_t size_path = ppath.size();
+        seq_net_paths.push_back(std::make_tuple(seq_net, minimum_distance, maximun_distance, size_path));
     }
 
     // pair<vector<string>, size_t>
@@ -339,7 +382,7 @@ tuple<vector<string>, vector<string>, size_t> fill_pretty_paths(
 // {chr : matrix(snarl, paths, chr, pos, type)}
 std::unordered_map<std::string, std::vector<std::tuple<string, vector<string>, string, vector<string>>>> loop_over_snarls_write(
         SnarlDistanceIndex& stree,
-        vector<tuple<net_handle_t, string, size_t>>& snarls,
+        vector<tuple<net_handle_t, string, size_t, bool>>& snarls,
         PackedGraph& pg, 
         const string& output_file,
         const string& output_snarl_not_analyse,
@@ -350,7 +393,7 @@ std::unordered_map<std::string, std::vector<std::tuple<string, vector<string>, s
     ofstream out_snarl(output_file);
     ofstream out_fail(output_snarl_not_analyse);
     
-    out_snarl << "chr\tpos\tsnarl\tpaths\ttype\n";
+    out_snarl << "chr\tpos\tsnarl\tpaths\ttype\treference\n";
     out_fail << "snarl\treason\n";
     
     std::vector<std::tuple<string, vector<string>, string, vector<string>>> snarl_paths;
@@ -413,11 +456,12 @@ std::unordered_map<std::string, std::vector<std::tuple<string, vector<string>, s
             string chr = std::get<1>(snarl_path_pos);
             string pos = std::to_string(std::get<2>(snarl_path_pos)+padding);
             paths_number_analysis += pretty_paths.size();
+            string str_reference = std::get<3>(snarl_path_pos) == true ? "on" : "out";
 
             if (bool_return) {
                 out_snarl << chr << "\t" << pos
                     << "\t" << snarl_id << "\t" << pretty_paths_stream.str() 
-                    << "\t" << type_variants_stream.str() << "\n";
+                    << "\t" << type_variants_stream.str() << "\t" << str_reference << "\n";
             } else {
                 // case new chr
                 if (chr != save_chr && !save_chr.empty()) {

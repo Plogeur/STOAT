@@ -4,7 +4,7 @@ OPTIMIZE STOAT USING :
 - gprof (performance bottlenecks)
 - perf (find slow parts of the code)
 
-ADD MULTI-THREADING QUANTITATIVE
+ADD TEST LIST PATH SNARL CREATING A SPECIAL CASE LIKE : 4th NODE PATHS 
 ADD FONCTIONNAL TEST
 
 ADD CHUNK :
@@ -19,7 +19,6 @@ ADD CHUNK :
     function that return the minimun number of subpath that you can parse that will form a chunk.
 - Reshape matrix size reshape/reserve by the optimal number
 
-ADD chi2 + fisher P adjusted with fisher comparation pvalue (means something).
 USE LIBDSG FIND REF CHR
 ADD LMM + TEST
 

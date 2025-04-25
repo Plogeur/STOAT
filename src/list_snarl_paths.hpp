@@ -41,7 +41,7 @@ public:
     void addNode(const std::string& node, char orient);
 
     // Add a node handle and extract information using the string representation
-    void addNodeHandle(const net_handle_t& node_h, const SnarlDistanceIndex& stree);
+    bool addNodeHandle(const net_handle_t& node_h, const SnarlDistanceIndex& stree);
 
     // Get the string representation of the path
     std::string print() const;
@@ -63,7 +63,7 @@ std::tuple<std::unique_ptr<bdsg::SnarlDistanceIndex>,
 parse_graph_tree(const std::string& pg_file, const std::string& dist_file);
 
 // Function to calculate the type of variant
-pair<vector<string>, size_t> calcul_pos_type_variant(const vector<vector<string>>& list_list_length_paths);
+pair<vector<string>, size_t> calcul_pos_type_variant(const vector<tuple<string, size_t, size_t, size_t>>& list_length_paths);
 
 // Function to find snarl ID
 string find_snarl_id(SnarlDistanceIndex& stree, net_handle_t& snarl);
@@ -78,7 +78,7 @@ void follow_edges(
 );
 
 // Function to save snarls
-vector<tuple<net_handle_t, string, size_t>> save_snarls(
+vector<tuple<net_handle_t, string, size_t, bool>> save_snarls(
                             SnarlDistanceIndex& stree, 
                             net_handle_t& root,
                             PackedGraph& pg, 
@@ -94,7 +94,7 @@ tuple<vector<string>, vector<string>, size_t> fill_pretty_paths(
 // Function to loop over snarls and write output
 std::unordered_map<std::string, std::vector<std::tuple<string, vector<string>, string, vector<string>>>> loop_over_snarls_write(
                             SnarlDistanceIndex& stree, 
-                            vector<tuple<net_handle_t, string, size_t>>& snarls, 
+                            vector<tuple<net_handle_t, string, size_t, bool>>& snarls, 
                             PackedGraph& pg, 
                             const string& output_file, 
                             const string& output_snarl_not_analyse, 

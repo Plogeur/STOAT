@@ -278,6 +278,8 @@ int main(int argc, char* argv[]) {
         std::cout << "Start snarl analysis... " << std::endl;
         auto start_0 = std::chrono::high_resolution_clock::now();
         std::tie(stree, pg, root, pp_overlay) = parse_graph_tree(pg_path, dist_path);
+
+        // 
         auto snarls = save_snarls(*stree, root, *pg, ref_chr, *pp_overlay);
 
         string output_snarl_not_analyse = output_dir + "/snarl_not_analyse.tsv";
