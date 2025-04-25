@@ -441,7 +441,7 @@ bool create_binary_table(
     size_t length_column_headers = list_path_snarl.size();
     size_t totalSum = 0;
 
-    for (size_t idx_g = 0; idx_g < list_path_snarl.size(); ++idx_g) {
+    for (size_t idx_g = 0; idx_g < length_column_headers; ++idx_g) {
         const std::string& path_snarl = list_path_snarl[idx_g];
         size_t number_sample = list_samples.size();
 

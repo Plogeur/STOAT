@@ -142,7 +142,7 @@ std::pair<std::unordered_map<std::string, std::vector<size_t>>, size_t> create_q
         for (auto idx : idx_srr_save) {
             size_t srr_idx = idx / 2;  // Adjust index to correspond to the sample index
             genotypes[srr_idx][col_idx] += 1;
-            allele_number++; // inversed matrice n*m by m*n
+            allele_number++;
         }
     }
 
