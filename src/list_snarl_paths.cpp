@@ -207,29 +207,25 @@ vector<tuple<net_handle_t, string, size_t, bool>> save_snarls(
                                 PackedPositionOverlay& ppo) {
 
     vector<tuple<net_handle_t, string, size_t, bool>> snarls;
-    unordered_map<string, tuple<string, size_t, bool>> snarls_pos;
+    unordered_map<string, tuple<string, size_t>> snarls_pos;
 
     // Given a node handle (dist index), return a position on a chr reference path
-    auto get_node_position = [&](net_handle_t node) -> tuple<string, size_t, bool> { // node : net_handle_t
+    auto get_node_position = [&](net_handle_t node) -> tuple<string, size_t> { // node : net_handle_t
         handle_t node_h = stree.get_handle(node, &pg);
 
         // path_name, position, reference_path_bool
-        tuple<string, size_t, bool> ret_pos("", 0, true);
+        tuple<string, size_t> ret_pos;
 
         auto step_callback = [&](const step_handle_t& step_handle) {
             path_handle_t path_handle = pg.get_path_handle_of_step(step_handle);
             string chr_path = pg.get_path_name(path_handle);
-            
+
             // check if chr_path is in ref_chr
             if (ref_chr.find(chr_path) != ref_chr.end()) {
                 std::get<0>(ret_pos) = chr_path;
                 std::get<1>(ret_pos) = ppo.get_position_of_step(step_handle) + stree.node_length(node); // position + length_node
                 return (false); // Stop iteration once a reference chr is found
-            } else {
-                std::cout << "chr_path : " << chr_path 
-                << ", position : " << ppo.get_position_of_step(step_handle) << std::endl;
             }
-
             return (true); // Continue iteration
         };
 
@@ -237,17 +233,17 @@ vector<tuple<net_handle_t, string, size_t, bool>> save_snarls(
         return ret_pos;
     };
 
-    auto get_net_start_position = [&](net_handle_t net) -> tuple<string, size_t, bool> {
+    auto get_net_start_position = [&](net_handle_t net) -> tuple<string, size_t> {
 
         if (stree.is_node(net)) {
             return get_node_position(net);
         }
 
         net_handle_t bnode1 = stree.get_bound(net, true, false);
-        tuple<string, size_t, bool> bnode1_p = get_node_position(bnode1);
+        tuple<string, size_t> bnode1_p = get_node_position(bnode1);
 
         net_handle_t bnode2 = stree.get_bound(net, false, false);
-        tuple<string, size_t, bool> bnode2_p = get_node_position(bnode2);
+        tuple<string, size_t> bnode2_p = get_node_position(bnode2);
 
         // Check if the string part of the pair is empty
         if (std::get<0>(bnode1_p).empty()) return bnode1_p;
@@ -261,19 +257,30 @@ vector<tuple<net_handle_t, string, size_t, bool>> save_snarls(
 
     function<void(net_handle_t)> save_snarl_tree_node;
     save_snarl_tree_node = [&](net_handle_t net) {
-        tuple<string, size_t, bool> snarl_pos = get_net_start_position(net);
+
+        tuple<string, size_t> snarl_pos = get_net_start_position(net);
+        bool bool_ref = true;
+
+        // if we couldn't find a position, use the parent's that we should have
+        // found and saved earlier
         if (std::get<0>(snarl_pos).empty()) {
             auto par_net = stree.get_parent(net);
             snarl_pos = snarls_pos[stree.net_handle_as_string(par_net)];
+            bool_ref = false;
         }
- 
+        
+        // save this position
         snarls_pos[stree.net_handle_as_string(net)] = snarl_pos;
+        
+        // save snarl
         if (stree.is_snarl(net)) {
-            snarls.push_back(std::make_tuple(net, std::get<0>(snarl_pos), std::get<1>(snarl_pos), std::get<2>(snarl_pos)));
+            snarls.push_back(std::make_tuple(net, std::get<0>(snarl_pos), std::get<1>(snarl_pos), bool_ref));
         }
 
+        // explore children
         if (!stree.is_node(net) && !stree.is_sentinel(net)) {
             stree.for_each_child(net, save_snarl_tree_node);
+            bool_ref = false;
         }
     };
     

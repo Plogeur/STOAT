@@ -549,7 +549,7 @@ void SnarlParser::binary_table(const std::vector<std::tuple<std::string, std::ve
                     << "\t" << allele_number << "\n";
                                 
                 } else {
-                    size_t length_column_headers = (list_snarl.size()*(list_snarl.size() +1))/2; // combination of snarl 
+                    size_t length_column_headers = list_snarl.size();
                     std::vector<size_t> g0(length_column_headers, 0); // can be replace by size_t arr[length_column_headers] = {0};
                     std::vector<size_t> g1(length_column_headers, 0); // can be replace by size_t arr[length_column_headers] = {0};
                     bool df_filtration = create_binary_table(g0, g1, binary_phenotype, list_snarl, sampleNames, matrix, maf);
