@@ -143,7 +143,6 @@ string find_snarl_id(SnarlDistanceIndex& stree, net_handle_t& snarl) {
     // Construct the snarl ID as "end_node_id_start_node_id"
     std::stringstream snarl_id;
     snarl_id << end_node_id << "_" << start_node_id;
-
     return snarl_id.str();  // Return the generated snarl ID as a string
 }
 
@@ -213,7 +212,9 @@ vector<tuple<net_handle_t, string, size_t, bool>> save_snarls(
     // Given a node handle (dist index), return a position on a chr reference path
     auto get_node_position = [&](net_handle_t node) -> tuple<string, size_t, bool> { // node : net_handle_t
         handle_t node_h = stree.get_handle(node, &pg);
-        tuple<string, size_t, bool> ret_pos("", 0, true); // tuple<string, size_t, bool> path_name, position, reference_path_bool
+
+        // path_name, position, reference_path_bool
+        tuple<string, size_t, bool> ret_pos("", 0, true);
 
         auto step_callback = [&](const step_handle_t& step_handle) {
             path_handle_t path_handle = pg.get_path_handle_of_step(step_handle);
@@ -224,9 +225,9 @@ vector<tuple<net_handle_t, string, size_t, bool>> save_snarls(
                 std::get<0>(ret_pos) = chr_path;
                 std::get<1>(ret_pos) = ppo.get_position_of_step(step_handle) + stree.node_length(node); // position + length_node
                 return (false); // Stop iteration once a reference chr is found
-            } else { // case of non-reference path
-                cout << "chr_path : " << chr_path << " is not in reference path" << endl;
-                std::get<2>(ret_pos) = false; // Not a reference path
+            } else {
+                std::cout << "chr_path : " << chr_path 
+                << ", position : " << ppo.get_position_of_step(step_handle) << std::endl;
             }
 
             return (true); // Continue iteration
