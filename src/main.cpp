@@ -48,6 +48,7 @@ void print_help() {
               << "  --gene-position <path>      Path to the Gene position file (.txt or .tsv)\n"
               << "  -k, --kinship <path>        Path to the kinship matrix file (.txt or .tsv)\n"
               << "  --make-bed                  Create a plink format files (.bed, .bim, .fam)\n"
+              << "  --table-threshold <int>     The N p-value digits threshold to use for plotting regression data file (exemple : 5 <=> 10-5, defauld 0 : disable)\n"
               << "  --maf                       Add a maf (Minimum allele frequency) thresold (defauld : 0.01)\n"
               << "  -o, --output <name>         Output dir name\n"
               << "  -t, --thread <int>          Number of threads\n"
@@ -63,6 +64,7 @@ int main(int argc, char* argv[]) {
 
     size_t num_threads=1;
     size_t phenotype=0;
+    size_t table_threshold = 0;
     size_t children_threshold = 50;
     size_t path_length_threshold = 10000;
     std::vector<std::string> covar_names;
@@ -143,6 +145,13 @@ int main(int argc, char* argv[]) {
                 std::cerr << "Error: Number of threads must be a positive integer\n";
                 return EXIT_FAILURE;
             }
+        } else if ((arg == "--table-threshold") && i + 1 < argc) {
+            // convert str to int and verify that it is a positive number
+            table_threshold = std::stoi(argv[++i]);
+            if (table_threshold < 1) {
+                std::cerr << "Error: Number of pvalue threshold for the table threshold must be a positive integer\n";
+                return EXIT_FAILURE;
+            }
         } else if ((arg == "--maf") && i + 1 < argc) {
             // convert str to int and verify that it is a positive number
             maf = 1-std::stoi(argv[++i]);
@@ -170,7 +179,7 @@ int main(int argc, char* argv[]) {
     }
 
     if (!covariate_path.empty() && covar_names.empty()) {
-        std::cerr << "If --covariate path is provided you must add the column name(s) to parse using --covar-name" << "\n";
+        std::cerr << "If --covariate path is provided you must add the column name(s), using --covar-name" << "\n";
         print_help();
         return EXIT_FAILURE;
     }
@@ -184,6 +193,11 @@ int main(int argc, char* argv[]) {
     auto start_1 = std::chrono::high_resolution_clock::now();
     std::filesystem::create_directory(output_dir);
     std::unordered_set<std::string> ref_chr = (!chromosome_path.empty()) ? parse_chromosome_reference(chromosome_path) : std::unordered_set<std::string>{"ref"};
+    std::string dir_regression = output_dir + "/regression";
+
+    if (table_threshold > 0) {
+        std::filesystem::create_directory(dir_regression);
+    }
 
     // Enforce valid argument combinations
     if ((!snarl_path.empty() || (!pg_path.empty() && !dist_path.empty())) && !vcf_path.empty() && phenotype == 1) {
@@ -319,7 +333,7 @@ int main(int argc, char* argv[]) {
     } else if (!binary_path.empty()) {
 
         string output_binary = output_dir + "/binary_analysis.tsv";
-        chromosome_chuck_binary(ptr_vcf, hdr, rec, list_samples, snarls_chr, binary, covariate, maf, kinship, num_threads, output_binary);
+        chromosome_chuck_binary(ptr_vcf, hdr, rec, list_samples, snarls_chr, binary, covariate, maf, kinship, num_threads, table_threshold, output_binary, dir_regression);
 
         string output_significative = output_dir + "/top_variant_binary.tsv";
         string phenotype_type = "binary";
@@ -333,7 +347,7 @@ int main(int argc, char* argv[]) {
     } else if (!quantitative_path.empty()) {
 
         string output_quantitive = output_dir + "/quantitative_analysis.tsv";
-        chromosome_chuck_quantitative(ptr_vcf, hdr, rec, list_samples, snarls_chr, quantitative, covariate, maf, kinship, num_threads, output_quantitive);
+        chromosome_chuck_quantitative(ptr_vcf, hdr, rec, list_samples, snarls_chr, quantitative, covariate, maf, kinship, num_threads, table_threshold, output_quantitive, dir_regression);
 
         string output_significative = output_dir + "/top_variant_quantitative.tsv";
         string phenotype_type = "quantitative";
@@ -357,6 +371,9 @@ int main(int argc, char* argv[]) {
 
 // BINARY
 // ./stoat_cxx -p ../data/binary/pg.pg -d ../data/binary/pg.dist -v ../data/binary/merged_output.vcf.gz -b ../data/binary/phenotype.tsv --output ../output
+
+// BINARY + COVARIATE
+// ./stoat_cxx -p ../data/binary/pg.pg -d ../data/binary/pg.dist -v ../data/binary/merged_output.vcf.gz -b ../data/binary/phenotype.tsv --covariate ../data/binary/covariate.tsv --output ../output
 
 // QUANTITATIVE
 // ./stoat_cxx -p ../data/quantitative/pg.pg -d ../data/quantitative/pg.dist -v ../data/quantitative/merged_output.vcf.gz -q ../data/quantitative/phenotype.tsv --output ../output

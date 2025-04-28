@@ -371,7 +371,6 @@ void check_format_covariate(const std::string& filename) {
 }
 
 // Function to parse covariates into an unordered_map
-
 std::unordered_map<std::string, std::vector<double>> parse_covariates(
     const std::string& filename, const std::vector<std::string>& covar_names) {
 

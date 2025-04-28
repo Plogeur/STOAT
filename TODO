@@ -4,8 +4,9 @@ OPTIMIZE STOAT USING :
 - gprof (performance bottlenecks)
 - perf (find slow parts of the code)
 
-ADD TEST LIST PATH SNARL CREATING A SPECIAL CASE LIKE : 4th NODE PATHS 
 ADD FONCTIONNAL TEST
+ADD TABLE OUTPUT FOR REGRESSION + PLOT SCRIPT IN R
+ADD LOGISITIC REGRESSION + TEST AGAINST CHI2
 
 ADD CHUNK :
 - Define a chunk struct for list snarl path :
