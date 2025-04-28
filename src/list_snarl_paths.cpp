@@ -280,7 +280,6 @@ vector<tuple<net_handle_t, string, size_t, bool>> save_snarls(
         // explore children
         if (!stree.is_node(net) && !stree.is_sentinel(net)) {
             stree.for_each_child(net, save_snarl_tree_node);
-            bool_ref = false;
         }
     };
     
