@@ -210,6 +210,11 @@ It can be informative to analyze how sample phenotypes are influenced by specifi
   - `-p`: Phenotype file  
   - `-o`: Output directory for the resulting JPEG boxplot images
 
+
+<p align="center">
+<img src="pictures/box_plot.jpeg" width="300">
+</p>
+
 ### Manhattan and QQ Plots
 
 To visually assess the significance and distribution of GWAS results, Stoat provides support for generating **Manhattan** and **QQ plots**. These plots help in identifying associations between genetic variations (e.g., paths in snarls) and phenotypic traits.
