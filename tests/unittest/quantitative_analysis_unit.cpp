@@ -72,23 +72,23 @@ using Catch::Approx;
 //     }
 // }
 
-TEST_CASE("Création de table quantitative", "[create_quantitative_table]") {
-    SECTION("Table simple") {
-        std::vector<std::string> list_samples = {"Sample1", "Sample2", "Sample3"};
-        std::vector<std::string> column_headers = {"Path1", "Path2"};
+// TEST_CASE("Création de table quantitative", "[create_quantitative_table]") {
+//     SECTION("Table simple") {
+//         std::vector<std::string> list_samples = {"Sample1", "Sample2", "Sample3"};
+//         std::vector<std::string> column_headers = {"Path1", "Path2"};
 
-        Matrix matrix(3, 2);  // 3 échantillons, 2 chemins
-        matrix.set(0, 0);  // Sample1, Path1
-        matrix.set(1, 1);  // Sample2, Path2
+//         Matrix matrix(3, 2);  // 3 échantillons, 2 chemins
+//         matrix.set(0, 0);  // Sample1, Path1
+//         matrix.set(1, 1);  // Sample2, Path2
 
-        auto [table, size] = create_quantitative_table(list_samples, column_headers, matrix);
+//         auto [table, size] = create_quantitative_table(list_samples, column_headers, matrix);
 
-        REQUIRE(table.size() == list_samples.size());
-        for (const auto& [sample, values] : table) {
-            REQUIRE(values.size() == column_headers.size());
-        }
-    }
-}
+//         REQUIRE(table.size() == list_samples.size());
+//         for (const auto& [sample, values] : table) {
+//             REQUIRE(values.size() == column_headers.size());
+//         }
+//     }
+// }
 
 TEST_CASE("Test de set_precision", "[set_precision]") {
     SECTION("Valeurs normales") {

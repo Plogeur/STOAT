@@ -20,17 +20,17 @@
 double normal_cdf(double x);
 
 void lmm_quantitative(
-    const std::unordered_map<std::string, std::vector<size_t>>& df,                  
-    const std::unordered_map<std::string, double>& phenotype_table,      
+    const std::vector<std::vector<size_t>>& df,                  
+    const vector<double>& phenotype_table,      
     const KinshipMatrix& kinship,                                              
     const std::unordered_map<std::string, std::vector<double>>& covariates,
-    std::string& p_value, std::string& beta, std::string& se, std::string& r2);
+    std::string& p_value_str, std::string& beta_str, std::string& se_str, std::string& r2_str);
 
 void lmm_binary(
-    const std::unordered_map<std::string, std::vector<size_t>>& df,                  
-    const std::unordered_map<std::string, bool>& phenotype_binary,      
+    const std::vector<std::vector<size_t>>& df,                  
+    const std::vector<bool>& phenotype_binary,     
     const KinshipMatrix& kinship,                                              
     const std::unordered_map<std::string, std::vector<double>>& covariates,
-    std::string& p_value, std::string& beta, std::string& se, std::string& r2);
+    std::string& p_value_str, std::string& beta_str, std::string& se_str, std::string& r2_str);
 
 #endif 

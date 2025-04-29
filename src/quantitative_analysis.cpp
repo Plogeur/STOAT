@@ -7,24 +7,22 @@ using namespace std;
 
 // Linear regression function OLS
 void linear_regression(
-    const std::unordered_map<std::string, std::vector<size_t>>& df,
-    const std::unordered_map<std::string, double>& quantitative_phenotype,
+    const std::vector<std::vector<size_t>>& df,
+    const std::vector<double>& quantitative_phenotype,
     std::string& p_value_str, std::string& beta_str, std::string& se_str, std::string& r2_str) {
 
     size_t num_samples = df.size();
-    size_t max_paths = df.begin()->second.size();
-    
+    size_t max_paths = df[0].size();
+
     Eigen::MatrixXd X(num_samples, max_paths);
     X.setZero(); // Initialize matrix with zeros
     Eigen::VectorXd y(num_samples);
     
-    int row = 0;
-    for (const auto& [sample, paths] : df) {
-        y(row) = quantitative_phenotype.at(sample);
-        for (size_t col = 0; col < paths.size(); ++col) {
-            X(row, col) = paths[col];
+    for (size_t row=0; row < num_samples; ++row) {
+        y(row) = quantitative_phenotype[row];
+        for (size_t col = 0; col < max_paths; ++col) {
+            X(row, col) = df[row][col];
         }
-        ++row;
     }
     
     Eigen::VectorXd beta = (X.transpose() * X).ldlt().solve(X.transpose() * y);
@@ -55,39 +53,32 @@ void linear_regression(
 }
 
 void glm_quantitative(
-    const std::unordered_map<std::string, std::vector<size_t>>& df,
-    const std::unordered_map<std::string, double>& quantitative_phenotype,
+    const std::vector<std::vector<size_t>>& df,
+    const std::vector<double>& quantitative_phenotype,
     const std::unordered_map<std::string, std::vector<double>>& covar,
-    std::string& p_value_str, std::string& beta_str, std::string& se_str, std::string& r2_str) {
-
+    std::string& p_value_str, std::string& beta_str, std::string& se_str, std::string& r2_str) 
+{
     size_t num_samples = df.size();
-    size_t num_features = df.begin()->second.size();
-
-    // Assuming all covariates are of the same size
-    size_t num_covariates = covar.begin()->second.size();
+    size_t num_features = df[0].size();  // Assumes all rows have the same number of features
+    size_t num_covariates = covar.begin()->second.size();  // Assumes covariate vectors are same length
 
     Eigen::MatrixXd X(num_samples, num_features + num_covariates);
-    X.setZero();
     Eigen::VectorXd y(num_samples);
 
-    int row = 0;
-    for (const auto& [sample, features] : df) {
-        y(row) = quantitative_phenotype.at(sample);
+    for (size_t row = 0; row < num_samples; ++row) {
+        y(row) = quantitative_phenotype[row];
 
-        // Add features (e.g., genotype/path values)
-        for (size_t col = 0; col < features.size(); ++col) {
-            X(row, col) = features[col];
+        // Add features
+        for (size_t col = 0; col < num_features; ++col) {
+            X(row, col) = static_cast<double>(df[row][col]);
         }
 
-        // Add covariates
-        if (covar.find(sample) != covar.end()) {
-            const auto& covariate_values = covar.at(sample);
-            for (size_t i = 0; i < covariate_values.size(); ++i) {
-                X(row, num_features + i) = covariate_values[i];
-            }
+        // Add covariates (assuming covariates are indexed in the same order as samples)
+        size_t i = 0;
+        for (const auto& [_, covariate_vector] : covar) {
+            X(row, num_features + i) = covariate_vector[row];
+            ++i;
         }
-
-        ++row;
     }
 
     Eigen::VectorXd beta = (X.transpose() * X).ldlt().solve(X.transpose() * y);
@@ -118,14 +109,13 @@ void glm_quantitative(
 }
 
 // Function to create the quantitative table
-std::pair<std::unordered_map<std::string, std::vector<size_t>>, size_t> create_quantitative_table(
-    const std::vector<std::string>& list_samples, 
+std::pair<std::vector<std::vector<size_t>>, size_t> create_quantitative_table(
+    const size_t& length_sample,
     const std::vector<std::string>& column_headers,
     Matrix& matrix) {
 
     // Retrieve row headers dictionary
     size_t allele_number = 0;
-    size_t length_sample = list_samples.size();
     size_t length_column = column_headers.size();
 
     // Initialize a zero matrix for genotypes
@@ -137,19 +127,14 @@ std::pair<std::unordered_map<std::string, std::vector<size_t>>, size_t> create_q
         std::vector<std::string> decomposed_snarl = decompose_string(path_snarl);
 
         // Identify correct paths
-        std::vector<int> idx_srr_save = identify_correct_path(decomposed_snarl, matrix, length_sample*2);
+        std::vector<size_t> idx_srr_save = identify_correct_path(decomposed_snarl, matrix, length_sample*2);
 
-        for (auto idx : idx_srr_save) {
+        for (size_t idx : idx_srr_save) {
             size_t srr_idx = idx / 2;  // Adjust index to correspond to the sample index
             genotypes[srr_idx][col_idx] += 1;
             allele_number++;
         }
     }
-
-    std::unordered_map<std::string, std::vector<size_t>> df;
-    for (size_t i = 0; i < list_samples.size(); ++i) {
-        df[list_samples[i]] = genotypes[i];
-    }
     
-    return {df, allele_number};
+    return {genotypes, allele_number};
 }

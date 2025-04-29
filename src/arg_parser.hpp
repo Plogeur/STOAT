@@ -53,10 +53,14 @@ std::unordered_map<std::string, std::vector<double>> parse_covariates(
     const std::string& filename, const std::vector<std::string>& covar_names);
 
 // Parses the group file and fills the group_0 and group_1 maps with sample data.
-std::unordered_map<std::string, bool> parse_binary_pheno(const std::string& binary_pheno);
+std::vector<bool> parse_binary_pheno(
+    const std::string& file_path,
+    const std::vector<std::string>& list_samples);
 
 // Parses the phenotype file and returns a map with IID as keys and PHENO as float values.
-std::unordered_map<std::string, double> parse_quantitative_pheno(const std::string& qunatitative_pheno);
+std::vector<double> parse_quantitative_pheno(
+    const std::string& file_path, 
+    const std::vector<std::string>& list_samples);
 
 std::tuple<std::vector<std::string>, htsFile*, bcf_hdr_t*, bcf1_t*> parseHeader(const std::string& file_path);
 

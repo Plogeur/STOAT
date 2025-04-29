@@ -87,22 +87,16 @@ std::vector<double> solve_linear_system(std::vector<std::vector<double>> A, std:
 
 // Logistic regression using IRLS for a single variant
 void logistic_regression(
-    const std::unordered_map<std::string, std::vector<size_t>>& variant_data,
-    const std::unordered_map<std::string, bool>& phenotype,
+    const std::vector<std::vector<size_t>>& variant_data,
+    const std::vector<bool>& phenotype,
+    const std::vector<string>& list_samples,
     const std::unordered_map<std::string, std::vector<double>>& covariates,
     std::string& p_value_str, std::string& beta_str, std::string& se_str, std::string& r2_str) {
 
     const size_t max_iter = 25;
     const double tol = 1e-6;
 
-    std::vector<std::string> ids;
-    for (const auto& [id, _] : phenotype) {
-        if (variant_data.count(id) && covariates.count(id)) {
-            ids.push_back(id);
-        }
-    }
-
-    size_t n = ids.size();
+    size_t n = phenotype.size();
     size_t num_cov = covariates.begin()->second.size();
     size_t p = 1 + 1 + num_cov; // intercept + genotype + covariates
 
@@ -111,11 +105,11 @@ void logistic_regression(
     std::vector<double> y(n);
 
     for (size_t i = 0; i < n; ++i) {
-        const std::string& id = ids[i];
-        y[i] = phenotype.at(id) ? 1.0 : 0.0;
+        const std::string& id = list_samples[i];
+        y[i] = phenotype[i] ? 1.0 : 0.0;
 
         X[i][0] = 1.0; // intercept
-        X[i][1] = static_cast<double>(variant_data.at(id)[0]); // single variant genotype
+        X[i][1] = static_cast<double>(variant_data[i][0]); // single variant genotype
 
         const auto& cov = covariates.at(id);
         for (size_t j = 0; j < num_cov; ++j) {
@@ -430,36 +424,38 @@ std::string format_group_paths(const std::vector<size_t>& g0, const std::vector<
     return result;
 }
 
-bool create_binary_table(
+size_t create_binary_table(
     std::vector<size_t>& g0, std::vector<size_t>& g1,
-    const std::unordered_map<std::string, bool>& groups, 
+    const vector<bool>& binary_phenotype, 
     const std::vector<std::string>& list_path_snarl, 
-    const std::vector<std::string>& list_samples, 
-    const Matrix& matrix,
-    const double& maf) {
+    const size_t& number_paths,
+    const size_t& number_samples,
+    const Matrix& matrix) {
 
-    size_t length_column_headers = list_path_snarl.size();
-    size_t totalSum = 0;
-
-    for (size_t idx_g = 0; idx_g < length_column_headers; ++idx_g) {
+    size_t total_sum = 0;
+    for (size_t idx_g = 0; idx_g < number_paths; ++idx_g) {
         const std::string& path_snarl = list_path_snarl[idx_g];
-        size_t number_sample = list_samples.size();
 
         std::vector<std::string> decomposed_snarl = decompose_string(path_snarl);
-        std::vector<int> idx_srr_save = identify_correct_path(decomposed_snarl, matrix, number_sample * 2);
+        std::vector<size_t> idx_srr_save = identify_correct_path(decomposed_snarl, matrix, number_samples * 2);
 
-        for (int idx : idx_srr_save) {
-            std::string srr = list_samples[idx / 2];
-
-            auto it = groups.find(srr);
-            if (it->second) {
+        for (size_t idx : idx_srr_save) {
+            bool group = binary_phenotype[idx / 2];
+            if (group) {
                 g1[idx_g] += 1;
             } else {
                 g0[idx_g] += 1;
             }
-            totalSum += 1;
+            total_sum++;
         }
     }
+    return total_sum;
+}
+
+bool check_MAF_threshold(
+    const std::vector<size_t>& g0, const std::vector<size_t>& g1,
+    const size_t& totalSum, const size_t& length_column_headers, 
+    const double& maf) {
 
     // Check MAF threshold
     for (size_t i = 0; i < length_column_headers; ++i) {
@@ -468,6 +464,5 @@ bool create_binary_table(
             return true; // MAF threshold met
         }
     }
-
     return false; // No column met MAF threshold
 }

@@ -26,9 +26,10 @@ double sigmoid(double z);
 std::vector<double> solve_linear_system(std::vector<std::vector<double>> A, std::vector<double> b);
 
 void logistic_regression(
-    const std::unordered_map<std::string, std::vector<size_t>>& variant_data,
-    const std::unordered_map<std::string, bool>& phenotype,
-    const std::unordered_map<std::string, std::vector<double>>& covariates, 
+    const std::vector<std::vector<size_t>>& variant_data,
+    const std::vector<bool>& phenotype,
+    const std::vector<string>& list_samples,
+    const std::unordered_map<std::string, std::vector<double>>& covariates,
     std::string& p_value_str, std::string& beta_str, std::string& se_str, std::string& r2_str);
 
 // ------------------------ Chi2 test ------------------------
@@ -53,11 +54,17 @@ void binary_stat_test(const std::vector<size_t>& g0, const std::vector<size_t>& 
     string& allele_number_str, string& min_row_index_str, string& numb_colum_str, 
     string& inter_group_str, string& average_str);
 
-bool create_binary_table(
+size_t create_binary_table(
     std::vector<size_t>& g0, std::vector<size_t>& g1,
-    const std::unordered_map<std::string, bool>& groups, 
+    const vector<bool>& binary_phenotype, 
     const std::vector<std::string>& list_path_snarl, 
-    const std::vector<std::string>& list_samples, 
-    const Matrix& matrix, const double& maf);
+    const size_t& number_paths,
+    const size_t& number_samples,
+    const Matrix& matrix);
+
+bool check_MAF_threshold(
+    const std::vector<size_t>& g0, const std::vector<size_t>& g1,
+    const size_t& totalSum, const size_t& length_column_headers, 
+    const double& maf);
 
 #endif

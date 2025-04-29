@@ -161,7 +161,8 @@
     "*.ipp": "cpp",
     "core": "cpp",
     "filesystem": "cpp",
-    "__memory": "cpp"
+    "__memory": "cpp",
+    "hash_set": "cpp"
   },
   "C_Cpp.errorSquiggles": "disabled",
   "C_Cpp.default.compilerPath": "/usr/bin/clang++"

@@ -224,8 +224,9 @@ int main(int argc, char* argv[]) {
         std::tie(list_samples, ptr_vcf, hdr, rec) = parseHeader(vcf_path);    
     }
 
-    std::unordered_map<std::string, bool> binary;
-    std::unordered_map<std::string, double> quantitative;
+
+    std::vector<bool> binary;
+    std::vector<double> quantitative;
     std::unordered_map<std::string, std::vector<double>> eqtl;
     std::unordered_map<std::string, std::tuple<std::string, int, int>> gene_position;
     std::unordered_map<std::string, std::vector<double>> covariate;
@@ -233,23 +234,14 @@ int main(int argc, char* argv[]) {
     if (!covariate_path.empty()) {
         check_format_covariate(covariate_path);
         covariate = parse_covariates(covariate_path, covar_names);
-        // no need because we will check with phenotype
-        // check_match_samples(covariate, list_samples);
+        check_match_samples(covariate, list_samples);
     }
 
     if (!binary_path.empty()) {
-        binary = parse_binary_pheno(binary_path);
-        check_match_samples(binary, list_samples);
-        if (!covariate_path.empty()) {
-            check_phenotype_covariate(binary, covariate);
-        }
+        binary = parse_binary_pheno(binary_path, list_samples);
 
     } else if (!quantitative_path.empty()) {
-        quantitative = parse_quantitative_pheno(quantitative_path);
-        check_match_samples(quantitative, list_samples);
-        if (!covariate_path.empty()) {
-            check_phenotype_covariate(quantitative, covariate);
-        }
+        quantitative = parse_quantitative_pheno(quantitative_path, list_samples);
 
     } else if (!eqtl_path.empty() && !gene_position_path.empty()) {
         eqtl = parse_qtl_file(eqtl_path);
@@ -299,8 +291,6 @@ int main(int argc, char* argv[]) {
 
     auto start_2 = std::chrono::high_resolution_clock::now();
 
-    // pvalue, index
-    std::vector<std::tuple<double, double, size_t>> pvalue_vector;
     if (make_bed) {
 
         std::vector<std::pair<std::string, int>> pheno;

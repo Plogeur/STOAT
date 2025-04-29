@@ -23,18 +23,18 @@
 
 // Linear regression function that returns a tuple of p_value, standard error (se), and beta
 void linear_regression(
-    const std::unordered_map<std::string, std::vector<size_t>>& df,
-    const std::unordered_map<std::string, double>& quantitative_phenotype,
+    const std::vector<std::vector<size_t>>& df,
+    const std::vector<double>& quantitative_phenotype,
     std::string& p_value_str, std::string& beta_str, std::string& se_str, std::string& r2_str);
 
 void glm_quantitative(
-    const std::unordered_map<std::string, std::vector<size_t>>& df,
-    const std::unordered_map<std::string, double>& quantitative_phenotype,
+    const std::vector<std::vector<size_t>>& df,
+    const std::vector<double>& quantitative_phenotype,
     const std::unordered_map<std::string, std::vector<double>>& covar,
     std::string& p_value_str, std::string& beta_str, std::string& se_str, std::string& r2_str);
 
-std::pair<std::unordered_map<std::string, std::vector<size_t>>, size_t> create_quantitative_table(
-    const std::vector<std::string>& list_samples, 
+std::pair<std::vector<std::vector<size_t>>, size_t> create_quantitative_table(
+    const size_t& length_sample,
     const std::vector<std::string>& column_headers,
     Matrix& matrix);
 

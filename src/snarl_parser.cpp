@@ -54,7 +54,7 @@ void chromosome_chuck_make_bed(htsFile* &ptr_vcf, bcf_hdr_t* &hdr, bcf1_t* &rec,
 void chromosome_chuck_quantitative(htsFile* &ptr_vcf, bcf_hdr_t* &hdr, bcf1_t* &rec, 
     const std::vector<std::string> &list_samples,
     unordered_map<string, std::vector<std::tuple<string, vector<string>, string, vector<string>>>> &snarl_chr,
-    const unordered_map<string, double>& pheno, std::unordered_map<std::string, std::vector<double>> covar,
+    const std::vector<double>& quantitative_phenotype, std::unordered_map<std::string, std::vector<double>> covar,
     const double& maf, const KinshipMatrix& kinship, 
     const size_t& num_threads, const std::string& output_quantitive) {
 
@@ -83,7 +83,7 @@ void chromosome_chuck_quantitative(htsFile* &ptr_vcf, bcf_hdr_t* &hdr, bcf1_t* &
         auto& snarl = snarl_chr[chr];
 
         // Gwas analysis by chromosome
-        vcf_object.quantitative_table(snarl, pheno, chr, covar, maf, kinship, num_threads, outf);
+        vcf_object.quantitative_table(snarl, quantitative_phenotype, chr, covar, maf, kinship, num_threads, outf);
     }
     // Cleanup
     bcf_destroy(rec);
@@ -123,7 +123,7 @@ void chromosome_chuck_quantitative(htsFile* &ptr_vcf, bcf_hdr_t* &hdr, bcf1_t* &
 void chromosome_chuck_binary(htsFile* &ptr_vcf, bcf_hdr_t* &hdr, bcf1_t* &rec, 
     const std::vector<std::string> &list_samples, 
     unordered_map<string, std::vector<std::tuple<string, vector<string>, string, vector<string>>>> &snarl_chr,
-    const unordered_map<string, bool>& pheno, std::unordered_map<std::string, std::vector<double>> covar, 
+    const std::vector<bool>& binary_pheno, std::unordered_map<std::string, std::vector<double>> covar, 
     const double& maf, const KinshipMatrix& kinship, 
     const size_t& num_threads, const std::string& output_binary) {
 
@@ -151,7 +151,7 @@ void chromosome_chuck_binary(htsFile* &ptr_vcf, bcf_hdr_t* &hdr, bcf1_t* &rec,
         auto& snarl = snarl_chr[chr];
 
         // Gwas analysis by chromosome
-        vcf_object.binary_table(snarl, pheno, chr, covar, maf, kinship, num_threads, outf);
+        vcf_object.binary_table(snarl, binary_pheno, chr, covar, maf, kinship, num_threads, outf);
     }
     // Cleanup
     bcf_destroy(rec);
@@ -178,9 +178,9 @@ std::pair<std::vector<size_t>, std::vector<size_t>> SnarlParser::create_table_sh
         std::vector<std::string> decomposed_snarl = decompose_string(path_snarl);
 
         // Identify correct paths
-        std::vector<int> idx_srr_save = identify_correct_path(decomposed_snarl, matrix, length_sample*2);
+        std::vector<size_t> idx_srr_save = identify_correct_path(decomposed_snarl, matrix, length_sample*2);
 
-        for (auto idx : idx_srr_save) {
+        for (size_t idx : idx_srr_save) {
             size_t srr_idx = idx / 2;  // Adjust index to correspond to the sample index
             genotypes[srr_idx][col_idx] += 1;
             allele_number_list[col_idx]++;
@@ -450,7 +450,7 @@ std::tuple<SnarlParser, htsFile*, bcf_hdr_t*, bcf1_t*> make_matrix(htsFile *ptr_
     return std::make_tuple(snarl_parser, ptr_vcf, hdr, rec);
 }
 
-std::vector<int> identify_correct_path(
+std::vector<size_t> identify_correct_path(
     const std::vector<std::string>& decomposed_snarl,
     const Matrix& matrix,
     const size_t num_cols) {
@@ -471,7 +471,7 @@ std::vector<int> identify_correct_path(
         }
     }
 
-    std::vector<int> idx_srr_save;
+    std::vector<size_t> idx_srr_save;
     idx_srr_save.reserve(num_cols);
 
     // Loop columns first (better cache locality if matrix is column-major or similar)
@@ -491,11 +491,12 @@ std::vector<int> identify_correct_path(
 }
 
 void SnarlParser::binary_table(const std::vector<std::tuple<std::string, std::vector<std::string>, std::string, std::vector<std::string>>>& snarls,
-                               const std::unordered_map<std::string, bool>& binary_phenotype, const std::string& chr,
+                               const std::vector<bool>& binary_phenotype, const std::string& chr,
                                const std::unordered_map<std::string, std::vector<double>>& covar,
                                const double& maf, const KinshipMatrix& kinship, 
                                const size_t& num_threads, std::ofstream& outf) {
 
+    size_t length_sample = sampleNames.size();
     const size_t total = snarls.size();
     size_t chunk_size = (total + num_threads - 1) / num_threads;
     std::mutex mutex_pvalues;
@@ -522,7 +523,7 @@ void SnarlParser::binary_table(const std::vector<std::tuple<std::string, std::ve
 
                 if (!covar.empty()) {
                     // Logistic regression
-                    auto [df, allele_number] = create_quantitative_table(sampleNames, list_snarl, matrix);
+                    auto [df, allele_number] = create_quantitative_table(length_sample, list_snarl, matrix);
                     bool df_filtration = false;
                     bool df_empty = false;
             
@@ -538,7 +539,7 @@ void SnarlParser::binary_table(const std::vector<std::tuple<std::string, std::ve
                     if (df_empty || !df_filtration) {
                         // do nothing
                     } else if (!kinship.empty()) { // logistic regression + covar
-                        logistic_regression(df, binary_phenotype, covar, p_value, beta, se, r2);
+                        logistic_regression(df, binary_phenotype, sampleNames, covar, p_value, beta, se, r2);
                     } else { // lmm
                         lmm_binary(df, binary_phenotype, kinship, covar, p_value, beta, se, r2);
                     }
@@ -550,9 +551,12 @@ void SnarlParser::binary_table(const std::vector<std::tuple<std::string, std::ve
                                 
                 } else {
                     size_t length_column_headers = list_snarl.size();
+                    size_t number_samples = sampleNames.size();
                     std::vector<size_t> g0(length_column_headers, 0); // can be replace by size_t arr[length_column_headers] = {0};
                     std::vector<size_t> g1(length_column_headers, 0); // can be replace by size_t arr[length_column_headers] = {0};
-                    bool df_filtration = create_binary_table(g0, g1, binary_phenotype, list_snarl, sampleNames, matrix, maf);
+                    
+                    size_t total_sum = create_binary_table(g0, g1, binary_phenotype, list_snarl, length_column_headers, number_samples, matrix);
+                    bool df_filtration = check_MAF_threshold(g0, g1, total_sum, length_column_headers, maf);
 
                     std::string fastfisher_p_value = "NA", chi2_p_value = "NA",
                     group_paths = "NA", allele_number_str = "NA", min_row_index_str = "NA",
@@ -587,11 +591,12 @@ void SnarlParser::binary_table(const std::vector<std::tuple<std::string, std::ve
 
 // Quantitative Table Generation
 void SnarlParser::quantitative_table(const std::vector<std::tuple<string, vector<string>, string, vector<string>>>& snarls,
-                                        const std::unordered_map<std::string, double>& quantitative_phenotype, const string &chr,
+                                        const std::vector<double>& quantitative_phenotype, const string &chr,
                                         const std::unordered_map<std::string, std::vector<double>>& covar,
                                         const double& maf, const KinshipMatrix& kinship, 
                                         const size_t& num_threads, std::ofstream& outf) {
 
+    size_t length_sample = sampleNames.size();
     const size_t total = snarls.size();
     size_t chunk_size = (total + num_threads - 1) / num_threads;
     std::mutex mutex_pvalues;
@@ -608,7 +613,7 @@ void SnarlParser::quantitative_table(const std::vector<std::tuple<string, vector
             for (size_t itr = 0; itr < snarls.size(); ++itr) {
                 const auto& [snarl, list_snarl, pos, type_var] = snarls[itr];
 
-                auto [df, allele_number] = create_quantitative_table(sampleNames, list_snarl, matrix);
+                auto [df, allele_number] = create_quantitative_table(length_sample, list_snarl, matrix);
                 bool df_filtration = false;
                 bool df_empty = false;
 

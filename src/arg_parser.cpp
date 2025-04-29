@@ -54,9 +54,11 @@ std::unordered_set<std::string> parse_chromosome_reference(const string& file_pa
     return reference;
 }
 
-std::unordered_map<std::string, bool> parse_binary_pheno(const std::string& file_path) {
+std::vector<bool> parse_binary_pheno(
+    const std::string& file_path,
+    const std::vector<std::string>& list_samples) {
     
-    std::unordered_map<std::string, bool> parsed_pheno;
+    std::unordered_map<std::string, bool> binary_pheno;
     
     std::ifstream file(file_path);
     std::string line;
@@ -89,10 +91,10 @@ std::unordered_map<std::string, bool> parse_binary_pheno(const std::string& file
         }
         if (pheno == 1) {
             count_controls++;
-            parsed_pheno[iid] = static_cast<bool>(false);
+            binary_pheno[iid] = static_cast<bool>(false);
         } else if (pheno == 2) {
             count_cases++;
-            parsed_pheno[iid] = static_cast<bool>(true);
+            binary_pheno[iid] = static_cast<bool>(true);
         } else {
             throw std::runtime_error("Error: Binary phenotype must be 1 or 2");
         }
@@ -102,12 +104,26 @@ std::unordered_map<std::string, bool> parse_binary_pheno(const std::string& file
     << ", Case : " << count_cases << ")" << endl;
     file.close();
 
-    return parsed_pheno;
+    check_match_samples(binary_pheno, list_samples);
+    std::vector<bool> vector_binary_pheno;
+    vector_binary_pheno.reserve(list_samples.size());
+
+    for (const auto& sample : list_samples) {
+        auto it = binary_pheno.find(sample);
+        if (it != binary_pheno.end()) {
+            vector_binary_pheno.push_back(it->second);
+        }
+    }
+
+    return vector_binary_pheno;
 }
 
 // Function to parse the phenotype file
-std::unordered_map<std::string, double> parse_quantitative_pheno(const std::string& file_path) {
-    std::unordered_map<std::string, double> parsed_pheno;
+std::vector<double> parse_quantitative_pheno(
+    const std::string& file_path, 
+    const std::vector<std::string>& list_samples) {
+
+    std::unordered_map<std::string, double> quantitative_pheno;
 
     std::ifstream file(file_path);
     std::string line;
@@ -133,7 +149,7 @@ std::unordered_map<std::string, double> parse_quantitative_pheno(const std::stri
 
         try
         {
-            parsed_pheno[iid] = std::stod(phenoStr);
+            quantitative_pheno[iid] = std::stod(phenoStr);
         }
         catch(const std::exception& e)
         {
@@ -145,7 +161,19 @@ std::unordered_map<std::string, double> parse_quantitative_pheno(const std::stri
 
     cout << "Quantitative phenotypes founds : " << count_pheno << endl;
     file.close();
-    return parsed_pheno;
+
+    check_match_samples(quantitative_pheno, list_samples);
+    std::vector<double> vector_quantitative_pheno;
+    vector_quantitative_pheno.reserve(list_samples.size());
+
+    for (const auto& sample : list_samples) {
+        auto it = quantitative_pheno.find(sample);
+        if (it != quantitative_pheno.end()) {
+            vector_quantitative_pheno.push_back(it->second);
+        }
+    }
+
+    return vector_quantitative_pheno;
 }
 
 // Function to open a VCF file and return pointers to the file, header, and record
@@ -435,21 +463,14 @@ std::unordered_map<std::string, std::vector<double>> parse_covariates(
     return covariateMap;
 }
 
-template void check_phenotype_covariate<double>(const std::unordered_map<std::string, double>& phenotype, 
-    const std::unordered_map<std::string, std::vector<double>>& covariates);
-
-template void check_phenotype_covariate<bool>(const std::unordered_map<std::string, bool>& phenotype, 
-    const std::unordered_map<std::string, std::vector<double>>& covariates);
-
 // Function to check if phenotype and covariate files match
-template <typename T>
-void check_phenotype_covariate(const std::unordered_map<std::string, T>& phenotype, 
+void check_phenotype_covariate(const std::vector<string>& list_samples, 
     const std::unordered_map<std::string, std::vector<double>>& covariates) {
 
         // Check if all phenotype samples are present in covariates
-        for (const auto& pair : phenotype) {
-        if (covariates.find(pair.first) == covariates.end()) {
-            throw std::runtime_error("Error: Missing covariate data for sample " + pair.first);
+        for (const auto& sample : list_samples) {
+        if (covariates.find(sample) == covariates.end()) {
+            throw std::runtime_error("Error: Missing covariate data for sample : " + sample);
             EXIT_FAILURE;
         }
     }

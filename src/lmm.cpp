@@ -7,8 +7,8 @@ double normal_cdf(double x) {
 
 
 void lmm_binary(
-    const std::unordered_map<std::string, std::vector<size_t>>& df,                  
-    const std::unordered_map<std::string, bool>& phenotype_binary,      
+    const std::vector<std::vector<size_t>>& df,                  
+    const std::vector<bool>& phenotype_binary,      
     const KinshipMatrix& kinship,                                              
     const std::unordered_map<std::string, std::vector<double>>& covariates,
     std::string& p_value_str, std::string& beta_str, std::string& se_str, std::string& r2_str) {
@@ -20,8 +20,8 @@ void lmm_binary(
 }
 
 void lmm_quantitative(
-    const std::unordered_map<std::string, std::vector<size_t>>& df,                  
-    const std::unordered_map<std::string, double>& phenotype_table,      
+    const std::vector<std::vector<size_t>>& df,                  
+    const vector<double>& phenotype_table,      
     const KinshipMatrix& kinship,                                              
     const std::unordered_map<std::string, std::vector<double>>& covariates,
     std::string& p_value_str, std::string& beta_str, std::string& se_str, std::string& r2_str) {
@@ -31,7 +31,7 @@ void lmm_quantitative(
     // Prepare phenotype vector
     Eigen::VectorXd phenotype(N);
     for (int i = 0; i < N; ++i) {
-        phenotype(i) = phenotype_table.at(kinship.ids[i]);
+        phenotype(i) = phenotype_table[i];
     }
 
     // Prepare kinship matrix
@@ -46,7 +46,7 @@ void lmm_quantitative(
     Eigen::MatrixXd X(N, 1);  // For simplicity, using only 1 SNP here
     for (int i = 0; i < N; ++i) {
         const std::string& sample_id = kinship.ids[i];
-        const auto& allele_counts = df.at(sample_id);
+        const auto& allele_counts = df[i];
         int genotype = std::accumulate(allele_counts.begin(), allele_counts.end(), 0);
         X(i, 0) = static_cast<double>(genotype);  // SNP dosage: 0, 1, 2
     }
