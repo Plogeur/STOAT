@@ -55,8 +55,9 @@ void chromosome_chuck_quantitative(htsFile* &ptr_vcf, bcf_hdr_t* &hdr, bcf1_t* &
     const std::vector<std::string> &list_samples,
     unordered_map<string, std::vector<std::tuple<string, vector<string>, string, vector<string>>>> &snarl_chr,
     const std::vector<double>& quantitative_phenotype, std::unordered_map<std::string, std::vector<double>> covar,
-    const double& maf, const KinshipMatrix& kinship, 
-    const size_t& num_threads, const std::string& output_quantitive) {
+    const double& maf, const KinshipMatrix& kinship, const size_t& num_threads, 
+    const size_t& table_threshold, const std::string& dir_regression,
+    const std::string& output_quantitive) {
 
     std::ofstream outf(output_quantitive, std::ios::binary);
     std::string headers;
@@ -124,8 +125,9 @@ void chromosome_chuck_binary(htsFile* &ptr_vcf, bcf_hdr_t* &hdr, bcf1_t* &rec,
     const std::vector<std::string> &list_samples, 
     unordered_map<string, std::vector<std::tuple<string, vector<string>, string, vector<string>>>> &snarl_chr,
     const std::vector<bool>& binary_pheno, std::unordered_map<std::string, std::vector<double>> covar, 
-    const double& maf, const KinshipMatrix& kinship, 
-    const size_t& num_threads, const std::string& output_binary) {
+    const double& maf, const KinshipMatrix& kinship, const size_t& num_threads, 
+    const size_t& table_threshold, const std::string& dir_regression,
+    const std::string& output_binary) {
 
     std::ofstream outf(output_binary, std::ios::binary);
     std::string headers;

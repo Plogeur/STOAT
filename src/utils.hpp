@@ -26,8 +26,9 @@ std::string set_precision_chi2(const boost::multiprecision::cpp_dec_float_50& va
 double combine_pvalue_from_strings(const std::string& p1, const std::string& p2);
 bool is_na(const std::string& s);
 double string_to_pvalue(const std::string& p1);
+
 void writeSignificantTableToTSV(
-    const std::unordered_map<std::string, std::vector<size_t>>& table,
+    const std::vector<std::vector<size_t>>& table,
     const std::vector<std::string>& list_snarl,
     const std::string& filename);
 

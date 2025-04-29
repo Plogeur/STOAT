@@ -84,7 +84,7 @@ bool isPValueSignificant(size_t numDigits, const std::string& pvalue_str) {
 
 // Write the table to a TSV file
 void writeSignificantTableToTSV(
-    const std::unordered_map<std::string, std::vector<size_t>>& table,
+    const std::vector<std::vector<size_t>>& table,
     const std::vector<std::string>& list_snarl,
     const std::string& filename) {
 
@@ -98,16 +98,16 @@ void writeSignificantTableToTSV(
     outFile << "\n";
 
     // Write each sample's data
-    for (const auto& pair : table) {
-        const std::string& sample_name = pair.first;
-        const std::vector<size_t>& allele_vector = pair.second;
+    for (const auto& allele_vector : table) {
+        for (int i=0; i < allele_vector.size(); ++i) {
 
-        outFile << sample_name;
+            outFile << list_snarl[i];
 
-        for (size_t i = 0; i < allele_vector.size(); ++i) {
-            outFile << "\t" << allele_vector[i];
+            for (size_t i = 0; i < allele_vector.size(); ++i) {
+                outFile << "\t" << allele_vector[i];
+            }
+            outFile << "\n";
         }
-        outFile << "\n";
     }
 
     outFile.close();
