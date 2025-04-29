@@ -28,8 +28,9 @@ Manual installation :
 - eigen3
 - boost
 - Catch2 v3
+- vg (optional)
 
-Or you can use the compiled unbuntu version provided.
+Or you can use the `Dockerfile` or the compiled unbuntu version provided (coming soon).
 
 ## Building
 
@@ -59,7 +60,7 @@ Required files :
 - dist : Distance file generated with vg dist, format: .dist.
 - vcf pangenomique : Merged VCF file, created using `vg pipeline` and bcftools merge, formats: .vcf or .vcf.gz. (ex : `bcftools merge -m none -Oz -o test`)
 - phenotype : phenotype file organise in three-column with FID (family/sample name), IID (sample name), and PHENO (integer/float). Format: .txt or .tsv (tab-separated).
-- chromosome : Txt file that containt the reference chromosome haplotype name in the pangenome graph. Format: .txt or .tsv.
+- chromosome : Txt file that containt the reference chromosome haplotype name in the pangenome graph. Format: .txt or .tsv. (use : `vg path -x <pg.pg> --list` to identify all haplotype name then select haplotype that you want to use as reference (idealy the ones use in the pangenome graph creation))
 
 Optional file : 
 - paths : Snarl decoposition stoat output, Two-column file containing snarl names and the list of paths through the snarl's netgraph, separated by tabs. Format: .txt or .tsv.
@@ -100,13 +101,19 @@ samp_g0_1	0	5.2	359.25	65.24
 
 Use `stoat tool` if you want to launch the full tool at once, starting from snarl path identification (identifying the multiple paths that can be taken by a sample based on the pangenome graph) and ending with the results plots (Manhattan plot and QQ plot).
 
-- Run full tool :
+- Usage tool :
 ```bash
-# binary trait
-stoat -p <pg.pg> -d <dist.dist> -v <vcf.vcf.gz> -b <phenotype.txt> -o output
+# decompose pangenome
+./stoat -p <pg.pg> -d <dist.dist> -o <paths.txt>
 
-# quantative trait
-stoat -p <pg.pg> -d <dist.dist> -v <vcf.vcf.gz> -q <phenotype.txt> -o output
+# binary trait with already decompose pangenome
+stoat -s <paths.txt> -v <vcf_file.vcf.gz> -b <phenotype.txt> --chr <ref.tsv> -o output
+
+# decompose pangenome + binary trait
+stoat -p <pg.pg> -d <dist.dist> -v <vcf_file.vcf.gz> -b <phenotype.txt> --chr <ref.tsv> -o output
+
+# decompose pangenome + quantative trait
+stoat -p <pg.pg> -d <dist.dist> -v <vcf_file.vcf.gz> -q <phenotype.txt> --chr <ref.tsv> -o output
 ```
 
 Explanation of all options:
@@ -135,19 +142,6 @@ Explanation of all options:
 
 ```
 
-- Example of usage : 
-
-```bash
-# decompose pangenome
-./stoat -p <pg.pg> -d <dist.dist> -o <paths.txt>
-
-# binary trait with list_path already computed and gaf creation 
-./stoat -l <paths.txt> -v <vcf.vcf.gz> -r <ref.vcf.gz> -b <phenotype.txt> -o output.tsv
-
-# quantitative trait with list_path already computed
-./stoat -l <paths.txt> -v <vcf.vcf.gz> -r <ref.vcf.gz> -q <phenotype.txt> -o output.tsv
-```
-
 ## Output
 
 | Column Name       | Description                                                                                   |
@@ -155,7 +149,7 @@ Explanation of all options:
 | **CHR**           | Chromosome name where the variation occurs.                                                   |
 | **POS**           | Position of the snarl within the chromosome.                                                  |
 | **SNARL**         | Identifier for the variant, snarl name/id                                                     |
-| **TYPE**          | Type of genetic variation (e.g., SNP, INS, DEL).                                              |
+| **TYPE**          | Type of genetic variation, SNP == (A,G,T,C), INS & DEL will be referenced by a number >2 or 0, and CPX aka complex (ex : snarl nested) will be add minimum and maximum path size like CPX:Min/Max                                               |
 | **P_FISHER**      | P-value calculated using Fisher's exact test (binary analysis).                               |
 | **P_CHI2**        | P-value calculated using the Chi-squared test (binary analysis).                              |
 | **ALLELE_NUM**    | Total number of alleles that pass in this snarl.                                              |
@@ -184,10 +178,10 @@ Below is an example of the output for a quantitative phenotype analysis (-q opti
 
 ```bash
 CHR	POS	SNARL	        TYPE	RSQUARED	BETA	    SE	        P
-1	12	5262721_5262719	A,C	    8.3697e-01	1.3878e+01	6.5108e+00	4.0376e-01
-1	15	5262719_5262717	T,3	    4.4237e-01	1.3238e+01	6.5345e+00	4.6574e-01
-1	18	5262717_5262714	2,G	    6.3237e-01	1.6458e+01	6.6453e+00	4.7484e-01
-1	19	5262717_5262714	G,15    4.2342e-01	2.3242e+01	5.3251e+00	1.3245e-01
+1	12	5262721_5262719	A,C	    0.8370	    0.1388	    0.6512	    0.4038
+1	15	5262719_5262717	CPX:1/457,3	    0.4424	    0.1324	    0.6534	    0.4657
+1	18	5262717_5262714	2,G	    0.6324	    0.1646	    0.6424	    0.4748
+1	19	5262717_5262714	G,15	    0.4234	    0.2324	    0.5215	    0.1324
 ```
 
 ## Visualization
