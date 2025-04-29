@@ -48,7 +48,6 @@ target_link_libraries(${PROJECT_NAME}
     bdsg
     handlegraph
     Eigen3::Eigen
-    libsdsl.so.3
     ${HTSLIB_LIBRARIES}
 )
 
@@ -89,5 +88,4 @@ target_link_libraries(unit_tests PRIVATE
     bdsg
     handlegraph
     Eigen3::Eigen
-    libsdsl.so.3
     ${HTSLIB_LIBRARIES})

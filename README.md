@@ -116,8 +116,8 @@ Explanation of all options:
 -p, --pg <path>             Path to the pg file (.pg)
 -d, --dist <path>           Path to the dist file (.dist)
 -r, --chr <path>            Path to the chromosome reference file (.txt)
---children <int>            Max number of children for a snarl in the snarl decomposition process (default = 50)
---path-length <int>         Max length for a path snarl in the snarl decomposition process (default = 10 000)
+--children <int>            Max number of children for a snarl in the snarl decomposition process (default : 50)
+--path-length <int>         Max length for a path snarl in the snarl decomposition process (default : 10 000)
 -b, --binary <path>         Path to the binary group file (.txt or .tsv)
 -g, --gaf                   Make a GAF file from the GWAS analysis
 -q, --quantitative <path>   Path to the quantitative phenotype file (.txt or .tsv)
@@ -127,8 +127,8 @@ Explanation of all options:
 --gene-position <path>      Path to the Gene position file (.txt or .tsv)
 -k, --kinship <path>        Path to the kinship matrix file (.txt or .tsv)
 --make-bed                  Create a plink format files (.bed, .bim, .fam)
---table-threshold <int>     The N p-value digits threshold to use for plotting regression data file (defauld : 5 <=> 10-5)
---maf                       Add a maf (Minimum allele frequency) thresold (defauld : 0.01)
+--table-threshold <int>     The N p-value digits threshold to use for plotting regression data file (default : disable exemple : 5 <=> 10-5)
+--maf                       Add a Minimum Aallele Frequency thresold (default : 0.01)
 -o, --output <name>         Output dir name
 -t, --thread <int>          Number of threads
 -h, --help                  Print this help message;
@@ -167,40 +167,93 @@ Explanation of all options:
 | **RSQUARED**      | R-squared value, proportion of variance explained by the model (quantitative analysis).       |
 | **SE**            | Mean Standard error, estimatation coefficients of all paths in a snarl (quantitative analysis). |
 | **BETA**          | Mean Beta coefficients, estimatation effect sizes of the prediction of all paths in a snarl (quantitative analysis). |
+| **GROUP_PATHS**   | Encodes the allele distribution across binary phenotype groups for each path in a snarl. Each entry is formatted as `X:Y,X':Y',...` where `X:Y` represents one path, with `X` being the count of samples in group 0 and `Y` in group 1. Commas separate multiple paths within the same snarl. Used in binary statistical analysis to assess associations between path presence and phenotype. |
 
 ### Example of Output:
 
 Below is an example of the output for a binary phenotype analysis:
 
 ```bash
-CHR POS SNARL           TYPE  REF ALT   P_FISHER  P_CHI2  ALLELE_NUM  MIN_ROW_INDEX NUM_COLUM INTER_GROUP AVERAGE
-1   12  5262721_5262719 SNP   A   T     0.4635    0.5182  286        2             137       46          143.0
-1   15  5262719_5262717 INS   A   ATT   0.8062    0.8747  286        2             141       34          143.0
-1   18  5262717_5262714 DEL   AA  T     0.2120    0.2363  286        2             134       32          143.0
+CHR POS SNARL           TYPE    P_FISHER  P_CHI2  ALLELE_NUM  MIN_ROW_INDEX NUM_COLUM   INTER_GROUP AVERAGE GROUP_PATHS
+1   12  5262721_5262719 A,C     0.4635    0.5182  286         2             137         46          143.0   107:97,93:103
+1   15  5262719_5262717 T,3     0.8062    0.8747  286         2             141         34          143.0   53:20,93:75
+1   18  5262717_5262714 2,T     0.2120    0.2363  286         2             134         32          143.0   25:97,78:2
 ```
 
 Below is an example of the output for a quantitative phenotype analysis (-q option) :
 
 ```bash
-CHR	POS	SNARL	TYPE	REF	ALT	RSQUARED	BETA	SE	P
-1	12	5262721_5262719	SNP	A	T	8.3697e-01	1.3878e+01	6.5108e+00	4.0376e-01
-1	15	5262719_5262717	INS	A	ATT	4.4237e-01	1.3238e+01	6.5345e+00	4.6574e-01
-1	18	5262717_5262714	DEL	AA	T	6.3237e-01	1.6458e+01	6.6453e+00	4.7484e-01
-1	19	5262717_5262714	COMPLEX	C	NA	4.2342e-01	2.3242e+01	5.3251e+00	1.3245e-01
+CHR	POS	SNARL	        TYPE	RSQUARED	BETA	    SE	        P
+1	12	5262721_5262719	A,C	    8.3697e-01	1.3878e+01	6.5108e+00	4.0376e-01
+1	15	5262719_5262717	T,3	    4.4237e-01	1.3238e+01	6.5345e+00	4.6574e-01
+1	18	5262717_5262714	2,G	    6.3237e-01	1.6458e+01	6.6453e+00	4.7484e-01
+1	19	5262717_5262714	G,15    4.2342e-01	2.3242e+01	5.3251e+00	1.3245e-01
 ```
 
 ## Visualization
 
-### Manhattan and QQ plots 
+### Binary table & Quantitative boxplot
 
-STOAT will generated a manhattan and a QQ plot for binary and quantitatif analysis.
+It can be informative to analyze how sample phenotypes are influenced by specific paths. To achieve this, we use two methods depending on the type of phenotype:
+
+- **Binary Phenotypes**:  
+  The `GROUP_PATHS` column provides a binary matrix used for statistical analysis.
+
+- **Quantitative Phenotypes**:  
+  There is no native column for this type of visualization. To generate the required data, use the `--table-threshold` argument. This will create, for each significant snarl, a table file with allele counts for each path, stored in a `regression` directory. You can then use the `box_plot.R` script to generate a boxplot for each snarl, comparing path usage to phenotype values.  
+
+  **Command:**
+  ```bash
+  Rscript plot_script/box_plot.R -d <regression_directory> -p <phenotype_file> -o <output_directory>
+  ```
+  - `-d`: Directory where the regression snarl files were created  
+  - `-p`: Phenotype file  
+  - `-o`: Output directory for the resulting JPEG boxplot images
+
+### Manhattan and QQ Plots
+
+To visually assess the significance and distribution of GWAS results, Stoat provides support for generating **Manhattan** and **QQ plots**. These plots help in identifying associations between genetic variations (e.g., paths in snarls) and phenotypic traits.
+
+The plotting script supports both **binary** and **quantitative** phenotypes and requires three key inputs:
+
+- `--pvalue`: Path to the file containing p-values per snarl/path.
+- `--qq`: Output path for the QQ plot image (e.g., `qq_plot.jpg`).
+- `--manh`: Output path for the Manhattan plot image (e.g., `manhattan_plot.jpg`).
+- One of either:
+  - `--binary`: for binary traits (e.g., disease presence/absence).
+  - `--quantitative`: for continuous traits (e.g., expression levels).
+
+**Command:**
+
+```bash
+python3 plot_gwas_results.py \
+  --pvalue results/pvalues.tsv \
+  --qq plots/qq_plot.jpg \
+  --manh plots/manhattan_plot.jpg \
+  --binary
+```
+
+Or for quantitative traits:
+
+```bash
+python3 plot_gwas_results.py \
+  --pvalue results/pvalues.tsv \
+  --qq plots/qq_plot.jpg \
+  --manh plots/manhattan_plot.jpg \
+  --quantitative
+```
+
+<p align="center">
+  <img src="pictures/manhattan_plot_binary.png" alt="Manhattan Plot" width="600" style="display: inline-block; margin-right: 20px;">
+  <img src="pictures/qq_plot_binary.png" alt="QQ Plot" width="200" style="display: inline-block;">
+</p>
 
 ### SequenceTube
 
 Use `--gaf` to geneate a GAF file and [sequenceTubeMap](https://github.com/vgteam/sequenceTubeMap) tool to visualize your gwas binary region results.
 
 <p align="center">
-<img src="pictures/seqTube.png" width="600">
+<img src="pictures/seqTube.png" width="400">
 </p>
 
 Description : Color represente the different paths group (red : group 1 & blue : group 0) and opacity represente the number of samples in that paths (number of samples passing trought each paths % 60).
