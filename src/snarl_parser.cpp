@@ -56,7 +56,7 @@ void chromosome_chuck_quantitative(htsFile* &ptr_vcf, bcf_hdr_t* &hdr, bcf1_t* &
     unordered_map<string, std::vector<std::tuple<string, vector<string>, string, vector<string>>>> &snarl_chr,
     const std::vector<double>& quantitative_phenotype, std::unordered_map<std::string, std::vector<double>> covar,
     const double& maf, const KinshipMatrix& kinship, 
-    const size_t& num_threads, const size_t& table_threshold, const std::string& output_quantitive, const std::string& dir_regression) {
+    const size_t& num_threads, const std::string& output_quantitive) {
 
     std::ofstream outf(output_quantitive, std::ios::binary);
     std::string headers;
@@ -83,7 +83,7 @@ void chromosome_chuck_quantitative(htsFile* &ptr_vcf, bcf_hdr_t* &hdr, bcf1_t* &
         auto& snarl = snarl_chr[chr];
 
         // Gwas analysis by chromosome
-        vcf_object.quantitative_table(snarl, pheno, chr, covar, maf, kinship, num_threads, outf);
+        vcf_object.quantitative_table(snarl, quantitative_phenotype, chr, covar, maf, kinship, num_threads, table_threshold, dir_regression, outf);
     }
     // Cleanup
     bcf_destroy(rec);
@@ -124,8 +124,8 @@ void chromosome_chuck_binary(htsFile* &ptr_vcf, bcf_hdr_t* &hdr, bcf1_t* &rec,
     const std::vector<std::string> &list_samples, 
     unordered_map<string, std::vector<std::tuple<string, vector<string>, string, vector<string>>>> &snarl_chr,
     const std::vector<bool>& binary_pheno, std::unordered_map<std::string, std::vector<double>> covar, 
-    const double& maf, const KinshipMatrix& kinship, const size_t& num_threads,
-    const size_t& table_threshold, const std::string& output_binary, const std::string& dir_regression) {
+    const double& maf, const KinshipMatrix& kinship, 
+    const size_t& num_threads, const std::string& output_binary) {
 
     std::ofstream outf(output_binary, std::ios::binary);
     std::string headers;
