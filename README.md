@@ -165,7 +165,7 @@ Explanation of all options:
 
 ### Example of Output:
 
-Below is an example of the output for a binary phenotype analysis:
+Below is an example of the output for a binary phenotype analysis (-b option) :
 
 ```bash
 CHR POS SNARL           TYPE    P_FISHER  P_CHI2  ALLELE_NUM  MIN_ROW_INDEX NUM_COLUM   INTER_GROUP AVERAGE GROUP_PATHS
@@ -177,21 +177,33 @@ CHR POS SNARL           TYPE    P_FISHER  P_CHI2  ALLELE_NUM  MIN_ROW_INDEX NUM_
 Below is an example of the output for a quantitative phenotype analysis (-q option) :
 
 ```bash
-CHR	POS	SNARL	        TYPE	RSQUARED	BETA	    SE	        P
-1	12	5262721_5262719	A,C	    0.8370	    0.1388	    0.6512	    0.4038
-1	15	5262719_5262717	CPX:1/457,3	    0.4424	    0.1324	    0.6534	    0.4657
-1	18	5262717_5262714	2,G	    0.6324	    0.1646	    0.6424	    0.4748
-1	19	5262717_5262714	G,15	    0.4234	    0.2324	    0.5215	    0.1324
+CHR	POS	SNARL	        TYPE	      RSQUARED	  BETA	      SE	        P
+1	12	5262721_5262719	A,C	        0.8370	    0.1388	    0.6512	    0.4038
+1	15	5262719_5262717	CPX:1/457,3	0.4424	    0.1324	    0.6534	    0.4657
+1	18	5262717_5262714	2,G	        0.6324	    0.1646	    0.6424	    0.4748
+1	19	5262717_5262714	G,15	      0.4234	    0.2324	    0.5215	    0.1324
 ```
 
 ## Visualization
 
-### Binary table & Quantitative boxplot
+### Binary table/sequenceTubeMap & Quantitative boxplot
 
 It can be informative to analyze how sample phenotypes are influenced by specific paths. To achieve this, we use two methods depending on the type of phenotype:
 
 - **Binary Phenotypes**:  
-  The `GROUP_PATHS` column provides a binary matrix used for statistical analysis.
+  The `GROUP_PATHS` column provides a binary matrix used for statistical analysis, where `107:97,93:103` can be visualize like 
+  | Group | Path 1 | Path 2 |
+  |-------|--------|----------|
+  | **Group0**| 107 | 93 |
+  | **Group1**| 97  | 103|
+
+  If you want more visualization way you can use `--gaf` this will generate an gaf file in the output dir use in [sequenceTubeMap](https://github.com/vgteam/sequenceTubeMap) tool to visualize your gwas binary region results.
+
+<p align="center">
+<img src="pictures/seqTube.png" width="300">
+</p>
+
+Description : Color represente the different paths group (red : group 1 & blue : group 0) and opacity represente the number of samples in that paths (number of samples passing trought each paths % 60).
 
 - **Quantitative Phenotypes**:  
   There is no native column for this type of visualization. To generate the required data, use the `--table-threshold` argument. This will create, for each significant snarl, a table file with allele counts for each path, stored in a `regression` directory. You can then use the `box_plot.R` script to generate a boxplot for each snarl, comparing path usage to phenotype values.  
@@ -247,12 +259,3 @@ python3 plot_gwas_results.py \
   <img src="pictures/qq_plot_binary.png" alt="QQ Plot" width="200" style="display: inline-block;">
 </p>
 
-### SequenceTube
-
-Use `--gaf` to geneate a GAF file and [sequenceTubeMap](https://github.com/vgteam/sequenceTubeMap) tool to visualize your gwas binary region results.
-
-<p align="center">
-<img src="pictures/seqTube.png" width="400">
-</p>
-
-Description : Color represente the different paths group (red : group 1 & blue : group 0) and opacity represente the number of samples in that paths (number of samples passing trought each paths % 60).
