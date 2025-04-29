@@ -43,143 +43,110 @@ static const double kExactTestBias = 0.00000000000000000000000010339757656912845
 
 // ------------------------ Logistic regression + covariate test ------------------------
 
-// Sigmoid function
-double sigmoid(double z) {
-    return 1.0 / (1.0 + std::exp(-z));
+double sigmoid(double x) {
+    return 1.0 / (1.0 + std::exp(-x));
 }
 
-// Simple Gaussian elimination to solve Ax = b
-std::vector<double> solve_linear_system(std::vector<std::vector<double>> A, std::vector<double> b) {
-    size_t n = A.size();
-
-    for (size_t i = 0; i < n; ++i) {
-        // Pivot
-        size_t max_row = i;
-        for (size_t k = i + 1; k < n; ++k) {
-            if (std::abs(A[k][i]) > std::abs(A[max_row][i])) {
-                max_row = k;
-            }
-        }
-        std::swap(A[i], A[max_row]);
-        std::swap(b[i], b[max_row]);
-
-        // Eliminate
-        for (size_t k = i + 1; k < n; ++k) {
-            double factor = A[k][i] / A[i][i];
-            for (size_t j = i; j < n; ++j) {
-                A[k][j] -= factor * A[i][j];
-            }
-            b[k] -= factor * b[i];
-        }
-    }
-
-    // Back substitution
-    std::vector<double> x(n, 0.0);
-    for (int i = n - 1; i >= 0; --i) {
-        x[i] = b[i];
-        for (size_t j = i + 1; j < n; ++j) {
-            x[i] -= A[i][j] * x[j];
-        }
-        x[i] /= A[i][i];
-    }
-    return x;
+// Compute mean-centered R² (McFadden's pseudo R²)
+double compute_r2(const Eigen::VectorXd& y, const Eigen::VectorXd& p_null, const Eigen::VectorXd& p_full) {
+    double ll_null = (y.array() * p_null.array().log() + (1.0 - y.array()) * (1.0 - p_null.array()).log()).sum();
+    double ll_full = (y.array() * p_full.array().log() + (1.0 - y.array()) * (1.0 - p_full.array()).log()).sum();
+    return 1.0 - (ll_full / ll_null);
 }
 
-// Logistic regression using IRLS for a single variant
 void logistic_regression(
     const std::vector<std::vector<size_t>>& variant_data,
     const std::vector<bool>& phenotype,
-    const std::vector<string>& list_samples,
+    const std::vector<std::string>& list_samples,
     const std::unordered_map<std::string, std::vector<double>>& covariates,
     std::string& p_value_str, std::string& beta_str, std::string& se_str, std::string& r2_str) {
 
-    const size_t max_iter = 25;
+    const std::size_t n = phenotype.size();
+    const std::size_t num_paths = variant_data[0].size();
+    const std::size_t num_covs = covariates.size();
+
+    // Convert phenotype to Eigen vector
+    Eigen::VectorXd y(n);
+    for (std::size_t i = 0; i < n; ++i) {
+        y(i) = phenotype[i] ? 1.0 : 0.0;
+    }
+
+    // Sum alleles over all paths per sample
+    Eigen::VectorXd snp(n);
+    for (std::size_t i = 0; i < n; ++i) {
+        double sum = 0.0;
+        for (std::size_t j = 0; j < num_paths; ++j) {
+            sum += static_cast<double>(variant_data[i][j]);
+        }
+        snp(i) = sum;
+    }
+
+    // Build design matrix X: intercept + covariates + SNP
+    Eigen::MatrixXd X(n, num_covs + 2);
+    X.col(0) = Eigen::VectorXd::Ones(n); // intercept
+
+    std::size_t col = 1;
+    for (const auto& kv : covariates) {
+        const std::vector<double>& values = kv.second;
+        for (std::size_t i = 0; i < n; ++i) {
+            X(i, col) = values[i];
+        }
+        ++col;
+    }
+
+    X.col(col) = snp; // last column is SNP
+
+    Eigen::VectorXd beta = Eigen::VectorXd::Zero(X.cols());
+    const int max_iter = 25;
     const double tol = 1e-6;
 
-    size_t n = phenotype.size();
-    size_t num_cov = covariates.begin()->second.size();
-    size_t p = 1 + 1 + num_cov; // intercept + genotype + covariates
+    for (int iter = 0; iter < max_iter; ++iter) {
+        Eigen::VectorXd z = X * beta;
+        Eigen::VectorXd p = z.unaryExpr([](double val) { return sigmoid(val); });
+        Eigen::VectorXd W_diag = p.array() * (1.0 - p.array());
 
-    // Build X and y
-    std::vector<std::vector<double>> X(n, std::vector<double>(p));
-    std::vector<double> y(n);
+        // Construct diagonal weight matrix
+        Eigen::MatrixXd W = W_diag.asDiagonal();
 
-    for (size_t i = 0; i < n; ++i) {
-        const std::string& id = list_samples[i];
-        y[i] = phenotype[i] ? 1.0 : 0.0;
+        // Compute gradient and Hessian
+        Eigen::VectorXd grad = X.transpose() * (y - p);
+        Eigen::MatrixXd H = X.transpose() * W * X;
 
-        X[i][0] = 1.0; // intercept
-        X[i][1] = static_cast<double>(variant_data[i][0]); // single variant genotype
+        // Newton-Raphson update step
+        Eigen::VectorXd delta = H.ldlt().solve(grad);
+        beta += delta;
 
-        const auto& cov = covariates.at(id);
-        for (size_t j = 0; j < num_cov; ++j) {
-            X[i][2 + j] = cov[j];
-        }
+        if (delta.norm() < tol) break;
     }
 
-    std::vector<double> beta(p, 0.0);
+    // Extract SNP coefficient
+    double snp_beta = beta(beta.size() - 1);
 
-    for (size_t iter = 0; iter < max_iter; ++iter) {
-        std::vector<double> eta(n), mu(n), W(n), z(n);
-        for (size_t i = 0; i < n; ++i) {
-            for (size_t j = 0; j < p; ++j) {
-                eta[i] += X[i][j] * beta[j];
-            }
-            mu[i] = sigmoid(eta[i]);
-            W[i] = mu[i] * (1 - mu[i]);
-            z[i] = eta[i] + (y[i] - mu[i]) / W[i];
-        }
+    // Compute standard error from inverse Hessian
+    Eigen::VectorXd z_final = X * beta;
+    Eigen::VectorXd p_final = z_final.unaryExpr([](double val) { return sigmoid(val); });
+    Eigen::VectorXd W_diag_final = p_final.array() * (1.0 - p_final.array());
+    Eigen::MatrixXd W_final = W_diag_final.asDiagonal();
+    Eigen::MatrixXd H_final = X.transpose() * W_final * X;
 
-        // Build weighted least squares system
-        std::vector<std::vector<double>> XtWX(p, std::vector<double>(p, 0.0));
-        std::vector<double> XtWz(p, 0.0);
+    double se = std::sqrt(H_final.inverse()(beta.size() - 1, beta.size() - 1));
 
-        for (size_t i = 0; i < n; ++i) {
-            for (size_t j = 0; j < p; ++j) {
-                for (size_t k = 0; k < p; ++k) {
-                    XtWX[j][k] += X[i][j] * W[i] * X[i][k];
-                }
-                XtWz[j] += X[i][j] * W[i] * z[i];
-            }
-        }
+    // Compute z-score and p-value
+    double z_stat = snp_beta / se;
+    double pval = 2.0 * (1.0 - std::erf(std::abs(z_stat) / std::sqrt(2.0)));
 
-        std::vector<double> new_beta = solve_linear_system(XtWX, XtWz);
+    // Compute pseudo-R²
+    Eigen::VectorXd p_null = Eigen::VectorXd::Constant(n, sigmoid(beta(0))); // intercept-only
+    Eigen::VectorXd p_full = p_final;
 
-        double diff = 0.0;
-        for (size_t j = 0; j < p; ++j) {
-            diff += std::abs(new_beta[j] - beta[j]);
-        }
+    double r2 = compute_r2(y, p_null, p_full);
 
-        beta = new_beta;
-        if (diff < tol) break;
-    }
-
-    // Estimate standard error for genotype coefficient
-    std::vector<std::vector<double>> XtWX(p, std::vector<double>(p, 0.0));
-    for (size_t i = 0; i < n; ++i) {
-        double mu_i = sigmoid(std::inner_product(X[i].begin(), X[i].end(), beta.begin(), 0.0));
-        double wi = mu_i * (1 - mu_i);
-        for (size_t j = 0; j < p; ++j) {
-            for (size_t k = 0; k < p; ++k) {
-                XtWX[j][k] += X[i][j] * wi * X[i][k];
-            }
-        }
-    }
-
-    std::vector<double> unit(p, 0.0);
-    unit[1] = 1.0; // genotype coefficient
-    std::vector<double> var_column = solve_linear_system(XtWX, unit);
-
-    double se = std::sqrt(var_column[1]);
-    double beta_means = std::accumulate(beta.begin(), beta.end(), 0.0) / beta.size();
-    double z = beta_means / se;
-    double p_value = std::erfc(std::abs(z) / std::sqrt(2));
-
-    cout << "z: " << z << " se: " << se << " p_value: " << p_value << endl;
-    r2_str = set_precision(z); // TODO correct 
-    beta_str = set_precision(beta_means);
-    se_str = set_precision(se);
-    p_value_str = set_precision(p_value);
+    // Set output strings
+    cout << "pval: " << pval << endl;
+    p_value_str = std::to_string(pval);
+    beta_str = std::to_string(snp_beta);
+    se_str = std::to_string(se);
+    r2_str = std::to_string(r2);
 }
 
 // ------------------------ Chi2 test ------------------------

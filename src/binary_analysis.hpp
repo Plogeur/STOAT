@@ -23,7 +23,7 @@
 // ------------------------ Logistic regression ------------------------
 
 double sigmoid(double z);
-std::vector<double> solve_linear_system(std::vector<std::vector<double>> A, std::vector<double> b);
+double compute_r2(const Eigen::VectorXd& y, const Eigen::VectorXd& p_null, const Eigen::VectorXd& p_full);
 
 void logistic_regression(
     const std::vector<std::vector<size_t>>& variant_data,
