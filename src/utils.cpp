@@ -63,3 +63,52 @@ double string_to_pvalue(const std::string& p1) {
         return 1.0;
     }
 }
+
+// Function to check significance from a string
+bool isPValueSignificant(size_t numDigits, const std::string& pvalue_str) {
+    double pvalue;
+    try {
+        if (pvalue_str == "NA") {
+            return false; // Treat "NA" as not significant
+        } else {
+            pvalue = std::stod(pvalue_str);
+        }
+    } catch (const std::exception& e) {
+        std::cerr << "Error parsing pvalue string : " << pvalue_str << " " << e.what() << "\n";
+        return false;
+    }
+
+    double threshold = std::pow(10.0, -static_cast<int>(numDigits));
+    return pvalue < threshold;
+}
+
+// Write the table to a TSV file
+void writeSignificantTableToTSV(
+    const std::unordered_map<std::string, std::vector<size_t>>& table,
+    const std::vector<std::string>& list_snarl,
+    const std::string& filename) {
+
+    std::ofstream outFile(filename);
+
+    // Write header
+    outFile << "sample_name";
+    for (const auto& snarl_name : list_snarl) {
+        outFile << "\t" << snarl_name;
+    }
+    outFile << "\n";
+
+    // Write each sample's data
+    for (const auto& pair : table) {
+        const std::string& sample_name = pair.first;
+        const std::vector<size_t>& allele_vector = pair.second;
+
+        outFile << sample_name;
+
+        for (size_t i = 0; i < allele_vector.size(); ++i) {
+            outFile << "\t" << allele_vector[i];
+        }
+        outFile << "\n";
+    }
+
+    outFile.close();
+}

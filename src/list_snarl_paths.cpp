@@ -463,7 +463,7 @@ std::unordered_map<std::string, std::vector<std::tuple<string, vector<string>, s
             string chr = std::get<1>(snarl_path_pos);
             string pos = std::to_string(std::get<2>(snarl_path_pos)+padding);
             paths_number_analysis += pretty_paths.size();
-            string str_reference = std::get<3>(snarl_path_pos) == true ? "on" : "out";
+            string str_reference = std::get<3>(snarl_path_pos) == true ? "0" : "1"; // 0 : on, 1 : out
 
             if (bool_return) {
                 out_snarl << chr << "\t" << pos

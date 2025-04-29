@@ -175,6 +175,7 @@ void logistic_regression(
     double z = beta_means / se;
     double p_value = std::erfc(std::abs(z) / std::sqrt(2));
 
+    cout << "z: " << z << " se: " << se << " p_value: " << p_value << endl;
     r2_str = set_precision(z); // TODO correct 
     beta_str = set_precision(beta_means);
     se_str = set_precision(se);

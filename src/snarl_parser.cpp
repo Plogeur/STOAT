@@ -56,7 +56,7 @@ void chromosome_chuck_quantitative(htsFile* &ptr_vcf, bcf_hdr_t* &hdr, bcf1_t* &
     unordered_map<string, std::vector<std::tuple<string, vector<string>, string, vector<string>>>> &snarl_chr,
     const std::vector<double>& quantitative_phenotype, std::unordered_map<std::string, std::vector<double>> covar,
     const double& maf, const KinshipMatrix& kinship, 
-    const size_t& num_threads, const std::string& output_quantitive) {
+    const size_t& num_threads, const size_t& table_threshold, const std::string& output_quantitive, const std::string& dir_regression) {
 
     std::ofstream outf(output_quantitive, std::ios::binary);
     std::string headers;
@@ -83,7 +83,7 @@ void chromosome_chuck_quantitative(htsFile* &ptr_vcf, bcf_hdr_t* &hdr, bcf1_t* &
         auto& snarl = snarl_chr[chr];
 
         // Gwas analysis by chromosome
-        vcf_object.quantitative_table(snarl, quantitative_phenotype, chr, covar, maf, kinship, num_threads, outf);
+        vcf_object.quantitative_table(snarl, pheno, chr, covar, maf, kinship, num_threads, outf);
     }
     // Cleanup
     bcf_destroy(rec);
@@ -124,8 +124,8 @@ void chromosome_chuck_binary(htsFile* &ptr_vcf, bcf_hdr_t* &hdr, bcf1_t* &rec,
     const std::vector<std::string> &list_samples, 
     unordered_map<string, std::vector<std::tuple<string, vector<string>, string, vector<string>>>> &snarl_chr,
     const std::vector<bool>& binary_pheno, std::unordered_map<std::string, std::vector<double>> covar, 
-    const double& maf, const KinshipMatrix& kinship, 
-    const size_t& num_threads, const std::string& output_binary) {
+    const double& maf, const KinshipMatrix& kinship, const size_t& num_threads,
+    const size_t& table_threshold, const std::string& output_binary, const std::string& dir_regression) {
 
     std::ofstream outf(output_binary, std::ios::binary);
     std::string headers;
@@ -151,7 +151,7 @@ void chromosome_chuck_binary(htsFile* &ptr_vcf, bcf_hdr_t* &hdr, bcf1_t* &rec,
         auto& snarl = snarl_chr[chr];
 
         // Gwas analysis by chromosome
-        vcf_object.binary_table(snarl, binary_pheno, chr, covar, maf, kinship, num_threads, outf);
+        vcf_object.binary_table(snarl, binary_pheno, chr, covar, maf, kinship, num_threads, table_threshold, dir_regression, outf);
     }
     // Cleanup
     bcf_destroy(rec);
@@ -493,8 +493,8 @@ std::vector<size_t> identify_correct_path(
 void SnarlParser::binary_table(const std::vector<std::tuple<std::string, std::vector<std::string>, std::string, std::vector<std::string>>>& snarls,
                                const std::vector<bool>& binary_phenotype, const std::string& chr,
                                const std::unordered_map<std::string, std::vector<double>>& covar,
-                               const double& maf, const KinshipMatrix& kinship, 
-                               const size_t& num_threads, std::ofstream& outf) {
+                               const double& maf, const KinshipMatrix& kinship, const size_t& num_threads, 
+                               const size_t& table_threshold, const std::string& regression_dir, std::ofstream& outf) {
 
     size_t length_sample = sampleNames.size();
     const size_t total = snarls.size();
@@ -530,20 +530,26 @@ void SnarlParser::binary_table(const std::vector<std::tuple<std::string, std::ve
                     if (allele_number < 2) {
                         df_empty = true;
                     } else {
-                        // df_filtration = check_MAF_threshold_quantitative(df, maf); //error correct 
+                        // df_filtration = check_MAF_threshold_quantitative(df, maf); // TODO error correct 
                     }
                     
                     std::string p_value = "NA", beta = "NA", se = "NA", r2 = "NA";
 
                     // chr, pos, snarl, type, p_value, p_adjusted, r2, beta, se, allele_number
-                    if (df_empty || !df_filtration) {
+                    if (df_empty || df_filtration) {
                         // do nothing
                     } else if (!kinship.empty()) { // logistic regression + covar
                         logistic_regression(df, binary_phenotype, sampleNames, covar, p_value, beta, se, r2);
                     } else { // lmm
                         lmm_binary(df, binary_phenotype, kinship, covar, p_value, beta, se, r2);
                     }
-
+                    
+                    // Plot regression table  for boxplot visualization
+                    if (table_threshold > 0 && isPValueSignificant(table_threshold, p_value)) {
+                        string variant_file_name = regression_dir + "/" + snarl + ".tsv";
+                        writeSignificantTableToTSV(df, list_snarl, variant_file_name);
+                    }
+    
                     // chr, pos, snarl, type, p_value, p_adjusted, t-dist, beta, se, allele_number
                     data << chr << "\t" << pos << "\t" << snarl << "\t" << type_var_str
                     << "\t" << p_value << "\t" << "" << "\t" << r2 << "\t" << beta << "\t" << se 
@@ -593,8 +599,8 @@ void SnarlParser::binary_table(const std::vector<std::tuple<std::string, std::ve
 void SnarlParser::quantitative_table(const std::vector<std::tuple<string, vector<string>, string, vector<string>>>& snarls,
                                         const std::vector<double>& quantitative_phenotype, const string &chr,
                                         const std::unordered_map<std::string, std::vector<double>>& covar,
-                                        const double& maf, const KinshipMatrix& kinship, 
-                                        const size_t& num_threads, std::ofstream& outf) {
+                                        const double& maf, const KinshipMatrix& kinship, const size_t& num_threads, 
+                                        const size_t& table_threshold, const std::string& regression_dir, std::ofstream& outf) {
 
     size_t length_sample = sampleNames.size();
     const size_t total = snarls.size();
@@ -643,6 +649,11 @@ void SnarlParser::quantitative_table(const std::vector<std::tuple<string, vector
 
                 } else { // single test
                     linear_regression(df, quantitative_phenotype, p_value, beta, se, r2);
+                }
+                
+                if (table_threshold > 0 && isPValueSignificant(table_threshold, p_value)) {
+                    string variant_file_name = regression_dir + "/" + snarl + ".tsv";
+                    writeSignificantTableToTSV(df, list_snarl, variant_file_name);
                 }
 
                 // chr, pos, snarl, type, p_value, p_adjusted, r2, beta, se, allele_number
