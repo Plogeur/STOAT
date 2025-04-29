@@ -89,6 +89,8 @@ size_t Path::nreversed() const {
 }
 
 // Function to calculate the type of variant
+// tuple<string, size_t, size_t, size_t>
+// seq_net, minimum_distance, maximun_distance, size_path
 pair<vector<string>, size_t> calcul_pos_type_variant(const vector<tuple<string, size_t, size_t, size_t>>& list_length_paths) {
     vector<string> list_type_variant;
     size_t padding = 0;

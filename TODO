@@ -1,9 +1,4 @@
 REPARE FIRST VARIANT SIMULATION RESULT STOAT
-OPTIMIZE STOAT USING :
-- Valgrind (memory usage and CPU profiling)
-- gprof (performance bottlenecks)
-- perf (find slow parts of the code)
-
 ADD FONCTIONNAL TEST
 ADD TABLE OUTPUT FOR REGRESSION + PLOT SCRIPT IN R
 ADD LOGISITIC REGRESSION + TEST AGAINST CHI2

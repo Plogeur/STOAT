@@ -73,14 +73,14 @@ The VCF pangenomique is a VCF merged from a pangenomique mapping+calling, we rec
 VCF file :
 ```
 #CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT	samp_g0_0	samp_g0_10	samp_g0_11
-Chr1	411	>1>9	CGATTATGGA	C,CGATTA,CGATT,CGA	396.121	PASS	LV=0;DP=1241;AT=>1>2>4>5>6>8>9,>1>9,>1>2>3>5>6>8>9,>1>2>3>5>7>8>9,>1>2>4>5>7>8>9	GT:DP:AD:GL:GQ:GP:XD:MAD	./1	0/2	1/3
+Chr1	411	>1>9	CGATTATGGA	C,CGATTA,CGATT,CGA	396.121	PASS	LV=0;DP=1241;AT=>1>2>4>5>6>8>9,>1>9,>1>2>3>5>6>8>9,>1>2>3>5>7>8>9,>1>2>4>5>7>8>9	GT	./1	0/2	1/3
 ```
 
 Phenotype file :
 ```
 FID	IID	PHENO
 samp_g0_0	samp_g0_0	1
-samp_g0_1	samp_g0_1	1
+samp_g0_1	samp_g0_1	2
 ```
 
 Chromosome reference file :
@@ -191,13 +191,13 @@ CHR	POS	SNARL	        TYPE	      RSQUARED	  BETA	      SE	        P
 It can be informative to analyze how sample phenotypes are influenced by specific paths. To achieve this, we use two methods depending on the type of phenotype:
 
 - **Binary Phenotypes**:  
-  The `GROUP_PATHS` column provides a binary matrix used for statistical analysis, where `107:97,93:103` can be visualize like 
+  The `GROUP_PATHS` column provides a binary matrix used for statistical analysis, where `107:97,93:103` can be visualize like :
   | Group | Path 1 | Path 2 |
   |-------|--------|----------|
   | **Group0**| 107 | 93 |
   | **Group1**| 97  | 103|
 
-  If you want more visualization way you can use `--gaf` this will generate an gaf file in the output dir use in [sequenceTubeMap](https://github.com/vgteam/sequenceTubeMap) tool to visualize your gwas binary region results.
+  If you want a more visual representation, you can use the `--gaf` option. This will generate a GAF file in the output directory, which can be used with the [sequenceTubeMap](https://github.com/vgteam/sequenceTubeMap) tool to visualize your gwas binary region results.
 
 <p align="center">
 <img src="pictures/seqTube.png" width="300">
