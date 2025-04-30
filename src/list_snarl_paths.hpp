@@ -78,7 +78,7 @@ void follow_edges(
 );
 
 // Function to save snarls
-vector<tuple<net_handle_t, string, size_t, bool>> save_snarls(
+vector<tuple<net_handle_t, string, size_t, size_t, bool>> save_snarls(
                             SnarlDistanceIndex& stree, 
                             net_handle_t& root,
                             PackedGraph& pg, 
@@ -92,9 +92,9 @@ tuple<vector<string>, vector<string>, size_t> fill_pretty_paths(
                             vector<vector<net_handle_t>>& finished_paths);
 
 // Function to loop over snarls and write output
-std::unordered_map<std::string, std::vector<std::tuple<string, vector<string>, string, vector<string>>>> loop_over_snarls_write(
+std::unordered_map<std::string, std::vector<std::tuple<string, vector<string>, size_t, size_t, vector<string>>>> loop_over_snarls_write(
                             SnarlDistanceIndex& stree, 
-                            vector<tuple<net_handle_t, string, size_t, bool>>& snarls, 
+                            vector<tuple<net_handle_t, string, size_t, size_t, bool>>& snarls, 
                             PackedGraph& pg, 
                             const string& output_file, 
                             const string& output_snarl_not_analyse, 

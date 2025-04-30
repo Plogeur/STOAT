@@ -107,8 +107,9 @@ void write_gaf_lines(const string& sequence_name, const string& path, int length
 }
 
 // Parses the input file and processes data into two output files
-void gaf_creation(const string& input_file, std::unordered_map<std::string, std::vector<std::tuple<string, vector<string>, string, vector<string>>>>& snarl_chr,
+void gaf_creation(const string& input_file, std::unordered_map<std::string, std::vector<std::tuple<string, vector<string>, size_t, size_t, vector<string>>>>& snarl_chr,
                       PackedGraph& pg, const string& output_file) {
+
     string output_file_1 = add_suffix_to_filename(output_file, "_0");
     string output_file_2 = add_suffix_to_filename(output_file, "_1");
 

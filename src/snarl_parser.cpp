@@ -10,7 +10,7 @@ using namespace std;
 
 void chromosome_chuck_make_bed(htsFile* &ptr_vcf, bcf_hdr_t* &hdr, bcf1_t* &rec, 
     const std::vector<std::string> &list_samples,
-    unordered_map<string, std::vector<std::tuple<string, vector<string>, string, vector<string>>>> &snarl_chr,
+    unordered_map<string, std::vector<std::tuple<string, vector<string>, size_t, size_t, vector<string>>>> &snarl_chr,
     string& output_dir) {
 
     const std::string output_bed = output_dir + ".bed";
@@ -53,7 +53,7 @@ void chromosome_chuck_make_bed(htsFile* &ptr_vcf, bcf_hdr_t* &hdr, bcf1_t* &rec,
 
 void chromosome_chuck_quantitative(htsFile* &ptr_vcf, bcf_hdr_t* &hdr, bcf1_t* &rec, 
     const std::vector<std::string> &list_samples,
-    unordered_map<string, std::vector<std::tuple<string, vector<string>, string, vector<string>>>> &snarl_chr,
+    unordered_map<string, std::vector<std::tuple<string, vector<string>, size_t, size_t, vector<string>>>> &snarl_chr,
     const std::vector<double>& quantitative_phenotype, std::unordered_map<std::string, std::vector<double>> covar,
     const double& maf, const KinshipMatrix& kinship, const size_t& num_threads, 
     const size_t& table_threshold, const std::string& dir_regression,
@@ -123,7 +123,7 @@ void chromosome_chuck_quantitative(htsFile* &ptr_vcf, bcf_hdr_t* &hdr, bcf1_t* &
 
 void chromosome_chuck_binary(htsFile* &ptr_vcf, bcf_hdr_t* &hdr, bcf1_t* &rec, 
     const std::vector<std::string> &list_samples, 
-    unordered_map<string, std::vector<std::tuple<string, vector<string>, string, vector<string>>>> &snarl_chr,
+    unordered_map<string, std::vector<std::tuple<string, vector<string>, size_t, size_t, vector<string>>>> &snarl_chr,
     const std::vector<bool>& binary_pheno, std::unordered_map<std::string, std::vector<double>> covar, 
     const double& maf, const KinshipMatrix& kinship, const size_t& num_threads, 
     const size_t& table_threshold, const std::string& dir_regression,
@@ -234,12 +234,12 @@ void find_two_largest_indices(const std::vector<size_t>& vec, size_t& major_inde
     }
 }
 
-void SnarlParser::create_bim_bed(const std::vector<std::tuple<string, vector<string>, string, vector<string>>>& snarls, 
+void SnarlParser::create_bim_bed(const std::vector<std::tuple<string, vector<string>, size_t, size_t, vector<string>>>& snarls, 
                                 string chromosome, std::ofstream& outbim, std::ofstream& outbed) {
 
     // Iterate over each snarl
     // <snarl, paths, pos, type>
-    for (const auto& [snarl, list_snarl, position, type] : snarls) {
+    for (const auto& [snarl, list_snarl, start_pos, end_pos, type] : snarls) {
 
         // if (list_snarl.size() > 2) {continue;} // avoid multiallelic var
         const size_t sample_number = sampleNames.size();  // Number of individuals
@@ -251,7 +251,7 @@ void SnarlParser::create_bim_bed(const std::vector<std::tuple<string, vector<str
         std::string allele2 = "T";  // Placeholder for allele 2
 
         // chr id genetic_distance pos allele1 allele2
-        outbim << chromosome << "\t" << snarl << "\t0\t" << position
+        outbim << chromosome << "\t" << snarl << "\t0\t" << start_pos
                 << "\t" << allele1 << "\t" << allele2 << "\n";
         
         // Write the genotypes for this SNP to the BED file
@@ -492,7 +492,7 @@ std::vector<size_t> identify_correct_path(
     return idx_srr_save;
 }
 
-void SnarlParser::binary_table(const std::vector<std::tuple<std::string, std::vector<std::string>, std::string, std::vector<std::string>>>& snarls,
+void SnarlParser::binary_table(const std::vector<std::tuple<std::string, std::vector<std::string>, size_t, size_t, std::vector<std::string>>>& snarls,
                                const std::vector<bool>& binary_phenotype, const std::string& chr,
                                const std::unordered_map<std::string, std::vector<double>>& covar,
                                const double& maf, const KinshipMatrix& kinship, const size_t& num_threads, 
@@ -512,8 +512,8 @@ void SnarlParser::binary_table(const std::vector<std::tuple<std::string, std::ve
             std::stringstream local_buffer;
 
             for (size_t itr = start; itr < end; ++itr) {
-                const auto& [snarl, list_snarl, pos, type_var] = snarls[itr];
-                
+                const auto& [snarl, list_snarl, start_pos, end_pos, type_var] = snarls[itr];
+
                 std::ostringstream oss;
                 for (size_t i = 0; i < type_var.size(); ++i) {
                     if (i != 0) oss << ",";
@@ -553,7 +553,7 @@ void SnarlParser::binary_table(const std::vector<std::tuple<std::string, std::ve
                     }
     
                     // chr, pos, snarl, type, p_value, p_adjusted, t-dist, beta, se, allele_number
-                    data << chr << "\t" << pos << "\t" << snarl << "\t" << type_var_str
+                    data << chr << "\t" << start_pos << "\t" << snarl << "\t" << type_var_str
                     << "\t" << p_value << "\t" << "" << "\t" << r2 << "\t" << beta << "\t" << se 
                     << "\t" << allele_number << "\n";
                                 
@@ -576,7 +576,7 @@ void SnarlParser::binary_table(const std::vector<std::tuple<std::string, std::ve
                             allele_number_str, min_row_index_str, numb_colum_str, inter_group_str, average_str);
                     }
 
-                    data << chr << "\t" << pos << "\t" << snarl << "\t" << type_var_str
+                    data << chr << "\t" << start_pos << "\t" << snarl << "\t" << type_var_str
                          << "\t" << fastfisher_p_value << "\t" << chi2_p_value << "\t" << ""
                          << "\t" << allele_number_str << "\t" << min_row_index_str << "\t" << numb_colum_str 
                          << "\t" << inter_group_str << "\t" << average_str << "\t" << group_paths << "\n";
@@ -598,7 +598,7 @@ void SnarlParser::binary_table(const std::vector<std::tuple<std::string, std::ve
 }
 
 // Quantitative Table Generation
-void SnarlParser::quantitative_table(const std::vector<std::tuple<string, vector<string>, string, vector<string>>>& snarls,
+void SnarlParser::quantitative_table(const std::vector<std::tuple<string, vector<string>, size_t, size_t, vector<string>>>& snarls,
                                         const std::vector<double>& quantitative_phenotype, const string &chr,
                                         const std::unordered_map<std::string, std::vector<double>>& covar,
                                         const double& maf, const KinshipMatrix& kinship, const size_t& num_threads, 
@@ -619,7 +619,7 @@ void SnarlParser::quantitative_table(const std::vector<std::tuple<string, vector
 
             // Iterate over each snarl
             for (size_t itr = 0; itr < snarls.size(); ++itr) {
-                const auto& [snarl, list_snarl, pos, type_var] = snarls[itr];
+                const auto& [snarl, list_snarl, start_pos, end_pos, type_var] = snarls[itr];
 
                 auto [df, allele_number] = create_quantitative_table(length_sample, list_snarl, matrix);
                 bool df_filtration = false;
@@ -659,7 +659,7 @@ void SnarlParser::quantitative_table(const std::vector<std::tuple<string, vector
                 }
 
                 // chr, pos, snarl, type, p_value, p_adjusted, r2, beta, se, allele_number
-                data << chr << "\t" << pos << "\t" << snarl << "\t" << type_var_str
+                data << chr << "\t" << start_pos << "\t" << snarl << "\t" << type_var_str
                 << "\t" << p_value  << "\t" << "" << "\t" << r2 << "\t" << beta << "\t" << se 
                 << "\t" << allele_number << "\n";
                 local_buffer << data.str();

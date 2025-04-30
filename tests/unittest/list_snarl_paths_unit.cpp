@@ -1,6 +1,12 @@
 #include <catch2/catch_test_macros.hpp>
 #include "../../src/list_snarl_paths.hpp"
 
+using namespace std;
+using namespace bdsg;
+using handlegraph::step_handle_t;
+using handlegraph::handle_t;
+using handlegraph::net_handle_t;
+
 TEST_CASE("Test de la classe Path", "[Path]") {
     SECTION("Construction et ajout de nœuds") {
         Path path;

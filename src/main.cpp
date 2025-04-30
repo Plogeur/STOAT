@@ -272,7 +272,7 @@ int main(int argc, char* argv[]) {
 
     // scope declaration
     // chr : <snarl, paths, pos, type>
-    std::unordered_map<std::string, std::vector<std::tuple<string, vector<string>, string, vector<string>>>> snarls_chr;
+    std::unordered_map<std::string, std::vector<std::tuple<string, vector<string>, size_t, size_t, vector<string>>>> snarls_chr;
     std::unique_ptr<bdsg::SnarlDistanceIndex> stree;
     std::unique_ptr<bdsg::PackedGraph> pg;
     handlegraph::net_handle_t root;
@@ -285,7 +285,8 @@ int main(int argc, char* argv[]) {
         auto start_0 = std::chrono::high_resolution_clock::now();
         std::tie(stree, pg, root, pp_overlay) = parse_graph_tree(pg_path, dist_path);
 
-        // 
+        // vector<tuple<net_handle_t, string, size_t, size_t, bool>>
+        // snarl_net_grah, chr_ref, start_pos, end_pos, is_on_ref
         auto snarls = save_snarls(*stree, root, *pg, ref_chr, *pp_overlay);
 
         string output_snarl_not_analyse = output_dir + "/snarl_not_analyse.tsv";
