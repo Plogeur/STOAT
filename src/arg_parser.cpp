@@ -231,11 +231,11 @@ void check_match_samples(const std::unordered_map<std::string, T>& map, const st
 }
 
 // Function to parse the snarl path file
-std::unordered_map<std::string, std::vector<std::tuple<string, vector<string>, string, vector<string>>>> parse_snarl_path(const std::string& file_path) {
+std::unordered_map<std::string, std::vector<std::tuple<string, vector<string>, size_t, size_t, vector<string>>>> parse_snarl_path(const std::string& file_path) {
 
-    std::string line, chr, pos, snarl, path_list, type_var;
-    unordered_map<string, std::vector<std::tuple<string, vector<string>, string, vector<string>>>> chr_snarl_matrix;
-    std::vector<std::tuple<string, vector<string>, string, vector<string>>> snarl_paths;
+    std::string line, chr, snarl, start_pos_str, end_pos_str, path_list, type_var;
+    unordered_map<string, std::vector<std::tuple<string, vector<string>, size_t, size_t, vector<string>>>> chr_snarl_matrix;
+    std::vector<std::tuple<string, vector<string>, size_t, size_t, vector<string>>> snarl_paths;
     std::ifstream file(file_path);
     std::string save_chr = "";
 
@@ -247,7 +247,8 @@ std::unordered_map<std::string, std::vector<std::tuple<string, vector<string>, s
         std::istringstream ss(line);
 
         std::getline(ss, chr, '\t');   // chr column
-        std::getline(ss, pos, '\t');   // pos column
+        std::getline(ss, start_pos_str, '\t');   // pos column
+        std::getline(ss, end_pos_str, '\t');   // pos column
         std::getline(ss, snarl, '\t');   // snarl column
         std::getline(ss, path_list, '\t'); // paths column
         std::getline(ss, type_var, '\t');   // type_var column
@@ -256,6 +257,8 @@ std::unordered_map<std::string, std::vector<std::tuple<string, vector<string>, s
         std::istringstream type_stream(type_var);
         std::vector<std::string> paths;
         std::vector<std::string> type;
+        size_t start_pos = std::stoi(start_pos_str);
+        size_t end_pos = std::stoi(end_pos_str);
         int size_paths = 0;
 
         // create a vector of paths
@@ -276,7 +279,7 @@ std::unordered_map<std::string, std::vector<std::tuple<string, vector<string>, s
         save_chr = chr;
 
         // {snarl, paths, chr, pos, type} 
-        snarl_paths.push_back(make_tuple(snarl, paths, pos, type));
+        snarl_paths.push_back(make_tuple(snarl, paths, start_pos, end_pos, type));
     }
     // last chr adding
     chr_snarl_matrix[save_chr] = std::move(snarl_paths);

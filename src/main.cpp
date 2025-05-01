@@ -272,7 +272,7 @@ int main(int argc, char* argv[]) {
 
     // scope declaration
     // chr : <snarl, paths, pos, type>
-    std::unordered_map<std::string, std::vector<std::tuple<string, vector<string>, string, vector<string>>>> snarls_chr;
+    std::unordered_map<std::string, std::vector<std::tuple<string, vector<string>, size_t, size_t, vector<string>>>> snarls_chr;
     std::unique_ptr<bdsg::SnarlDistanceIndex> stree;
     std::unique_ptr<bdsg::PackedGraph> pg;
     handlegraph::net_handle_t root;
@@ -285,7 +285,8 @@ int main(int argc, char* argv[]) {
         auto start_0 = std::chrono::high_resolution_clock::now();
         std::tie(stree, pg, root, pp_overlay) = parse_graph_tree(pg_path, dist_path);
 
-        // 
+        // vector<tuple<net_handle_t, string, size_t, size_t, bool>>
+        // snarl_net_grah, chr_ref, start_pos, end_pos, is_on_ref
         auto snarls = save_snarls(*stree, root, *pg, ref_chr, *pp_overlay);
 
         string output_snarl_not_analyse = output_dir + "/snarl_not_analyse.tsv";
@@ -363,7 +364,7 @@ int main(int argc, char* argv[]) {
 // ./stoat_cxx -p ../data/binary/pg.pg -d ../data/binary/pg.dist -v ../data/binary/merged_output.vcf.gz -b ../data/binary/phenotype.tsv --output ../output
 
 // BINARY + COVARIATE
-// ./stoat_cxx -p ../data/binary/pg.pg -d ../data/binary/pg.dist -v ../data/binary/merged_output.vcf.gz -b ../data/binary/phenotype.tsv --covariate ../data/binary/covariate.tsv --output ../output
+// ./stoat_cxx -p ../data/binary/pg.pg -d ../data/binary/pg.dist -v ../data/binary/merged_output.vcf.gz -b ../data/binary/phenotype.tsv --covariate ../data/binary/covariate.tsv --covar-name CP1,SEX,CP3 --output ../output
 
 // QUANTITATIVE
 // ./stoat_cxx -p ../data/quantitative/pg.pg -d ../data/quantitative/pg.dist -v ../data/quantitative/merged_output.vcf.gz -q ../data/quantitative/phenotype.tsv --output ../output
@@ -380,6 +381,10 @@ int main(int argc, char* argv[]) {
 // ./stoat_cxx -v ../data/simu/variants.vcf -s ../data/simu/paths_snarl.tsv -b ../data/simu/phenotypes.txt --make-bed --output ../output
 // plink --bfile ../output/output --pheno ../data/simu/phenotypes.txt --pheno-name PHENO --assoc --allow-no-sex --allow-extra-chr --out ../output/stoat_plink
 
-// // PLINK
+// PLINK
 // plink --vcf ../data/simu/variants.vcf --make-bed --allow-extra-chr --out ../output/genotype
 // plink --bfile ../output/genotype --pheno ../data/simu/phenotypes.txt --pheno-name PHENO --assoc --allow-no-sex --allow-extra-chr --out ../output/plink
+
+// VALGRIND
+// valgrind --tool=callgrind ./stoat_cxx -s ../data/binary/snarl_paths.tsv -v ../data/binary/merged_output.vcf.gz -b ../data/binary/phenotype.tsv --output ../output
+// kcachegrind callgrind.out.<id>

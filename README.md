@@ -28,8 +28,9 @@ Manual installation :
 - eigen3
 - boost
 - Catch2 v3
+- vg (optional)
 
-Or you can use the compiled unbuntu version provided.
+Or you can use the `Dockerfile` or the compiled unbuntu version provided (coming soon).
 
 ## Building
 
@@ -59,7 +60,7 @@ Required files :
 - dist : Distance file generated with vg dist, format: .dist.
 - vcf pangenomique : Merged VCF file, created using `vg pipeline` and bcftools merge, formats: .vcf or .vcf.gz. (ex : `bcftools merge -m none -Oz -o test`)
 - phenotype : phenotype file organise in three-column with FID (family/sample name), IID (sample name), and PHENO (integer/float). Format: .txt or .tsv (tab-separated).
-- chromosome : Txt file that containt the reference chromosome haplotype name in the pangenome graph. Format: .txt or .tsv.
+- chromosome : Txt file that containt the reference chromosome haplotype name in the pangenome graph. Format: .txt or .tsv. (use : `vg paths -x <pg.pg> --list` to identify all haplotype name then select haplotype that you want to use as reference (idealy the ones use in the pangenome graph creation))
 
 Optional file : 
 - paths : Snarl decoposition stoat output, Two-column file containing snarl names and the list of paths through the snarl's netgraph, separated by tabs. Format: .txt or .tsv.
@@ -72,14 +73,14 @@ The VCF pangenomique is a VCF merged from a pangenomique mapping+calling, we rec
 VCF file :
 ```
 #CHROM	POS	ID	REF	ALT	QUAL	FILTER	INFO	FORMAT	samp_g0_0	samp_g0_10	samp_g0_11
-Chr1	411	>1>9	CGATTATGGA	C,CGATTA,CGATT,CGA	396.121	PASS	LV=0;DP=1241;AT=>1>2>4>5>6>8>9,>1>9,>1>2>3>5>6>8>9,>1>2>3>5>7>8>9,>1>2>4>5>7>8>9	GT:DP:AD:GL:GQ:GP:XD:MAD	./1	0/2	1/3
+Chr1	411	>1>9	CGATTATGGA	C,CGATTA,CGATT,CGA	396.121	PASS	LV=0;DP=1241;AT=>1>2>4>5>6>8>9,>1>9,>1>2>3>5>6>8>9,>1>2>3>5>7>8>9,>1>2>4>5>7>8>9	GT	./1	0/2	1/3
 ```
 
 Phenotype file :
 ```
 FID	IID	PHENO
 samp_g0_0	samp_g0_0	1
-samp_g0_1	samp_g0_1	1
+samp_g0_1	samp_g0_1	2
 ```
 
 Chromosome reference file :
@@ -100,13 +101,19 @@ samp_g0_1	0	5.2	359.25	65.24
 
 Use `stoat tool` if you want to launch the full tool at once, starting from snarl path identification (identifying the multiple paths that can be taken by a sample based on the pangenome graph) and ending with the results plots (Manhattan plot and QQ plot).
 
-- Run full tool :
+- Usage tool :
 ```bash
-# binary trait
-stoat -p <pg.pg> -d <dist.dist> -v <vcf.vcf.gz> -b <phenotype.txt> -o output
+# decompose pangenome
+./stoat -p <pg.pg> -d <dist.dist> -o <paths.txt>
 
-# quantative trait
-stoat -p <pg.pg> -d <dist.dist> -v <vcf.vcf.gz> -q <phenotype.txt> -o output
+# binary trait with already decompose pangenome
+stoat -s <paths.txt> -v <vcf_file.vcf.gz> -b <phenotype.txt> --chr <ref.tsv> -o output
+
+# decompose pangenome + binary trait
+stoat -p <pg.pg> -d <dist.dist> -v <vcf_file.vcf.gz> -b <phenotype.txt> --chr <ref.tsv> -o output
+
+# decompose pangenome + quantative trait
+stoat -p <pg.pg> -d <dist.dist> -v <vcf_file.vcf.gz> -q <phenotype.txt> --chr <ref.tsv> -o output
 ```
 
 Explanation of all options:
@@ -116,8 +123,8 @@ Explanation of all options:
 -p, --pg <path>             Path to the pg file (.pg)
 -d, --dist <path>           Path to the dist file (.dist)
 -r, --chr <path>            Path to the chromosome reference file (.txt)
---children <int>            Max number of children for a snarl in the snarl decomposition process (default = 50)
---path-length <int>         Max length for a path snarl in the snarl decomposition process (default = 10 000)
+--children <int>            Max number of children for a snarl in the snarl decomposition process (default : 50)
+--path-length <int>         Max length for a path snarl in the snarl decomposition process (default : 10 000)
 -b, --binary <path>         Path to the binary group file (.txt or .tsv)
 -g, --gaf                   Make a GAF file from the GWAS analysis
 -q, --quantitative <path>   Path to the quantitative phenotype file (.txt or .tsv)
@@ -127,25 +134,12 @@ Explanation of all options:
 --gene-position <path>      Path to the Gene position file (.txt or .tsv)
 -k, --kinship <path>        Path to the kinship matrix file (.txt or .tsv)
 --make-bed                  Create a plink format files (.bed, .bim, .fam)
---table-threshold <int>     The N p-value digits threshold to use for plotting regression data file (defauld : 5 <=> 10-5)
---maf                       Add a maf (Minimum allele frequency) thresold (defauld : 0.01)
+--table-threshold <int>     The N p-value digits threshold to use for plotting regression data file (default : disable exemple : 5 <=> 10-5)
+--maf                       Add a Minimum Aallele Frequency thresold (default : 0.01)
 -o, --output <name>         Output dir name
 -t, --thread <int>          Number of threads
 -h, --help                  Print this help message;
 
-```
-
-- Example of usage : 
-
-```bash
-# decompose pangenome
-./stoat -p <pg.pg> -d <dist.dist> -o <paths.txt>
-
-# binary trait with list_path already computed and gaf creation 
-./stoat -l <paths.txt> -v <vcf.vcf.gz> -r <ref.vcf.gz> -b <phenotype.txt> -o output.tsv
-
-# quantitative trait with list_path already computed
-./stoat -l <paths.txt> -v <vcf.vcf.gz> -r <ref.vcf.gz> -q <phenotype.txt> -o output.tsv
 ```
 
 ## Output
@@ -155,7 +149,7 @@ Explanation of all options:
 | **CHR**           | Chromosome name where the variation occurs.                                                   |
 | **POS**           | Position of the snarl within the chromosome.                                                  |
 | **SNARL**         | Identifier for the variant, snarl name/id                                                     |
-| **TYPE**          | Type of genetic variation (e.g., SNP, INS, DEL).                                              |
+| **TYPE**          | Type of genetic variation, SNP == (A,G,T,C), INS & DEL will be referenced by a number >2 or 0, and CPX aka complex (ex : snarl nested) will be add minimum and maximum path size like CPX:Min/Max                                               |
 | **P_FISHER**      | P-value calculated using Fisher's exact test (binary analysis).                               |
 | **P_CHI2**        | P-value calculated using the Chi-squared test (binary analysis).                              |
 | **ALLELE_NUM**    | Total number of alleles that pass in this snarl.                                              |
@@ -167,40 +161,101 @@ Explanation of all options:
 | **RSQUARED**      | R-squared value, proportion of variance explained by the model (quantitative analysis).       |
 | **SE**            | Mean Standard error, estimatation coefficients of all paths in a snarl (quantitative analysis). |
 | **BETA**          | Mean Beta coefficients, estimatation effect sizes of the prediction of all paths in a snarl (quantitative analysis). |
+| **GROUP_PATHS**   | Encodes the allele distribution across binary phenotype groups for each path in a snarl. Each entry is formatted as `X:Y,X':Y',...` where `X:Y` represents one path, with `X` being the count of samples in group 0 and `Y` in group 1. Commas separate multiple paths within the same snarl. Used in binary statistical analysis to assess associations between path presence and phenotype. (binary analysis). |
 
 ### Example of Output:
 
-Below is an example of the output for a binary phenotype analysis:
+Below is an example of the output for a binary phenotype analysis (-b option) :
 
 ```bash
-CHR POS SNARL           TYPE  REF ALT   P_FISHER  P_CHI2  ALLELE_NUM  MIN_ROW_INDEX NUM_COLUM INTER_GROUP AVERAGE
-1   12  5262721_5262719 SNP   A   T     0.4635    0.5182  286        2             137       46          143.0
-1   15  5262719_5262717 INS   A   ATT   0.8062    0.8747  286        2             141       34          143.0
-1   18  5262717_5262714 DEL   AA  T     0.2120    0.2363  286        2             134       32          143.0
+CHR POS SNARL           TYPE    P_FISHER  P_CHI2  ALLELE_NUM  MIN_ROW_INDEX NUM_COLUM   INTER_GROUP AVERAGE GROUP_PATHS
+1   12  5262721_5262719 A,C     0.4635    0.5182  286         2             137         46          143.0   107:97,93:103
+1   15  5262719_5262717 T,3     0.8062    0.8747  286         2             141         34          143.0   53:20,93:75
+1   18  5262717_5262714 2,T     0.2120    0.2363  286         2             134         32          143.0   25:97,78:2
 ```
 
 Below is an example of the output for a quantitative phenotype analysis (-q option) :
 
 ```bash
-CHR	POS	SNARL	TYPE	REF	ALT	RSQUARED	BETA	SE	P
-1	12	5262721_5262719	SNP	A	T	8.3697e-01	1.3878e+01	6.5108e+00	4.0376e-01
-1	15	5262719_5262717	INS	A	ATT	4.4237e-01	1.3238e+01	6.5345e+00	4.6574e-01
-1	18	5262717_5262714	DEL	AA	T	6.3237e-01	1.6458e+01	6.6453e+00	4.7484e-01
-1	19	5262717_5262714	COMPLEX	C	NA	4.2342e-01	2.3242e+01	5.3251e+00	1.3245e-01
+CHR	POS	SNARL	        TYPE	      RSQUARED	  BETA	      SE	        P
+1	12	5262721_5262719	A,C	        0.8370	    0.1388	    0.6512	    0.4038
+1	15	5262719_5262717	CPX:1/457,3	0.4424	    0.1324	    0.6534	    0.4657
+1	18	5262717_5262714	2,G	        0.6324	    0.1646	    0.6424	    0.4748
+1	19	5262717_5262714	G,15	      0.4234	    0.2324	    0.5215	    0.1324
 ```
 
 ## Visualization
 
-### Manhattan and QQ plots 
+### Binary table/sequenceTubeMap & Quantitative boxplot
 
-STOAT will generated a manhattan and a QQ plot for binary and quantitatif analysis.
+It can be informative to analyze how sample phenotypes are influenced by specific paths. To achieve this, we use two methods depending on the type of phenotype:
 
-### SequenceTube
+- **Binary Phenotypes**:  
+  The `GROUP_PATHS` column provides a binary matrix used for statistical analysis, where `107:97,93:103` can be visualize like :
+  | Group | Path 1 | Path 2 |
+  |-------|--------|----------|
+  | **Group0**| 107 | 93 |
+  | **Group1**| 97  | 103|
 
-Use `--gaf` to geneate a GAF file and [sequenceTubeMap](https://github.com/vgteam/sequenceTubeMap) tool to visualize your gwas binary region results.
+  If you want a more visual representation, you can use the `--gaf` option. This will generate a GAF file in the output directory, which can be used with the [sequenceTubeMap](https://github.com/vgteam/sequenceTubeMap) tool to visualize your gwas binary region results.
 
 <p align="center">
-<img src="pictures/seqTube.png" width="600">
+<img src="pictures/seqTube.png" width="300">
 </p>
 
 Description : Color represente the different paths group (red : group 1 & blue : group 0) and opacity represente the number of samples in that paths (number of samples passing trought each paths % 60).
+
+- **Quantitative Phenotypes**:  
+  There is no native column for this type of visualization. To generate the required data, use the `--table-threshold` argument. This will create, for each significant snarl, a table file with allele counts for each path, stored in a `regression` directory. You can then use the `box_plot.R` script to generate a boxplot for each snarl, comparing path usage to phenotype values.  
+
+  **Command:**
+  ```bash
+  Rscript plot_script/box_plot.R -d <regression_directory> -p <phenotype_file> -o <output_directory>
+  ```
+  - `-d`: Directory where the regression snarl files were created  
+  - `-p`: Phenotype file  
+  - `-o`: Output directory for the resulting JPEG boxplot images
+
+
+<p align="center">
+<img src="pictures/box_plot.jpeg" width="300">
+</p>
+
+### Manhattan and QQ Plots
+
+To visually assess the significance and distribution of GWAS results, Stoat provides support for generating **Manhattan** and **QQ plots**. These plots help in identifying associations between genetic variations (e.g., paths in snarls) and phenotypic traits.
+
+The plotting script supports both **binary** and **quantitative** phenotypes and requires three key inputs:
+
+- `--pvalue`: Path to the file containing p-values per snarl/path.
+- `--qq`: Output path for the QQ plot image (e.g., `qq_plot.jpg`).
+- `--manh`: Output path for the Manhattan plot image (e.g., `manhattan_plot.jpg`).
+- One of either:
+  - `--binary`: for binary traits (e.g., disease presence/absence).
+  - `--quantitative`: for continuous traits (e.g., expression levels).
+
+**Command:**
+
+```bash
+python3 plot_gwas_results.py \
+  --pvalue results/pvalues.tsv \
+  --qq plots/qq_plot.jpg \
+  --manh plots/manhattan_plot.jpg \
+  --binary
+```
+
+Or for quantitative traits:
+
+```bash
+python3 plot_gwas_results.py \
+  --pvalue results/pvalues.tsv \
+  --qq plots/qq_plot.jpg \
+  --manh plots/manhattan_plot.jpg \
+  --quantitative
+```
+
+<p align="center">
+  <img src="pictures/manhattan_plot_binary.png" alt="Manhattan Plot" width="600" style="display: inline-block; margin-right: 20px;">
+  <img src="pictures/qq_plot_binary.png" alt="QQ Plot" width="200" style="display: inline-block;">
+</p>
+

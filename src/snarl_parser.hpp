@@ -33,19 +33,19 @@ public:
     ~SnarlParser()=default;
     void push_matrix(const std::string& decomposedSnarl, std::unordered_map<std::string, size_t>& rowHeaderDict, size_t indexColumn);
     
-    void binary_table(const std::vector<std::tuple<std::string, std::vector<std::string>, std::string, std::vector<std::string>>>& snarls,
+    void binary_table(const std::vector<std::tuple<std::string, std::vector<std::string>, size_t, size_t, std::vector<std::string>>>& snarls,
         const std::vector<bool>& binary_phenotype, const std::string& chr,
         const std::unordered_map<std::string, std::vector<double>>& covar,
         const double& maf, const KinshipMatrix& kinship, const size_t& num_threads, 
         const size_t& table_threshold, const std::string& output_dir, std::ofstream& outf);
 
-    void quantitative_table(const std::vector<std::tuple<string, vector<string>, string, vector<string>>>& snarls,
+    void quantitative_table(const std::vector<std::tuple<string, vector<string>, size_t, size_t, vector<string>>>& snarls,
                             const std::vector<double>& quantitative_phenotype, const string &chr,
                             const std::unordered_map<std::string, std::vector<double>>& covar,
                             const double& maf, const KinshipMatrix& kinship, const size_t& num_threads, 
                             const size_t& table_threshold, const std::string& output_dir, std::ofstream& outf);
 
-    void create_bim_bed(const std::vector<std::tuple<string, vector<string>, string, vector<string>>>& snarls, 
+    void create_bim_bed(const std::vector<std::tuple<string, vector<string>, size_t, size_t, vector<string>>>& snarls, 
         string chromosome, std::ofstream& outbim, std::ofstream& outbed);
 
     std::pair<std::vector<size_t>, std::vector<size_t>> create_table_short_path(const vector<std::string>& list_path_snarl);
@@ -60,7 +60,7 @@ bool check_MAF_threshold_quantitative(const std::unordered_map<std::string, std:
 
 void chromosome_chuck_binary(htsFile* &ptr_vcf, bcf_hdr_t* &hdr, bcf1_t* &rec, 
     const std::vector<std::string> &list_samples, 
-    unordered_map<string, std::vector<std::tuple<string, vector<string>, string, vector<string>>>> &snarl_chr,
+    unordered_map<string, std::vector<std::tuple<string, vector<string>, size_t, size_t, vector<string>>>> &snarl_chr,
     const std::vector<bool>& pheno, std::unordered_map<std::string, std::vector<double>> covar, 
     const double& maf, const KinshipMatrix& kinship, 
     const size_t& num_threads, const size_t& table_threshold, 
@@ -68,7 +68,7 @@ void chromosome_chuck_binary(htsFile* &ptr_vcf, bcf_hdr_t* &hdr, bcf1_t* &rec,
 
 void chromosome_chuck_quantitative(htsFile* &ptr_vcf, bcf_hdr_t* &hdr, bcf1_t* &rec, 
     const std::vector<std::string> &list_samples,
-    unordered_map<string, std::vector<std::tuple<string, vector<string>, string, vector<string>>>> &snarl_chr,
+    unordered_map<string, std::vector<std::tuple<string, vector<string>, size_t, size_t, vector<string>>>> &snarl_chr,
     const vector<double>& pheno, std::unordered_map<std::string, std::vector<double>> covar,
     const double& maf, const KinshipMatrix& kinship, 
     const size_t& num_threads, const size_t& table_threshold, 
@@ -76,7 +76,7 @@ void chromosome_chuck_quantitative(htsFile* &ptr_vcf, bcf_hdr_t* &hdr, bcf1_t* &
 
 void chromosome_chuck_make_bed(htsFile* &ptr_vcf, bcf_hdr_t* &hdr, bcf1_t* &rec, 
     const std::vector<std::string> &list_samples,
-    unordered_map<string, std::vector<std::tuple<string, vector<string>, string, vector<string>>>> &snarl_chr,
+    unordered_map<string, std::vector<std::tuple<string, vector<string>, size_t, size_t, vector<string>>>> &snarl_chr,
     string& output_dir);
 
 std::tuple<htsFile*, bcf_hdr_t*, bcf1_t*> parse_vcf(const std::string& vcf_path);
