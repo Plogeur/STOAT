@@ -22,7 +22,7 @@ TEST_CASE("Chi-square & Fisher test function", "[chi2_2xN]") {
         REQUIRE(chi2_2xN(g0, g1) == "0.0970");
     }
 
-    SECTION("Chi-square fail (N row significatif)") {
+    SECTION("Chi-square N row significatif") {
         std::vector<size_t> g0 = {5, 10, 15, 20};
         std::vector<size_t> g1 = {20, 15, 10, 5};
         REQUIRE(chi2_2xN(g0, g1) == "0.0002");

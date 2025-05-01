@@ -541,7 +541,7 @@ void SnarlParser::binary_table(const std::vector<std::tuple<std::string, std::ve
                     if (df_empty || df_filtration) {
                         // do nothing
                     } else if (!kinship.empty()) { // logistic regression + covar
-                        logistic_regression(df, binary_phenotype, sampleNames, covar, p_value, beta, se, r2);
+                        logistic_regression_covar(df, binary_phenotype, sampleNames, covar, p_value, beta, se, r2);
                     } else { // lmm
                         lmm_binary(df, binary_phenotype, kinship, covar, p_value, beta, se, r2);
                     }

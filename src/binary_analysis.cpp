@@ -85,12 +85,11 @@ std::vector<double> solve_linear_system(std::vector<std::vector<double>> A, std:
     return x;
 }
 
-// Logistic regression using IRLS for a single variant
-void logistic_regression(
+// Logistic regression
+void logistic_regression_covar(
     const std::vector<std::vector<size_t>>& variant_data,
     const std::vector<bool>& phenotype,
-    const std::vector<string>& list_samples,
-    const std::unordered_map<std::string, std::vector<double>>& covariates,
+    const std::vector<double>& covariates,
     std::string& p_value_str, std::string& beta_str, std::string& se_str, std::string& r2_str) {
 
     const size_t max_iter = 25;

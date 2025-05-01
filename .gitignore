@@ -13,3 +13,5 @@ tests/unittest/chi2_test.cpp
 tests/unittest/test_stats.py
 .gitignore
 .vscode/settings.json
+logistic_reg/logistic_regression.cpp
+logistic_reg/README

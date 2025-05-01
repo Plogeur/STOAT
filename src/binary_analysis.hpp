@@ -25,7 +25,7 @@
 double sigmoid(double z);
 std::vector<double> solve_linear_system(std::vector<std::vector<double>> A, std::vector<double> b);
 
-void logistic_regression(
+void logistic_regression_covar(
     const std::vector<std::vector<size_t>>& variant_data,
     const std::vector<bool>& phenotype,
     const std::vector<string>& list_samples,
