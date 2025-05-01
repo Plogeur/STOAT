@@ -54,7 +54,6 @@ double compute_r2(const Eigen::VectorXd& y, const Eigen::VectorXd& p_null, const
     return 1.0 - (ll_full / ll_null);
 }
 
-void logistic_regression(
 // Simple Gaussian elimination to solve Ax = b
 std::vector<double> solve_linear_system(std::vector<std::vector<double>> A, std::vector<double> b) {
     size_t n = A.size();
