@@ -242,7 +242,6 @@ TEST_CASE("Covariate format checking", "[check_format_covariate]") {
             "B 30 0\n"
             "C 45 1\n";
         std::string path = create_test_covar_file(content);
-
         REQUIRE_NOTHROW(check_format_covariate(path));
     }
 
@@ -261,29 +260,34 @@ TEST_CASE("Parse covariates from file", "[parse_covariates]") {
     SECTION("Valid covariate file and columns") {
         std::string content =
             "IID age sex\n"
-            "A 25 1\n"
-            "B 30 0\n"
-            "C 45 1\n";
+            "samp0 25 1\n"
+            "samp1 30 0\n"
+            "samp2 45 1\n";
+
         std::string path = create_test_covar_file(content);
         std::vector<std::string> covars = {"age", "sex"};
+        std::vector<std::string> list_samples = {"samp0", "samp1", "samp2"};
 
-        auto result = parse_covariates(path, covars);
+        auto result = parse_covariates(path, covars, list_samples);
 
         REQUIRE(result.size() == 3);
-        REQUIRE(result["A"][0] == 25);
-        REQUIRE(result["A"][1] == 1);
-        REQUIRE(result["B"][0] == 30);
-        REQUIRE(result["B"][1] == 0);
-        REQUIRE(result["C"][0] == 45);
+        REQUIRE(result[0][0] == 25);
+        REQUIRE(result[0][1] == 1);
+        REQUIRE(result[1][0] == 30);
+        REQUIRE(result[1][1] == 0);
+        REQUIRE(result[2][0] == 45);
+        REQUIRE(result[2][1] == 1);
     }
 
     SECTION("Missing IID column") {
         std::string content =
             "ID age sex\n"
-            "A 25 1\n";
+            "samp0 25 1\n";
         std::string path = create_test_covar_file(content);
         std::vector<std::string> column_covars = {"age", "sex"};
-        REQUIRE_THROWS_AS(parse_covariates(path, column_covars), std::runtime_error);
+        std::vector<std::string> list_samples = {"samp0", "samp1", "samp2"};
+
+        REQUIRE_THROWS_AS(parse_covariates(path, column_covars, list_samples), std::runtime_error);
     }
 
     SECTION("Missing covariate column") {
@@ -292,15 +296,19 @@ TEST_CASE("Parse covariates from file", "[parse_covariates]") {
             "A 25 1\n";
         std::string path = create_test_covar_file(content);
         std::vector<std::string> column_covars = {"height"}; // not present
-        REQUIRE_THROWS_AS(parse_covariates(path, column_covars), std::runtime_error);
+        std::vector<std::string> list_samples = {"samp0", "samp1", "samp2"};
+
+        REQUIRE_THROWS_AS(parse_covariates(path, column_covars, list_samples), std::runtime_error);
     }
 
     SECTION("Non-numeric value in covariate field") {
         std::string content =
             "IID age sex\n"
-            "A XX 1\n"; // XX is not numeric
+            "samp0 XX 1\n"; // XX is not numeric
         std::string path = create_test_covar_file(content);
         std::vector<std::string> column_covars = {"age", "sex"};
-        REQUIRE_THROWS_AS(parse_covariates(path, column_covars), std::runtime_error);
+        std::vector<std::string> list_samples = {"samp0"};
+
+        REQUIRE_THROWS_AS(parse_covariates(path, column_covars, list_samples), std::runtime_error);
     }
 }

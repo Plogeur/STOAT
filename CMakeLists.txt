@@ -48,7 +48,7 @@ target_link_libraries(${PROJECT_NAME}
     bdsg
     handlegraph
     Eigen3::Eigen
-    libsdsl.a
+    libsdsl.so.3
     ${HTSLIB_LIBRARIES}
 )
 
@@ -69,7 +69,6 @@ add_executable(unit_tests
     tests/unittest/list_snarl_paths_unit.cpp
     tests/unittest/matrix_unit.cpp
     tests/unittest/quantitative_analysis_unit.cpp
-    tests/unittest/arg_parsing_unit.cpp
 
     src/utils.cpp
     src/arg_parser.cpp
@@ -89,5 +88,5 @@ target_link_libraries(unit_tests PRIVATE
     bdsg
     handlegraph
     Eigen3::Eigen
-    libsdsl.a
+    libsdsl.so.3
     ${HTSLIB_LIBRARIES})

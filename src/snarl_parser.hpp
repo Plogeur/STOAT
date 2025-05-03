@@ -35,13 +35,13 @@ public:
     
     void binary_table(const std::vector<std::tuple<std::string, std::vector<std::string>, size_t, size_t, std::vector<std::string>>>& snarls,
         const std::vector<bool>& binary_phenotype, const std::string& chr,
-        const std::unordered_map<std::string, std::vector<double>>& covar,
+        const std::vector<std::vector<double>>& covar,
         const double& maf, const KinshipMatrix& kinship, const size_t& num_threads, 
         const size_t& table_threshold, const std::string& output_dir, std::ofstream& outf);
 
     void quantitative_table(const std::vector<std::tuple<string, vector<string>, size_t, size_t, vector<string>>>& snarls,
                             const std::vector<double>& quantitative_phenotype, const string &chr,
-                            const std::unordered_map<std::string, std::vector<double>>& covar,
+                            const std::vector<std::vector<double>>& covar,
                             const double& maf, const KinshipMatrix& kinship, const size_t& num_threads, 
                             const size_t& table_threshold, const std::string& output_dir, std::ofstream& outf);
 
@@ -61,7 +61,7 @@ bool check_MAF_threshold_quantitative(const std::unordered_map<std::string, std:
 void chromosome_chuck_binary(htsFile* &ptr_vcf, bcf_hdr_t* &hdr, bcf1_t* &rec, 
     const std::vector<std::string> &list_samples, 
     unordered_map<string, std::vector<std::tuple<string, vector<string>, size_t, size_t, vector<string>>>> &snarl_chr,
-    const std::vector<bool>& pheno, std::unordered_map<std::string, std::vector<double>> covar, 
+    const std::vector<bool>& pheno, std::vector<std::vector<double>> covar, 
     const double& maf, const KinshipMatrix& kinship, 
     const size_t& num_threads, const size_t& table_threshold, 
     const std::string& dir_regression, const std::string& output_binary);
@@ -69,7 +69,7 @@ void chromosome_chuck_binary(htsFile* &ptr_vcf, bcf_hdr_t* &hdr, bcf1_t* &rec,
 void chromosome_chuck_quantitative(htsFile* &ptr_vcf, bcf_hdr_t* &hdr, bcf1_t* &rec, 
     const std::vector<std::string> &list_samples,
     unordered_map<string, std::vector<std::tuple<string, vector<string>, size_t, size_t, vector<string>>>> &snarl_chr,
-    const vector<double>& pheno, std::unordered_map<std::string, std::vector<double>> covar,
+    const vector<double>& pheno, std::vector<std::vector<double>> covar,
     const double& maf, const KinshipMatrix& kinship, 
     const size_t& num_threads, const size_t& table_threshold, 
     const std::string& dir_regression, const std::string& output_quantitative);

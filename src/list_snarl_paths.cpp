@@ -149,11 +149,12 @@ string find_snarl_id(SnarlDistanceIndex& stree, net_handle_t& snarl) {
 }
 
 std::tuple<std::unique_ptr<bdsg::SnarlDistanceIndex>, 
-           std::unique_ptr<bdsg::PackedGraph>, 
-           handlegraph::net_handle_t, 
-           std::unique_ptr<bdsg::PackedPositionOverlay>>
-parse_graph_tree(const std::string& pg_file, const std::string& dist_file) {
-    
+            std::unique_ptr<bdsg::PackedGraph>, 
+            handlegraph::net_handle_t, 
+            std::unique_ptr<bdsg::PackedPositionOverlay>>
+            parse_graph_tree(const std::string& pg_file, 
+                const std::string& dist_file) {
+                
     // Load graph
     auto pg = std::make_unique<bdsg::PackedGraph>();
     pg->deserialize(pg_file);

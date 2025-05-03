@@ -230,8 +230,45 @@ void check_match_samples(const std::unordered_map<std::string, T>& map, const st
     }
 }
 
+std::tuple<std::vector<std::vector<double>>, 
+std::vector<std::tuple<string, size_t, size_t>>, 
+std::vector<std::string>> parse_qtl_gene_file(
+    const std::string& eqtl_path, 
+    const std::string& gene_position_path, 
+    const std::vector<std::string>& list_samples) {
+
+    auto qtl = parse_qtl_file(eqtl_path, list_samples); // and check in the same time
+    auto gene_position = parse_gene_positions(gene_position_path);
+
+    std::vector<std::vector<double>> eqtl_vector;
+    std::vector<std::tuple<string, size_t, size_t>> gene_pos_vector;
+    std::vector<std::string> list_gene;
+
+    for (const auto& [gene, vector_qtl] : qtl) {
+        eqtl_vector.push_back(vector_qtl);
+        list_gene.push_back(gene);
+        auto it = gene_position.find(gene);
+        if (it != gene_position.end()) {
+            auto [chrom, start, end] = it->second;
+            gene_pos_vector.push_back(std::make_tuple(chrom, start, end));
+        } else {
+            std::cerr << "Error: Gene \"" << gene << "\" not found in gene positions." << std::endl;
+            exit(1);
+        }
+    }
+
+    // Warn if gene_position has more genes than qtl
+    if (gene_pos_vector.size() > eqtl_vector.size()) {
+        std::cerr << "Warning: More genes in the gene position file than in the QTL data." << std::endl;
+    }
+
+    return std::make_tuple(eqtl_vector, gene_pos_vector, list_gene);
+}
+
 // Function to parse the snarl path file
-std::unordered_map<std::string, std::vector<std::tuple<string, vector<string>, size_t, size_t, vector<string>>>> parse_snarl_path(const std::string& file_path) {
+std::unordered_map<std::string, std::vector<
+std::tuple<string, vector<string>, size_t, size_t, vector<string>>>> 
+parse_snarl_path(const std::string& file_path) {
 
     std::string line, chr, snarl, start_pos_str, end_pos_str, path_list, type_var;
     unordered_map<string, std::vector<std::tuple<string, vector<string>, size_t, size_t, vector<string>>>> chr_snarl_matrix;
@@ -288,28 +325,10 @@ std::unordered_map<std::string, std::vector<std::tuple<string, vector<string>, s
     return chr_snarl_matrix;
 }
 
-void check_qtl_gene_position(
-    const std::unordered_map<std::string, std::vector<double>>& qtl,
-    const std::unordered_map<std::string, std::tuple<std::string, int, int>>& gene_position) {
-
-    // Check genes in QTL that are missing from gene positions
-    for (const auto& [gene, _] : qtl) {
-        if (gene_position.find(gene) == gene_position.end()) {
-            std::cerr << "Error: Gene \"" << gene << "\" found in QTL data but not in gene positions." << std::endl;
-            exit(1);
-        }
-    }
-
-    // Warn if gene_position has more genes than qtl
-    if (gene_position.size() > qtl.size()) {
-        std::cerr << "Warning: More genes in the gene position file than in the QTL data." << std::endl;
-    }
-}
-
-std::unordered_map<std::string, std::tuple<std::string, int, int>> parse_gene_positions(
+std::unordered_map<std::string, std::tuple<std::string, size_t, size_t>> parse_gene_positions(
     const std::string& filename) {
 
-    std::unordered_map<std::string, std::tuple<std::string, int, int>> geneMap;
+    std::unordered_map<std::string, std::tuple<std::string, size_t, size_t>> geneMap;
     std::ifstream file(filename);
     std::string line;
 
@@ -338,7 +357,9 @@ std::unordered_map<std::string, std::tuple<std::string, int, int>> parse_gene_po
 }
 
 // Function to parse the phenotype file
-std::unordered_map<std::string, std::vector<double>> parse_qtl_file(const std::string& filename) {
+std::unordered_map<std::string, std::vector<double>> parse_qtl_file(
+    const std::string& filename, const vector<std::string>& list_samples) {
+
     std::ifstream file(filename);
     std::unordered_map<std::string, std::vector<double>> geneExpressions;
 
@@ -350,6 +371,25 @@ std::unordered_map<std::string, std::vector<double>> parse_qtl_file(const std::s
         std::string token;
 
         if (isHeader) {
+            std::getline(ss, token, '\t');  // Skip the first column (gene name)
+            std::vector<std::string> sampleNames;
+            while (std::getline(ss, token, '\t')) {
+                sampleNames.push_back(token);
+            }
+
+            // Check if all sample names are present in the list_samples
+            for (const auto& sample : sampleNames) {
+                if (std::find(list_samples.begin(), list_samples.end(), sample) == list_samples.end()) {
+                    std::cerr << "Error: Sample " << sample << " not found in the list of samples." << std::endl;
+                    exit(1);
+                }
+            }
+
+            // warning if the number of samples in the file does not match the number of samples in the list
+            if (sampleNames.size() != list_samples.size()) {
+                std::cerr << "Warning: Number of samples in the qtl file is > that the number of samples in the VCF." << std::endl;
+            }
+
             isHeader = false;  // Skip header
             continue;
         }
@@ -366,7 +406,6 @@ std::unordered_map<std::string, std::vector<double>> parse_qtl_file(const std::s
                 exit(1);
             }
         }
-
         geneExpressions[geneName] = expressions;
     }
 
@@ -374,40 +413,16 @@ std::unordered_map<std::string, std::vector<double>> parse_qtl_file(const std::s
     return geneExpressions;
 }
 
-// Function to check covariate format
-void check_format_covariate(const std::string& filename) {
-    
-    std::ifstream file(filename);
-    std::string line;
-    int numCols = -1; // Store column count
-    int lineCount = 0;
-
-    while (std::getline(file, line)) {
-        std::stringstream ss(line);
-        std::string token;
-        int colCount = 0;
-
-        while (ss >> token) colCount++; // Count columns in this line
-
-        if (numCols == -1) {
-            numCols = colCount; // Set number of columns from first line
-        } else if (colCount != numCols) {
-            int error_lineCount = lineCount + 1;
-
-            throw std::runtime_error("Error: Inconsistent column count in row " + std::to_string(error_lineCount));
-        }
-        lineCount++;
-    }
-    file.close();
-}
-
 // Function to parse covariates into an unordered_map
-std::unordered_map<std::string, std::vector<double>> parse_covariates(
-    const std::string& filename, const std::vector<std::string>& covar_names) {
+std::vector<std::vector<double>> parse_covariates(
+    const std::string& filename, 
+    const std::vector<std::string>& covar_names,
+    const std::vector<std::string>& list_samples) {
 
     std::ifstream file(filename);
     std::string line;
-    std::unordered_map<std::string, std::vector<double>> covariateMap;
+    std::vector<std::vector<double>> covariate;
+    std::unordered_map<string, std::vector<double>>covariate_map;
 
     // Read header
     std::getline(file, line);
@@ -422,7 +437,7 @@ std::unordered_map<std::string, std::vector<double>> parse_covariates(
     auto it_iid = std::find(headers.begin(), headers.end(), "IID");
     if (it_iid == headers.end()) {
         throw std::runtime_error("Error: header must include 'IID' column.\n");
-        return covariateMap;
+        exit(1);
     }
     size_t iid_index = std::distance(headers.begin(), it_iid);
 
@@ -431,11 +446,11 @@ std::unordered_map<std::string, std::vector<double>> parse_covariates(
         col_index[headers[i]] = i;
     }
 
-    // Validate requested covariates
+    // Check header for covariate names
     for (const auto& name : covar_names) {
         if (col_index.find(name) == col_index.end()) {
             throw std::runtime_error("Error: covariate column '" + name + "' not found in file.\n");
-            return covariateMap;
+            exit(1);
         }
     }
 
@@ -459,23 +474,26 @@ std::unordered_map<std::string, std::vector<double>> parse_covariates(
             }
         } catch (...) {
             throw std::runtime_error("Error: Individual " + iid + " got an non-numeric value\n");
+            exit(1);
         }
-        covariateMap[iid] = selected;
+        covariate_map[iid] = selected;
     }
-    return covariateMap;
-}
 
-// Function to check if phenotype and covariate files match
-void check_phenotype_covariate(const std::vector<string>& list_samples, 
-    const std::unordered_map<std::string, std::vector<double>>& covariates) {
+    check_match_samples(covariate_map, list_samples);
 
-        // Check if all phenotype samples are present in covariates
-        for (const auto& sample : list_samples) {
-        if (covariates.find(sample) == covariates.end()) {
-            throw std::runtime_error("Error: Missing covariate data for sample : " + sample);
-            EXIT_FAILURE;
+    // Order covariate_map by list_samples
+    for (const auto& sample : list_samples) {
+        auto it = covariate_map.find(sample);
+        if (it != covariate_map.end()) {
+            covariate.push_back(it->second);
+        } else {
+            std::cerr << "Error: Sample " << sample << " not found in the covariate file." << std::endl;
+            exit(1);
         }
     }
+    file.close();
+
+    return covariate;
 }
 
 void check_file(const std::string& file_path) {

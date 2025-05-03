@@ -54,7 +54,7 @@ void chromosome_chuck_make_bed(htsFile* &ptr_vcf, bcf_hdr_t* &hdr, bcf1_t* &rec,
 void chromosome_chuck_quantitative(htsFile* &ptr_vcf, bcf_hdr_t* &hdr, bcf1_t* &rec, 
     const std::vector<std::string> &list_samples,
     unordered_map<string, std::vector<std::tuple<string, vector<string>, size_t, size_t, vector<string>>>> &snarl_chr,
-    const std::vector<double>& quantitative_phenotype, std::unordered_map<std::string, std::vector<double>> covar,
+    const std::vector<double>& quantitative_phenotype, std::vector<std::vector<double>> covar,
     const double& maf, const KinshipMatrix& kinship, const size_t& num_threads, 
     const size_t& table_threshold, const std::string& dir_regression,
     const std::string& output_quantitive) {
@@ -124,7 +124,7 @@ void chromosome_chuck_quantitative(htsFile* &ptr_vcf, bcf_hdr_t* &hdr, bcf1_t* &
 void chromosome_chuck_binary(htsFile* &ptr_vcf, bcf_hdr_t* &hdr, bcf1_t* &rec, 
     const std::vector<std::string> &list_samples, 
     unordered_map<string, std::vector<std::tuple<string, vector<string>, size_t, size_t, vector<string>>>> &snarl_chr,
-    const std::vector<bool>& binary_pheno, std::unordered_map<std::string, std::vector<double>> covar, 
+    const std::vector<bool>& binary_pheno, std::vector<std::vector<double>> covar, 
     const double& maf, const KinshipMatrix& kinship, const size_t& num_threads, 
     const size_t& table_threshold, const std::string& dir_regression,
     const std::string& output_binary) {
@@ -494,7 +494,7 @@ std::vector<size_t> identify_correct_path(
 
 void SnarlParser::binary_table(const std::vector<std::tuple<std::string, std::vector<std::string>, size_t, size_t, std::vector<std::string>>>& snarls,
                                const std::vector<bool>& binary_phenotype, const std::string& chr,
-                               const std::unordered_map<std::string, std::vector<double>>& covar,
+                               const std::vector<std::vector<double>>& covar,
                                const double& maf, const KinshipMatrix& kinship, const size_t& num_threads, 
                                const size_t& table_threshold, const std::string& regression_dir, std::ofstream& outf) {
 
@@ -541,7 +541,8 @@ void SnarlParser::binary_table(const std::vector<std::tuple<std::string, std::ve
                     if (df_empty || df_filtration) {
                         // do nothing
                     } else if (kinship.empty()) { // logistic regression + covar
-                        logistic_regression(df, binary_phenotype, sampleNames, covar, p_value, beta, se, r2);
+                        logistic_regression(df, binary_phenotype, p_value, beta, se, r2);
+                        //glm_logistic_covar(df, binary_phenotype, covar, p_value, beta, se, r2);
                     } else { // lmm
                         lmm_binary(df, binary_phenotype, kinship, covar, p_value, beta, se, r2);
                     }
@@ -600,7 +601,7 @@ void SnarlParser::binary_table(const std::vector<std::tuple<std::string, std::ve
 // Quantitative Table Generation
 void SnarlParser::quantitative_table(const std::vector<std::tuple<string, vector<string>, size_t, size_t, vector<string>>>& snarls,
                                         const std::vector<double>& quantitative_phenotype, const string &chr,
-                                        const std::unordered_map<std::string, std::vector<double>>& covar,
+                                        const std::vector<std::vector<double>>& covar,
                                         const double& maf, const KinshipMatrix& kinship, const size_t& num_threads, 
                                         const size_t& table_threshold, const std::string& regression_dir, std::ofstream& outf) {
 

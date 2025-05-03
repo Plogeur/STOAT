@@ -20,8 +20,10 @@
 #include <vector>
 #include <unordered_map>
 #include <string>
-#include <Eigen/Dense>
 #include <cmath>
+#include <Eigen/Dense>
+#include <Eigen/Core>
+#include <boost/math/distributions/normal.hpp>
 
 using boost::multiprecision::cpp_dec_float_50;
 using boost::math::chi_squared_distribution;
@@ -41,149 +43,154 @@ using boost::math::chi_squared_distribution;
 static const double kExactTestEpsilon2 = 0.0000000000009094947017729282379150390625;
 static const double kExactTestBias = 0.00000000000000000000000010339757656912845935892608650874535669572651386260986328125;
 
-// ------------------------ Logistic regression + covariate test ------------------------
+// ------------------------ Logistic regression ------------------------
 
-double sigmoid(double x) {
+// Sigmoid function
+inline double sigmoid(double x) {
     return 1.0 / (1.0 + std::exp(-x));
 }
 
-// Compute mean-centered R² (McFadden's pseudo R²)
-double compute_r2(const Eigen::VectorXd& y, const Eigen::VectorXd& p_null, const Eigen::VectorXd& p_full) {
-    double ll_null = (y.array() * p_null.array().log() + (1.0 - y.array()) * (1.0 - p_null.array()).log()).sum();
-    double ll_full = (y.array() * p_full.array().log() + (1.0 - y.array()) * (1.0 - p_full.array()).log()).sum();
-    return 1.0 - (ll_full / ll_null);
+// Clamp helper
+inline double clamp(double x, double lo, double hi) {
+    return std::max(lo, std::min(hi, x));
 }
 
-// Simple Gaussian elimination to solve Ax = b
-std::vector<double> solve_linear_system(std::vector<std::vector<double>> A, std::vector<double> b) {
-    size_t n = A.size();
-
-    for (size_t i = 0; i < n; ++i) {
-        // Pivot
-        size_t max_row = i;
-        for (size_t k = i + 1; k < n; ++k) {
-            if (std::abs(A[k][i]) > std::abs(A[max_row][i])) {
-                max_row = k;
-            }
-        }
-        std::swap(A[i], A[max_row]);
-        std::swap(b[i], b[max_row]);
-
-        // Eliminate
-        for (size_t k = i + 1; k < n; ++k) {
-            double factor = A[k][i] / A[i][i];
-            for (size_t j = i; j < n; ++j) {
-                A[k][j] -= factor * A[i][j];
-            }
-            b[k] -= factor * b[i];
-        }
+// Log-likelihood
+double calculate_log_likelihood(const Eigen::VectorXd& y, const Eigen::VectorXd& p) {
+    double epsilon = 1e-8;
+    double ll = 0.0;
+    for (int i = 0; i < y.size(); ++i) {
+        double pi = clamp(p(i), epsilon, 1.0 - epsilon);
+        ll += y(i) * std::log(pi) + (1 - y(i)) * std::log(1 - pi);
     }
-
-    // Back substitution
-    std::vector<double> x(n, 0.0);
-    for (int i = n - 1; i >= 0; --i) {
-        x[i] = b[i];
-        for (size_t j = i + 1; j < n; ++j) {
-            x[i] -= A[i][j] * x[j];
-        }
-        x[i] /= A[i][i];
-    }
-    return x;
+    return ll;
 }
 
-// Logistic regression
-void logistic_regression_covar(
-    const std::vector<std::vector<size_t>>& variant_data,
+// Logistic regression function
+void logistic_regression(
+    const std::vector<std::vector<size_t>>& variants_data,
     const std::vector<bool>& phenotype,
-    const std::vector<double>& covariates,
-    std::string& p_value_str, std::string& beta_str, std::string& se_str, std::string& r2_str) {
+    std::string& p_value_out,    // LRT (global) p-value
+    std::string& beta_out,       // beta for first variant
+    std::string& se_out,         // SE for first variant
+    std::string& r2_out) {
 
-    const std::size_t n = phenotype.size();
-    const std::size_t num_paths = variant_data[0].size();
-    const std::size_t num_covs = covariates.size();
+    const int max_iterations = 100;
+    const double tolerance = 1e-6;
+    const double l2_penalty = 1e-4;
+    const double epsilon = 1e-8;
 
-    // Convert phenotype to Eigen vector
-    Eigen::VectorXd y(n);
-    for (std::size_t i = 0; i < n; ++i) {
+    size_t n_samples = variants_data.size();
+    size_t n_variants = variants_data[0].size();
+    size_t n_features = 1 + n_variants;
+
+    Eigen::MatrixXd X(n_samples, n_features);
+    Eigen::VectorXd y(n_samples);
+
+    // Intercept + variants
+    X.col(0).setOnes();
+    for (size_t i = 0; i < n_samples; ++i) {
+        for (size_t j = 0; j < n_variants; ++j) {
+            X(i, 1 + j) = static_cast<double>(variants_data[i][j]);
+        }
         y(i) = phenotype[i] ? 1.0 : 0.0;
     }
 
-    // Sum alleles over all paths per sample
-    Eigen::VectorXd snp(n);
-    for (std::size_t i = 0; i < n; ++i) {
-        double sum = 0.0;
-        for (std::size_t j = 0; j < num_paths; ++j) {
-            sum += static_cast<double>(variant_data[i][j]);
-        }
-        snp(i) = sum;
-    }
+    Eigen::VectorXd beta = Eigen::VectorXd::Zero(n_features);
+    Eigen::VectorXd p(n_samples);
+    Eigen::VectorXd weights(n_samples);
+    Eigen::VectorXd beta_old = beta;
 
-    // Build design matrix X: intercept + covariates + SNP
-    Eigen::MatrixXd X(n, num_covs + 2);
-    X.col(0) = Eigen::VectorXd::Ones(n); // intercept
-
-    std::size_t col = 1;
-    for (const auto& kv : covariates) {
-        const std::vector<double>& values = kv.second;
-        for (std::size_t i = 0; i < n; ++i) {
-            X(i, col) = values[i];
-        }
-        ++col;
-    }
-
-    X.col(col) = snp; // last column is SNP
-
-    Eigen::VectorXd beta = Eigen::VectorXd::Zero(X.cols());
-    const int max_iter = 25;
-    const double tol = 1e-6;
-
-    for (int iter = 0; iter < max_iter; ++iter) {
+    bool converged = false;
+    for (int iter = 0; iter < max_iterations; ++iter) {
         Eigen::VectorXd z = X * beta;
-        Eigen::VectorXd p = z.unaryExpr([](double val) { return sigmoid(val); });
-        Eigen::VectorXd W_diag = p.array() * (1.0 - p.array());
+        for (int i = 0; i < n_samples; ++i) {
+            p(i) = sigmoid(z(i));
+            weights(i) = clamp(p(i) * (1.0 - p(i)), epsilon, 1.0);
+        }
 
-        // Construct diagonal weight matrix
-        Eigen::MatrixXd W = W_diag.asDiagonal();
+        Eigen::MatrixXd X_weighted = X;
+        for (int i = 0; i < n_samples; ++i)
+            X_weighted.row(i) *= std::sqrt(weights(i));
 
-        // Compute gradient and Hessian
-        Eigen::VectorXd grad = X.transpose() * (y - p);
-        Eigen::MatrixXd H = X.transpose() * W * X;
+        Eigen::MatrixXd hessian = X_weighted.transpose() * X_weighted;
+        hessian += l2_penalty * Eigen::MatrixXd::Identity(n_features, n_features);
 
-        // Newton-Raphson update step
-        Eigen::VectorXd delta = H.ldlt().solve(grad);
+        Eigen::VectorXd gradient = X.transpose() * (y - p) - l2_penalty * beta;
+
+        Eigen::LDLT<Eigen::MatrixXd> ldlt(hessian);
+        if (ldlt.info() != Eigen::Success) {
+            std::cerr << "LDLT failed\n";
+            return;
+        }
+
+        Eigen::VectorXd delta = ldlt.solve(gradient);
         beta += delta;
 
-        if (delta.norm() < tol) break;
+        if ((beta - beta_old).norm() < tolerance) {
+            converged = true;
+            break;
+        }
+        beta_old = beta;
     }
 
-    // Extract SNP coefficient
-    double snp_beta = beta(beta.size() - 1);
+    if (!converged) {
+        std::cerr << "Logistic regression did not converge.\n";
+        return;
+    }
 
-    // Compute standard error from inverse Hessian
+    // Final probabilities & weights
     Eigen::VectorXd z_final = X * beta;
-    Eigen::VectorXd p_final = z_final.unaryExpr([](double val) { return sigmoid(val); });
-    Eigen::VectorXd W_diag_final = p_final.array() * (1.0 - p_final.array());
-    Eigen::MatrixXd W_final = W_diag_final.asDiagonal();
-    Eigen::MatrixXd H_final = X.transpose() * W_final * X;
+    for (int i = 0; i < n_samples; ++i) {
+        p(i) = sigmoid(z_final(i));
+        weights(i) = clamp(p(i) * (1.0 - p(i)), epsilon, 1.0);
+    }
 
-    double se = std::sqrt(H_final.inverse()(beta.size() - 1, beta.size() - 1));
+    // Covariance matrix
+    Eigen::MatrixXd X_weighted = X;
+    for (int i = 0; i < n_samples; ++i)
+        X_weighted.row(i) *= std::sqrt(weights(i));
 
-    // Compute z-score and p-value
-    double z_stat = snp_beta / se;
-    double pval = 2.0 * (1.0 - std::erf(std::abs(z_stat) / std::sqrt(2.0)));
+    Eigen::MatrixXd hessian = X_weighted.transpose() * X_weighted;
+    hessian += l2_penalty * Eigen::MatrixXd::Identity(n_features, n_features);
+    Eigen::MatrixXd cov = hessian.inverse();
+    Eigen::VectorXd se = cov.diagonal().array().sqrt();
 
-    // Compute pseudo-R²
-    Eigen::VectorXd p_null = Eigen::VectorXd::Constant(n, sigmoid(beta(0))); // intercept-only
-    Eigen::VectorXd p_full = p_final;
+    // --- Wald Test (for first variant)
+    size_t idx = 1; // first variant
+    double z = beta(idx) / se(idx);
+    boost::math::normal_distribution<> nd(0.0, 1.0);
+    double wald_pval = 2.0 * boost::math::cdf(boost::math::complement(nd, std::abs(z)));
 
-    double r2 = compute_r2(y, p_null, p_full);
+    // --- Log-likelihood ratio test (global)
+    double ll_full = calculate_log_likelihood(y, p);
+    double p_null_val = clamp(y.mean(), epsilon, 1.0 - epsilon);
+    Eigen::VectorXd p_null = Eigen::VectorXd::Constant(n_samples, p_null_val);
+    double ll_null = calculate_log_likelihood(y, p_null);
+    double llr_stat = 2.0 * (ll_full - ll_null);
 
-    // Set output strings
-    cout << "pval: " << pval << endl;
-    p_value_str = std::to_string(pval);
-    beta_str = std::to_string(snp_beta);
-    se_str = std::to_string(se);
-    r2_str = std::to_string(r2);
+    boost::math::chi_squared chi2(n_variants);
+    double llr_pval = boost::math::cdf(boost::math::complement(chi2, std::abs(llr_stat)));
+
+    // --- McFadden's R²
+    double r2 = 1.0 - (ll_full / ll_null);
+    r2 = clamp(r2, 0.0, 1.0);
+
+    // --- Outputs
+    // beta_out     = set_precision(beta.means());
+    // se_out       = set_precision(se.means());
+    p_value_out  = set_precision(llr_pval);   // global
+    r2_out       = set_precision(r2);
+}
+
+// GLM Implementation with Iteratively Reweighted Least Squares (IRLS)
+void glm_logistic_covar(
+    const std::vector<std::vector<size_t>>& variant_data,
+    const std::vector<bool>& phenotype,
+    const std::vector<std::vector<double>>& covariates,
+    std::string& p_value_str, std::string& beta_str, 
+    std::string& se_str, std::string& r2_str) {
+
 }
 
 // ------------------------ Chi2 test ------------------------

@@ -25,13 +25,15 @@
 void linear_regression(
     const std::vector<std::vector<size_t>>& df,
     const std::vector<double>& quantitative_phenotype,
-    std::string& p_value_str, std::string& beta_str, std::string& se_str, std::string& r2_str);
+    std::string& p_value_str, std::string& beta_str, 
+    std::string& se_str, std::string& r2_str);
 
 void glm_quantitative(
     const std::vector<std::vector<size_t>>& df,
     const std::vector<double>& quantitative_phenotype,
-    const std::unordered_map<std::string, std::vector<double>>& covar,
-    std::string& p_value_str, std::string& beta_str, std::string& se_str, std::string& r2_str);
+    const std::vector<std::vector<double>>& covar,
+    std::string& p_value_str, std::string& beta_str, 
+    std::string& se_str, std::string& r2_str);
 
 std::pair<std::vector<std::vector<size_t>>, size_t> create_quantitative_table(
     const size_t& length_sample,

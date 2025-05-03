@@ -32,5 +32,5 @@ if __name__ == "__main__":
     covariates.to_csv(args.out, sep="\t", index=False)
     print(f"Covariate file created successfully: {args.out}")
 
-# python3 covar.py --pheno ../data/binary/phenotype.tsv --sex 0 --cp1 25.215 --cp2 75.84 --cp3 45 --out ../data/binary/covariate.tsv
-# python3 covar.py --pheno ../data/quantitative/phenotype.tsv --sex 0 --cp1 1.25 --cp2 0.0045 --cp3 0.5 --out ../data/quantitative/covariate.tsv
+# python3 create_covar.py --pheno ../data/binary/phenotype.tsv --sex 0 --cp1 25.215 --cp2 75.84 --cp3 45 --out ../data/binary/covariate.tsv
+# python3 create_covar.py --pheno ../data/quantitative/phenotype.tsv --sex 0 --cp1 1.25 --cp2 0.0045 --cp3 0.5 --out ../data/quantitative/covariate.tsv

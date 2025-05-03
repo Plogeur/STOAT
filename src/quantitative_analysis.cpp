@@ -9,7 +9,8 @@ using namespace std;
 void linear_regression(
     const std::vector<std::vector<size_t>>& df,
     const std::vector<double>& quantitative_phenotype,
-    std::string& p_value_str, std::string& beta_str, std::string& se_str, std::string& r2_str) {
+    std::string& p_value_str, std::string& beta_str, 
+    std::string& se_str, std::string& r2_str) {
 
     size_t num_samples = df.size();
     size_t max_paths = df[0].size();
@@ -55,57 +56,9 @@ void linear_regression(
 void glm_quantitative(
     const std::vector<std::vector<size_t>>& df,
     const std::vector<double>& quantitative_phenotype,
-    const std::unordered_map<std::string, std::vector<double>>& covar,
-    std::string& p_value_str, std::string& beta_str, std::string& se_str, std::string& r2_str) 
-{
-    size_t num_samples = df.size();
-    size_t num_features = df[0].size();  // Assumes all rows have the same number of features
-    size_t num_covariates = covar.begin()->second.size();  // Assumes covariate vectors are same length
-
-    Eigen::MatrixXd X(num_samples, num_features + num_covariates);
-    Eigen::VectorXd y(num_samples);
-
-    for (size_t row = 0; row < num_samples; ++row) {
-        y(row) = quantitative_phenotype[row];
-
-        // Add features
-        for (size_t col = 0; col < num_features; ++col) {
-            X(row, col) = static_cast<double>(df[row][col]);
-        }
-
-        // Add covariates (assuming covariates are indexed in the same order as samples)
-        size_t i = 0;
-        for (const auto& [_, covariate_vector] : covar) {
-            X(row, num_features + i) = covariate_vector[row];
-            ++i;
-        }
-    }
-
-    Eigen::VectorXd beta = (X.transpose() * X).ldlt().solve(X.transpose() * y);
-    Eigen::VectorXd y_pred = X * beta;
-    Eigen::VectorXd residuals = y - y_pred;
-
-    double rss = residuals.squaredNorm();
-    double tss = (y.array() - y.mean()).matrix().squaredNorm();
-    double r2 = 1 - (rss / tss);
-
-    int df_reg = num_features + num_covariates - 1;
-    int df_res = num_samples - (num_features + num_covariates);
-    double mse = rss / df_res;
-
-    Eigen::MatrixXd cov_matrix = (X.transpose() * X).inverse();
-    Eigen::VectorXd se = (cov_matrix.diagonal() * mse).array().sqrt().matrix();
-
-    double f_stat = (r2 / df_reg) / ((1 - r2) / df_res);
-    boost::math::fisher_f dist(df_reg, df_res);
-    double p_value = boost::math::cdf(boost::math::complement(dist, std::abs(f_stat)));
-
-    // set precision : 4 digits
-    r2_str = set_precision(r2);
-    beta_str = set_precision(beta.mean());
-    se_str = set_precision(se.mean());
-    p_value_str = set_precision(p_value);
-
+    const std::vector<std::vector<double>>& covar,
+    std::string& p_value_str, std::string& beta_str, 
+    std::string& se_str, std::string& r2_str) {
 }
 
 // Function to create the quantitative table
@@ -135,6 +88,5 @@ std::pair<std::vector<std::vector<size_t>>, size_t> create_quantitative_table(
             allele_number++;
         }
     }
-    
     return {genotypes, allele_number};
 }

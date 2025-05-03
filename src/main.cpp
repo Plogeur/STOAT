@@ -228,27 +228,25 @@ int main(int argc, char* argv[]) {
         return EXIT_FAILURE;
     }
 
-    // Check phenotypes
     std::vector<std::string> list_samples;
+
     htsFile* ptr_vcf;
     bcf_hdr_t* hdr;
     bcf1_t* rec;
 
     if (!only_snarl_parsing) {
-        std::tie(list_samples, ptr_vcf, hdr, rec) = parseHeader(vcf_path);    
+        std::tie(list_samples, ptr_vcf, hdr, rec) = parseHeader(vcf_path); 
     }
-
 
     std::vector<bool> binary;
     std::vector<double> quantitative;
-    std::unordered_map<std::string, std::vector<double>> eqtl;
-    std::unordered_map<std::string, std::tuple<std::string, int, int>> gene_position;
-    std::unordered_map<std::string, std::vector<double>> covariate;
+    std::vector<std::vector<double>> eqtl;
+    std::vector<std::tuple<size_t, size_t>> gene_position;
+    vector<std::string> list_gene;
+    std::vector<std::vector<double>> covariate;
 
     if (!covariate_path.empty()) {
-        check_format_covariate(covariate_path);
-        covariate = parse_covariates(covariate_path, covar_names);
-        check_match_samples(covariate, list_samples);
+        covariate = parse_covariates(covariate_path, covar_names, list_samples);
     }
 
     if (!binary_path.empty()) {
@@ -258,10 +256,7 @@ int main(int argc, char* argv[]) {
         quantitative = parse_quantitative_pheno(quantitative_path, list_samples);
 
     } else if (!eqtl_path.empty() && !gene_position_path.empty()) {
-        eqtl = parse_qtl_file(eqtl_path);
-        gene_position = parse_gene_positions(gene_position_path);
-        check_match_samples(eqtl, list_samples);
-        check_match_samples(gene_position, list_samples);
+        auto [eqtl, gene_position, list_gene] = parse_qtl_gene_file(eqtl_path, gene_position_path, list_samples);
     }
 
     KinshipMatrix kinship;
@@ -327,7 +322,7 @@ int main(int argc, char* argv[]) {
         chromosome_chuck_binary(ptr_vcf, hdr, rec, list_samples, snarls_chr, binary, covariate, maf, kinship, num_threads, table_threshold, dir_regression, output_binary);
 
         string output_significative = output_dir + "/top_variant_binary.tsv";
-        string phenotype_type = "binary";
+        string phenotype_type = covariate.empty() ? "binary" : "quantitative";
         add_BH_adjusted_column(output_binary, output_significative, phenotype_type);
 
         if (gaf) {

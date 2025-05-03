@@ -12,8 +12,10 @@
 #include <iomanip>
 #include <sstream>
 #include <Eigen/Dense>
+#include <Eigen/Core>
 #include <boost/math/distributions/chi_squared.hpp>
 #include <boost/math/distributions/hypergeometric.hpp>
+#include <boost/math/distributions/normal.hpp>
 #include <boost/multiprecision/cpp_dec_float.hpp>
 
 #include "matrix.hpp"
@@ -22,16 +24,21 @@
 
 // ------------------------ Logistic regression ------------------------
 
-double sigmoid(double z);
-double compute_r2(const Eigen::VectorXd& y, const Eigen::VectorXd& p_null, const Eigen::VectorXd& p_full);
+void logistic_regression(
+    const std::vector<std::vector<size_t>>& variants_data,
+    const std::vector<bool>& phenotype,
+    std::string& p_value_out,
+    std::string& beta_out,
+    std::string& se_out,
+    std::string& r2_out);
 
-void logistic_regression_covar(
+void glm_logistic_covar(
     const std::vector<std::vector<size_t>>& variant_data,
     const std::vector<bool>& phenotype,
-    const std::vector<string>& list_samples,
-    const std::unordered_map<std::string, std::vector<double>>& covariates,
-    std::string& p_value_str, std::string& beta_str, std::string& se_str, std::string& r2_str);
-
+    const std::vector<std::vector<double>>& covariates,
+    std::string& p_value_str, std::string& beta_str, 
+    std::string& se_str, std::string& r2_str);
+    
 // ------------------------ Chi2 test ------------------------
 
 // Function to perform the Chi-square test on row size > 2 

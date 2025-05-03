@@ -39,18 +39,26 @@ struct KinshipMatrix {
 };
 
 KinshipMatrix parseKinshipMatrix(const std::string& filename);
-std::unordered_map<std::string, std::vector<double>> parse_qtl_file(const std::string& filename);
-std::unordered_map<std::string, std::tuple<std::string, int, int>> parse_gene_positions(const std::string& filename);
 
-void check_qtl_gene_position(const std::unordered_map<std::string, std::vector<double>>& qtl, const std::unordered_map<std::string, std::tuple<std::string, int, int>>& gene_position);
+std::unordered_map<std::string, std::vector<double>> parse_qtl_file(
+    const std::string& filename, const vector<std::string>& list_samples);
+
+std::unordered_map<std::string, std::tuple<std::string, size_t, size_t>> parse_gene_positions(
+    const std::string& filename);
+
 void check_format_covariate(const std::string& filename);
 
-template <typename T>
-void check_phenotype_covariate(const std::unordered_map<std::string, T>& phenotype, 
-    const std::unordered_map<std::string, std::vector<double>>& covariates);
+std::tuple<std::vector<std::vector<double>>, 
+std::vector<std::tuple<string, size_t, size_t>>, 
+std::vector<std::string>> parse_qtl_gene_file(
+    const std::string& eqtl_path, 
+    const std::string& gene_position_path, 
+    const std::vector<std::string>& list_samples);
 
-std::unordered_map<std::string, std::vector<double>> parse_covariates(
-    const std::string& filename, const std::vector<std::string>& covar_names);
+std::vector<std::vector<double>> parse_covariates(
+    const std::string& filename, 
+    const std::vector<std::string>& covar_names,
+    const std::vector<std::string>& list_samples);
 
 // Parses the group file and fills the group_0 and group_1 maps with sample data.
 std::vector<bool> parse_binary_pheno(
