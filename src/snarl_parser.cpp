@@ -532,7 +532,7 @@ void SnarlParser::binary_table(const std::vector<std::tuple<std::string, std::ve
                     if (allele_number < 2) {
                         df_empty = true;
                     } else {
-                        // df_filtration = check_MAF_threshold_quantitative(df, maf); // TODO error correct 
+                        df_filtration = check_MAF_threshold_quantitative(df, maf);
                     }
                     
                     std::string p_value = "NA", beta = "NA", se = "NA", r2 = "NA";
@@ -629,7 +629,7 @@ void SnarlParser::quantitative_table(const std::vector<std::tuple<string, vector
                 if (allele_number < 2) {
                     df_empty = true;
                 } else {
-                    // df_filtration = check_MAF_threshold_quantitative(df, maf); //error correct
+                    df_filtration = check_MAF_threshold_quantitative(df, maf); // error correct
                 }
 
                 // make a string separated by ',' from a vector of string
@@ -678,27 +678,28 @@ void SnarlParser::quantitative_table(const std::vector<std::tuple<string, vector
     }
 }
 
-bool check_MAF_threshold_quantitative(const std::unordered_map<std::string, std::vector<size_t>>& df, const double& maf) {    
+bool check_MAF_threshold_quantitative(const std::vector<std::vector<size_t>>& df, const double& maf) {    
+    
     int totalSum = 0;
-    size_t numPaths = df.begin()->second.size(); // Get the number of paths from the first element
+    size_t numPaths = df[0].size(); // Get the number of paths from the first element
     std::vector<int> table(numPaths, 0); // Initialize vector with the correct size
 
     // Compute total sum of all elements in the matrix
-    for (const auto& [key, paths] : df) {
-        for (size_t i = 0; i < paths.size(); i++) {
-            table[i] += paths[i];
-            totalSum += paths[i];
+    for (const auto& vector : df) {
+        for (size_t i = 0; i < vector.size(); i++) {
+            table[i] += vector[i];
+            totalSum += vector[i];
         }
     }
-    
+
     // Check if any column's sum proportion exceeds the threshold
     for (int val : table) {
         if (static_cast<double>(val) / totalSum >= maf) {
-            return false; // If any value exceeds the threshold, return false
+            return true; // If any value exceeds the threshold, return false
         }
     }
-    
-    return true; // If all values are within the threshold, return true
+
+    return false; // If all values are within the threshold, return true
 }
 
 std::unordered_map<std::string, std::vector<double>> convertBinaryGroups(

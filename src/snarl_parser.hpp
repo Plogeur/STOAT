@@ -56,7 +56,7 @@ public:
 //     unordered_map<string, std::vector<std::tuple<string, vector<string>, string, vector<string>>>> &snarl_chr,
 //     const std::unordered_map<std::string, std::vector<double>>& eqtl_pheno, std::ofstream& outf);
 
-bool check_MAF_threshold_quantitative(const std::unordered_map<std::string, std::vector<size_t>>& df, const double& maf);
+bool check_MAF_threshold_quantitative(const std::vector<std::vector<size_t>>& df, const double& maf);
 
 void chromosome_chuck_binary(htsFile* &ptr_vcf, bcf_hdr_t* &hdr, bcf1_t* &rec, 
     const std::vector<std::string> &list_samples, 
