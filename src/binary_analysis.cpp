@@ -82,19 +82,134 @@ void logistic_regression(
 
     size_t n_samples = variants_data.size();
     size_t n_variants = variants_data[0].size();
-    size_t n_features = 1 + n_variants;
 
-    Eigen::MatrixXd X(n_samples, n_features);
+    Eigen::MatrixXd X(n_samples, n_variants);
     Eigen::VectorXd y(n_samples);
 
-    // Intercept + variants
-    X.col(0).setOnes();
     for (size_t i = 0; i < n_samples; ++i) {
         for (size_t j = 0; j < n_variants; ++j) {
-            X(i, 1 + j) = static_cast<double>(variants_data[i][j]);
+            X(i, j) = static_cast<double>(variants_data[i][j]);
         }
         y(i) = phenotype[i] ? 1.0 : 0.0;
     }
+
+    Eigen::VectorXd beta = Eigen::VectorXd::Zero(n_variants);
+    Eigen::VectorXd p(n_samples);
+    Eigen::VectorXd weights(n_samples);
+    Eigen::VectorXd beta_old = beta;
+
+    bool converged = false;
+    for (int iter = 0; iter < max_iterations; ++iter) {
+        Eigen::VectorXd z = X * beta;
+        for (int i = 0; i < n_samples; ++i) {
+            p(i) = sigmoid(z(i));
+            weights(i) = clamp(p(i) * (1.0 - p(i)), epsilon, 1.0);
+        }
+
+        Eigen::MatrixXd X_weighted = X;
+        for (int i = 0; i < n_samples; ++i)
+            X_weighted.row(i) *= std::sqrt(weights(i));
+
+        Eigen::MatrixXd hessian = X_weighted.transpose() * X_weighted;
+        hessian += l2_penalty * Eigen::MatrixXd::Identity(n_variants, n_variants);
+
+        Eigen::VectorXd gradient = X.transpose() * (y - p) - l2_penalty * beta;
+
+        Eigen::LDLT<Eigen::MatrixXd> ldlt(hessian);
+        if (ldlt.info() != Eigen::Success) {
+            return;
+        }
+
+        Eigen::VectorXd delta = ldlt.solve(gradient);
+        beta += delta;
+
+        if ((beta - beta_old).norm() < tolerance) {
+            converged = true;
+            break;
+        }
+        beta_old = beta;
+    }
+
+    if (!converged) {
+        return;
+    }
+
+    // Final probabilities & weights
+    Eigen::VectorXd z_final = X * beta;
+    for (int i = 0; i < n_samples; ++i) {
+        p(i) = sigmoid(z_final(i));
+        weights(i) = clamp(p(i) * (1.0 - p(i)), epsilon, 1.0);
+    }
+
+    // Covariance matrix
+    Eigen::MatrixXd X_weighted = X;
+    for (int i = 0; i < n_samples; ++i)
+        X_weighted.row(i) *= std::sqrt(weights(i));
+
+    Eigen::MatrixXd hessian = X_weighted.transpose() * X_weighted;
+    hessian += l2_penalty * Eigen::MatrixXd::Identity(n_variants, n_variants);
+    Eigen::MatrixXd cov = hessian.inverse();
+    Eigen::VectorXd se = cov.diagonal().array().sqrt();
+
+    // --- Wald Test (for first variant)
+    size_t idx = 1; // first variant
+    double z = beta(idx) / se(idx);
+    boost::math::normal_distribution<> nd(0.0, 1.0);
+    double wald_pval = 2.0 * boost::math::cdf(boost::math::complement(nd, std::abs(z)));
+
+    // --- Log-likelihood ratio test (global)
+    double ll_full = calculate_log_likelihood(y, p);
+    double p_null_val = clamp(y.mean(), epsilon, 1.0 - epsilon);
+    Eigen::VectorXd p_null = Eigen::VectorXd::Constant(n_samples, p_null_val);
+    double ll_null = calculate_log_likelihood(y, p_null);
+    double llr_stat = 2.0 * (ll_full - ll_null);
+
+    boost::math::chi_squared chi2(n_variants);
+    double llr_pval = boost::math::cdf(boost::math::complement(chi2, std::abs(llr_stat)));
+
+    // --- McFadden's R²
+    double r2 = 1.0 - (ll_full / ll_null);
+    r2 = clamp(r2, 0.0, 1.0);
+
+    // --- Outputs
+    beta_out     = set_precision(beta.mean());
+    se_out       = set_precision(se.mean());
+    p_value_out  = set_precision(llr_pval);
+    r2_out       = set_precision(r2);
+}
+
+// GLM Implementation with Iteratively Reweighted Least Squares (IRLS)
+void glm_logistic_covar(
+    const std::vector<std::vector<size_t>>& variant_data,
+    const std::vector<bool>& phenotype,
+    const std::vector<std::vector<double>>& covariates,
+    std::string& p_value_str, std::string& beta_str, 
+    std::string& se_str, std::string& r2_str) {
+
+    const int max_iterations = 100;
+    const double tolerance = 1e-6;
+    const double l2_penalty = 1e-4;
+    const double epsilon = 1e-8;
+
+    size_t n_samples = variant_data.size();
+    size_t n_variants = variant_data[0].size();
+    size_t n_covariates = covariates[0].size();
+    size_t n_features = n_variants + n_covariates;
+    
+    Eigen::MatrixXd X(n_samples, n_features);
+    Eigen::VectorXd y(n_samples);
+    
+    for (size_t i = 0; i < n_samples; ++i) {
+        size_t col = 0;
+        for (size_t j = 0; j < n_variants; ++j) {
+            X(i, col++) = static_cast<double>(variant_data[i][j]);
+        }
+        for (size_t j = 0; j < n_covariates; ++j) {
+            X(i, col++) = covariates[i][j];
+        }
+        y(i) = phenotype[i] ? 1.0 : 0.0;
+    }
+    
 
     Eigen::VectorXd beta = Eigen::VectorXd::Zero(n_features);
     Eigen::VectorXd p(n_samples);
@@ -120,7 +235,6 @@ void logistic_regression(
 
         Eigen::LDLT<Eigen::MatrixXd> ldlt(hessian);
         if (ldlt.info() != Eigen::Success) {
-            std::cerr << "LDLT failed\n";
             return;
         }
 
@@ -135,7 +249,6 @@ void logistic_regression(
     }
 
     if (!converged) {
-        std::cerr << "Logistic regression did not converge.\n";
         return;
     }
 
@@ -177,21 +290,12 @@ void logistic_regression(
     r2 = clamp(r2, 0.0, 1.0);
 
     // --- Outputs
-    // beta_out     = set_precision(beta.means());
-    // se_out       = set_precision(se.means());
-    p_value_out  = set_precision(llr_pval);   // global
-    r2_out       = set_precision(r2);
+    beta_str     = set_precision(beta.mean());
+    se_str       = set_precision(se.mean());
+    p_value_str  = set_precision(llr_pval);
+    r2_str       = set_precision(r2);
 }
 
-// GLM Implementation with Iteratively Reweighted Least Squares (IRLS)
-void glm_logistic_covar(
-    const std::vector<std::vector<size_t>>& variant_data,
-    const std::vector<bool>& phenotype,
-    const std::vector<std::vector<double>>& covariates,
-    std::string& p_value_str, std::string& beta_str, 
-    std::string& se_str, std::string& r2_str) {
-
-}
 
 // ------------------------ Chi2 test ------------------------
 

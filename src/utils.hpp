@@ -30,6 +30,7 @@ double string_to_pvalue(const std::string& p1);
 void writeSignificantTableToTSV(
     const std::vector<std::vector<size_t>>& table,
     const std::vector<std::string>& list_snarl,
+    const std::vector<std::string>& list_samples,
     const std::string& filename);
 
 bool isPValueSignificant(size_t numDigits, const std::string& pvalue_str);

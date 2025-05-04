@@ -541,8 +541,8 @@ void SnarlParser::binary_table(const std::vector<std::tuple<std::string, std::ve
                     if (df_empty || df_filtration) {
                         // do nothing
                     } else if (kinship.empty()) { // logistic regression + covar
-                        logistic_regression(df, binary_phenotype, p_value, beta, se, r2);
-                        //glm_logistic_covar(df, binary_phenotype, covar, p_value, beta, se, r2);
+                        // logistic_regression(df, binary_phenotype, p_value, beta, se, r2);
+                        glm_logistic_covar(df, binary_phenotype, covar, p_value, beta, se, r2);
                     } else { // lmm
                         lmm_binary(df, binary_phenotype, kinship, covar, p_value, beta, se, r2);
                     }
@@ -550,7 +550,7 @@ void SnarlParser::binary_table(const std::vector<std::tuple<std::string, std::ve
                     // Plot regression table  for boxplot visualization
                     if (table_threshold > 0 && isPValueSignificant(table_threshold, p_value)) {
                         string variant_file_name = regression_dir + "/" + snarl + ".tsv";
-                        writeSignificantTableToTSV(df, list_snarl, variant_file_name);
+                        writeSignificantTableToTSV(df, list_snarl, sampleNames, variant_file_name);
                     }
     
                     // chr, pos, snarl, type, p_value, p_adjusted, t-dist, beta, se, allele_number
@@ -656,7 +656,7 @@ void SnarlParser::quantitative_table(const std::vector<std::tuple<string, vector
                 
                 if (table_threshold > 0 && isPValueSignificant(table_threshold, p_value)) {
                     string variant_file_name = regression_dir + "/" + snarl + ".tsv";
-                    writeSignificantTableToTSV(df, list_snarl, variant_file_name);
+                    writeSignificantTableToTSV(df, list_snarl, sampleNames, variant_file_name);
                 }
 
                 // chr, pos, snarl, type, p_value, p_adjusted, r2, beta, se, allele_number

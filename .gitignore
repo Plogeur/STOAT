@@ -15,3 +15,4 @@ tests/unittest/test_stats.py
 .vscode/settings.json
 logistic_reg/logistic_regression.cpp
 logistic_reg/README
+.Rproj.user
