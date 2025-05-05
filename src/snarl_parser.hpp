@@ -106,7 +106,4 @@ std::vector<std::vector<size_t>> transpose_matrix(const std::vector<std::vector<
 
 void find_two_largest_indices(const std::vector<size_t>& vec, size_t& major_index_1, size_t& major_index_2);
 
-std::unordered_map<std::string, std::vector<double>> convertBinaryGroups(
-                                        const std::unordered_map<std::string, bool>& binary_phenotype);
-
 #endif
