@@ -48,7 +48,7 @@ void print_help() {
               << "  --gene-position <path>      Path to the Gene position file (.txt or .tsv)\n"
               << "  -k, --kinship <path>        Path to the kinship matrix file (.txt or .tsv)\n"
               << "  --make-bed                  Create a plink format files (.bed, .bim, .fam)\n"
-              << "  --table-threshold <int>     The N p-value digits threshold to use for plotting regression data file (exemple : 5 <=> 10-5, defauld 0 : disable)\n"
+              << "  --table-threshold <int>     The p-value threshold for regression data file (exemple : 5 <=> 10-5, defauld 0 : disable)\n"
               << "  --maf                       Add a maf (Minimum allele frequency) thresold (defauld : 0.01)\n"
               << "  -o, --output <name>         Output dir name\n"
               << "  -t, --thread <int>          Number of threads\n"
@@ -64,7 +64,7 @@ int main(int argc, char* argv[]) {
 
     size_t num_threads=1;
     size_t phenotype=0;
-    size_t table_threshold = 0;
+    double table_threshold = 0;
     size_t children_threshold = 50;
     size_t path_length_threshold = 10000;
     std::vector<std::string> covar_names;
@@ -148,8 +148,8 @@ int main(int argc, char* argv[]) {
         } else if ((arg == "--table-threshold") && i + 1 < argc) {
             // convert str to int and verify that it is a positive number
             table_threshold = std::stoi(argv[++i]);
-            if (table_threshold < 1) {
-                std::cerr << "Error: Number of pvalue threshold for the table threshold must be a positive integer\n";
+            if (table_threshold < 0) {
+                std::cerr << "Error: Pvalue threshold for table threshold must be a positive integer\n";
                 return EXIT_FAILURE;
             }
         } else if ((arg == "--maf") && i + 1 < argc) {

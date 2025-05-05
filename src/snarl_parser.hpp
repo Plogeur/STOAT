@@ -37,13 +37,13 @@ public:
         const std::vector<bool>& binary_phenotype, const std::string& chr,
         const std::vector<std::vector<double>>& covar,
         const double& maf, const KinshipMatrix& kinship, const size_t& num_threads, 
-        const size_t& table_threshold, const std::string& output_dir, std::ofstream& outf);
+        const double& table_threshold, const std::string& output_dir, std::ofstream& outf);
 
     void quantitative_table(const std::vector<std::tuple<string, vector<string>, size_t, size_t, vector<string>>>& snarls,
                             const std::vector<double>& quantitative_phenotype, const string &chr,
                             const std::vector<std::vector<double>>& covar,
                             const double& maf, const KinshipMatrix& kinship, const size_t& num_threads, 
-                            const size_t& table_threshold, const std::string& output_dir, std::ofstream& outf);
+                            const double& table_threshold, const std::string& output_dir, std::ofstream& outf);
 
     void create_bim_bed(const std::vector<std::tuple<string, vector<string>, size_t, size_t, vector<string>>>& snarls, 
         string chromosome, std::ofstream& outbim, std::ofstream& outbed);
@@ -63,7 +63,7 @@ void chromosome_chuck_binary(htsFile* &ptr_vcf, bcf_hdr_t* &hdr, bcf1_t* &rec,
     unordered_map<string, std::vector<std::tuple<string, vector<string>, size_t, size_t, vector<string>>>> &snarl_chr,
     const std::vector<bool>& pheno, std::vector<std::vector<double>> covar, 
     const double& maf, const KinshipMatrix& kinship, 
-    const size_t& num_threads, const size_t& table_threshold, 
+    const size_t& num_threads, const double& table_threshold, 
     const std::string& dir_regression, const std::string& output_binary);
 
 void chromosome_chuck_quantitative(htsFile* &ptr_vcf, bcf_hdr_t* &hdr, bcf1_t* &rec, 
@@ -71,7 +71,7 @@ void chromosome_chuck_quantitative(htsFile* &ptr_vcf, bcf_hdr_t* &hdr, bcf1_t* &
     unordered_map<string, std::vector<std::tuple<string, vector<string>, size_t, size_t, vector<string>>>> &snarl_chr,
     const vector<double>& pheno, std::vector<std::vector<double>> covar,
     const double& maf, const KinshipMatrix& kinship, 
-    const size_t& num_threads, const size_t& table_threshold, 
+    const size_t& num_threads, const double& table_threshold, 
     const std::string& dir_regression, const std::string& output_quantitative);
 
 void chromosome_chuck_make_bed(htsFile* &ptr_vcf, bcf_hdr_t* &hdr, bcf1_t* &rec, 

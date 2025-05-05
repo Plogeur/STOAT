@@ -65,7 +65,7 @@ double string_to_pvalue(const std::string& p1) {
 }
 
 // Function to check significance from a string
-bool isPValueSignificant(size_t numDigits, const std::string& pvalue_str) {
+bool isPValueSignificant(double pvalue_threshold, const std::string& pvalue_str) {
     double pvalue;
     try {
         if (pvalue_str == "NA") {
@@ -77,9 +77,7 @@ bool isPValueSignificant(size_t numDigits, const std::string& pvalue_str) {
         std::cerr << "Error parsing pvalue string : " << pvalue_str << " " << e.what() << "\n";
         return false;
     }
-
-    double threshold = std::pow(10.0, -static_cast<int>(numDigits));
-    return pvalue < threshold;
+    return pvalue < pvalue_threshold;
 }
 
 // Write the table to a TSV file

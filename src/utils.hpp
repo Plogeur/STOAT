@@ -33,6 +33,6 @@ void writeSignificantTableToTSV(
     const std::vector<std::string>& list_samples,
     const std::string& filename);
 
-bool isPValueSignificant(size_t numDigits, const std::string& pvalue_str);
+bool isPValueSignificant(double pvalue_threshold, const std::string& pvalue_str);
 
 #endif
