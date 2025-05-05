@@ -364,6 +364,9 @@ int main(int argc, char* argv[]) {
 // QUANTITATIVE
 // ./stoat_cxx -p ../data/quantitative/pg.pg -d ../data/quantitative/pg.dist -v ../data/quantitative/merged_output.vcf.gz -q ../data/quantitative/phenotype.tsv --output ../output
 
+// TEST
+// ./stoat_cxx -p ../tests/graph_test/3th_snp.pg -d ../tests/graph_test/3th_snp.dist --output ../output
+
 // BINARY-PLINK
 // ./stoat_cxx -p ../data/binary/pg.pg -d ../data/binary/pg.dist -v ../data/binary/merged_output.vcf.gz --make-bed --output ../output
 

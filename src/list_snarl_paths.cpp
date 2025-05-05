@@ -91,42 +91,34 @@ size_t Path::nreversed() const {
 // Function to calculate the type of variant
 // tuple<string, size_t, size_t, size_t>
 // seq_net, minimum_distance, maximun_distance, size_path
-pair<vector<string>, size_t> calcul_pos_type_variant(const vector<tuple<string, size_t, size_t, size_t>>& list_length_paths) {
+vector<string> calcul_pos_type_variant(const vector<tuple<string, size_t, size_t, size_t>>& list_length_paths) {
     vector<string> list_type_variant;
-    size_t padding = 0;
-    bool just_snp = true;
 
     for (const auto& tuple_info : list_length_paths) {
         size_t path_length = std::get<3>(tuple_info);
         if (path_length > 3) { // Case complex
             string complex = "CPX:"+ to_string(std::get<1>(tuple_info)) + "/" + to_string(std::get<2>(tuple_info));
             list_type_variant.push_back(complex); // COMPLEX
-            just_snp = false;
 
         } else if (path_length == 3) { // Case simple path len 3
             string seq = std::get<0>(tuple_info);
             size_t seq_length = seq.length();
             if (seq_length > 1) { // case INSERTION
                 list_type_variant.push_back(to_string(seq_length));
-                just_snp = false;
             } else if (seq_length == 1) { // case SNP
                 list_type_variant.push_back(seq); // add seq str SNP
             } else { // Case path_lengths is empty
                 cerr << "error in seq type : " << seq << endl;
             }
-        
+
         } else if (path_length == 2) { // case Deletion
             list_type_variant.push_back("0");
-            just_snp = false;
         } else { // Case path_lengths is empty
             cerr << "path_lengths is empty" << endl;
         }
     }
 
-    // add +1 in pos for just SNP present in snarl
-    if (just_snp) {padding = 1;}
-
-    return {list_type_variant, padding};
+    return list_type_variant;
 }
 
 string find_snarl_id(SnarlDistanceIndex& stree, net_handle_t& snarl) {
@@ -308,7 +300,7 @@ vector<tuple<net_handle_t, string, size_t, size_t, bool>> save_snarls(
     return snarls;
 }
 
-tuple<vector<string>, vector<string>, size_t> fill_pretty_paths(
+tuple<vector<string>, vector<string>> fill_pretty_paths(
     SnarlDistanceIndex& stree, 
     PackedGraph& pg, 
     vector<vector<net_handle_t>>& finished_paths) {
@@ -402,8 +394,8 @@ tuple<vector<string>, vector<string>, size_t> fill_pretty_paths(
     }
 
     // pair<vector<string>, size_t>
-    auto [type_variants, length_first_variant] = calcul_pos_type_variant(seq_net_paths);
-    return std::make_tuple(pretty_paths, type_variants, length_first_variant);
+    vector<string> type_variants = calcul_pos_type_variant(seq_net_paths);
+    return std::make_tuple(pretty_paths, type_variants);
 }
 
 // {chr : matrix(snarl, paths, start_pos, end_pos, type)}
@@ -465,7 +457,7 @@ std::unordered_map<std::string, std::vector<std::tuple<string, vector<string>, s
 
         if (not_break) {
             // pair<vector<string>, vector<string>>
-            auto [pretty_paths, type_variants, padding] = fill_pretty_paths(stree, pg, finished_paths);
+            auto [pretty_paths, type_variants] = fill_pretty_paths(stree, pg, finished_paths);
             std::ostringstream pretty_paths_stream, type_variants_stream;
 
             // Convert pretty_paths (vector<string>) into a comma-separated string
@@ -481,7 +473,7 @@ std::unordered_map<std::string, std::vector<std::tuple<string, vector<string>, s
 
             // snarl_id chromosome   start_position  end_position    paths    type
             string chr = std::get<1>(snarl_path_pos);
-            size_t strat_pos = std::get<2>(snarl_path_pos)+padding;
+            size_t strat_pos = std::get<2>(snarl_path_pos);
             size_t end_pos = std::get<3>(snarl_path_pos);
             paths_number_analysis += pretty_paths.size();
             string str_reference = std::get<4>(snarl_path_pos) == true ? "0" : "1"; // 0 : on, 1 : out

@@ -701,22 +701,3 @@ bool check_MAF_threshold_quantitative(const std::vector<std::vector<size_t>>& df
 
     return false; // If all values are within the threshold, return true
 }
-
-std::unordered_map<std::string, std::vector<double>> convertBinaryGroups(
-    const std::unordered_map<std::string, bool>& binary_phenotype) {
-
-    std::unordered_map<std::string, std::vector<double>> converted_map;
-
-    for (const auto& entry : binary_phenotype) {
-        const std::string& sample_id = entry.first;
-        bool group_value = entry.second;
-
-        // Convert the binary value (bool) to a vector of double (1.0 or 0.0)
-        std::vector<double> group_vector = {group_value ? 1.0 : 0.0};
-
-        // Store the converted vector in the result map
-        converted_map[sample_id] = group_vector;
-    }
-
-    return converted_map;
-}

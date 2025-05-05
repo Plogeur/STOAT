@@ -63,7 +63,7 @@ std::tuple<std::unique_ptr<bdsg::SnarlDistanceIndex>,
 parse_graph_tree(const std::string& pg_file, const std::string& dist_file);
 
 // Function to calculate the type of variant
-pair<vector<string>, size_t> calcul_pos_type_variant(const vector<tuple<string, size_t, size_t, size_t>>& list_length_paths);
+vector<string> calcul_pos_type_variant(const vector<tuple<string, size_t, size_t, size_t>>& list_length_paths);
 
 // Function to find snarl ID
 string find_snarl_id(SnarlDistanceIndex& stree, net_handle_t& snarl);
@@ -86,7 +86,7 @@ vector<tuple<net_handle_t, string, size_t, size_t, bool>> save_snarls(
                             PackedPositionOverlay& ppo);
 
 // Function to fill pretty paths
-tuple<vector<string>, vector<string>, size_t> fill_pretty_paths(
+tuple<vector<string>, vector<string>> fill_pretty_paths(
                             SnarlDistanceIndex& stree, 
                             PackedGraph& pg, 
                             vector<vector<net_handle_t>>& finished_paths);
