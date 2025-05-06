@@ -336,11 +336,11 @@ std::unordered_map<std::string, std::tuple<std::string, size_t, size_t>> parse_g
         if (line.empty()) continue;
 
         std::stringstream ss(line);
-        std::string chrom, startStr, endStr, gene;
-        std::getline(ss, chrom, '\t');
+        std::string gene, startStr, endStr, chrom;
+        std::getline(ss, gene, '\t');
         std::getline(ss, startStr, '\t');
         std::getline(ss, endStr, '\t');
-        std::getline(ss, gene, '\t');
+        std::getline(ss, chrom, '\t');
 
         try {
             int start = std::stoi(startStr);
