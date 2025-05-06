@@ -135,21 +135,49 @@ def create_insert_deletion_graph(filename="insert_deletion.hg") :
 def create_loop_graph(filename="loop.hg") :
 
     gr = HashGraph()
-    seqs = ["TTTT", "AAAA", "AT", "CA", "T", "GT", "AAAA", "TTTT"]
+    seqs = ["TTTT", "AAAA", "A", "CG","AAAA", "TTTT"]
+    nodes = [gr.create_handle(s) for s in seqs]
+
+    gr.create_edge(nodes[0], nodes[1])
+    gr.create_edge(nodes[1], nodes[2])
+    gr.create_edge(nodes[1], nodes[3])
+    gr.create_edge(nodes[2], nodes[1])
+    gr.create_edge(nodes[2], nodes[4])
+    gr.create_edge(nodes[3], nodes[4])
+    gr.create_edge(nodes[4], nodes[5])
+
+    path = gr.create_path_handle("ref")
+    for idx in [0, 1, 2, 4, 5]:
+        gr.append_step(path, nodes[idx])
+
+    path2 = gr.create_path_handle("alt")
+    for idx in [0, 1, 3, 4, 5]:
+        gr.append_step(path2, nodes[idx])
+
+    gr.serialize(filename)
+    vg_process(filename)
+    vg_view(filename, 8)
+    print("loop graph created")
+
+def create_loop_plus_graph(filename="loop_plus.hg") :
+
+    gr = HashGraph()
+    seqs = ["TTTT", "AAAA", "AT", "A", "G", "CG", "AAAA", "TTTT"]
     nodes = [gr.create_handle(s) for s in seqs]
 
     gr.create_edge(nodes[0], nodes[1])
     gr.create_edge(nodes[1], nodes[2])
     gr.create_edge(nodes[2], nodes[3])
     gr.create_edge(nodes[2], nodes[4])
+    gr.create_edge(nodes[3], nodes[2])
     gr.create_edge(nodes[3], nodes[5])
     gr.create_edge(nodes[4], nodes[5])
-    gr.create_edge(nodes[3], nodes[2]) # end 2 begin 1
     gr.create_edge(nodes[5], nodes[6])
+    gr.create_edge(nodes[1], nodes[6])
     gr.create_edge(nodes[6], nodes[7])
 
     path = gr.create_path_handle("ref")
-    for idx in [0, 1, 2, 3, 5, 6, 7]:
+    for idx in [0, 1, 6, 7]:
         gr.append_step(path, nodes[idx])
 
     path2 = gr.create_path_handle("alt")
@@ -158,8 +186,8 @@ def create_loop_graph(filename="loop.hg") :
 
     gr.serialize(filename)
     vg_process(filename)
-    vg_view(filename, 5)
-    print("simple loop graph created")
+    vg_view(filename, 8)
+    print("loop plus graph created")
 
 def create_linear_path(filename="linear.hg"):
     gr = HashGraph()
@@ -180,7 +208,7 @@ def create_linear_path(filename="linear.hg"):
 
 def create_snp_and_nested_snp_graph(filename="snp_and_nested_snp.hg"):
     gr = HashGraph()
-    seqs = ["TTTT", "AAAA", "T", "G", "A", "C", "T", "AAAA", "TTTT"]
+    seqs = ["TTTT", "AAAA", "T", "G", "AT", "C", "T", "AAAA", "TTTT"]
     nodes = [gr.create_handle(s) for s in seqs]
 
     gr.create_edge(nodes[0], nodes[1])
@@ -207,7 +235,7 @@ def create_snp_and_nested_snp_graph(filename="snp_and_nested_snp.hg"):
     vg_view(filename, 9)
     print("snp and nested snp graph created")
 
-def create_snp_and_nested_plus_graph(filename="snp_and_nested_plus.hg"):
+def create_complex_ins_graph(filename="complex_ins.hg"):
     gr = HashGraph()
     seqs = ["TTTT", "AAAA", "T", "G", "A", "C", "T", "AAAA", "TTTT"]
     nodes = [gr.create_handle(s) for s in seqs]
@@ -217,6 +245,7 @@ def create_snp_and_nested_plus_graph(filename="snp_and_nested_plus.hg"):
     gr.create_edge(nodes[1], nodes[6])
     gr.create_edge(nodes[2], nodes[3]) # NESTED
     gr.create_edge(nodes[2], nodes[4])
+    gr.create_edge(nodes[1], nodes[7]) # BIG DELETION
     gr.create_edge(nodes[3], nodes[5]) # NESTED
     gr.create_edge(nodes[4], nodes[5]) # NESTED
     gr.create_edge(nodes[4], nodes[6]) # PLUS
@@ -294,28 +323,6 @@ def create_repetition_graph(filename="repetition.hg"):
     vg_view(filename, 7)
     print("repetition graph created")
 
-def create_overlap_graph(filename="overlap.hg"):
-    gr = HashGraph()
-    seqs = ["TTTT", "AAAA", "GTT", "CAA", "AAAA", "TTTT"]
-    nodes = [gr.create_handle(s) for s in seqs]
-
-    gr.create_edge(nodes[0], nodes[1])
-    gr.create_edge(nodes[1], nodes[2])
-    gr.create_edge(nodes[1], nodes[3])
-    gr.create_edge(nodes[2], nodes[4])
-    gr.create_edge(nodes[2], nodes[3])
-    gr.create_edge(nodes[3], nodes[4])
-    gr.create_edge(nodes[4], nodes[5])
-
-    path1 = gr.create_path_handle("ref")
-    for idx in [0, 1, 2, 3, 4, 5]:
-        gr.append_step(path1, nodes[idx])
-
-    gr.serialize(filename)
-    vg_process(filename)
-    vg_view(filename, 6)
-    print("overlap graph created")
-
 def create_large_del_graph(filename="large_del.hg"):
     gr = HashGraph()
     seqs = ["TTTT", "AAAA", "GTT", "A", "T", "CCC", "G", "TT", "AAAA", "TTTT"]
@@ -392,12 +399,12 @@ if __name__ == "__main__":
     create_deletion_snp_graph(wrap_filename("deletion_snp.hg"))
     create_insert_deletion_graph(wrap_filename("insert_deletion.hg"))
     create_loop_graph(wrap_filename("loop.hg"))
+    create_loop_plus_graph(wrap_filename("loop_plus.hg"))
     create_linear_path(wrap_filename("linear.hg"))
     create_snp_and_nested_snp_graph(wrap_filename("snp_and_nested_snp.hg"))
-    create_snp_and_nested_plus_graph(wrap_filename("snp_and_nested_plus.hg"))
+    create_complex_ins_graph(wrap_filename("complex_ins.hg"))
     create_4th_graph(wrap_filename("4th.hg"))
     create_repetition_graph(wrap_filename("repetition.hg"))
-    create_overlap_graph(wrap_filename("overlap.hg"))
     create_large_del_graph(wrap_filename("large_del.hg"))
     create_inversion_snp_graph(wrap_filename("inversion_snp.hg"))
 

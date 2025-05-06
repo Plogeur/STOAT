@@ -1,0 +1,39 @@
+import sys
+import pandas as pd
+import statsmodels.api as sm
+
+# --- Load input files from command line ---
+feature_file = sys.argv[1]
+pheno_file = sys.argv[2]
+
+# --- Load features ---
+features = pd.read_csv(feature_file, sep='\t')
+features = features.rename(columns={features.columns[0]: "IID"})
+
+# --- Load phenotype ---
+pheno = pd.read_csv(pheno_file, sep='\t', usecols=["IID", "PHENO"])
+
+# --- Merge on sample ID ---
+df = pd.merge(features, pheno, on="IID")
+
+print(df)
+
+# --- Prepare data for model ---
+X = df.drop(columns=["IID", "PHENO"])
+y = df["PHENO"]
+
+print(X)
+print(y)
+
+# --- Fit logistic regression model ---
+model = sm.Logit(y, X)
+result = model.fit(disp=False)
+
+# --- Output coefficients and p-values ---
+print("\n=== Logistic Regression Coefficients ===")
+print(result.summary())  # Shows coef, std err, z, p-value, conf int
+
+# --- Output LLR p-value ---
+print("\n=== Model Fit Stats ===")
+print(f"Log-Likelihood: {result.llf:.4f}")
+print(f"LLR p-value: {result.llr_pvalue:.6g}")

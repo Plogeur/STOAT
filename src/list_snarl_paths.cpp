@@ -90,15 +90,19 @@ size_t Path::nreversed() const {
 
 // Function to calculate the type of variant
 // tuple<string, size_t, size_t, size_t>
-// seq_net, minimum_distance, maximun_distance, size_path
-vector<string> calcul_pos_type_variant(const vector<tuple<string, size_t, size_t, size_t>>& list_length_paths) {
+// seq_net, minimum_distance, maximun_distance, size_path, sum_path
+vector<string> calcul_pos_type_variant(const vector<tuple<string, size_t, size_t, size_t, size_t>>& list_length_paths) {
     vector<string> list_type_variant;
 
     for (const auto& tuple_info : list_length_paths) {
         size_t path_length = std::get<3>(tuple_info);
-        if (path_length > 3) { // Case complex
-            string complex = "CPX:"+ to_string(std::get<1>(tuple_info)) + "/" + to_string(std::get<2>(tuple_info));
-            list_type_variant.push_back(complex); // COMPLEX
+        if (path_length > 3) {
+            if (sum_path == 0) { // Case complex 
+                string complex = to_string(std::get<1>(tuple_info)) + "/" + to_string(std::get<2>(tuple_info));
+                list_type_variant.push_back(complex);
+            } else { // Case multiple nodes (ex : INS+SNP+...)
+                list_type_variant.push_back(std::to_string(sum_path));
+            }
 
         } else if (path_length == 3) { // Case simple path len 3
             string seq = std::get<0>(tuple_info);
@@ -317,10 +321,13 @@ tuple<vector<string>, vector<string>> fill_pretty_paths(
         size_t size_start_node = 0;
         bool start_is_reverse = false;
         bool end_is_reverse = false;
+        bool is_complex = false;
+        size_t sum_path = 0;
         nid_t complex_start_id;
         nid_t complex_end_id;
         size_t minimum_distance;
         size_t maximun_distance;
+
 
         for (auto net : path) {
             if (stree.is_sentinel(net)) {
@@ -332,11 +339,12 @@ tuple<vector<string>, vector<string>> fill_pretty_paths(
                 bool rev = ppath.addNodeHandle(net, stree);
                 nid_t node_start_id = stree.node_id(net);
                 handle_t node_handle = pg.get_handle(node_start_id);
+                size_t size_node = pg.get_length(node_handle);
                 if (ppath.size() == 2) { // add only the node seq in position 2 on the snarl (ex : X>P>Q, P is in position 2)
                     seq_net = pg.get_sequence(node_handle);
                 } else if (ppath.size() == 1) {
                     complex_start_id = stree.node_id(net);
-                    size_start_node = pg.get_sequence(node_handle).size();
+                    size_start_node = size_node;
                     start_is_reverse = rev;
                 } else { // last element
                     complex_end_id = stree.node_id(net);
@@ -350,10 +358,11 @@ tuple<vector<string>, vector<string>> fill_pretty_paths(
                 auto stn_start = stree.starts_at_start(net) ? stree.get_bound(net, false, true) : stree.get_bound(net, true, true);
                 nid_t node_start_id = stree.node_id(stn_start);
                 handle_t net_trivial_chain = pg.get_handle(node_start_id);
+                size_t size_node = pg.get_length(net_trivial_chain);
                 if (ppath.size() == 2) {
                     seq_net = pg.get_sequence(net_trivial_chain);
                 } else if (ppath.size() == 1) {
-                    size_start_node = pg.get_sequence(net_trivial_chain).size(); // optimizable using get_length
+                    size_start_node = size_node;
                     complex_start_id = stree.node_id(net);
                 } else {
                     complex_end_id = stree.node_id(net);
@@ -373,7 +382,9 @@ tuple<vector<string>, vector<string>> fill_pretty_paths(
                 ppath.addNodeHandle(nodl, stree);
                 ppath.addNode("*", '>');
                 ppath.addNodeHandle(nodr, stree);
+                is_complex = true;
             }
+            sum_path += size_node;
         }
 
         if (ppath.nreversed() > ppath.size() / 2) {
@@ -383,17 +394,17 @@ tuple<vector<string>, vector<string>> fill_pretty_paths(
         }
 
         // Case of complex found
-        if (seq_net.empty()) {
+        if (is_complex) {
             minimum_distance = stree.minimum_distance(complex_start_id, start_is_reverse, size_start_node, complex_end_id, end_is_reverse, 0);
             maximun_distance = stree.maximum_distance(complex_start_id, start_is_reverse, size_start_node, complex_end_id, end_is_reverse, 0);
+            sum_path = 0;
         }
 
         pretty_paths.push_back(ppath.print());
         size_t size_path = ppath.size();
-        seq_net_paths.push_back(std::make_tuple(seq_net, minimum_distance, maximun_distance, size_path));
+        seq_net_paths.push_back(std::make_tuple(seq_net, minimum_distance, maximun_distance, size_path, sum_path));
     }
 
-    // pair<vector<string>, size_t>
     vector<string> type_variants = calcul_pos_type_variant(seq_net_paths);
     return std::make_tuple(pretty_paths, type_variants);
 }
