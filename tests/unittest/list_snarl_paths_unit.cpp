@@ -80,7 +80,6 @@ TEST_CASE("Test de calcul_pos_type_variant", "[calcul_pos_type_variant]") {
 
 TEST_CASE("Test simulated case", "[Path]") {
 
-    std::unordered_map<std::string, std::vector<std::tuple<string, vector<string>, size_t, size_t, vector<string>>>> snarls_chr;
     std::unique_ptr<bdsg::SnarlDistanceIndex> stree;
     std::unique_ptr<bdsg::PackedGraph> pg;
     handlegraph::net_handle_t root;
@@ -90,6 +89,7 @@ TEST_CASE("Test simulated case", "[Path]") {
     size_t path_length_threshold = 10000;
     std::unordered_set<std::string> ref_chr = {"ref"};
     bool only_snarl_parsing = false;
+    std::string output_dir = "../tests/graph_test";
     string output_snarl_not_analyse = output_dir + "/snarl_not_analyse.tsv";
     string output_file = output_dir + "/snarl_analyse.tsv";
 
@@ -101,7 +101,7 @@ TEST_CASE("Test simulated case", "[Path]") {
         auto snarls = save_snarls(*stree, root, *pg, ref_chr, *pp_overlay);
         
         // {chr : matrix(snarl, paths, start_pos, end_pos, type)}
-        snarls_chr = loop_over_snarls_write(*stree, snarls, *pg, output_file, output_snarl_not_analyse, children_threshold, path_length_threshold, only_snarl_parsing);        
+        auto snarls_chr = loop_over_snarls_write(*stree, snarls, *pg, output_file, output_snarl_not_analyse, children_threshold, path_length_threshold, only_snarl_parsing);        
         
         REQUIRE(snarls_chr.size() == 1);
         REQUIRE(snarls_chr["ref"].size() == 1);
@@ -120,7 +120,7 @@ TEST_CASE("Test simulated case", "[Path]") {
         auto snarls = save_snarls(*stree, root, *pg, ref_chr, *pp_overlay);
         
         // {chr : matrix(snarl, paths, start_pos, end_pos, type)}
-        snarls_chr = loop_over_snarls_write(*stree, snarls, *pg, output_file, output_snarl_not_analyse, children_threshold, path_length_threshold, only_snarl_parsing);        
+        auto snarls_chr = loop_over_snarls_write(*stree, snarls, *pg, output_file, output_snarl_not_analyse, children_threshold, path_length_threshold, only_snarl_parsing);        
         
         REQUIRE(snarls_chr.size() == 1);
         REQUIRE(snarls_chr["ref"].size() == 1);
@@ -139,7 +139,7 @@ TEST_CASE("Test simulated case", "[Path]") {
         auto snarls = save_snarls(*stree, root, *pg, ref_chr, *pp_overlay);
         
         // {chr : matrix(snarl, paths, start_pos, end_pos, type)}
-        snarls_chr = loop_over_snarls_write(*stree, snarls, *pg, output_file, output_snarl_not_analyse, children_threshold, path_length_threshold, only_snarl_parsing);        
+        auto snarls_chr = loop_over_snarls_write(*stree, snarls, *pg, output_file, output_snarl_not_analyse, children_threshold, path_length_threshold, only_snarl_parsing);        
         
         REQUIRE(snarls_chr.size() == 1);
         REQUIRE(snarls_chr["ref"].size() == 1);
@@ -158,7 +158,7 @@ TEST_CASE("Test simulated case", "[Path]") {
         auto snarls = save_snarls(*stree, root, *pg, ref_chr, *pp_overlay);
         
         // {chr : matrix(snarl, paths, start_pos, end_pos, type)}
-        snarls_chr = loop_over_snarls_write(*stree, snarls, *pg, output_file, output_snarl_not_analyse, children_threshold, path_length_threshold, only_snarl_parsing);        
+        auto snarls_chr = loop_over_snarls_write(*stree, snarls, *pg, output_file, output_snarl_not_analyse, children_threshold, path_length_threshold, only_snarl_parsing);        
         
         REQUIRE(snarls_chr.size() == 1);
         REQUIRE(snarls_chr["ref"].size() == 1);
@@ -177,7 +177,7 @@ TEST_CASE("Test simulated case", "[Path]") {
         auto snarls = save_snarls(*stree, root, *pg, ref_chr, *pp_overlay);
         
         // {chr : matrix(snarl, paths, start_pos, end_pos, type)}
-        snarls_chr = loop_over_snarls_write(*stree, snarls, *pg, output_file, output_snarl_not_analyse, children_threshold, path_length_threshold, only_snarl_parsing);        
+        auto snarls_chr = loop_over_snarls_write(*stree, snarls, *pg, output_file, output_snarl_not_analyse, children_threshold, path_length_threshold, only_snarl_parsing);        
         
         REQUIRE(snarls_chr.size() == 1);
         REQUIRE(snarls_chr["ref"].size() == 1);
@@ -196,7 +196,7 @@ TEST_CASE("Test simulated case", "[Path]") {
         auto snarls = save_snarls(*stree, root, *pg, ref_chr, *pp_overlay);
         
         // {chr : matrix(snarl, paths, start_pos, end_pos, type)}
-        snarls_chr = loop_over_snarls_write(*stree, snarls, *pg, output_file, output_snarl_not_analyse, children_threshold, path_length_threshold, only_snarl_parsing);        
+        auto snarls_chr = loop_over_snarls_write(*stree, snarls, *pg, output_file, output_snarl_not_analyse, children_threshold, path_length_threshold, only_snarl_parsing);        
         
         REQUIRE(snarls_chr.size() == 1);
         REQUIRE(snarls_chr["ref"].size() == 1);
@@ -215,7 +215,7 @@ TEST_CASE("Test simulated case", "[Path]") {
         auto snarls = save_snarls(*stree, root, *pg, ref_chr, *pp_overlay);
         
         // {chr : matrix(snarl, paths, start_pos, end_pos, type)}
-        snarls_chr = loop_over_snarls_write(*stree, snarls, *pg, output_file, output_snarl_not_analyse, children_threshold, path_length_threshold, only_snarl_parsing);        
+        auto snarls_chr = loop_over_snarls_write(*stree, snarls, *pg, output_file, output_snarl_not_analyse, children_threshold, path_length_threshold, only_snarl_parsing);        
         
         REQUIRE(snarls_chr.size() == 1);
         REQUIRE(snarls_chr["ref"].size() == 1);
@@ -367,8 +367,3 @@ TEST_CASE("Test simulated case", "[Path]") {
         REQUIRE(std::get<4>(snarls_chr["ref"][1]) == std::vector<std::string>{"G","2"});
     }
 }
-
-std::tie(stree, pg, root, pp_overlay) = parse_graph_tree(pg_path, dist_path);
-auto snarls = save_snarls(*stree, root, *pg, ref_chr, *pp_overlay);
-snarls_chr = loop_over_snarls_write(*stree, snarls, *pg, output_file, output_snarl_not_analyse, children_threshold, path_length_threshold, only_snarl_parsing);
-

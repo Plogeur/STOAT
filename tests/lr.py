@@ -20,6 +20,7 @@ print(df)
 
 # --- Prepare data for model ---
 X = df.drop(columns=["IID", "PHENO"])
+X = sm.add_constant(X)  # Adds intercept term
 y = df["PHENO"]
 
 print(X)
