@@ -355,7 +355,7 @@ tuple<vector<string>, vector<string>> fill_pretty_paths(
                 }
             }
 
-            // Chain case
+            // Chain case aka complexe
             else if (stree.is_chain(net)) {
                 net_handle_t nodl, nodr;
                 bool boundl;
