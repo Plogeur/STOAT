@@ -48,7 +48,7 @@ TEST_CASE("Test de calcul_pos_type_variant", "[calcul_pos_type_variant]") {
         };
         auto types = calcul_pos_type_variant(list_paths);
         REQUIRE(types.size() == 3);
-        REQUIRE(types[0] == "T");  // SNP
+        REQUIRE(types[0] == "1");  // SNP
         REQUIRE(types[1] == "2");  // INS
         REQUIRE(types[2] == "0");  // DEL
     }
@@ -60,8 +60,8 @@ TEST_CASE("Test de calcul_pos_type_variant", "[calcul_pos_type_variant]") {
         };
         auto types = calcul_pos_type_variant(list_paths);
         REQUIRE(types.size() == 2);
-        REQUIRE(types[0] == "T");
-        REQUIRE(types[1] == "G");
+        REQUIRE(types[0] == "1");
+        REQUIRE(types[1] == "1");
     }
 
     SECTION("Cas complexe") {
@@ -109,7 +109,7 @@ TEST_CASE("Test simulated case", "[Path]") {
         REQUIRE(std::get<1>(snarls_chr["ref"][0]) == std::vector<std::string>{">2>3>5",">2>4>5"});
         REQUIRE(std::get<2>(snarls_chr["ref"][0]) == 8);
         REQUIRE(std::get<3>(snarls_chr["ref"][0]) == 10);
-        REQUIRE(std::get<4>(snarls_chr["ref"][0]) == std::vector<std::string>{"C", "G"});
+        REQUIRE(std::get<4>(snarls_chr["ref"][0]) == std::vector<std::string>{"1", "1"});
     }
 
     SECTION("3th SNP") {
@@ -128,7 +128,7 @@ TEST_CASE("Test simulated case", "[Path]") {
         REQUIRE(std::get<1>(snarls_chr["ref"][0]) == std::vector<std::string>{">2>3>6",">2>4>6",">2>5>6"});
         REQUIRE(std::get<2>(snarls_chr["ref"][0]) == 8);
         REQUIRE(std::get<3>(snarls_chr["ref"][0]) == 10);
-        REQUIRE(std::get<4>(snarls_chr["ref"][0]) == std::vector<std::string>{"C", "T", "G"});
+        REQUIRE(std::get<4>(snarls_chr["ref"][0]) == std::vector<std::string>{"1", "1", "1"});
     }
 
     SECTION("4th") {
@@ -147,7 +147,7 @@ TEST_CASE("Test simulated case", "[Path]") {
         REQUIRE(std::get<1>(snarls_chr["ref"][0]) == std::vector<std::string>{">2>3>5>7", ">2>4>6>7" ,">2>3>6>7"});
         REQUIRE(std::get<2>(snarls_chr["ref"][0]) == 8);
         REQUIRE(std::get<3>(snarls_chr["ref"][0]) == 13);
-        REQUIRE(std::get<4>(snarls_chr["ref"][0]) == std::vector<std::string>{"4/4", "5/5", "6"});
+        REQUIRE(std::get<4>(snarls_chr["ref"][0]) == std::vector<std::string>{"4", "6", "5"});
     }
 
     SECTION("deletion_snp") {
@@ -166,7 +166,7 @@ TEST_CASE("Test simulated case", "[Path]") {
         REQUIRE(std::get<1>(snarls_chr["ref"][0]) == std::vector<std::string>{">2>4", ">2>3>4"});
         REQUIRE(std::get<2>(snarls_chr["ref"][0]) == 8);
         REQUIRE(std::get<3>(snarls_chr["ref"][0]) == 10);
-        REQUIRE(std::get<4>(snarls_chr["ref"][0]) == std::vector<std::string>{"0", "C"});
+        REQUIRE(std::get<4>(snarls_chr["ref"][0]) == std::vector<std::string>{"0", "1"});
     }
 
     SECTION("insert_deletion") {
@@ -204,7 +204,7 @@ TEST_CASE("Test simulated case", "[Path]") {
         REQUIRE(std::get<1>(snarls_chr["ref"][0]) == std::vector<std::string>{">2>3>5", ">2>4>5"});
         REQUIRE(std::get<2>(snarls_chr["ref"][0]) == 8);
         REQUIRE(std::get<3>(snarls_chr["ref"][0]) == 10);
-        REQUIRE(std::get<4>(snarls_chr["ref"][0]) == std::vector<std::string>{"C", "3"});
+        REQUIRE(std::get<4>(snarls_chr["ref"][0]) == std::vector<std::string>{"1", "3"});
     }
 
     SECTION("inversion") {
@@ -223,7 +223,7 @@ TEST_CASE("Test simulated case", "[Path]") {
         REQUIRE(std::get<1>(snarls_chr["ref"][0]) == std::vector<std::string>{">1>2>3>4"});
         REQUIRE(std::get<2>(snarls_chr["ref"][0]) == 8);
         REQUIRE(std::get<3>(snarls_chr["ref"][0]) == 12);
-        REQUIRE(std::get<4>(snarls_chr["ref"][0]) == std::vector<std::string>{"C", "3"});
+        REQUIRE(std::get<4>(snarls_chr["ref"][0]) == std::vector<std::string>{"1", "3"});
     }
 
     SECTION("large_del") {
@@ -234,7 +234,7 @@ TEST_CASE("Test simulated case", "[Path]") {
         auto snarls = save_snarls(*stree, root, *pg, ref_chr, *pp_overlay);
         
         // {chr : matrix(snarl, paths, start_pos, end_pos, type)}
-        snarls_chr = loop_over_snarls_write(*stree, snarls, *pg, output_file, output_snarl_not_analyse, children_threshold, path_length_threshold, only_snarl_parsing);        
+        auto snarls_chr = loop_over_snarls_write(*stree, snarls, *pg, output_file, output_snarl_not_analyse, children_threshold, path_length_threshold, only_snarl_parsing);        
         
         REQUIRE(snarls_chr.size() == 1);
         REQUIRE(snarls_chr["ref"].size() == 3);
@@ -248,13 +248,13 @@ TEST_CASE("Test simulated case", "[Path]") {
         REQUIRE(std::get<1>(snarls_chr["ref"][1]) == std::vector<std::string>{">6>8",">6>7>8"});
         REQUIRE(std::get<2>(snarls_chr["ref"][1]) == 8);
         REQUIRE(std::get<3>(snarls_chr["ref"][1]) == 9);
-        REQUIRE(std::get<4>(snarls_chr["ref"][1]) == std::vector<std::string>{"0", "G"});
+        REQUIRE(std::get<4>(snarls_chr["ref"][1]) == std::vector<std::string>{"0", "1"});
 
         REQUIRE(std::get<0>(snarls_chr["ref"][2]) == "3_6");
         REQUIRE(std::get<1>(snarls_chr["ref"][2]) == std::vector<std::string>{">3>5>6",">3>4>6"});
         REQUIRE(std::get<2>(snarls_chr["ref"][2]) == 8);
         REQUIRE(std::get<3>(snarls_chr["ref"][2]) == 9);
-        REQUIRE(std::get<4>(snarls_chr["ref"][2]) == std::vector<std::string>{"T", "A"});
+        REQUIRE(std::get<4>(snarls_chr["ref"][2]) == std::vector<std::string>{"1", "1"});
 
     }
 
@@ -266,7 +266,7 @@ TEST_CASE("Test simulated case", "[Path]") {
         auto snarls = save_snarls(*stree, root, *pg, ref_chr, *pp_overlay);
         
         // {chr : matrix(snarl, paths, start_pos, end_pos, type)}
-        snarls_chr = loop_over_snarls_write(*stree, snarls, *pg, output_file, output_snarl_not_analyse, children_threshold, path_length_threshold, only_snarl_parsing);        
+        auto snarls_chr = loop_over_snarls_write(*stree, snarls, *pg, output_file, output_snarl_not_analyse, children_threshold, path_length_threshold, only_snarl_parsing);        
         
         REQUIRE(snarls_chr.size() == 0);
     }
@@ -279,7 +279,7 @@ TEST_CASE("Test simulated case", "[Path]") {
         auto snarls = save_snarls(*stree, root, *pg, ref_chr, *pp_overlay);
 
         // {chr : matrix(snarl, paths, start_pos, end_pos, type)}
-        snarls_chr = loop_over_snarls_write(*stree, snarls, *pg, output_file, output_snarl_not_analyse, children_threshold, path_length_threshold, only_snarl_parsing);        
+        auto snarls_chr =  loop_over_snarls_write(*stree, snarls, *pg, output_file, output_snarl_not_analyse, children_threshold, path_length_threshold, only_snarl_parsing);        
 
         REQUIRE(snarls_chr.size() == 1);
         REQUIRE(snarls_chr["ref"].size() == 1);
@@ -293,7 +293,7 @@ TEST_CASE("Test simulated case", "[Path]") {
         auto snarls = save_snarls(*stree, root, *pg, ref_chr, *pp_overlay);
 
         // {chr : matrix(snarl, paths, start_pos, end_pos, type)}
-        snarls_chr = loop_over_snarls_write(*stree, snarls, *pg, output_file, output_snarl_not_analyse, children_threshold, path_length_threshold, only_snarl_parsing);        
+        auto snarls_chr =  loop_over_snarls_write(*stree, snarls, *pg, output_file, output_snarl_not_analyse, children_threshold, path_length_threshold, only_snarl_parsing);        
 
         REQUIRE(snarls_chr.size() == 1);
         REQUIRE(snarls_chr["ref"].size() == 1);
@@ -312,12 +312,12 @@ TEST_CASE("Test simulated case", "[Path]") {
         auto snarls = save_snarls(*stree, root, *pg, ref_chr, *pp_overlay);
 
         // {chr : matrix(snarl, paths, start_pos, end_pos, type)}
-        snarls_chr = loop_over_snarls_write(*stree, snarls, *pg, output_file, output_snarl_not_analyse, children_threshold, path_length_threshold, only_snarl_parsing);        
+        auto snarls_chr =  loop_over_snarls_write(*stree, snarls, *pg, output_file, output_snarl_not_analyse, children_threshold, path_length_threshold, only_snarl_parsing);        
 
         REQUIRE(snarls_chr.size() == 1);
         REQUIRE(snarls_chr["ref"].size() == 1);
         REQUIRE(std::get<0>(snarls_chr["ref"][0]) == "6_2");
-        REQUIRE(std::get<1>(snarls_chr["ref"][0]) == std::vector<std::string>{">2>6", ">2>3>6", ">2>3>6", ">2>3>4>6", ">2>3>4>5>6"});
+        REQUIRE(std::get<1>(snarls_chr["ref"][0]) == std::vector<std::string>{">2>6", ">2>3>6", ">2>3>4>6", ">2>3>4>5>6"});
         REQUIRE(std::get<2>(snarls_chr["ref"][0]) == 8);
         REQUIRE(std::get<3>(snarls_chr["ref"][0]) == 9);
         REQUIRE(std::get<4>(snarls_chr["ref"][0]) == std::vector<std::string>{"0", "3", "6", "9"});
@@ -331,7 +331,7 @@ TEST_CASE("Test simulated case", "[Path]") {
         auto snarls = save_snarls(*stree, root, *pg, ref_chr, *pp_overlay);
 
         // {chr : matrix(snarl, paths, start_pos, end_pos, type)}
-        snarls_chr = loop_over_snarls_write(*stree, snarls, *pg, output_file, output_snarl_not_analyse, children_threshold, path_length_threshold, only_snarl_parsing);        
+        auto snarls_chr =  loop_over_snarls_write(*stree, snarls, *pg, output_file, output_snarl_not_analyse, children_threshold, path_length_threshold, only_snarl_parsing);        
 
         REQUIRE(snarls_chr.size() == 1);
         REQUIRE(snarls_chr["ref"].size() == 1);
@@ -339,7 +339,7 @@ TEST_CASE("Test simulated case", "[Path]") {
         REQUIRE(std::get<1>(snarls_chr["ref"][0]) == std::vector<std::string>{">2>8", ">2>3>4>6>8",">2>3>5>6>8",">2>3>5>7>8",">2>7>8"});
         REQUIRE(std::get<2>(snarls_chr["ref"][0]) == 8);
         REQUIRE(std::get<3>(snarls_chr["ref"][0]) == 10);
-        REQUIRE(std::get<4>(snarls_chr["ref"][0]) == std::vector<std::string>{"0","3","3","3","T"});
+        REQUIRE(std::get<4>(snarls_chr["ref"][0]) == std::vector<std::string>{"0","3","3","3","1"});
     }
 
     SECTION("snp_and_nested_snp") {
@@ -350,7 +350,7 @@ TEST_CASE("Test simulated case", "[Path]") {
         auto snarls = save_snarls(*stree, root, *pg, ref_chr, *pp_overlay);
 
         // {chr : matrix(snarl, paths, start_pos, end_pos, type)}
-        snarls_chr = loop_over_snarls_write(*stree, snarls, *pg, output_file, output_snarl_not_analyse, children_threshold, path_length_threshold, only_snarl_parsing);        
+        auto snarls_chr =  loop_over_snarls_write(*stree, snarls, *pg, output_file, output_snarl_not_analyse, children_threshold, path_length_threshold, only_snarl_parsing);        
 
         REQUIRE(snarls_chr.size() == 1);
         REQUIRE(snarls_chr["ref"].size() == 2);
@@ -358,12 +358,12 @@ TEST_CASE("Test simulated case", "[Path]") {
         REQUIRE(std::get<1>(snarls_chr["ref"][0]) == std::vector<std::string>{">2>3>*>6>8",">2>7>8"});
         REQUIRE(std::get<2>(snarls_chr["ref"][0]) == 8);
         REQUIRE(std::get<3>(snarls_chr["ref"][0]) == 10);
-        REQUIRE(std::get<4>(snarls_chr["ref"][0]) == std::vector<std::string>{"3/4","T"});
+        REQUIRE(std::get<4>(snarls_chr["ref"][0]) == std::vector<std::string>{"3/4","1"});
 
         REQUIRE(std::get<0>(snarls_chr["ref"][1]) == "6_3");
         REQUIRE(std::get<1>(snarls_chr["ref"][1]) == std::vector<std::string>{">3>4>6",">3>5>6"});
         REQUIRE(std::get<2>(snarls_chr["ref"][1]) == 8);
         REQUIRE(std::get<3>(snarls_chr["ref"][1]) == 10);
-        REQUIRE(std::get<4>(snarls_chr["ref"][1]) == std::vector<std::string>{"G","2"});
+        REQUIRE(std::get<4>(snarls_chr["ref"][1]) == std::vector<std::string>{"1","2"});
     }
 }

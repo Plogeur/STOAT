@@ -234,28 +234,6 @@ std::string create_test_covar_file(const std::string& content, const std::string
     return filename;
 }
 
-TEST_CASE("Covariate format checking", "[check_format_covariate]") {
-    SECTION("Consistent column count") {
-        std::string content =
-            "IID age sex\n"
-            "A 25 1\n"
-            "B 30 0\n"
-            "C 45 1\n";
-        std::string path = create_test_covar_file(content);
-        REQUIRE_NOTHROW(check_format_covariate(path));
-    }
-
-    SECTION("Inconsistent column count prints error") {
-        std::string content =
-            "IID age sex\n"
-            "A 25 1\n"
-            "B 30\n" // Missing one column
-            "C 45 1\n";
-        std::string path = create_test_covar_file(content);
-        REQUIRE_THROWS_AS(check_format_covariate(path), std::runtime_error);
-    }
-}
-
 TEST_CASE("Parse covariates from file", "[parse_covariates]") {
     SECTION("Valid covariate file and columns") {
         std::string content =

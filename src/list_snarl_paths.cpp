@@ -96,6 +96,7 @@ vector<string> calcul_pos_type_variant(const vector<tuple<string, size_t, size_t
 
     for (const auto& tuple_info : list_length_paths) {
         size_t path_length = std::get<3>(tuple_info);
+        size_t sum_path = std::get<4>(tuple_info);
         if (path_length > 3) {
             if (sum_path == 0) { // Case complex 
                 string complex = to_string(std::get<1>(tuple_info)) + "/" + to_string(std::get<2>(tuple_info));
@@ -107,13 +108,7 @@ vector<string> calcul_pos_type_variant(const vector<tuple<string, size_t, size_t
         } else if (path_length == 3) { // Case simple path len 3
             string seq = std::get<0>(tuple_info);
             size_t seq_length = seq.length();
-            if (seq_length > 1) { // case INSERTION
-                list_type_variant.push_back(to_string(seq_length));
-            } else if (seq_length == 1) { // case SNP
-                list_type_variant.push_back(seq); // add seq str SNP
-            } else { // Case path_lengths is empty
-                cerr << "error in seq type : " << seq << endl;
-            }
+            list_type_variant.push_back(to_string(seq_length));
 
         } else if (path_length == 2) { // case Deletion
             list_type_variant.push_back("0");
@@ -313,41 +308,38 @@ tuple<vector<string>, vector<string>> fill_pretty_paths(
     vector<string> pretty_paths;
 
     // seq_net, minimum_distance, maximum_distance
-    vector<tuple<string, size_t, size_t, size_t>> seq_net_paths;
+    vector<tuple<string, size_t, size_t, size_t, size_t>> seq_net_paths;
 
     for (const auto& path : finished_paths) {
         Path ppath;
         string seq_net;
-        size_t size_start_node = 0;
-        bool start_is_reverse = false;
-        bool end_is_reverse = false;
+        bool start_is_reverse = true;
+        bool end_is_reverse = true;
         bool is_complex = false;
         size_t sum_path = 0;
-        nid_t complex_start_id;
-        nid_t complex_end_id;
         size_t minimum_distance;
         size_t maximun_distance;
+        std::vector<size_t> size_node;
+        size_node.resize(path.size());
 
+        for (int i=0; i<path.size(); i++) {
+            net_handle_t net = path[i];
 
-        for (auto net : path) {
             if (stree.is_sentinel(net)) {
                 net = stree.get_node_from_sentinel(net);
             }
-            
+
             // Node case
             if (stree.is_node(net)) {
                 bool rev = ppath.addNodeHandle(net, stree);
                 nid_t node_start_id = stree.node_id(net);
                 handle_t node_handle = pg.get_handle(node_start_id);
-                size_t size_node = pg.get_length(node_handle);
+                size_node[i] = pg.get_length(node_handle);
                 if (ppath.size() == 2) { // add only the node seq in position 2 on the snarl (ex : X>P>Q, P is in position 2)
                     seq_net = pg.get_sequence(node_handle);
                 } else if (ppath.size() == 1) {
-                    complex_start_id = stree.node_id(net);
-                    size_start_node = size_node;
                     start_is_reverse = rev;
                 } else { // last element
-                    complex_end_id = stree.node_id(net);
                     end_is_reverse = rev;
                 }
             }
@@ -358,14 +350,9 @@ tuple<vector<string>, vector<string>> fill_pretty_paths(
                 auto stn_start = stree.starts_at_start(net) ? stree.get_bound(net, false, true) : stree.get_bound(net, true, true);
                 nid_t node_start_id = stree.node_id(stn_start);
                 handle_t net_trivial_chain = pg.get_handle(node_start_id);
-                size_t size_node = pg.get_length(net_trivial_chain);
+                size_node[i] = pg.get_length(net_trivial_chain);
                 if (ppath.size() == 2) {
                     seq_net = pg.get_sequence(net_trivial_chain);
-                } else if (ppath.size() == 1) {
-                    size_start_node = size_node;
-                    complex_start_id = stree.node_id(net);
-                } else {
-                    complex_end_id = stree.node_id(net);
                 }
             }
 
@@ -382,22 +369,29 @@ tuple<vector<string>, vector<string>> fill_pretty_paths(
                 ppath.addNodeHandle(nodl, stree);
                 ppath.addNode("*", '>');
                 ppath.addNodeHandle(nodr, stree);
+
+                // Get the size of the chain and return the distance (minimum and maximum)
+                size_t complex_start_id = stree.node_id(nodl);
+                size_t size_start_node = pg.get_length(pg.get_handle(complex_start_id));
+                size_t complex_end_id = stree.node_id(nodr);
+                // size_t size_end_node = pg.get_length(pg.get_handle(complex_end_id));
+                // size_t size_chain = size_start_node + size_end_node;
+                minimum_distance = stree.minimum_distance(complex_start_id, !start_is_reverse, size_start_node, complex_end_id, !end_is_reverse, 0);
+                maximun_distance = stree.maximum_distance(complex_start_id, !start_is_reverse, size_start_node, complex_end_id, !end_is_reverse, 0);
                 is_complex = true;
             }
-            sum_path += size_node;
         }
 
         if (ppath.nreversed() > ppath.size() / 2) {
             ppath.flip();
-            start_is_reverse = !start_is_reverse;
-            end_is_reverse = !end_is_reverse;
         }
 
-        // Case of complex found
-        if (is_complex) {
-            minimum_distance = stree.minimum_distance(complex_start_id, start_is_reverse, size_start_node, complex_end_id, end_is_reverse, 0);
-            maximun_distance = stree.maximum_distance(complex_start_id, start_is_reverse, size_start_node, complex_end_id, end_is_reverse, 0);
+        if (is_complex) { // Case of complex found
             sum_path = 0;
+        } else {
+            for (size_t i = 1; i < size_node.size()-1; ++i) {
+                sum_path += size_node[i];
+            }
         }
 
         pretty_paths.push_back(ppath.print());
