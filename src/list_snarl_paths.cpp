@@ -170,20 +170,25 @@ void follow_edges(SnarlDistanceIndex& stree,
                 PackedGraph& pg) {
   
     auto add_to_path = [&](const net_handle_t& next_child) {
+
+        cout << "stree.net_handle_as_string(next_child) : " << stree.net_handle_as_string(next_child) << endl;
         if (stree.is_sentinel(next_child)) {
             // If this is the bound of the snarl then we're done
             finished_paths.emplace_back(path);
             finished_paths.back().push_back(next_child);
         } else {
+            // Case where we find a loop
             for (const auto& i : path) {
-                // Case where we find a loop
+                cout << "stree.net_handle_as_string(i) : " << stree.net_handle_as_string(i) << endl;
                 if (stree.net_handle_as_string(i) == stree.net_handle_as_string(next_child)) {
+                    cout << "loop found" << endl;
                     return false;
                 }
             }
             paths.emplace_back(path);
             paths.back().push_back(next_child);
         }
+        cout << endl;
         return true;
     };
 
@@ -313,12 +318,10 @@ tuple<vector<string>, vector<string>> fill_pretty_paths(
     for (const auto& path : finished_paths) {
         Path ppath;
         string seq_net;
-        bool start_is_reverse = true;
-        bool end_is_reverse = true;
         bool is_complex = false;
         size_t sum_path = 0;
-        size_t minimum_distance;
-        size_t maximun_distance;
+        size_t minimum_distance=0;
+        size_t maximun_distance=0;
         std::vector<size_t> size_node;
         size_node.resize(path.size());
 
@@ -337,10 +340,6 @@ tuple<vector<string>, vector<string>> fill_pretty_paths(
                 size_node[i] = pg.get_length(node_handle);
                 if (ppath.size() == 2) { // add only the node seq in position 2 on the snarl (ex : X>P>Q, P is in position 2)
                     seq_net = pg.get_sequence(node_handle);
-                } else if (ppath.size() == 1) {
-                    start_is_reverse = rev;
-                } else { // last element
-                    end_is_reverse = rev;
                 }
             }
 
@@ -359,13 +358,19 @@ tuple<vector<string>, vector<string>> fill_pretty_paths(
             // Chain case
             else if (stree.is_chain(net)) {
                 net_handle_t nodl, nodr;
+                bool boundl;
                 if (stree.starts_at_start(net)) {
+                    cout << "start at start 1" << endl;
+                    boundl = false;
                     nodl = stree.get_bound(net, false, true);
                     nodr = stree.get_bound(net, true, false);
                 } else {
+                    cout << "start at start 2" << endl;
+                    boundl = true;
                     nodl = stree.get_bound(net, true, true);
                     nodr = stree.get_bound(net, false, false);
                 }
+
                 ppath.addNodeHandle(nodl, stree);
                 ppath.addNode("*", '>');
                 ppath.addNodeHandle(nodr, stree);
@@ -374,10 +379,24 @@ tuple<vector<string>, vector<string>> fill_pretty_paths(
                 size_t complex_start_id = stree.node_id(nodl);
                 size_t size_start_node = pg.get_length(pg.get_handle(complex_start_id));
                 size_t complex_end_id = stree.node_id(nodr);
-                // size_t size_end_node = pg.get_length(pg.get_handle(complex_end_id));
-                // size_t size_chain = size_start_node + size_end_node;
-                minimum_distance = stree.minimum_distance(complex_start_id, !start_is_reverse, size_start_node, complex_end_id, !end_is_reverse, 0);
-                maximun_distance = stree.maximum_distance(complex_start_id, !start_is_reverse, size_start_node, complex_end_id, !end_is_reverse, 0);
+                size_t size_end_node = pg.get_length(pg.get_handle(complex_end_id));
+                size_t size_chain = size_start_node + size_end_node;
+
+                // boundl = true or false 
+                size_t min_dist = stree.minimum_distance(complex_start_id, boundl, size_start_node, complex_end_id, boundl, 0);
+                size_t max_dist = stree.maximum_distance(complex_start_id, boundl, size_start_node, complex_end_id, boundl, 0);
+                minimum_distance = size_chain + min_dist;
+                maximun_distance = size_chain + max_dist;
+                // cout << "stree.node_id(nodl) : " << stree.node_id(nodl) << endl;
+                // cout << "stree.node_id(nodr) : " << stree.node_id(nodr) << endl;
+                // cout << "size_end_node = " << size_end_node << endl;
+                // cout << "size_start_node = " << size_start_node << endl;
+                // cout << "size_chain = " << size_chain << endl;
+                // cout << "minimum_distance without size_chain = " << min_dist << endl;
+                // cout << "maximun_distance without size_chain = " << max_dist << endl;
+                // cout << "minimum_distance = " << minimum_distance << endl;
+                // cout << "maximun_distance = " << maximun_distance << endl;
+
                 is_complex = true;
             }
         }

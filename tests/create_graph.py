@@ -135,14 +135,14 @@ def create_insert_deletion_graph(filename="insert_deletion.hg") :
 def create_loop_graph(filename="loop.hg") :
 
     gr = HashGraph()
-    seqs = ["TTTT", "AAAA", "A", "CG","AAAA", "TTTT"]
+    seqs = ["TTTT", "AAAA", "A", "CG", "AAAA", "TTTT"]
     nodes = [gr.create_handle(s) for s in seqs]
 
     gr.create_edge(nodes[0], nodes[1])
     gr.create_edge(nodes[1], nodes[2])
     gr.create_edge(nodes[1], nodes[3])
-    gr.create_edge(nodes[2], nodes[1])
     gr.create_edge(nodes[2], nodes[4])
+    gr.create_edge(nodes[2], nodes[1])
     gr.create_edge(nodes[3], nodes[4])
     gr.create_edge(nodes[4], nodes[5])
 
@@ -156,7 +156,7 @@ def create_loop_graph(filename="loop.hg") :
 
     gr.serialize(filename)
     vg_process(filename)
-    vg_view(filename, 8)
+    vg_view(filename, 6)
     print("loop graph created")
 
 def create_loop_plus_graph(filename="loop_plus.hg") :
@@ -243,12 +243,12 @@ def create_complex_ins_graph(filename="complex_ins.hg"):
     gr.create_edge(nodes[0], nodes[1])
     gr.create_edge(nodes[1], nodes[2])
     gr.create_edge(nodes[1], nodes[6])
-    gr.create_edge(nodes[2], nodes[3]) # NESTED
+    gr.create_edge(nodes[2], nodes[3])
     gr.create_edge(nodes[2], nodes[4])
     gr.create_edge(nodes[1], nodes[7]) # BIG DELETION
-    gr.create_edge(nodes[3], nodes[5]) # NESTED
-    gr.create_edge(nodes[4], nodes[5]) # NESTED
-    gr.create_edge(nodes[4], nodes[6]) # PLUS
+    gr.create_edge(nodes[3], nodes[5])
+    gr.create_edge(nodes[4], nodes[5])
+    gr.create_edge(nodes[4], nodes[6])
     gr.create_edge(nodes[5], nodes[7])
     gr.create_edge(nodes[6], nodes[7])
     gr.create_edge(nodes[7], nodes[8])
@@ -354,30 +354,28 @@ def create_large_del_graph(filename="large_del.hg"):
     vg_view(filename, 10)
     print("large deletion graph created")
 
-def create_inversion_snp_graph(filename="inversion_snp.hg"):
+def create_inversion_graph(filename="inversion.hg"):
     gr = HashGraph()
-    seqs = ["A", "TTTT", "AAAA", "T", "AT", "CAT", "AAAA", "TTTT", "A"]
+    seqs = ["TTTT", "AAAA", "T", "AT", "CAT", "AAAA", "TTTT"]
     nodes = [gr.create_handle(s) for s in seqs]
 
     gr.create_edge(nodes[0], nodes[1])
     gr.create_edge(nodes[1], nodes[2])
     gr.create_edge(nodes[2], nodes[3])
     gr.create_edge(nodes[3], nodes[4])
-    gr.create_edge(nodes[4], nodes[3]) # begin 1 -> end 2
+    gr.create_edge(gr.flip(nodes[2]), gr.flip(nodes[3])) # begin 3 -> end 4
+    gr.create_edge(nodes[1], nodes[5]) # DEL
+    gr.create_edge(gr.flip(nodes[3]), nodes[4]) # begin 4 -> begin 5    
     gr.create_edge(nodes[4], nodes[5])
-    gr.create_edge(nodes[2], nodes[6]) # DEL
-    gr.create_edge(gr.flip(nodes[4]), nodes[5]) # begin 3 -> begin 2    
     gr.create_edge(nodes[5], nodes[6])
-    gr.create_edge(nodes[6], nodes[7])
-    gr.create_edge(nodes[7], nodes[8])
 
     path1 = gr.create_path_handle("ref")
-    for idx in [0, 1, 2, 3, 4, 5, 6, 7, 8]:
+    for idx in [0, 1, 2, 3, 4, 5, 6]:
         gr.append_step(path1, nodes[idx])
 
     gr.serialize(filename)
     vg_process(filename)
-    vg_view(filename, 5)
+    vg_view(filename, 7)
     print("inversion graph created")
 
 # Example call to generate all
@@ -406,7 +404,7 @@ if __name__ == "__main__":
     create_4th_graph(wrap_filename("4th.hg"))
     create_repetition_graph(wrap_filename("repetition.hg"))
     create_large_del_graph(wrap_filename("large_del.hg"))
-    create_inversion_snp_graph(wrap_filename("inversion_snp.hg"))
+    create_inversion_graph(wrap_filename("inversion.hg"))
 
 # python3 create_graph.py
 

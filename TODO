@@ -1,9 +1,11 @@
 REPARE FIRST VARIANT SIMULATION RESULT STOAT
 ADD FONCTIONNAL TEST
 ADD END LIST_SNARL_PATHS
-ADD LOGISITIC REGRESSION + TEST AGAINST CHI2
-ADD UNITEST BDSG (MAKING GRAPH)
-ADD VCF
+
+LIST SNARL PATH TEST PROBLEM :
+- rev variable not working of all exemple
+- inversion exemple loop found when no loop is present
+- allow only one loop in path 
 
 ADD CHUNK :
 - Define a chunk struct for list snarl path :

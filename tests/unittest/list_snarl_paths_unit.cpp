@@ -219,16 +219,16 @@ TEST_CASE("Test simulated case", "[Path]") {
         
         REQUIRE(snarls_chr.size() == 1);
         REQUIRE(snarls_chr["ref"].size() == 1);
-        REQUIRE(std::get<0>(snarls_chr["ref"][0]) == "4_1");
-        REQUIRE(std::get<1>(snarls_chr["ref"][0]) == std::vector<std::string>{">1>2>3>4"});
+        REQUIRE(std::get<0>(snarls_chr["ref"][0]) == "6_2");
+        REQUIRE(std::get<1>(snarls_chr["ref"][0]) == std::vector<std::string>{">2>6", ">2>3>4>5>6", ">2>3<4<5>6", ">2>3>4<5>6", ">2>3<4>5>6"});
         REQUIRE(std::get<2>(snarls_chr["ref"][0]) == 8);
-        REQUIRE(std::get<3>(snarls_chr["ref"][0]) == 12);
-        REQUIRE(std::get<4>(snarls_chr["ref"][0]) == std::vector<std::string>{"1", "3"});
+        REQUIRE(std::get<3>(snarls_chr["ref"][0]) == 15);
+        REQUIRE(std::get<4>(snarls_chr["ref"][0]) == std::vector<std::string>{"0", "6", "6", "6", "6"});
     }
 
     SECTION("large_del") {
-        std::string pg_path = "../tests/graph_test/inversion.pg";
-        std::string dist_path = "../tests/graph_test/inversion.dist";
+        std::string pg_path = "../tests/graph_test/large_del.pg";
+        std::string dist_path = "../tests/graph_test/large_del.dist";
 
         std::tie(stree, pg, root, pp_overlay) = parse_graph_tree(pg_path, dist_path);
         auto snarls = save_snarls(*stree, root, *pg, ref_chr, *pp_overlay);

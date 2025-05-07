@@ -15,18 +15,18 @@ void linear_regression(
     size_t num_samples = df.size();
     size_t max_paths = df[0].size();
 
-    Eigen::MatrixXd X(num_samples, max_paths + 1);  // +1 for intercept
-    X.setOnes(); // Set first column to ones (intercept)
+    Eigen::MatrixXd X(num_samples, max_paths);
+    X.setZero(); // Initialize matrix with zeros
     Eigen::VectorXd y(num_samples);
     
-    for (size_t row = 0; row < num_samples; ++row) {
+    for (size_t row=0; row < num_samples; ++row) {
         y(row) = quantitative_phenotype[row];
         for (size_t col = 0; col < max_paths; ++col) {
-            X(row, col + 1) = df[row][col];  // Shift columns to right
+            X(row, col) = static_cast<double>(df[row][col]);
         }
     }
-
-    Eigen::VectorXd beta = X.bdcSvd(Eigen::ComputeThinU | Eigen::ComputeThinV).solve(y);
+    
+    Eigen::VectorXd beta = (X.transpose() * X).ldlt().solve(X.transpose() * y);
     Eigen::VectorXd y_pred = X * beta;
     Eigen::VectorXd residuals = y - y_pred;
     
@@ -34,12 +34,14 @@ void linear_regression(
     double tss = (y.array() - y.mean()).matrix().squaredNorm();
     double r2 = 1 - (rss / tss);
 
-    int df_reg = max_paths;  // includes intercept
-    double mse = rss / df_res;
-
+    int df_reg = max_paths - 1;
+    int df_res = num_samples - max_paths;
+    double mse = rss / df_res;  // Mean Squared Error (MSE)
+    
     Eigen::MatrixXd cov_matrix = (X.transpose() * X).inverse();
     Eigen::VectorXd se = (cov_matrix.diagonal() * mse).array().sqrt().matrix();
 
+    // Compute F-statistic
     double f_stat = (r2 / df_reg) / ((1 - r2) / df_res);
     boost::math::fisher_f dist(df_reg, df_res);
     double p_value = boost::math::cdf(boost::math::complement(dist, std::abs(f_stat)));
