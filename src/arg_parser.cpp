@@ -332,16 +332,20 @@ std::unordered_map<std::string, std::tuple<std::string, size_t, size_t>> parse_g
     std::unordered_map<std::string, std::tuple<std::string, size_t, size_t>> geneMap;
     std::ifstream file(filename);
     std::string line;
+    
+    // pass header
+    std::getline(file, line);
 
+    // Check for required columns
     while (std::getline(file, line)) {
         if (line.empty()) continue;
 
         std::stringstream ss(line);
         std::string gene, startStr, endStr, chrom;
         std::getline(ss, gene, '\t');
+        std::getline(ss, chrom, '\t');
         std::getline(ss, startStr, '\t');
         std::getline(ss, endStr, '\t');
-        std::getline(ss, chrom, '\t');
 
         try {
             int start = std::stoi(startStr);

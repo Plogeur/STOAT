@@ -102,7 +102,7 @@ void chromosome_chuck_eqtl(htsFile* &ptr_vcf, bcf_hdr_t* &hdr, bcf1_t* &rec,
     const std::string& out_eqtl) {
 
     std::ofstream outf(out_eqtl, std::ios::binary);
-    std::string headers = "CHR\tPOS\tSNARL\tTYPE\tSE\tBETA\tP\n";
+    std::string headers = "CHR\tPOS\tSNARL\tTYPE\tGENE\tSE\tBETA\tP\n";
     outf.write(headers.c_str(), headers.size());
     
     std::cout << "GWAS analysis for chromosome : " << std::endl;
@@ -806,8 +806,8 @@ void SnarlParser::eqtl_table(
         
                         // chr, pos, snarl, type, p_value, p_adjusted, r2, beta, se, allele_number
                         data << chr << "\t" << start_pos << "\t" << snarl << "\t" << type_var_str
-                        << "\t" << p_value  << "\t" << "" << "\t" << r2 << "\t" << beta << "\t" << se 
-                        << "\t" << allele_number << "\n";
+                        << "\t" << gene_name << "\t" << p_value  << "\t" << "" << "\t" << r2
+                        << "\t" << beta << "\t" << se << "\t" << allele_number << "\n";
                         local_buffer << data.str();
                     }
         
