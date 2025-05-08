@@ -230,27 +230,26 @@ void check_match_samples(const std::unordered_map<std::string, T>& map, const st
     }
 }
 
-std::tuple<std::vector<std::vector<double>>, 
-std::vector<std::tuple<string, size_t, size_t>>, 
-std::vector<std::string>> parse_qtl_gene_file(
+// dict chr:string : vector{(geneName:string, sample_expression:vector<double>, start_pos:size_t, end_pos:size_t)}
+std::unordered_map<std::string, std::vector<std::tuple<std::string, std::vector<double>, size_t, size_t>>> 
+    parse_qtl_gene_file(
     const std::string& eqtl_path, 
     const std::string& gene_position_path, 
     const std::vector<std::string>& list_samples) {
 
+    // dict sampleName:string : vector<double> sample_expression
     auto qtl = parse_qtl_file(eqtl_path, list_samples); // and check in the same time
+
+    // dict geneName:string : tuple{chrom:string, start_pos:size_t, end_pos:size_t}
     auto gene_position = parse_gene_positions(gene_position_path);
 
-    std::vector<std::vector<double>> eqtl_vector;
-    std::vector<std::tuple<string, size_t, size_t>> gene_pos_vector;
-    std::vector<std::string> list_gene;
+    std::unordered_map<std::string, std::vector<std::tuple<std::string, std::vector<double>, size_t, size_t>>> qtl_map;
 
-    for (const auto& [gene, vector_qtl] : qtl) {
-        eqtl_vector.push_back(vector_qtl);
-        list_gene.push_back(gene);
+    for (const auto& [gene, expression_vector] : qtl) {
         auto it = gene_position.find(gene);
         if (it != gene_position.end()) {
-            auto [chrom, start, end] = it->second;
-            gene_pos_vector.push_back(std::make_tuple(chrom, start, end));
+            const auto& [chrom, start, end] = it->second;
+            qtl_map[chrom].emplace_back(gene, expression_vector, start, end);
         } else {
             std::cerr << "Error: Gene \"" << gene << "\" not found in gene positions." << std::endl;
             exit(1);
@@ -258,11 +257,11 @@ std::vector<std::string>> parse_qtl_gene_file(
     }
 
     // Warn if gene_position has more genes than qtl
-    if (gene_pos_vector.size() > eqtl_vector.size()) {
+    if (gene_position.size() > qtl.size()) {
         std::cerr << "Warning: More genes in the gene position file than in the QTL data." << std::endl;
     }
 
-    return std::make_tuple(eqtl_vector, gene_pos_vector, list_gene);
+    return qtl_map;
 }
 
 // Function to parse the snarl path file
@@ -325,6 +324,8 @@ parse_snarl_path(const std::string& file_path) {
     return chr_snarl_matrix;
 }
 
+// Function to parse the gene positions file
+// dict geneName:string : tuple{chrom:string, start_pos:size_t, end_pos:size_t}
 std::unordered_map<std::string, std::tuple<std::string, size_t, size_t>> parse_gene_positions(
     const std::string& filename) {
 
@@ -356,7 +357,8 @@ std::unordered_map<std::string, std::tuple<std::string, size_t, size_t>> parse_g
     return geneMap;
 }
 
-// Function to parse the phenotype file
+// Function to parse the qtl file
+// dict sampleName:string : vector<double> sample_expression
 std::unordered_map<std::string, std::vector<double>> parse_qtl_file(
     const std::string& filename, const vector<std::string>& list_samples) {
 

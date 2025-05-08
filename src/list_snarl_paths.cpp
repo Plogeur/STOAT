@@ -171,16 +171,17 @@ void follow_edges(SnarlDistanceIndex& stree,
   
     auto add_to_path = [&](const net_handle_t& next_child) {
 
-        cout << "stree.net_handle_as_string(next_child) : " << stree.net_handle_as_string(next_child) << endl;
+        // cout << "stree.net_handle_as_string(next_child) : " << stree.net_handle_as_string(next_child) << endl;
         if (stree.is_sentinel(next_child)) {
             // If this is the bound of the snarl then we're done
             finished_paths.emplace_back(path);
             finished_paths.back().push_back(next_child);
         } else {
+
             // Case where we find a loop
             for (const auto& i : path) {
-                cout << "stree.net_handle_as_string(i) : " << stree.net_handle_as_string(i) << endl;
-                if (stree.net_handle_as_string(i) == stree.net_handle_as_string(next_child)) {
+                // cout << "stree.net_handle_as_string(i) : " << stree.net_handle_as_string(i) << endl;
+                if (i == next_child) {
                     cout << "loop found" << endl;
                     return false;
                 }
@@ -188,7 +189,7 @@ void follow_edges(SnarlDistanceIndex& stree,
             paths.emplace_back(path);
             paths.back().push_back(next_child);
         }
-        cout << endl;
+        //cout << endl;
         return true;
     };
 

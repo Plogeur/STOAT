@@ -10,8 +10,8 @@ using namespace std;
 
 void chromosome_chuck_make_bed(htsFile* &ptr_vcf, bcf_hdr_t* &hdr, bcf1_t* &rec, 
     const std::vector<std::string> &list_samples,
-    unordered_map<string, std::vector<std::tuple<string, vector<string>, size_t, size_t, vector<string>>>> &snarl_chr,
-    string& output_dir) {
+    const std::unordered_map<std::string, std::vector<std::tuple<std::string, std::vector<std::string>, size_t, size_t, std::vector<std::string>>>>& snarl_chr,
+    const string& output_dir) {
 
     const std::string output_bed = output_dir + ".bed";
     const std::string output_bim = output_dir + ".bim";
@@ -28,7 +28,7 @@ void chromosome_chuck_make_bed(htsFile* &ptr_vcf, bcf_hdr_t* &hdr, bcf1_t* &rec,
 
         string chr = bcf_hdr_id2name(hdr, rec->rid);
         std::cout << "> " << chr << std::endl;
-        size_t size_chr = snarl_chr[chr].size();
+        size_t size_chr = snarl_chr.at(chr).size();
 
         // Make genotype matrix by chromosome    
         auto [vcf_object, ptr_vcf_new, hdr_new, rec_new] = make_matrix(ptr_vcf, hdr, rec, list_samples, chr, size_chr);
@@ -36,7 +36,7 @@ void chromosome_chuck_make_bed(htsFile* &ptr_vcf, bcf_hdr_t* &hdr, bcf1_t* &rec,
         hdr = hdr_new;
         rec = rec_new;
 
-        auto& snarl = snarl_chr[chr];
+        auto& snarl = snarl_chr.at(chr);
 
         // Gwas analysis by chromosome
         vcf_object.create_bim_bed(snarl, chr, outbim, outbed);
@@ -53,10 +53,10 @@ void chromosome_chuck_make_bed(htsFile* &ptr_vcf, bcf_hdr_t* &hdr, bcf1_t* &rec,
 
 void chromosome_chuck_quantitative(htsFile* &ptr_vcf, bcf_hdr_t* &hdr, bcf1_t* &rec, 
     const std::vector<std::string> &list_samples,
-    unordered_map<string, std::vector<std::tuple<string, vector<string>, size_t, size_t, vector<string>>>> &snarl_chr,
+    const unordered_map<string, std::vector<std::tuple<string, vector<string>, size_t, size_t, vector<string>>>> &snarl_chr,
     const std::vector<double>& quantitative_phenotype, std::vector<std::vector<double>> covar,
     const double& maf, const KinshipMatrix& kinship, const size_t& num_threads, 
-    const double& table_threshold, const std::string& dir_regression,
+    const double& table_threshold, const std::string& regression_dir,
     const std::string& output_quantitive) {
 
     std::ofstream outf(output_quantitive, std::ios::binary);
@@ -73,7 +73,7 @@ void chromosome_chuck_quantitative(htsFile* &ptr_vcf, bcf_hdr_t* &hdr, bcf1_t* &
 
         string chr = bcf_hdr_id2name(hdr, rec->rid);
         std::cout << "> " << chr << std::endl;
-        size_t size_chr = snarl_chr[chr].size();
+        size_t size_chr = snarl_chr.at(chr).size();
 
         // Make genotype matrix by chromosome    
         auto [vcf_object, ptr_vcf_new, hdr_new, rec_new] = make_matrix(ptr_vcf, hdr, rec, list_samples, chr, size_chr);
@@ -81,10 +81,10 @@ void chromosome_chuck_quantitative(htsFile* &ptr_vcf, bcf_hdr_t* &hdr, bcf1_t* &
         hdr = hdr_new;
         rec = rec_new;
 
-        auto& snarl = snarl_chr[chr];
+        auto& snarl = snarl_chr.at(chr);
 
         // Gwas analysis by chromosome
-        vcf_object.quantitative_table(snarl, quantitative_phenotype, chr, covar, maf, kinship, num_threads, table_threshold, dir_regression, outf);
+        vcf_object.quantitative_table(snarl, quantitative_phenotype, chr, covar, maf, kinship, num_threads, table_threshold, regression_dir, outf);
     }
     // Cleanup
     bcf_destroy(rec);
@@ -92,41 +92,50 @@ void chromosome_chuck_quantitative(htsFile* &ptr_vcf, bcf_hdr_t* &hdr, bcf1_t* &
     bcf_close(ptr_vcf);
 }
 
-// void chromosome_chuck_eqtl(htsFile* &ptr_vcf, bcf_hdr_t* &hdr, bcf1_t* &rec, 
-//     const std::vector<std::string> &list_samples,
-//     unordered_map<string, std::vector<std::tuple<string, vector<string>, string, vector<string>>>> &snarl_chr,
-//     const std::unordered_map<std::string, std::vector<double>>& eqtl_pheno, std::ofstream& outf) {
+void chromosome_chuck_eqtl(htsFile* &ptr_vcf, bcf_hdr_t* &hdr, bcf1_t* &rec, 
+    const std::vector<std::string> &list_samples,
+    const std::unordered_map<std::string, std::vector<std::tuple<std::string, std::vector<std::string>, size_t, size_t, std::vector<std::string>>>> &snarl_chr,
+    const std::unordered_map<std::string, std::vector<std::tuple<std::string, std::vector<double>, size_t, size_t>>>& eqtl_map,
+    const std::vector<std::vector<double>>& covar,
+    const double& maf, const KinshipMatrix& kinship, const size_t& num_threads, 
+    const double& table_threshold, const std::string& regression_dir,
+    const std::string& out_eqtl) {
 
-//     std::cout << "GWAS analysis for chromosome : " << std::endl;
-//     while (bcf_read(ptr_vcf, hdr, rec) >= 0) {
+    std::ofstream outf(out_eqtl, std::ios::binary);
+    std::string headers = "CHR\tPOS\tSNARL\tTYPE\tSE\tBETA\tP\n";
+    outf.write(headers.c_str(), headers.size());
+    
+    std::cout << "GWAS analysis for chromosome : " << std::endl;
+    while (bcf_read(ptr_vcf, hdr, rec) >= 0) {
 
-//         string chr = bcf_hdr_id2name(hdr, rec->rid);
-//         std::cout << "> " << chr << std::endl;
-//         size_t size_chr = snarl_chr[chr].size();
+        string chr = bcf_hdr_id2name(hdr, rec->rid);
+        std::cout << "> " << chr << std::endl;
+        size_t size_chr = snarl_chr.at(chr).size();
 
-//         // Make genotype matrix by chromosome    
-//         auto [vcf_object, ptr_vcf_new, hdr_new, rec_new] = make_matrix(ptr_vcf, hdr, rec, list_samples, chr, size_chr);
-//         ptr_vcf = ptr_vcf_new;
-//         hdr = hdr_new;
-//         rec = rec_new;
+        // Make genotype matrix by chromosome    
+        auto [vcf_object, ptr_vcf_new, hdr_new, rec_new] = make_matrix(ptr_vcf, hdr, rec, list_samples, chr, size_chr);
+        ptr_vcf = ptr_vcf_new;
+        hdr = hdr_new;
+        rec = rec_new;
 
-//         auto& snarl = snarl_chr[chr];
+        auto& snarl = snarl_chr.at(chr);
+        auto& eqtl = eqtl_map.at(chr);
 
-//         // Gwas analysis by chromosome
-//         // vcf_object.eqtl_table(snarl, eqtl_pheno, chr, outf);
-//     }
-//     // Cleanup
-//     bcf_destroy(rec);
-//     bcf_hdr_destroy(hdr);
-//     bcf_close(ptr_vcf);
-// }
+        // Gwas analysis by chromosome
+        vcf_object.eqtl_table(snarl, eqtl, chr, covar, maf, kinship, num_threads, table_threshold, regression_dir, outf);
+    }
+    // Cleanup
+    bcf_destroy(rec);
+    bcf_hdr_destroy(hdr);
+    bcf_close(ptr_vcf);
+}
 
 void chromosome_chuck_binary(htsFile* &ptr_vcf, bcf_hdr_t* &hdr, bcf1_t* &rec, 
     const std::vector<std::string> &list_samples, 
-    unordered_map<string, std::vector<std::tuple<string, vector<string>, size_t, size_t, vector<string>>>> &snarl_chr,
+    const unordered_map<string, std::vector<std::tuple<string, vector<string>, size_t, size_t, vector<string>>>> &snarl_chr,
     const std::vector<bool>& binary_pheno, std::vector<std::vector<double>> covar, 
     const double& maf, const KinshipMatrix& kinship, const size_t& num_threads, 
-    const double& table_threshold, const std::string& dir_regression,
+    const double& table_threshold, const std::string& regression_dir,
     const std::string& output_binary) {
 
     std::ofstream outf(output_binary, std::ios::binary);
@@ -143,17 +152,17 @@ void chromosome_chuck_binary(htsFile* &ptr_vcf, bcf_hdr_t* &hdr, bcf1_t* &rec,
 
         string chr = bcf_hdr_id2name(hdr, rec->rid);
         std::cout << "> " << chr << std::endl;
-        size_t size_chr = snarl_chr[chr].size();
+        size_t size_chr = snarl_chr.at(chr).size();
 
         // Make genotype matrix by chromosome    
         auto [vcf_object, ptr_vcf_new, hdr_new, rec_new] = make_matrix(ptr_vcf, hdr, rec, list_samples, chr, size_chr);
         ptr_vcf = ptr_vcf_new;
         hdr = hdr_new;
         rec = rec_new;
-        auto& snarl = snarl_chr[chr];
+        auto& snarl = snarl_chr.at(chr);
 
         // Gwas analysis by chromosome
-        vcf_object.binary_table(snarl, binary_pheno, chr, covar, maf, kinship, num_threads, table_threshold, dir_regression, outf);
+        vcf_object.binary_table(snarl, binary_pheno, chr, covar, maf, kinship, num_threads, table_threshold, regression_dir, outf);
     }
     // Cleanup
     bcf_destroy(rec);
@@ -701,3 +710,116 @@ bool check_MAF_threshold_quantitative(const std::vector<std::vector<size_t>>& df
 
     return false; // If all values are within the threshold, return true
 }
+
+// Identify genes index that will be tested for this snarl by matching position
+// eqtl : <gene_name, gene_expression, start_pos, end_pos>
+std::vector<size_t> found_gene_snarl(
+    const std::vector<std::tuple<std::string, std::vector<double>, size_t, size_t>>& gene_position, 
+    const size_t& start_pos, 
+    const size_t& end_pos,
+    const size_t& size_threshold) { // TODO : change size_threshold to user arg 
+
+    std::vector<size_t> gene_index;
+    size_t start_pos_threshold = (start_pos > size_threshold) ? start_pos - size_threshold : 0;
+    size_t end_pos_threshold = end_pos + size_threshold;
+
+    for (size_t i = 0; i < gene_position.size(); ++i) {
+        size_t gene_start = std::get<2>(gene_position[i]);
+        size_t gene_end = std::get<3>(gene_position[i]);
+
+        // Check if the gene overlaps with the snarl region
+        if (!(gene_end < start_pos_threshold || gene_start > end_pos_threshold)) {
+            gene_index.push_back(i);
+        }
+    }
+
+    return gene_index;
+}
+
+void SnarlParser::eqtl_table(
+    const std::vector<std::tuple<string, vector<string>, size_t, size_t, vector<string>>>& snarls,
+    const std::vector<std::tuple<std::string, std::vector<double>, size_t, size_t>>& eqtl,
+    const std::string& chr, const std::vector<std::vector<double>>& covar,
+    const double& maf, const KinshipMatrix& kinship, const size_t& num_threads, 
+    const double& table_threshold, const std::string& regression_dir,
+    std::ofstream& outf) {
+
+        size_t length_sample = sampleNames.size();
+        const size_t total = snarls.size();
+        size_t chunk_size = (total + num_threads - 1) / num_threads;
+        std::mutex mutex_pvalues;
+        std::mutex mutex_file;
+        std::vector<std::thread> threads;
+    
+        for (size_t thread_id = 0; thread_id < num_threads; ++thread_id) {
+            threads.emplace_back([&, thread_id]() {
+                size_t start = thread_id * chunk_size;
+                size_t end = std::min(start + chunk_size, total);
+                std::stringstream local_buffer;
+    
+                // Iterate over each snarl
+                for (size_t itr = 0; itr < snarls.size(); ++itr) {
+                    const auto& [snarl, list_snarl, start_pos, end_pos, type_var] = snarls[itr];
+                    std::vector<size_t> list_gene_index = found_gene_snarl(eqtl, start_pos, end_pos);
+                    
+                    for (size_t i = 0; i < list_gene_index.size(); ++i) {
+                        size_t gene_idx = list_gene_index[i];
+                        std::string gene_name = std::get<0>(eqtl[gene_idx]);
+                        std::vector<double> gene_expression = std::get<1>(eqtl[gene_idx]);
+
+                        auto [df, allele_number] = create_quantitative_table(length_sample, list_snarl, matrix);
+                        bool df_filtration = false;
+                        bool df_empty = false;
+        
+                        if (allele_number < 2) {
+                            df_empty = true;
+                        } else {
+                            df_filtration = check_MAF_threshold_quantitative(df, maf); // error correct
+                        }
+        
+                        // make a string separated by ',' from a vector of string
+                        std::ostringstream oss;
+                        for (size_t i = 0; i < type_var.size(); ++i) {
+                            if (i != 0) oss << ","; // Add comma before all elements except the first
+                            oss << type_var[i];
+                        }
+                        std::string type_var_str = oss.str();
+                        std::stringstream data;
+                        std::string p_value = "NA", beta = "NA", se = "NA", r2 = "NA";
+        
+                        if (df_empty || df_filtration) { // filtred variant
+                            // do nothing
+                        } else if (covar.size() > 0 && !kinship.empty()) { // lmm
+                            lmm_quantitative(df, gene_expression, kinship, covar, p_value, beta, se, r2);
+        
+                        } else if (covar.size() > 0 && kinship.empty()) { // glm
+                            glm_quantitative(df, gene_expression, covar, p_value, beta, se, r2); // TODO : se nan problem
+        
+                        } else { // single test
+                            linear_regression(df, gene_expression, p_value, beta, se, r2);
+                        }
+                        
+                        if (table_threshold != 0 && isPValueSignificant(table_threshold, p_value)) {
+                            string variant_file_name = regression_dir + "/" + snarl + ".tsv";
+                            writeSignificantTableToTSV(df, list_snarl, sampleNames, variant_file_name);
+                        }
+        
+                        // chr, pos, snarl, type, p_value, p_adjusted, r2, beta, se, allele_number
+                        data << chr << "\t" << start_pos << "\t" << snarl << "\t" << type_var_str
+                        << "\t" << p_value  << "\t" << "" << "\t" << r2 << "\t" << beta << "\t" << se 
+                        << "\t" << allele_number << "\n";
+                        local_buffer << data.str();
+                    }
+        
+                    {
+                        std::lock_guard<std::mutex> lock(mutex_file);
+                        outf.write(local_buffer.str().c_str(), local_buffer.str().size());
+                    }
+                }
+            });
+        }
+    
+        for (auto& t : threads) {
+            t.join();
+        }
+    }

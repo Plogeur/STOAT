@@ -193,10 +193,10 @@ int main(int argc, char* argv[]) {
     auto start_1 = std::chrono::high_resolution_clock::now();
     std::filesystem::create_directory(output_dir);
     std::unordered_set<std::string> ref_chr = (!chromosome_path.empty()) ? parse_chromosome_reference(chromosome_path) : std::unordered_set<std::string>{"ref"};
-    std::string dir_regression = output_dir + "/regression";
+    std::string regression_dir = output_dir + "/regression";
 
     if (table_threshold > 0) {
-        std::filesystem::create_directory(dir_regression);
+        std::filesystem::create_directory(regression_dir);
     }
 
     // Enforce valid argument combinations
@@ -240,9 +240,7 @@ int main(int argc, char* argv[]) {
 
     std::vector<bool> binary;
     std::vector<double> quantitative;
-    std::vector<std::vector<double>> eqtl;
-    std::vector<std::tuple<size_t, size_t>> gene_position;
-    vector<std::string> list_gene;
+    std::unordered_map<std::string, std::vector<std::tuple<std::string, std::vector<double>, size_t, size_t>>> eqtl;
     std::vector<std::vector<double>> covariate;
 
     if (!covariate_path.empty()) {
@@ -256,7 +254,7 @@ int main(int argc, char* argv[]) {
         quantitative = parse_quantitative_pheno(quantitative_path, list_samples);
 
     } else if (!eqtl_path.empty() && !gene_position_path.empty()) {
-        auto [eqtl, gene_position, list_gene] = parse_qtl_gene_file(eqtl_path, gene_position_path, list_samples);
+        auto eqtl = parse_qtl_gene_file(eqtl_path, gene_position_path, list_samples);
     }
 
     KinshipMatrix kinship;
@@ -319,7 +317,7 @@ int main(int argc, char* argv[]) {
     } else if (!binary_path.empty()) {
 
         string output_binary = output_dir + "/binary_analysis.tsv";
-        chromosome_chuck_binary(ptr_vcf, hdr, rec, list_samples, snarls_chr, binary, covariate, maf, kinship, num_threads, table_threshold, dir_regression, output_binary);
+        chromosome_chuck_binary(ptr_vcf, hdr, rec, list_samples, snarls_chr, binary, covariate, maf, kinship, num_threads, table_threshold, regression_dir, output_binary);
 
         string output_significative = output_dir + "/top_variant_binary.tsv";
         string phenotype_type = covariate.empty() ? "binary" : "quantitative";
@@ -333,7 +331,7 @@ int main(int argc, char* argv[]) {
     } else if (!quantitative_path.empty()) {
 
         string output_quantitive = output_dir + "/quantitative_analysis.tsv";
-        chromosome_chuck_quantitative(ptr_vcf, hdr, rec, list_samples, snarls_chr, quantitative, covariate, maf, kinship, num_threads, table_threshold, dir_regression, output_quantitive);
+        chromosome_chuck_quantitative(ptr_vcf, hdr, rec, list_samples, snarls_chr, quantitative, covariate, maf, kinship, num_threads, table_threshold, regression_dir, output_quantitive);
 
         string output_significative = output_dir + "/top_variant_quantitative.tsv";
         string phenotype_type = "quantitative";
@@ -342,12 +340,10 @@ int main(int argc, char* argv[]) {
     } else if (!eqtl_path.empty()) {
 
         string eqtl_output = output_dir + "/eqtl_gwas.tsv";
-        std::ofstream outf(eqtl_output, std::ios::binary);
-        std::string headers = "CHR\tPOS\tSNARL\tTYPE\tSE\tBETA\tP\n";
-        outf.write(headers.c_str(), headers.size());
-        // chromosome_chuck_eqtl(ptr_vcf, hdr, rec, list_samples, snarls_chr, eqtl, outf);
+        chromosome_chuck_eqtl(ptr_vcf, hdr, rec, list_samples, snarls_chr, eqtl, covariate, maf, 
+            kinship, num_threads, table_threshold, regression_dir, eqtl_output);
     }
-    
+
     auto end_1 = std::chrono::high_resolution_clock::now();
     std::cout << "Snarl analysis : " << std::chrono::duration<double>(end_1 - start_2).count() << " s" << std::endl;
     std::cout << "Time Gwas analysis : " << std::chrono::duration<double>(end_1 - start_1).count() << " s" << std::endl;

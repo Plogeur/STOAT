@@ -46,11 +46,8 @@ std::unordered_map<std::string, std::vector<double>> parse_qtl_file(
 std::unordered_map<std::string, std::tuple<std::string, size_t, size_t>> parse_gene_positions(
     const std::string& filename);
 
-void check_format_covariate(const std::string& filename);
-
-std::tuple<std::vector<std::vector<double>>, 
-std::vector<std::tuple<string, size_t, size_t>>, 
-std::vector<std::string>> parse_qtl_gene_file(
+std::unordered_map<std::string, std::vector<std::tuple<std::string, std::vector<double>, size_t, size_t>>> 
+    parse_qtl_gene_file(
     const std::string& eqtl_path, 
     const std::string& gene_position_path, 
     const std::vector<std::string>& list_samples);
