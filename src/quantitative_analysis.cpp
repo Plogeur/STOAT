@@ -18,14 +18,14 @@ void linear_regression(
     Eigen::MatrixXd X(num_samples, max_paths);
     X.setZero(); // Initialize matrix with zeros
     Eigen::VectorXd y(num_samples);
-    
+
     for (size_t row=0; row < num_samples; ++row) {
         y(row) = quantitative_phenotype[row];
         for (size_t col = 0; col < max_paths; ++col) {
             X(row, col) = static_cast<double>(df[row][col]);
         }
     }
-    
+
     Eigen::VectorXd beta = (X.transpose() * X).ldlt().solve(X.transpose() * y);
     Eigen::VectorXd y_pred = X * beta;
     Eigen::VectorXd residuals = y - y_pred;

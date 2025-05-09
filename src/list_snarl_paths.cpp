@@ -361,12 +361,10 @@ tuple<vector<string>, vector<string>> fill_pretty_paths(
                 net_handle_t nodl, nodr;
                 bool boundl;
                 if (stree.starts_at_start(net)) {
-                    cout << "start at start 1" << endl;
                     boundl = false;
                     nodl = stree.get_bound(net, false, true);
                     nodr = stree.get_bound(net, true, false);
                 } else {
-                    cout << "start at start 2" << endl;
                     boundl = true;
                     nodl = stree.get_bound(net, true, true);
                     nodr = stree.get_bound(net, false, false);
@@ -437,7 +435,7 @@ std::unordered_map<std::string, std::vector<std::tuple<string, vector<string>, s
     ofstream out_snarl(output_file);
     ofstream out_fail(output_snarl_not_analyse);
     
-    out_snarl << "CHR\tPOS\tEND\tSNARL\tPATHS\tTYPE\tREF\n";
+    out_snarl << "CHR\tSTART_POS\tEND_POS\tSNARL\tPATHS\tTYPE\tREF\n";
     out_fail << "SNARL\tREASON\n";
     
     std::vector<std::tuple<string, vector<string>, size_t, size_t, vector<string>>> snarl_paths;

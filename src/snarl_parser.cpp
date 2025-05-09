@@ -380,7 +380,7 @@ void SnarlParser::push_matrix(const std::string& decomposedSnarl, std::unordered
     size_t lengthOrderedMap = rowHeaderDict.size();
     size_t idxSnarl = getOrAddIndex(rowHeaderDict, decomposedSnarl, lengthOrderedMap);
     size_t currentRowsNumber = matrix.getMaxElement();
-    
+
     if (lengthOrderedMap > currentRowsNumber - 1) {
         matrix.expandMatrix();
     }
@@ -395,7 +395,7 @@ std::tuple<SnarlParser, htsFile*, bcf_hdr_t*, bcf1_t*> make_matrix(htsFile *ptr_
     std::unordered_map<std::string, size_t> row_header_dict;
 
     // loop over the VCF file for each line and stop where chr is different
-    while ((bcf_read(ptr_vcf, hdr, rec) >= 0) && (chr == bcf_hdr_id2name(hdr, rec->rid))) {
+    do {
         bcf_unpack(rec, BCF_UN_STR);
 
         // Check the INFO field for LV (Level Variant) and skip if LV != 0
@@ -439,12 +439,13 @@ std::tuple<SnarlParser, htsFile*, bcf_hdr_t*, bcf1_t*> make_matrix(htsFile *ptr_
             int allele_1 = bcf_gt_allele(gt[i * 2]);
             int allele_2 = bcf_gt_allele(gt[i * 2 + 1]);
             size_t col_idx = i * 2;
-
+            
             if (allele_1 != -1) { // Handle non-missing genotypes
                 for (const auto &decompose_allele_1 : list_list_decomposed_snarl[allele_1]) {
                     snarl_parser.push_matrix(decompose_allele_1, row_header_dict, col_idx);
                 }
             }
+
             if (allele_2 != -1) { // Handle non-missing genotypes
                 for (const auto &decompose_allele_2 : list_list_decomposed_snarl[allele_2]) {
                     snarl_parser.push_matrix(decompose_allele_2, row_header_dict, col_idx + 1);
@@ -453,7 +454,8 @@ std::tuple<SnarlParser, htsFile*, bcf_hdr_t*, bcf1_t*> make_matrix(htsFile *ptr_
         }
 
         free(gt);
-    }
+
+    } while ((bcf_read(ptr_vcf, hdr, rec) >= 0) && (chr == bcf_hdr_id2name(hdr, rec->rid)));
 
     snarl_parser.matrix.set_row_header(row_header_dict);
     snarl_parser.matrix.shrink(row_header_dict.size());
@@ -732,7 +734,6 @@ std::vector<size_t> found_gene_snarl(
             gene_index.push_back(i);
         }
     }
-
     return gene_index;
 }
 
@@ -744,82 +745,84 @@ void SnarlParser::eqtl_table(
     const double& table_threshold, const std::string& regression_dir,
     std::ofstream& outf) {
 
-        size_t length_sample = sampleNames.size();
-        const size_t total = snarls.size();
-        size_t chunk_size = (total + num_threads - 1) / num_threads;
-        std::mutex mutex_pvalues;
-        std::mutex mutex_file;
-        std::vector<std::thread> threads;
-    
-        for (size_t thread_id = 0; thread_id < num_threads; ++thread_id) {
-            threads.emplace_back([&, thread_id]() {
-                size_t start = thread_id * chunk_size;
-                size_t end = std::min(start + chunk_size, total);
-                std::stringstream local_buffer;
-    
-                // Iterate over each snarl
-                for (size_t itr = 0; itr < snarls.size(); ++itr) {
-                    const auto& [snarl, list_snarl, start_pos, end_pos, type_var] = snarls[itr];
-                    std::vector<size_t> list_gene_index = found_gene_snarl(eqtl, start_pos, end_pos);
-                    
-                    for (size_t i = 0; i < list_gene_index.size(); ++i) {
-                        size_t gene_idx = list_gene_index[i];
-                        std::string gene_name = std::get<0>(eqtl[gene_idx]);
-                        std::vector<double> gene_expression = std::get<1>(eqtl[gene_idx]);
+    size_t length_sample = sampleNames.size();
+    const size_t total = snarls.size();
+    size_t chunk_size = (total + num_threads - 1) / num_threads;
+    std::mutex mutex_pvalues;
+    std::mutex mutex_file;
+    std::vector<std::thread> threads;
 
-                        auto [df, allele_number] = create_quantitative_table(length_sample, list_snarl, matrix);
-                        bool df_filtration = false;
-                        bool df_empty = false;
-        
-                        if (allele_number < 2) {
-                            df_empty = true;
-                        } else {
-                            df_filtration = check_MAF_threshold_quantitative(df, maf); // error correct
-                        }
-        
-                        // make a string separated by ',' from a vector of string
-                        std::ostringstream oss;
-                        for (size_t i = 0; i < type_var.size(); ++i) {
-                            if (i != 0) oss << ","; // Add comma before all elements except the first
-                            oss << type_var[i];
-                        }
-                        std::string type_var_str = oss.str();
-                        std::stringstream data;
-                        std::string p_value = "NA", beta = "NA", se = "NA", r2 = "NA";
-        
-                        if (df_empty || df_filtration) { // filtred variant
-                            // do nothing
-                        } else if (covar.size() > 0 && !kinship.empty()) { // lmm
-                            lmm_quantitative(df, gene_expression, kinship, covar, p_value, beta, se, r2);
-        
-                        } else if (covar.size() > 0 && kinship.empty()) { // glm
-                            glm_quantitative(df, gene_expression, covar, p_value, beta, se, r2); // TODO : se nan problem
-        
-                        } else { // single test
-                            linear_regression(df, gene_expression, p_value, beta, se, r2);
-                        }
-                        
-                        if (table_threshold != 0 && isPValueSignificant(table_threshold, p_value)) {
-                            string variant_file_name = regression_dir + "/" + snarl + ".tsv";
-                            writeSignificantTableToTSV(df, list_snarl, sampleNames, variant_file_name);
-                        }
-        
-                        // chr, pos, snarl, type, p_value, p_adjusted, r2, beta, se, allele_number
-                        data << chr << "\t" << start_pos << "\t" << snarl << "\t" << type_var_str
-                        << "\t" << gene_name << "\t" << p_value  << "\t" << "" << "\t" << r2
-                        << "\t" << beta << "\t" << se << "\t" << allele_number << "\n";
-                        local_buffer << data.str();
-                    }
-        
-                    {
-                        std::lock_guard<std::mutex> lock(mutex_file);
-                        outf.write(local_buffer.str().c_str(), local_buffer.str().size());
-                    }
+    for (size_t thread_id = 0; thread_id < num_threads; ++thread_id) {
+        threads.emplace_back([&, thread_id]() {
+            size_t start = thread_id * chunk_size;
+            size_t end = std::min(start + chunk_size, total);
+            std::stringstream local_buffer;
+
+            // Iterate over each snarl
+            for (size_t itr = 0; itr < snarls.size(); ++itr) {
+                const auto& [snarl, list_snarl, start_pos, end_pos, type_var] = snarls[itr];
+                std::vector<size_t> list_gene_index = found_gene_snarl(eqtl, start_pos, end_pos);
+
+                auto [df, allele_number] = create_quantitative_table(length_sample, list_snarl, matrix);
+                bool df_filtration = false;
+                bool df_empty = false;
+
+                if (allele_number < 2) {
+                    df_empty = true;
+                } else {
+                    df_filtration = check_MAF_threshold_quantitative(df, maf); // error correct
                 }
-            });
-        }
+
+                for (size_t i = 0; i < list_gene_index.size(); ++i) {
+                    size_t gene_idx = list_gene_index[i];
+                    std::string gene_name = std::get<0>(eqtl[gene_idx]);
+                    std::vector<double> gene_expression = std::get<1>(eqtl[gene_idx]);
+
+                    // make a string separated by ',' from a vector of string
+                    std::ostringstream oss;
+                    for (size_t i = 0; i < type_var.size(); ++i) {
+                        if (i != 0) oss << ","; // Add comma before all elements except the first
+                        oss << type_var[i];
+                    }
+
+                    std::string type_var_str = oss.str();
+                    std::stringstream data;
+                    std::string p_value = "NA", beta = "NA", se = "NA", r2 = "NA";
     
-        for (auto& t : threads) {
-            t.join();
-        }
+                    if (df_empty || df_filtration) { // filtred variant
+                        // do nothing
+                    } else if (covar.size() > 0 && !kinship.empty()) { // lmm
+                        lmm_quantitative(df, gene_expression, kinship, covar, p_value, beta, se, r2);
+
+                    } else if (covar.size() > 0 && kinship.empty()) { // glm
+                        glm_quantitative(df, gene_expression, covar, p_value, beta, se, r2); // TODO : se nan problem
+
+                    } else { // single test
+                        linear_regression(df, gene_expression, p_value, beta, se, r2);
+                    }
+
+                    if (table_threshold != 0 && isPValueSignificant(table_threshold, p_value)) {
+                        string variant_file_name = regression_dir + "/" + snarl + ".tsv";
+                        writeSignificantTableToTSV(df, list_snarl, sampleNames, variant_file_name);
+                    }
+
+                    // chr, pos, snarl, type, p_value, p_adjusted, r2, beta, se, allele_number
+                    data << chr << "\t" << start_pos << "\t" << snarl << "\t" << type_var_str
+                    << "\t" << gene_name << "\t" << p_value  << "\t" << "" << "\t" << r2
+                    << "\t" << beta << "\t" << se << "\t" << allele_number << "\n";
+                
+                    local_buffer << data.str();
+                }
+            }
+
+            {
+                std::lock_guard<std::mutex> lock(mutex_file);
+                outf.write(local_buffer.str().c_str(), local_buffer.str().size());
+            }
+        });
     }
+
+    for (auto& t : threads) {
+        t.join();
+    }
+}

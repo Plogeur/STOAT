@@ -254,7 +254,7 @@ int main(int argc, char* argv[]) {
         quantitative = parse_quantitative_pheno(quantitative_path, list_samples);
 
     } else if (!eqtl_path.empty() && !gene_position_path.empty()) {
-        auto eqtl = parse_qtl_gene_file(eqtl_path, gene_position_path, list_samples);
+        eqtl = parse_qtl_gene_file(eqtl_path, gene_position_path, list_samples);
     }
 
     KinshipMatrix kinship;

@@ -135,14 +135,14 @@ std::vector<double> parse_quantitative_pheno(
         std::string fid, iid, phenoStr;
 
         if (!(iss >> fid >> iid >> phenoStr)) {
-            throw std::runtime_error("Malformed line: " + line);
+            throw std::runtime_error("Error: In parsing phenotype, malformed line: " + line);
         }
 
         if (firstLine) {
             firstLine = false;
             // Check that the header contains FID, IID, and PHENO
             if (fid != "FID" || iid != "IID" || phenoStr != "PHENO") {
-                throw std::invalid_argument("Invalid header: " + line);
+                throw std::invalid_argument("Error: In parsing phenotype, invalid header: " + line);
             }
             continue;
         }
@@ -154,7 +154,7 @@ std::vector<double> parse_quantitative_pheno(
         catch(const std::exception& e)
         {
             std::cerr << e.what() << '\n';
-            throw std::runtime_error("Bad phenotype type : " + phenoStr);
+            throw std::runtime_error("Error: Bad phenotype type : " + phenoStr);
         }
         count_pheno++;
     }
@@ -226,7 +226,7 @@ void check_match_samples(const std::unordered_map<std::string, T>& map, const st
         }
     }
     if (map.size() != keys.size()) {
-        cerr << "Warning:  Number of samples found in VCF does not match the number of samples in the phenotype file" << endl;
+        cerr << "Warning: Number of samples found in VCF does not match the number of samples in the phenotype file" << endl;
     }
 }
 
@@ -242,7 +242,6 @@ std::unordered_map<std::string, std::vector<std::tuple<std::string, std::vector<
 
     // dict geneName:string : tuple{chrom:string, start_pos:size_t, end_pos:size_t}
     auto gene_position = parse_gene_positions(gene_position_path);
-
     std::unordered_map<std::string, std::vector<std::tuple<std::string, std::vector<double>, size_t, size_t>>> qtl_map;
 
     for (const auto& [gene, expression_vector] : qtl) {
@@ -255,7 +254,7 @@ std::unordered_map<std::string, std::vector<std::tuple<std::string, std::vector<
             exit(1);
         }
     }
-
+  
     // Warn if gene_position has more genes than qtl
     if (gene_position.size() > qtl.size()) {
         std::cerr << "Warning: More genes in the gene position file than in the QTL data." << std::endl;
@@ -275,8 +274,24 @@ parse_snarl_path(const std::string& file_path) {
     std::ifstream file(file_path);
     std::string save_chr = "";
 
-    // Read header
-    std::getline(file, line);
+    // Read and validate header
+    if (!std::getline(file, line)) {
+        throw std::runtime_error("Empty file or failed to read header.");
+    }
+
+    std::istringstream header_stream(line);
+    std::string h1, h2, h3, h4, h5, h6, h7;
+    if (!(std::getline(header_stream, h1, '\t') &&
+          std::getline(header_stream, h2, '\t') &&
+          std::getline(header_stream, h3, '\t') &&
+          std::getline(header_stream, h4, '\t') &&
+          std::getline(header_stream, h5, '\t') &&
+          std::getline(header_stream, h6, '\t') &&
+          std::getline(header_stream, h7, '\t')) ||
+        h1 != "CHR" || h2 != "START_POS" || h3 != "END_POS" ||
+        h4 != "SNARL" || h5 != "PATHS" || h6 != "TYPE" || h7 != "REF") {
+        throw std::runtime_error("Error: In parsing snarl paths, invalid header format. Expected: CHR\tSTART_POS\tEND_POS\tSNARL\tPATHS\tTYPE\tREF");
+    }
 
     // Process each line
     while (std::getline(file, line)) {
@@ -333,15 +348,26 @@ std::unordered_map<std::string, std::tuple<std::string, size_t, size_t>> parse_g
     std::ifstream file(filename);
     std::string line;
     
-    // pass header
-    std::getline(file, line);
+    // Read and validate header
+    if (!std::getline(file, line)) {
+        throw std::runtime_error("Error: Empty file or failed to read header.");
+    }
+
+    std::istringstream header_stream(line);
+    std::string col1, col2, col3, col4;
+    if (!(std::getline(header_stream, col1, '\t') &&
+          std::getline(header_stream, col2, '\t') &&
+          std::getline(header_stream, col3, '\t') &&
+          std::getline(header_stream, col4, '\t')) ||
+        col1 != "gene_name" || col2 != "chr" || col3 != "start_pos" || col4 != "end_pos") {
+        throw std::runtime_error("Error: In parsing gene position file, invalid header format. Expected: gene_name\tchr\tstart_pos\tend_pos");
+    }
 
     // Check for required columns
     while (std::getline(file, line)) {
-        if (line.empty()) continue;
-
         std::stringstream ss(line);
-        std::string gene, startStr, endStr, chrom;
+        std::string gene, chrom, startStr, endStr;
+
         std::getline(ss, gene, '\t');
         std::getline(ss, chrom, '\t');
         std::getline(ss, startStr, '\t');
@@ -352,7 +378,7 @@ std::unordered_map<std::string, std::tuple<std::string, size_t, size_t>> parse_g
             int end = std::stoi(endStr);
             geneMap[gene] = std::make_tuple(chrom, start, end);
         } catch (...) {
-            std::cerr << "Invalid line: " << line << std::endl;
+            std::cerr << "Error: In parsing gene position file, invalid line: " << line << std::endl;
             exit(1);
         }
     }
