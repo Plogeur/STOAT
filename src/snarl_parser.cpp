@@ -810,7 +810,6 @@ void SnarlParser::eqtl_table(
                     data << chr << "\t" << start_pos << "\t" << snarl << "\t" << type_var_str
                     << "\t" << gene_name << "\t" << p_value  << "\t" << "" << "\t" << r2
                     << "\t" << beta << "\t" << se << "\t" << allele_number << "\n";
-                
                     local_buffer << data.str();
                 }
             }

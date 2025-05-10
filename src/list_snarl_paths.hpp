@@ -6,6 +6,7 @@
 #include <algorithm>
 #include <numeric>
 #include <unordered_map>
+#include <unordered_set>
 #include <functional>
 #include <iostream>
 #include <array>
@@ -69,13 +70,13 @@ vector<string> calcul_pos_type_variant(const vector<tuple<string, size_t, size_t
 string find_snarl_id(SnarlDistanceIndex& stree, net_handle_t& snarl);
 
 // Function to follow edges
-void follow_edges(
-    SnarlDistanceIndex& stree,
+void follow_edges(SnarlDistanceIndex& stree,
     vector<vector<net_handle_t>>& finished_paths,
     vector<net_handle_t>& path,
+    std::unordered_set<net_handle_t> set_path,
     vector<vector<net_handle_t>>& paths,
-    PackedGraph& pg
-);
+    PackedGraph& pg,
+    const size_t cycle_threshold);
 
 // Function to save snarls
 vector<tuple<net_handle_t, string, size_t, size_t, bool>> save_snarls(
@@ -98,8 +99,9 @@ std::unordered_map<std::string, std::vector<std::tuple<string, vector<string>, s
                             PackedGraph& pg, 
                             const string& output_file, 
                             const string& output_snarl_not_analyse, 
-                            size_t& children_treshold,
-                            size_t& path_length_threshold,
+                            const size_t& children_treshold,
+                            const size_t& path_length_threshold,
+                            const size_t& cycle_threshold,
                             bool bool_return);
 
 #endif

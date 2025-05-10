@@ -132,6 +132,33 @@ def create_insert_deletion_graph(filename="insert_deletion.hg") :
     vg_view(filename, 5)
     print("insert deletion graph created")
 
+def create_loop_simple_graph(filename="loop_simple.hg") :
+
+    gr = HashGraph()
+    seqs = ["TTTT", "AAAA", "A", "CG", "AAAA", "TTTT"]
+    nodes = [gr.create_handle(s) for s in seqs]
+
+    gr.create_edge(nodes[0], nodes[1])
+    gr.create_edge(nodes[1], nodes[2])
+    gr.create_edge(nodes[1], nodes[3])
+    gr.create_edge(nodes[2], nodes[4])
+    gr.create_edge(nodes[2], nodes[2]) # LOOP
+    gr.create_edge(nodes[3], nodes[4])
+    gr.create_edge(nodes[4], nodes[5])
+
+    path = gr.create_path_handle("ref")
+    for idx in [0, 1, 2, 4, 5]:
+        gr.append_step(path, nodes[idx])
+
+    path2 = gr.create_path_handle("alt")
+    for idx in [0, 1, 3, 4, 5]:
+        gr.append_step(path2, nodes[idx])
+
+    gr.serialize(filename)
+    vg_process(filename)
+    vg_view(filename, 6)
+    print("simple loop graph created")
+
 def create_loop_graph(filename="loop.hg") :
 
     gr = HashGraph()
@@ -142,7 +169,7 @@ def create_loop_graph(filename="loop.hg") :
     gr.create_edge(nodes[1], nodes[2])
     gr.create_edge(nodes[1], nodes[3])
     gr.create_edge(nodes[2], nodes[4])
-    gr.create_edge(nodes[2], nodes[1])
+    gr.create_edge(nodes[2], nodes[1]) # LOOP
     gr.create_edge(nodes[3], nodes[4])
     gr.create_edge(nodes[4], nodes[5])
 
@@ -160,33 +187,34 @@ def create_loop_graph(filename="loop.hg") :
     print("loop graph created")
 
 def create_loop_plus_graph(filename="loop_plus.hg") :
-
+    
     gr = HashGraph()
-    seqs = ["TTTT", "AAAA", "AT", "A", "G", "CG", "AAAA", "TTTT"]
+    seqs = ["TTTT", "AAAA", "T", "G", "AT", "C", "A", "AAAA", "TTTT"]
     nodes = [gr.create_handle(s) for s in seqs]
 
     gr.create_edge(nodes[0], nodes[1])
     gr.create_edge(nodes[1], nodes[2])
-    gr.create_edge(nodes[2], nodes[3])
-    gr.create_edge(nodes[2], nodes[4])
-    gr.create_edge(nodes[3], nodes[2])
-    gr.create_edge(nodes[3], nodes[5])
-    gr.create_edge(nodes[4], nodes[5])
-    gr.create_edge(nodes[5], nodes[6])
     gr.create_edge(nodes[1], nodes[6])
+    gr.create_edge(nodes[2], nodes[3]) # NESTED
+    gr.create_edge(nodes[2], nodes[4]) # NESTED
+    gr.create_edge(nodes[3], nodes[5]) # NESTED
+    gr.create_edge(nodes[4], nodes[5]) # NESTED
+    gr.create_edge(nodes[5], nodes[2]) # NESTED + LOOP
+    gr.create_edge(nodes[5], nodes[7])
     gr.create_edge(nodes[6], nodes[7])
+    gr.create_edge(nodes[7], nodes[8])
 
-    path = gr.create_path_handle("ref")
-    for idx in [0, 1, 6, 7]:
-        gr.append_step(path, nodes[idx])
+    path1 = gr.create_path_handle("ref")
+    for idx in [0, 1, 6, 7, 8]:
+        gr.append_step(path1, nodes[idx])
 
     path2 = gr.create_path_handle("alt")
-    for idx in [0, 1, 2, 3, 5, 6, 7]:
+    for idx in [0, 1, 2, 3, 5, 7, 8]:
         gr.append_step(path2, nodes[idx])
 
     gr.serialize(filename)
     vg_process(filename)
-    vg_view(filename, 8)
+    vg_view(filename, 9)
     print("loop plus graph created")
 
 def create_linear_path(filename="linear.hg"):
@@ -215,7 +243,7 @@ def create_snp_and_nested_snp_graph(filename="snp_and_nested_snp.hg"):
     gr.create_edge(nodes[1], nodes[2])
     gr.create_edge(nodes[1], nodes[6])
     gr.create_edge(nodes[2], nodes[3]) # NESTED
-    gr.create_edge(nodes[2], nodes[4])
+    gr.create_edge(nodes[2], nodes[4]) # NESTED
     gr.create_edge(nodes[3], nodes[5]) # NESTED
     gr.create_edge(nodes[4], nodes[5]) # NESTED
     gr.create_edge(nodes[5], nodes[7])
@@ -396,6 +424,7 @@ if __name__ == "__main__":
     create_insert_snp_graph(wrap_filename("insert_snp.hg"))
     create_deletion_snp_graph(wrap_filename("deletion_snp.hg"))
     create_insert_deletion_graph(wrap_filename("insert_deletion.hg"))
+    create_loop_simple_graph(wrap_filename("loop_simple.hg"))
     create_loop_graph(wrap_filename("loop.hg"))
     create_loop_plus_graph(wrap_filename("loop_plus.hg"))
     create_linear_path(wrap_filename("linear.hg"))

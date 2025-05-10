@@ -112,7 +112,7 @@ vector<string> calcul_pos_type_variant(const vector<tuple<string, size_t, size_t
 
         } else if (path_length == 2) { // case Deletion
             list_type_variant.push_back("0");
-        } else { // Case path_lengths is empty
+        } else { // Case path_lengths is empty or == 1
             cerr << "path_lengths is empty" << endl;
         }
     }
@@ -163,33 +163,30 @@ std::tuple<std::unique_ptr<bdsg::SnarlDistanceIndex>,
     return std::make_tuple(std::move(stree), std::move(pg), root, std::move(pp_overlay));
 }
 
-void follow_edges(SnarlDistanceIndex& stree, 
+void follow_edges(SnarlDistanceIndex& stree,
                 vector<vector<net_handle_t>>& finished_paths,
                 vector<net_handle_t>& path,
-                vector<vector<net_handle_t>>& paths, 
-                PackedGraph& pg) {
-  
+                std::unordered_set<net_handle_t> set_path,
+                vector<vector<net_handle_t>>& paths,
+                PackedGraph& pg,
+                const size_t cycle_threshold) {
+
+    size_t number_cycle = 0;
     auto add_to_path = [&](const net_handle_t& next_child) {
 
-        // cout << "stree.net_handle_as_string(next_child) : " << stree.net_handle_as_string(next_child) << endl;
-        if (stree.is_sentinel(next_child)) {
-            // If this is the bound of the snarl then we're done
+        if (stree.is_sentinel(next_child)) { // If this is the bound of the snarl then we're done
             finished_paths.emplace_back(path);
             finished_paths.back().push_back(next_child);
-        } else {
-
-            // Case where we find a loop
-            for (const auto& i : path) {
-                // cout << "stree.net_handle_as_string(i) : " << stree.net_handle_as_string(i) << endl;
-                if (i == next_child) {
-                    cout << "loop found" << endl;
+        } else { // Case where we find a loop
+            if (set_path.find(next_child) != set_path.end()) {
+                number_cycle++;
+                if (number_cycle > cycle_threshold) {
                     return false;
                 }
             }
             paths.emplace_back(path);
             paths.back().push_back(next_child);
         }
-        //cout << endl;
         return true;
     };
 
@@ -356,7 +353,7 @@ tuple<vector<string>, vector<string>> fill_pretty_paths(
                 }
             }
 
-            // Chain case aka complexe
+            // Chain case aka complex
             else if (stree.is_chain(net)) {
                 net_handle_t nodl, nodr;
                 bool boundl;
@@ -428,8 +425,9 @@ std::unordered_map<std::string, std::vector<std::tuple<string, vector<string>, s
         PackedGraph& pg, 
         const string& output_file,
         const string& output_snarl_not_analyse,
-        size_t& children_threshold,
-        size_t& path_length_threshold, 
+        const size_t& children_threshold,
+        const size_t& path_length_threshold, 
+        const size_t& cycle_threshold,
         bool bool_return = true) {
 
     ofstream out_snarl(output_file);
@@ -466,7 +464,12 @@ std::unordered_map<std::string, std::vector<std::tuple<string, vector<string>, s
         vector<vector<net_handle_t>> finished_paths;
 
         while (!paths.empty()) {
-            auto path = paths.back();
+            std::vector<net_handle_t> path = paths.back();
+            std::unordered_set<net_handle_t> set_path;
+            for (auto net : path) {
+                set_path.insert(net);
+            }
+
             paths.pop_back();
 
             if (itr > path_length_threshold) {
@@ -474,7 +477,7 @@ std::unordered_map<std::string, std::vector<std::tuple<string, vector<string>, s
                 not_break = false;
                 break;
             }
-            follow_edges(stree, finished_paths, path, paths, pg);
+            follow_edges(stree, finished_paths, path, set_path, paths, pg, cycle_threshold);
             itr++;
         }
 

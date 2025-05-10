@@ -49,6 +49,7 @@ void print_help() {
               << "  -k, --kinship <path>        Path to the kinship matrix file (.txt or .tsv)\n"
               << "  --make-bed                  Create a plink format files (.bed, .bim, .fam)\n"
               << "  --table-threshold <int>     The p-value threshold for regression data file (exemple : 5 <=> 10-5, defauld 0 : disable)\n"
+              << "  --cycle <int>               Max number of authorized cycle use in snarl parsing (defauld : 1)\n"
               << "  --maf                       Add a maf (Minimum allele frequency) thresold (defauld : 0.01)\n"
               << "  -o, --output <name>         Output dir name\n"
               << "  -t, --thread <int>          Number of threads\n"
@@ -62,8 +63,9 @@ int main(int argc, char* argv[]) {
         eqtl_path, covariate_path, gene_position_path, 
         kinship_path, output_dir;
 
-    size_t num_threads=1;
-    size_t phenotype=0;
+    size_t num_threads = 1;
+    size_t phenotype = 0;
+    size_t cycle_threshold = 1;
     double table_threshold = 0;
     size_t children_threshold = 50;
     size_t path_length_threshold = 10000;
@@ -143,6 +145,13 @@ int main(int argc, char* argv[]) {
             num_threads = std::stoi(argv[++i]);
             if (num_threads < 1) {
                 std::cerr << "Error: Number of threads must be a positive integer\n";
+                return EXIT_FAILURE;
+            }
+        } else if ((arg == "--cycle") && i + 1 < argc) {
+            // convert str to int and verify that it is a positive number
+            cycle_threshold = std::stoi(argv[++i]);
+            if (cycle_threshold < 1) {
+                std::cerr << "Error: Max number of cycle must be a positive integer\n";
                 return EXIT_FAILURE;
             }
         } else if ((arg == "--table-threshold") && i + 1 < argc) {
@@ -285,7 +294,7 @@ int main(int argc, char* argv[]) {
         string output_snarl_not_analyse = output_dir + "/snarl_not_analyse.tsv";
         string output_file = output_dir + "/snarl_analyse.tsv";
 
-        snarls_chr = loop_over_snarls_write(*stree, snarls, *pg, output_file, output_snarl_not_analyse, children_threshold, path_length_threshold, only_snarl_parsing);
+        snarls_chr = loop_over_snarls_write(*stree, snarls, *pg, output_file, output_snarl_not_analyse, children_threshold, path_length_threshold, cycle_threshold, only_snarl_parsing);
         auto end_0 = std::chrono::high_resolution_clock::now();
         std::cout << "Snarl decomposition : " << std::chrono::duration<double>(end_0 - start_0).count() << " s" << std::endl;
         if (only_snarl_parsing) {
