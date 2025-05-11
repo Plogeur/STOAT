@@ -159,6 +159,36 @@ def create_loop_simple_graph(filename="loop_simple.hg") :
     vg_view(filename, 6)
     print("simple loop graph created")
 
+def create_loop_double_graph(filename="loop_double.hg") :
+
+    gr = HashGraph()
+    seqs = ["TTTT", "AAAA", "CG", "TC", "GG", "GA", "AAAA", "TTTT"]
+    nodes = [gr.create_handle(s) for s in seqs]
+
+    gr.create_edge(nodes[0], nodes[1])
+    gr.create_edge(nodes[1], nodes[2])
+    gr.create_edge(nodes[1], nodes[5])
+    gr.create_edge(nodes[2], nodes[3])
+    gr.create_edge(nodes[3], nodes[2]) # 1er LOOP
+    gr.create_edge(nodes[3], nodes[4])
+    gr.create_edge(nodes[4], nodes[2]) # 2eme LOOP
+    gr.create_edge(nodes[4], nodes[6])
+    gr.create_edge(nodes[5], nodes[6])
+    gr.create_edge(nodes[6], nodes[7])
+
+    path1 = gr.create_path_handle("ref")
+    for idx in [0, 1, 5, 6, 7]:
+        gr.append_step(path1, nodes[idx])
+
+    path2 = gr.create_path_handle("alt")
+    for idx in [0, 1, 2, 3, 4, 6, 7]:
+        gr.append_step(path2, nodes[idx])
+
+    gr.serialize(filename)
+    vg_process(filename)
+    vg_view(filename, 8)
+    print("double loop graph created")
+
 def create_loop_graph(filename="loop.hg") :
 
     gr = HashGraph()

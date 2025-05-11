@@ -105,7 +105,7 @@ vector<string> calcul_pos_type_variant(const vector<tuple<string, size_t, size_t
                 list_type_variant.push_back(std::to_string(sum_path));
             }
 
-        } else if (path_length == 3) { // Case simple path len 3
+        } else if (path_length == 3) { // Case simple path len 3 (INS or SNP)
             string seq = std::get<0>(tuple_info);
             size_t seq_length = seq.length();
             list_type_variant.push_back(to_string(seq_length));
@@ -166,23 +166,18 @@ std::tuple<std::unique_ptr<bdsg::SnarlDistanceIndex>,
 void follow_edges(SnarlDistanceIndex& stree,
                 vector<vector<net_handle_t>>& finished_paths,
                 vector<net_handle_t>& path,
-                std::unordered_set<net_handle_t> set_path,
                 vector<vector<net_handle_t>>& paths,
                 PackedGraph& pg,
-                const size_t cycle_threshold) {
+                const bool& cycle) {
 
-    size_t number_cycle = 0;
     auto add_to_path = [&](const net_handle_t& next_child) {
 
         if (stree.is_sentinel(next_child)) { // If this is the bound of the snarl then we're done
             finished_paths.emplace_back(path);
             finished_paths.back().push_back(next_child);
-        } else { // Case where we find a loop
-            if (set_path.find(next_child) != set_path.end()) {
-                number_cycle++;
-                if (number_cycle > cycle_threshold) {
-                    return false;
-                }
+        } else {
+            if (cycle) { // Case where we find a loop
+                return false;
             }
             paths.emplace_back(path);
             paths.back().push_back(next_child);
@@ -310,7 +305,7 @@ tuple<vector<string>, vector<string>> fill_pretty_paths(
     // list of paths
     vector<string> pretty_paths;
 
-    // seq_net, minimum_distance, maximum_distance
+    // seq_net, minimum_distance, maximun_distance, size_path, sum_path
     vector<tuple<string, size_t, size_t, size_t, size_t>> seq_net_paths;
 
     for (const auto& path : finished_paths) {
@@ -414,6 +409,9 @@ tuple<vector<string>, vector<string>> fill_pretty_paths(
         seq_net_paths.push_back(std::make_tuple(seq_net, minimum_distance, maximun_distance, size_path, sum_path));
     }
 
+    cout << "seq_net_paths size : " << seq_net_paths.size() << endl;
+    cout << "pretty_paths size : " << pretty_paths.size() << endl;
+
     vector<string> type_variants = calcul_pos_type_variant(seq_net_paths);
     return std::make_tuple(pretty_paths, type_variants);
 }
@@ -465,9 +463,15 @@ std::unordered_map<std::string, std::vector<std::tuple<string, vector<string>, s
 
         while (!paths.empty()) {
             std::vector<net_handle_t> path = paths.back();
-            std::unordered_set<net_handle_t> set_path;
-            for (auto net : path) {
-                set_path.insert(net);
+            std::unordered_map<net_handle_t, size_t> dict_path_occ;
+            bool cycle = false;
+            
+            for (const auto& net : path) {
+                dict_path_occ[net]++;
+                if (dict_path_occ[net] > cycle_threshold+1) {
+                    cycle = true;
+                    break;
+                }
             }
 
             paths.pop_back();
@@ -477,7 +481,7 @@ std::unordered_map<std::string, std::vector<std::tuple<string, vector<string>, s
                 not_break = false;
                 break;
             }
-            follow_edges(stree, finished_paths, path, set_path, paths, pg, cycle_threshold);
+            follow_edges(stree, finished_paths, path, paths, pg, cycle);
             itr++;
         }
 

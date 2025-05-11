@@ -73,10 +73,9 @@ string find_snarl_id(SnarlDistanceIndex& stree, net_handle_t& snarl);
 void follow_edges(SnarlDistanceIndex& stree,
     vector<vector<net_handle_t>>& finished_paths,
     vector<net_handle_t>& path,
-    std::unordered_set<net_handle_t> set_path,
     vector<vector<net_handle_t>>& paths,
     PackedGraph& pg,
-    const size_t cycle_threshold);
+    const bool& cycle);
 
 // Function to save snarls
 vector<tuple<net_handle_t, string, size_t, size_t, bool>> save_snarls(

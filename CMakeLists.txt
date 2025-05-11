@@ -6,6 +6,7 @@ set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
+set(CMAKE_OSX_DEPLOYMENT_TARGET "12.7") # IOS fix
 
 include_directories(/usr/include /usr/local/include)
 link_directories(/usr/include /usr/local/lib)  # libbdsg.dylib
@@ -41,6 +42,8 @@ target_include_directories(${PROJECT_NAME} PRIVATE
     ${Boost_INCLUDE_DIRS}
     ${HTSLIB_INCLUDE_DIRS}
 )
+
+target_compile_options(${PROJECT_NAME} PRIVATE -w) # fix warning
 
 # Link Libraries
 target_link_libraries(${PROJECT_NAME}
@@ -80,6 +83,8 @@ add_executable(unit_tests
     src/snarl_parser.cpp
     src/lmm.cpp
 )
+
+target_compile_options(unit_tests PRIVATE -w) # fix warning
 
 # add src target lib + Catch2 lib 
 target_link_libraries(unit_tests PRIVATE 
