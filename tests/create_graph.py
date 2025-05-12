@@ -421,7 +421,7 @@ def create_inversion_graph(filename="inversion.hg"):
     gr.create_edge(nodes[1], nodes[2])
     gr.create_edge(nodes[2], nodes[3])
     gr.create_edge(nodes[3], nodes[4])
-    gr.create_edge(gr.flip(nodes[2]), gr.flip(nodes[3])) # begin 3 -> end 4
+    gr.create_edge(nodes[2], gr.flip(nodes[3])) # begin 3 -> end 4
     gr.create_edge(nodes[1], nodes[5]) # DEL
     gr.create_edge(gr.flip(nodes[3]), nodes[4]) # begin 4 -> begin 5    
     gr.create_edge(nodes[4], nodes[5])
@@ -456,6 +456,7 @@ if __name__ == "__main__":
     create_insert_deletion_graph(wrap_filename("insert_deletion.hg"))
     create_loop_simple_graph(wrap_filename("loop_simple.hg"))
     create_loop_graph(wrap_filename("loop.hg"))
+    create_loop_double_graph(wrap_filename("loop_double.hg"))
     create_loop_plus_graph(wrap_filename("loop_plus.hg"))
     create_linear_path(wrap_filename("linear.hg"))
     create_snp_and_nested_snp_graph(wrap_filename("snp_and_nested_snp.hg"))

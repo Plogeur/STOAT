@@ -65,17 +65,6 @@
 <title>4:sw&#45;&gt;5:nw</title>
 <path fill="none" stroke="black" stroke-width="2" d="M315,-10.96C313.38,-10.96 314.71,-8.44 316,-7.46 332.5,4.98 342.87,-1.01 362.5,-7.46 383.48,-14.36 402.5,-59.05 402.5,-36.96"/>
 </g>
-<!-- 3 -->
-<g id="node7" class="node">
-<title>3</title>
-<polygon fill="none" stroke="black" stroke-width="2" points="232,-7.96 232,-34.96 267,-34.96 267,-7.96 232,-7.96"/>
-<text text-anchor="start" x="238" y="-17.76" font-family="Times,serif" font-size="14.00">3:T</text>
-</g>
-<!-- 4&#45;&gt;3 -->
-<g id="edge9" class="edge">
-<title>4:ne&#45;&gt;3:nw</title>
-<path fill="none" stroke="black" stroke-width="2" d="M363,-36.96C363,-51.63 231,-51.63 231,-36.96"/>
-</g>
 <!-- 6&#45;&gt;7 -->
 <g id="edge5" class="edge">
 <title>6:ne&#45;&gt;7:nw</title>
@@ -86,6 +75,12 @@
 <title>2:ne&#45;&gt;6:nw</title>
 <path fill="none" stroke="black" stroke-width="2" d="M186.5,-50.96C186.5,-85.3 495.5,-85.3 495.5,-50.96"/>
 </g>
+<!-- 3 -->
+<g id="node7" class="node">
+<title>3</title>
+<polygon fill="none" stroke="black" stroke-width="2" points="232,-7.96 232,-34.96 267,-34.96 267,-7.96 232,-7.96"/>
+<text text-anchor="start" x="238" y="-17.76" font-family="Times,serif" font-size="14.00">3:T</text>
+</g>
 <!-- 2&#45;&gt;3 -->
 <g id="edge7" class="edge">
 <title>2:ne&#45;&gt;3:nw</title>
@@ -93,6 +88,11 @@
 </g>
 <!-- 3&#45;&gt;4 -->
 <g id="edge8" class="edge">
+<title>3:ne&#45;&gt;4:se</title>
+<path fill="none" stroke="black" stroke-width="2" d="M268,-36.96C268,-61.81 291.6,-14.28 315.5,-7.46 335.8,-1.67 346.15,5.25 363,-7.46 364.29,-8.44 365.62,-10.96 364,-10.96"/>
+</g>
+<!-- 3&#45;&gt;4 -->
+<g id="edge9" class="edge">
 <title>3:ne&#45;&gt;4:nw</title>
 <path fill="none" stroke="black" stroke-width="2" d="M268,-36.96C268,-58.3 316,-58.3 316,-36.96"/>
 </g>

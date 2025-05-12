@@ -72,7 +72,7 @@ string find_snarl_id(SnarlDistanceIndex& stree, net_handle_t& snarl);
 // Function to follow edges
 void follow_edges(SnarlDistanceIndex& stree,
     vector<vector<net_handle_t>>& finished_paths,
-    vector<net_handle_t>& path,
+    const vector<net_handle_t>& path,
     vector<vector<net_handle_t>>& paths,
     PackedGraph& pg,
     const bool& cycle);

@@ -116,7 +116,6 @@ vector<string> calcul_pos_type_variant(const vector<tuple<string, size_t, size_t
             cerr << "path_lengths is empty" << endl;
         }
     }
-
     return list_type_variant;
 }
 
@@ -165,18 +164,26 @@ std::tuple<std::unique_ptr<bdsg::SnarlDistanceIndex>,
 
 void follow_edges(SnarlDistanceIndex& stree,
                 vector<vector<net_handle_t>>& finished_paths,
-                vector<net_handle_t>& path,
+                const vector<net_handle_t>& path,
                 vector<vector<net_handle_t>>& paths,
                 PackedGraph& pg,
                 const bool& cycle) {
 
     auto add_to_path = [&](const net_handle_t& next_child) {
 
-        if (stree.is_sentinel(next_child)) { // If this is the bound of the snarl then we're done
-            finished_paths.emplace_back(path);
-            finished_paths.back().push_back(next_child);
+        // If this is the bound of the snarl then we're done && next_child is different that the first node
+        if (stree.is_sentinel(next_child)) {
+            size_t next_child_node_id = stree.node_id(stree.get_node_from_sentinel(next_child));
+            size_t first_element_path_node_id = stree.node_id(stree.get_node_from_sentinel(path[0]));
+            if (next_child_node_id != first_element_path_node_id) {
+                finished_paths.emplace_back(path);
+                finished_paths.back().push_back(next_child);
+            }
+
         } else {
+
             if (cycle) { // Case where we find a loop
+                cout << "cycle found" << endl;
                 return false;
             }
             paths.emplace_back(path);
@@ -351,42 +358,40 @@ tuple<vector<string>, vector<string>> fill_pretty_paths(
             // Chain case aka complex
             else if (stree.is_chain(net)) {
                 net_handle_t nodl, nodr;
-                bool boundl;
                 if (stree.starts_at_start(net)) {
-                    boundl = false;
                     nodl = stree.get_bound(net, false, true);
                     nodr = stree.get_bound(net, true, false);
                 } else {
-                    boundl = true;
                     nodl = stree.get_bound(net, true, true);
                     nodr = stree.get_bound(net, false, false);
                 }
 
                 ppath.addNodeHandle(nodl, stree);
+                // test taille de la chaine == 2 && is_node both ?
                 ppath.addNode("*", '>');
                 ppath.addNodeHandle(nodr, stree);
 
                 // Get the size of the chain and return the distance (minimum and maximum)
                 size_t complex_start_id = stree.node_id(nodl);
-                size_t size_start_node = pg.get_length(pg.get_handle(complex_start_id));
-                size_t complex_end_id = stree.node_id(nodr);
-                size_t size_end_node = pg.get_length(pg.get_handle(complex_end_id));
-                size_t size_chain = size_start_node + size_end_node;
+                handle_t handle_start = pg.get_handle(complex_start_id);
+                size_t size_start_node = pg.get_length(handle_start);
+                bool revl = stree.ends_at_start(nodl);
 
-                // boundl = true or false 
-                size_t min_dist = stree.minimum_distance(complex_start_id, boundl, size_start_node, complex_end_id, boundl, 0);
-                size_t max_dist = stree.maximum_distance(complex_start_id, boundl, size_start_node, complex_end_id, boundl, 0);
+                size_t complex_end_id = stree.node_id(nodr);
+                handle_t handle_end = pg.get_handle(complex_end_id);
+                size_t size_end_node = pg.get_length(handle_end);
+                bool revr = stree.ends_at_start(nodr);
+
+                size_t size_chain = size_start_node + size_end_node;
+                size_t min_dist = stree.minimum_distance(complex_start_id, revl, size_start_node, complex_end_id, revr, 0);
+                size_t max_dist = stree.maximum_distance(complex_start_id, revl, size_start_node, complex_end_id, revr, 0);
+                
+                // Fail case 
+                assert(max_dist != static_cast<size_t>(INT_MAX) && "Overflow max distance");
+                assert(min_dist != static_cast<size_t>(INT_MAX) && "Overflow min distance");
+
                 minimum_distance = size_chain + min_dist;
                 maximun_distance = size_chain + max_dist;
-                // cout << "stree.node_id(nodl) : " << stree.node_id(nodl) << endl;
-                // cout << "stree.node_id(nodr) : " << stree.node_id(nodr) << endl;
-                // cout << "size_end_node = " << size_end_node << endl;
-                // cout << "size_start_node = " << size_start_node << endl;
-                // cout << "size_chain = " << size_chain << endl;
-                // cout << "minimum_distance without size_chain = " << min_dist << endl;
-                // cout << "maximun_distance without size_chain = " << max_dist << endl;
-                // cout << "minimum_distance = " << minimum_distance << endl;
-                // cout << "maximun_distance = " << maximun_distance << endl;
 
                 is_complex = true;
             }
@@ -408,9 +413,6 @@ tuple<vector<string>, vector<string>> fill_pretty_paths(
         size_t size_path = ppath.size();
         seq_net_paths.push_back(std::make_tuple(seq_net, minimum_distance, maximun_distance, size_path, sum_path));
     }
-
-    cout << "seq_net_paths size : " << seq_net_paths.size() << endl;
-    cout << "pretty_paths size : " << pretty_paths.size() << endl;
 
     vector<string> type_variants = calcul_pos_type_variant(seq_net_paths);
     return std::make_tuple(pretty_paths, type_variants);
@@ -465,7 +467,7 @@ std::unordered_map<std::string, std::vector<std::tuple<string, vector<string>, s
             std::vector<net_handle_t> path = paths.back();
             std::unordered_map<net_handle_t, size_t> dict_path_occ;
             bool cycle = false;
-            
+
             for (const auto& net : path) {
                 dict_path_occ[net]++;
                 if (dict_path_occ[net] > cycle_threshold+1) {
