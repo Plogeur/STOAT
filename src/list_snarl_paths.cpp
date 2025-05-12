@@ -323,7 +323,7 @@ tuple<vector<string>, vector<string>> fill_pretty_paths(
         size_t minimum_distance=0;
         size_t maximun_distance=0;
         std::vector<size_t> size_node;
-        size_node.resize(path.size());
+        size_node.resize(path.size(), 0);
 
         for (int i=0; i<path.size(); i++) {
             net_handle_t net = path[i];
@@ -367,22 +367,28 @@ tuple<vector<string>, vector<string>> fill_pretty_paths(
                 }
 
                 ppath.addNodeHandle(nodl, stree);
-                
+
                 // test chain : net_handle_t is composed of 2 element && if both element is_node == true ?
                 bool chain_2node = true;
                 int child_count = 0;
-                
+                size_t sum_node = 0;
+
                 stree.for_each_child(net, [&](const net_handle_t& child) {
                     ++child_count;
                     if (!stree.is_node(child)) {
                         chain_2node = false;
                         return false; // stop early
+                    } else {
+                        sum_node += pg.get_length(pg.get_handle(stree.node_id(child)));
                     }
                     return true;
                 });
                 
                 if (!(chain_2node && child_count == 2)) {
                     ppath.addNode("*", '>');
+                    is_complex = true;
+                } else {
+                    size_node[i] = sum_node;
                 }
                 ppath.addNodeHandle(nodr, stree);
 
@@ -407,8 +413,6 @@ tuple<vector<string>, vector<string>> fill_pretty_paths(
 
                 minimum_distance = size_chain + min_dist;
                 maximun_distance = size_chain + max_dist;
-
-                is_complex = true;
             }
         }
 

@@ -304,7 +304,7 @@ TEST_CASE("Test simulated case", "[Path]") {
         REQUIRE(std::get<1>(snarls_chr["ref"][0]) == std::vector<std::string>{">2>3>4>5>7", ">2>3>4>5>3>4>5>7", ">2>3>4>5>3>4>5>3>4>5>7", ">2>3>4>5>3>4>3>4>5>7", ">2>3>4>3>4>5>7", ">2>3>4>3>4>5>3>4>5>7", ">2>3>4>3>4>3>4>5>7", ">2>6>7"});
         REQUIRE(std::get<2>(snarls_chr["ref"][0]) == 8);
         REQUIRE(std::get<3>(snarls_chr["ref"][0]) == 11);
-        REQUIRE(std::get<4>(snarls_chr["ref"][0]) == std::vector<std::string>{"6", "10", "12", "14", "16", "18", "2"});
+        REQUIRE(std::get<4>(snarls_chr["ref"][0]) == std::vector<std::string>{"6", "12", "18", "16", "10", "16", "14", "2"});
     }
 
     SECTION("loop_plus") {
