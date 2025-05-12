@@ -183,7 +183,7 @@ void follow_edges(SnarlDistanceIndex& stree,
         } else {
 
             if (cycle) { // Case where we find a loop
-                cout << "cycle found" << endl;
+                // cout << "cycle found" << endl;
                 return false;
             }
             paths.emplace_back(path);
@@ -367,8 +367,23 @@ tuple<vector<string>, vector<string>> fill_pretty_paths(
                 }
 
                 ppath.addNodeHandle(nodl, stree);
-                // test taille de la chaine == 2 && is_node both ?
-                ppath.addNode("*", '>');
+                
+                // test chain : net_handle_t is composed of 2 element && if both element is_node == true ?
+                bool chain_2node = true;
+                int child_count = 0;
+                
+                stree.for_each_child(net, [&](const net_handle_t& child) {
+                    ++child_count;
+                    if (!stree.is_node(child)) {
+                        chain_2node = false;
+                        return false; // stop early
+                    }
+                    return true;
+                });
+                
+                if (!(chain_2node && child_count == 2)) {
+                    ppath.addNode("*", '>');
+                }
                 ppath.addNodeHandle(nodr, stree);
 
                 // Get the size of the chain and return the distance (minimum and maximum)

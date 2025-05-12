@@ -211,10 +211,10 @@ TEST_CASE("Test simulated case", "[Path]") {
         REQUIRE(std::get<3>(snarls_chr["ref"][0]) == 15);
         REQUIRE(std::get<4>(snarls_chr["ref"][0]) == std::vector<std::string>{"0", "6/6"});
         
-        REQUIRE(std::get<1>(snarls_chr["ref"][1]) == std::vector<std::string>{">3>4>5", ">3<4>5", ">3>4<5", ">3<4<5"});
+        REQUIRE(std::get<1>(snarls_chr["ref"][1]) == std::vector<std::string>{">3>4>5", ">3<4>5"});
         REQUIRE(std::get<2>(snarls_chr["ref"][1]) == 9);
         REQUIRE(std::get<3>(snarls_chr["ref"][1]) == 12);
-        REQUIRE(std::get<4>(snarls_chr["ref"][1]) == std::vector<std::string>{"2", "2", "2", "2"});
+        REQUIRE(std::get<4>(snarls_chr["ref"][1]) == std::vector<std::string>{"2", "2"});
     }
 
     SECTION("large_del") {
