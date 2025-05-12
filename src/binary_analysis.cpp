@@ -296,7 +296,6 @@ void glm_logistic_covar(
     r2_str       = set_precision(r2);
 }
 
-
 // ------------------------ Chi2 test ------------------------
 
 std::string chi2_2x2(const std::vector<size_t>& g0, const std::vector<size_t>& g1) {

@@ -5,8 +5,8 @@ void lmm_binary(
     const std::vector<bool>& phenotype_binary,      
     const KinshipMatrix& kinship,                                              
     const std::vector<std::vector<double>>& covariates,
-    std::string& p_value_str, std::string& beta_str, std::string& se_str, std::string& r2_str) {
-    
+    std::string& p_value_str, std::string& beta_str, 
+    std::string& se_str, std::string& r2_str) {
 }
 
 void lmm_quantitative(
@@ -16,6 +16,5 @@ void lmm_quantitative(
     const std::vector<std::vector<double>>& covariates,
     std::string& p_value_str, std::string& beta_str, 
     std::string& se_str, std::string& r2_str) {
-
 }
 
