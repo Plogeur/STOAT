@@ -68,7 +68,7 @@ double calculate_log_likelihood(const Eigen::VectorXd& y, const Eigen::VectorXd&
 
 // Logistic regression function
 void logistic_regression(
-    const std::vector<std::vector<size_t>>& variants_data,
+    const std::vector<std::vector<double>>& variants_data,
     const std::vector<bool>& phenotype,
     std::string& p_value_out,    // LRT (global) p-value
     std::string& beta_out,       // beta for first variant
@@ -180,7 +180,7 @@ void logistic_regression(
 
 // GLM Implementation with Iteratively Reweighted Least Squares (IRLS)
 void glm_logistic_covar(
-    const std::vector<std::vector<size_t>>& variant_data,
+    const std::vector<std::vector<double>>& variant_data,
     const std::vector<bool>& phenotype,
     const std::vector<std::vector<double>>& covariates,
     std::string& p_value_str, std::string& beta_str, 

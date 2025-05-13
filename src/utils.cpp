@@ -82,7 +82,7 @@ bool isPValueSignificant(double pvalue_threshold, const std::string& pvalue_str)
 
 // Write the table to a TSV file
 void writeSignificantTableToTSV(
-    const std::vector<std::vector<size_t>>& table,
+    const std::vector<std::vector<double>>& table,
     const std::vector<std::string>& list_snarl,
     const std::vector<std::string>& list_samples,
     const std::string& filename) {

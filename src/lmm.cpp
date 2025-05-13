@@ -1,7 +1,7 @@
 #include "lmm.hpp"
 
 void lmm_binary(
-    const std::vector<std::vector<size_t>>& df,                  
+    const std::vector<std::vector<double>>& df,                  
     const std::vector<bool>& phenotype_binary,      
     const KinshipMatrix& kinship,                                              
     const std::vector<std::vector<double>>& covariates,
@@ -10,7 +10,7 @@ void lmm_binary(
 }
 
 void lmm_quantitative(
-    const std::vector<std::vector<size_t>>& df,                  
+    const std::vector<std::vector<double>>& df,                  
     const vector<double>& phenotype_table,      
     const KinshipMatrix& kinship,                                              
     const std::vector<std::vector<double>>& covariates,

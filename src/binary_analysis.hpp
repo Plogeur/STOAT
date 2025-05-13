@@ -25,7 +25,7 @@
 // ------------------------ Logistic regression ------------------------
 
 void logistic_regression(
-    const std::vector<std::vector<size_t>>& variants_data,
+    const std::vector<std::vector<double>>& variants_data,
     const std::vector<bool>& phenotype,
     std::string& p_value_out,
     std::string& beta_out,
@@ -33,7 +33,7 @@ void logistic_regression(
     std::string& r2_out);
 
 void glm_logistic_covar(
-    const std::vector<std::vector<size_t>>& variant_data,
+    const std::vector<std::vector<double>>& variant_data,
     const std::vector<bool>& phenotype,
     const std::vector<std::vector<double>>& covariates,
     std::string& p_value_str, std::string& beta_str, 

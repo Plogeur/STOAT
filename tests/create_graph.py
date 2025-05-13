@@ -436,6 +436,31 @@ def create_inversion_graph(filename="inversion.hg"):
     vg_view(filename, 7)
     print("inversion graph created")
 
+def create_jean_graph(filename="jean.hg"):
+    gr = HashGraph()
+    seqs = ["TTTT", "AAAA", "T", "AT", "CAT", "AAAA", "TTTT"]
+    nodes = [gr.create_handle(s) for s in seqs]
+
+    gr.create_edge(nodes[0], nodes[1])
+    gr.create_edge(nodes[1], nodes[2])
+    gr.create_edge(nodes[2], nodes[3])
+    gr.create_edge(nodes[3], nodes[4])
+    gr.create_edge(nodes[3], nodes[2]) # begin 4 -> end 3
+    gr.create_edge(nodes[1], nodes[5]) # DEL
+    gr.create_edge(gr.flip(nodes[3]), nodes[4]) # begin 4 -> begin 5 
+    gr.create_edge(nodes[4], gr.flip(nodes[4])) # loop 5 end -> 5 end
+    gr.create_edge(nodes[4], nodes[5])
+    gr.create_edge(nodes[5], nodes[6])
+
+    path1 = gr.create_path_handle("ref")
+    for idx in [0, 1, 2, 3, 4, 5, 6]:
+        gr.append_step(path1, nodes[idx])
+
+    gr.serialize(filename)
+    vg_process(filename)
+    vg_view(filename, 7)
+    print("jean graph created")
+
 # Example call to generate all
 if __name__ == "__main__":
 
@@ -465,7 +490,7 @@ if __name__ == "__main__":
     create_repetition_graph(wrap_filename("repetition.hg"))
     create_large_del_graph(wrap_filename("large_del.hg"))
     create_inversion_graph(wrap_filename("inversion.hg"))
-
+    create_jean_graph(wrap_filename("jean.hg"))
 # python3 create_graph.py
 
 # vg convert simple_snp.hg > simple_snp.pg

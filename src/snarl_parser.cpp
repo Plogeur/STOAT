@@ -99,10 +99,10 @@ void chromosome_chuck_eqtl(htsFile* &ptr_vcf, bcf_hdr_t* &hdr, bcf1_t* &rec,
     const std::vector<std::vector<double>>& covar,
     const double& maf, const KinshipMatrix& kinship, const size_t& num_threads, 
     const double& table_threshold, const std::string& regression_dir,
-    const std::string& out_eqtl) {
+    const size_t& windows_gene_threshold, const std::string& out_eqtl) {
 
     std::ofstream outf(out_eqtl, std::ios::binary);
-    std::string headers = "CHR\tPOS\tSNARL\tTYPE\tGENE\tSE\tBETA\tP\n";
+    std::string headers = "CHR\tPOS\tSNARL\tTYPE\tGENE\tP\tP_ADJUSTED\tRSQUARE\tBETA\tSE\tALLELE_NUM\n";
     outf.write(headers.c_str(), headers.size());
     
     std::cout << "GWAS analysis for chromosome : " << std::endl;
@@ -122,7 +122,7 @@ void chromosome_chuck_eqtl(htsFile* &ptr_vcf, bcf_hdr_t* &hdr, bcf1_t* &rec,
         auto& eqtl = eqtl_map.at(chr);
 
         // Gwas analysis by chromosome
-        vcf_object.eqtl_table(snarl, eqtl, chr, covar, maf, kinship, num_threads, table_threshold, regression_dir, outf);
+        vcf_object.eqtl_table(snarl, eqtl, chr, covar, maf, kinship, num_threads, table_threshold, regression_dir, windows_gene_threshold, outf);
     }
     // Cleanup
     bcf_destroy(rec);
@@ -536,30 +536,30 @@ void SnarlParser::binary_table(const std::vector<std::tuple<std::string, std::ve
 
                 if (!covar.empty()) {
                     // Logistic regression
-                    auto [df, allele_number] = create_quantitative_table(length_sample, list_snarl, matrix);
+                    auto [df, phenotype_filtered, allele_number] = create_quantitative_table(length_sample, list_snarl, binary_phenotype, matrix);
                     bool df_filtration = false;
                     bool df_empty = false;
-            
+
                     if (allele_number < 2) {
                         df_empty = true;
                     } else {
                         df_filtration = check_MAF_threshold_quantitative(df, maf);
                     }
-                    
+
                     std::string p_value = "NA", beta = "NA", se = "NA", r2 = "NA";
 
                     // chr, pos, snarl, type, p_value, p_adjusted, r2, beta, se, allele_number
                     if (df_empty || df_filtration) {
                         // do nothing
                     } else if (kinship.empty()) { // logistic regression + covar
-                        // logistic_regression(df, binary_phenotype, p_value, beta, se, r2);
-                        glm_logistic_covar(df, binary_phenotype, covar, p_value, beta, se, r2);
+                        // logistic_regression(df, phenotype_filtered, p_value, beta, se, r2);
+                        glm_logistic_covar(df, phenotype_filtered, covar, p_value, beta, se, r2);
                     } else { // lmm
-                        lmm_binary(df, binary_phenotype, kinship, covar, p_value, beta, se, r2);
+                        lmm_binary(df, phenotype_filtered, kinship, covar, p_value, beta, se, r2);
                     }
                     
                     // Plot regression table  for boxplot visualization
-                    if (table_threshold != 0 && isPValueSignificant(table_threshold, p_value)) {
+                    if (table_threshold >= 0 && isPValueSignificant(table_threshold, p_value)) {
                         string variant_file_name = regression_dir + "/" + snarl + ".tsv";
                         writeSignificantTableToTSV(df, list_snarl, sampleNames, variant_file_name);
                     }
@@ -633,7 +633,7 @@ void SnarlParser::quantitative_table(const std::vector<std::tuple<string, vector
             for (size_t itr = 0; itr < snarls.size(); ++itr) {
                 const auto& [snarl, list_snarl, start_pos, end_pos, type_var] = snarls[itr];
 
-                auto [df, allele_number] = create_quantitative_table(length_sample, list_snarl, matrix);
+                auto [df, phenotype_filtered, allele_number] = create_quantitative_table(length_sample, list_snarl, quantitative_phenotype, matrix);
                 bool df_filtration = false;
                 bool df_empty = false;
 
@@ -656,16 +656,16 @@ void SnarlParser::quantitative_table(const std::vector<std::tuple<string, vector
                 if (df_empty || df_filtration) { // filtred variant
                     // do nothing
                 } else if (covar.size() > 0 && !kinship.empty()) { // lmm
-                    lmm_quantitative(df, quantitative_phenotype, kinship, covar, p_value, beta, se, r2);
+                    lmm_quantitative(df, phenotype_filtered, kinship, covar, p_value, beta, se, r2);
 
                 } else if (covar.size() > 0 && kinship.empty()) { // glm
-                    glm_quantitative(df, quantitative_phenotype, covar, p_value, beta, se, r2); // TODO : se nan problem
+                    glm_quantitative(df, phenotype_filtered, covar, p_value, beta, se, r2); // TODO : se nan problem
 
                 } else { // single test
-                    linear_regression(df, quantitative_phenotype, p_value, beta, se, r2);
+                    linear_regression(df, phenotype_filtered, p_value, beta, se, r2);
                 }
-                
-                if (table_threshold != 0 && isPValueSignificant(table_threshold, p_value)) {
+
+                if (table_threshold >= 0 && isPValueSignificant(table_threshold, p_value)) {
                     string variant_file_name = regression_dir + "/" + snarl + ".tsv";
                     writeSignificantTableToTSV(df, list_snarl, sampleNames, variant_file_name);
                 }
@@ -689,23 +689,23 @@ void SnarlParser::quantitative_table(const std::vector<std::tuple<string, vector
     }
 }
 
-bool check_MAF_threshold_quantitative(const std::vector<std::vector<size_t>>& df, const double& maf) {    
+bool check_MAF_threshold_quantitative(const std::vector<std::vector<double>>& df, const double& maf) {    
     
     int totalSum = 0;
     size_t numPaths = df[0].size(); // Get the number of paths from the first element
-    std::vector<int> table(numPaths, 0); // Initialize vector with the correct size
+    std::vector<double> table(numPaths, 0); // Initialize vector with the correct size
 
     // Compute total sum of all elements in the matrix
     for (const auto& vector : df) {
         for (size_t i = 0; i < vector.size(); i++) {
-            table[i] += vector[i];
+            table[i] += vector[i]; // TODO : now we working with normalized change this
             totalSum += vector[i];
         }
     }
 
     // Check if any column's sum proportion exceeds the threshold
-    for (int val : table) {
-        if (static_cast<double>(val) / totalSum >= maf) {
+    for (double val : table) {
+        if (val / totalSum >= maf) {
             return true; // If any value exceeds the threshold, return false
         }
     }
@@ -719,11 +719,11 @@ std::vector<size_t> found_gene_snarl(
     const std::vector<std::tuple<std::string, std::vector<double>, size_t, size_t>>& gene_position, 
     const size_t& start_pos, 
     const size_t& end_pos,
-    const size_t& size_threshold) { // TODO : change size_threshold to user arg 
+    const size_t& windows_gene_threshold) {
 
     std::vector<size_t> gene_index;
-    size_t start_pos_threshold = (start_pos > size_threshold) ? start_pos - size_threshold : 0;
-    size_t end_pos_threshold = end_pos + size_threshold;
+    size_t start_pos_threshold = (start_pos > windows_gene_threshold) ? start_pos - windows_gene_threshold : 0;
+    size_t end_pos_threshold = end_pos + windows_gene_threshold;
 
     for (size_t i = 0; i < gene_position.size(); ++i) {
         size_t gene_start = std::get<2>(gene_position[i]);
@@ -742,8 +742,8 @@ void SnarlParser::eqtl_table(
     const std::vector<std::tuple<std::string, std::vector<double>, size_t, size_t>>& eqtl,
     const std::string& chr, const std::vector<std::vector<double>>& covar,
     const double& maf, const KinshipMatrix& kinship, const size_t& num_threads, 
-    const double& table_threshold, const std::string& regression_dir,
-    std::ofstream& outf) {
+    const double& table_threshold, const std::string& regression_dir, 
+    const size_t& windows_gene_threshold, std::ofstream& outf) {
 
     size_t length_sample = sampleNames.size();
     const size_t total = snarls.size();
@@ -761,23 +761,24 @@ void SnarlParser::eqtl_table(
             // Iterate over each snarl
             for (size_t itr = 0; itr < snarls.size(); ++itr) {
                 const auto& [snarl, list_snarl, start_pos, end_pos, type_var] = snarls[itr];
-                std::vector<size_t> list_gene_index = found_gene_snarl(eqtl, start_pos, end_pos);
-
-                auto [df, allele_number] = create_quantitative_table(length_sample, list_snarl, matrix);
-                bool df_filtration = false;
-                bool df_empty = false;
-
-                if (allele_number < 2) {
-                    df_empty = true;
-                } else {
-                    df_filtration = check_MAF_threshold_quantitative(df, maf); // error correct
-                }
+                std::vector<size_t> list_gene_index = found_gene_snarl(eqtl, start_pos, end_pos, windows_gene_threshold);
 
                 for (size_t i = 0; i < list_gene_index.size(); ++i) {
                     size_t gene_idx = list_gene_index[i];
                     std::string gene_name = std::get<0>(eqtl[gene_idx]);
                     std::vector<double> gene_expression = std::get<1>(eqtl[gene_idx]);
 
+                    auto [df, gene_expression_filtered, allele_number] = create_quantitative_table(length_sample, list_snarl, gene_expression, matrix);
+                    bool df_filtration = false;
+                    bool df_empty = false;
+    
+                    if (allele_number < 2) {
+                        df_empty = true;
+                    } else {
+                        df_filtration = check_MAF_threshold_quantitative(df, maf); // error correct
+                    }
+
+                    
                     // make a string separated by ',' from a vector of string
                     std::ostringstream oss;
                     for (size_t i = 0; i < type_var.size(); ++i) {
@@ -792,21 +793,21 @@ void SnarlParser::eqtl_table(
                     if (df_empty || df_filtration) { // filtred variant
                         // do nothing
                     } else if (covar.size() > 0 && !kinship.empty()) { // lmm
-                        lmm_quantitative(df, gene_expression, kinship, covar, p_value, beta, se, r2);
+                        lmm_quantitative(df, gene_expression_filtered, kinship, covar, p_value, beta, se, r2);
 
                     } else if (covar.size() > 0 && kinship.empty()) { // glm
-                        glm_quantitative(df, gene_expression, covar, p_value, beta, se, r2); // TODO : se nan problem
+                        glm_quantitative(df, gene_expression_filtered, covar, p_value, beta, se, r2); // TODO : se nan problem
 
                     } else { // single test
-                        linear_regression(df, gene_expression, p_value, beta, se, r2);
+                        linear_regression(df, gene_expression_filtered, p_value, beta, se, r2);
                     }
 
-                    if (table_threshold != 0 && isPValueSignificant(table_threshold, p_value)) {
+                    if (table_threshold >= 0 && isPValueSignificant(table_threshold, p_value)) {
                         string variant_file_name = regression_dir + "/" + snarl + ".tsv";
                         writeSignificantTableToTSV(df, list_snarl, sampleNames, variant_file_name);
                     }
 
-                    // chr, pos, snarl, type, p_value, p_adjusted, r2, beta, se, allele_number
+                   // "CHR\tPOS\tSNARL\tTYPE\tGENE\tP\tP_ADJUSTED\tRSQUARE\tBETA\tSE\tALLELE_NUM\n";
                     data << chr << "\t" << start_pos << "\t" << snarl << "\t" << type_var_str
                     << "\t" << gene_name << "\t" << p_value  << "\t" << "" << "\t" << r2
                     << "\t" << beta << "\t" << se << "\t" << allele_number << "\n";

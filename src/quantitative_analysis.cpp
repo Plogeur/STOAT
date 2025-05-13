@@ -7,7 +7,7 @@ using namespace std;
 
 // Linear regression function OLS with intercept
 void linear_regression(
-    const std::vector<std::vector<size_t>>& df,
+    const std::vector<std::vector<double>>& df,
     const std::vector<double>& quantitative_phenotype,
     std::string& p_value_str, std::string& beta_str, 
     std::string& se_str, std::string& r2_str) {
@@ -54,7 +54,7 @@ void linear_regression(
 }
 
 void glm_quantitative(
-    const std::vector<std::vector<size_t>>& df,
+    const std::vector<std::vector<double>>& df,
     const std::vector<double>& quantitative_phenotype,
     const std::vector<std::vector<double>>& covar,
     std::string& p_value_str, std::string& beta_str, 
@@ -72,7 +72,7 @@ void glm_quantitative(
         y(i) = quantitative_phenotype[i];
         size_t col = 0;
         for (size_t j = 0; j < num_variants; ++j) {
-            X(i, col++) = static_cast<double>(df[i][j]);
+            X(i, col++) = df[i][j];
         }
         for (size_t j = 0; j < num_covariates; ++j) {
             X(i, col++) = covar[i][j];
@@ -105,32 +105,66 @@ void glm_quantitative(
     p_value_str = set_precision(p_value);
 }
 
-// Function to create the quantitative table
-std::pair<std::vector<std::vector<size_t>>, size_t> create_quantitative_table(
+// Explicit template instantiations
+template std::tuple<std::vector<std::vector<double>>, std::vector<double>, size_t>
+create_quantitative_table<double>(
+    const size_t&,
+    const std::vector<std::string>&,
+    const std::vector<double>&,
+    Matrix&);
+
+template std::tuple<std::vector<std::vector<double>>, std::vector<bool>, size_t>
+create_quantitative_table<bool>(
+    const size_t&,
+    const std::vector<std::string>&,
+    const std::vector<bool>&,
+    Matrix&);
+
+// Function template definition
+template <typename T>
+std::tuple<std::vector<std::vector<double>>, std::vector<T>, size_t> create_quantitative_table(
     const size_t& length_sample,
     const std::vector<std::string>& column_headers,
+    const std::vector<T>& phenotype,
     Matrix& matrix) {
 
-    // Retrieve row headers dictionary
     size_t allele_number = 0;
     size_t length_column = column_headers.size();
 
-    // Initialize a zero matrix for genotypes
-    std::vector<std::vector<size_t>> genotypes(length_sample, std::vector<size_t>(length_column, 0));
+    std::vector<std::vector<double>> genotypes(length_sample, std::vector<double>(length_column, 0.0));
+    std::unordered_set<size_t> index_used;
 
-    // Genotype paths
     for (size_t col_idx = 0; col_idx < length_column; ++col_idx) {
         const std::string& path_snarl = column_headers[col_idx];
         std::vector<std::string> decomposed_snarl = decompose_string(path_snarl);
-
-        // Identify correct paths
-        std::vector<size_t> idx_srr_save = identify_correct_path(decomposed_snarl, matrix, length_sample*2);
+        std::vector<size_t> idx_srr_save = identify_correct_path(decomposed_snarl, matrix, length_sample * 2);
 
         for (size_t idx : idx_srr_save) {
-            size_t srr_idx = idx / 2;  // Adjust index to correspond to the sample index
-            genotypes[srr_idx][col_idx] += 1;
+            size_t srr_idx = idx / 2;
+            genotypes[srr_idx][col_idx] += 1.0;
+            index_used.insert(srr_idx);
             allele_number++;
         }
     }
-    return {genotypes, allele_number};
+
+    std::vector<std::vector<double>> genotypes_filtered;
+    genotypes_filtered.reserve(index_used.size());
+
+    std::vector<T> phenotype_filtered;
+    phenotype_filtered.reserve(index_used.size());
+
+    for (size_t i : index_used) {
+        double row_sum = std::accumulate(genotypes[i].begin(), genotypes[i].end(), 0.0);
+
+        std::vector<double> normalized_row;
+        normalized_row.reserve(length_column);
+        for (double allele : genotypes[i]) {
+            normalized_row.push_back(allele > 0.0 ? allele / row_sum : 0.0);
+        }
+
+        genotypes_filtered.push_back(std::move(normalized_row));
+        phenotype_filtered.push_back(phenotype[i]);
+    }
+
+    return {genotypes_filtered, phenotype_filtered, allele_number};
 }

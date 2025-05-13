@@ -43,7 +43,13 @@ void add_BH_adjusted_column(
     std::vector<std::tuple<double, double, size_t>> pvalues;
     std::string line;
     size_t line_index = 0;
-    size_t adjusted_col_index = phenotype_type == "binary" ? 6 : 5; 
+    size_t adjusted_col_index;
+
+    if (phenotype_type == "binary" || phenotype_type == "eqtl") {
+        adjusted_col_index = 6;
+    } else if (phenotype_type == "quantitative") {
+        adjusted_col_index = 5;
+    }
 
     // Read the header line
     std::string header_line;
@@ -69,9 +75,9 @@ void add_BH_adjusted_column(
             //pval = combine_pvalue_from_strings(columns[4], columns[5]);
             
             // use only chi2
-            pval = string_to_pvalue(columns[5]); // use only chi2
+            pval = string_to_pvalue(columns[adjusted_col_index-1]); // use only chi2
         } else if (phenotype_type == "quantitative") {
-            pval = string_to_pvalue(columns[4]);
+            pval = string_to_pvalue(columns[adjusted_col_index-1]);
         }
 
         pvalues.emplace_back(pval, 1.0, line_index++);

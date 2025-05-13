@@ -123,8 +123,8 @@ Explanation of all options:
 -p, --pg <path>             Path to the pg file (.pg)
 -d, --dist <path>           Path to the dist file (.dist)
 -r, --chr <path>            Path to the chromosome reference file (.txt)
---children <int>            Max number of children for a snarl in the snarl decomposition process (default : 50)
---path-length <int>         Max length for a path snarl in the snarl decomposition process (default : 10 000)
+--children <int>            Max number of children for a snarl in the snarl decomposition process (default = 50)
+--path-length <int>         Max length for a path snarl in the snarl decomposition process (default = 10 000)
 -b, --binary <path>         Path to the binary group file (.txt or .tsv)
 -g, --gaf                   Make a GAF file from the GWAS analysis
 -q, --quantitative <path>   Path to the quantitative phenotype file (.txt or .tsv)
@@ -134,12 +134,12 @@ Explanation of all options:
 --gene-position <path>      Path to the Gene position file (.txt or .tsv)
 -k, --kinship <path>        Path to the kinship matrix file (.txt or .tsv)
 --make-bed                  Create a plink format files (.bed, .bim, .fam)
---table-threshold <int>     The N p-value digits threshold to use for plotting regression data file (default : disable exemple : 5 <=> 10-5)
---maf                       Add a Minimum Aallele Frequency thresold (default : 0.01)
+--table-threshold <int>     The p-value threshold for regression data file (exemple : 5 <=> 10-5, defauld 0 : disable)
+--cycle <int>               Max number of authorized cycle use in snarl parsing (defauld : 1)
+--maf                       Add a maf (Minimum allele frequency) thresold (defauld : 0.01)
 -o, --output <name>         Output dir name
 -t, --thread <int>          Number of threads
--h, --help                  Print this help message;
-
+-h, --help                  Print this help message
 ```
 
 ## Output
