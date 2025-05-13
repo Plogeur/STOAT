@@ -59,7 +59,7 @@ public:
     std::pair<std::vector<size_t>, std::vector<size_t>> create_table_short_path(const vector<std::string>& list_path_snarl);
 };
 
-bool check_MAF_threshold_quantitative(const std::vector<std::vector<size_t>>& df, const double& maf);
+bool check_MAF_threshold_quantitative(const std::vector<std::vector<double>>& df, const double& maf);
 
 void chromosome_chuck_binary(htsFile* &ptr_vcf, bcf_hdr_t* &hdr, bcf1_t* &rec, 
     const std::vector<std::string> &list_samples, 

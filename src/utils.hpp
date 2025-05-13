@@ -28,7 +28,7 @@ bool is_na(const std::string& s);
 double string_to_pvalue(const std::string& p1);
 
 void writeSignificantTableToTSV(
-    const std::vector<std::vector<size_t>>& table,
+    const std::vector<std::vector<double>>& table,
     const std::vector<std::string>& list_snarl,
     const std::vector<std::string>& list_samples,
     const std::string& filename);
