@@ -38,7 +38,7 @@ void print_help() {
               << "  -d, --dist <path>           Path to the dist file (.dist)\n"
               << "  -r, --chr <path>            Path to the chromosome reference file (.txt)\n"
               << "  --children <int>            Max number of children for a snarl in the snarl decomposition process (default = 50)\n"
-              << "  --path-length <int>         Max length for a path snarl in the snarl decomposition process (default = 10 000)\n"
+              << "  --path-length <int>         Max number of node in path in the snarl decomposition process (default = 10 000)\n"
               << "  -b, --binary <path>         Path to the binary group file (.txt or .tsv)\n"
               << "  -g, --gaf                   Make a GAF file from the GWAS analysis\n"
               << "  -q, --quantitative <path>   Path to the quantitative phenotype file (.txt or .tsv)\n"
@@ -48,7 +48,8 @@ void print_help() {
               << "  --gene-position <path>      Path to the Gene position file (.txt or .tsv)\n"
               << "  -k, --kinship <path>        Path to the kinship matrix file (.txt or .tsv)\n"
               << "  --make-bed                  Create a plink format files (.bed, .bim, .fam)\n"
-              << "  --table-threshold <int>     The p-value threshold for regression data file (exemple : 5 <=> 10-5, defauld 0 : disable)\n"
+              << "  --windows-gene <int>        Defines a window threshold length from the gene's start to end positions to test all snarls within. (defauld : 1 000 000)\n"
+              << "  --table-threshold <int>     The p-value threshold for regression table file (defauld : disable)\n"
               << "  --cycle <int>               Max number of authorized cycle use in snarl parsing (defauld : 1)\n"
               << "  --maf                       Add a maf (Minimum allele frequency) thresold (defauld : 0.01)\n"
               << "  -o, --output <name>         Output dir name\n"
@@ -66,9 +67,10 @@ int main(int argc, char* argv[]) {
     size_t num_threads = 1;
     size_t phenotype = 0;
     size_t cycle_threshold = 1;
-    double table_threshold = 0;
+    double table_threshold = -1;
     size_t children_threshold = 50;
     size_t path_length_threshold = 10000;
+    size_t windows_gene_threshold = 1000000;
     std::vector<std::string> covar_names;
 
     double maf = 0.99;
@@ -159,6 +161,13 @@ int main(int argc, char* argv[]) {
             table_threshold = std::stoi(argv[++i]);
             if (table_threshold < 0) {
                 std::cerr << "Error: Pvalue threshold for table threshold must be a positive integer\n";
+                return EXIT_FAILURE;
+            }
+        } else if ((arg == "--windows-gene") && i + 1 < argc) {
+            // convert str to int and verify that it is a positive number
+            windows_gene_threshold = std::stoi(argv[++i]);
+            if (windows_gene_threshold < 1) {
+                std::cerr << "Error: windows gene threshold for the eqtl analysis must be a positive integer\n";
                 return EXIT_FAILURE;
             }
         } else if ((arg == "--maf") && i + 1 < argc) {
@@ -350,7 +359,11 @@ int main(int argc, char* argv[]) {
 
         string eqtl_output = output_dir + "/eqtl_gwas.tsv";
         chromosome_chuck_eqtl(ptr_vcf, hdr, rec, list_samples, snarls_chr, eqtl, covariate, maf, 
-            kinship, num_threads, table_threshold, regression_dir, eqtl_output);
+            kinship, num_threads, table_threshold, regression_dir, windows_gene_threshold, eqtl_output);
+        
+        string output_significative = output_dir + "/top_variant_eqtl.tsv";
+        string phenotype_type = "eqtl";
+        add_BH_adjusted_column(eqtl_output, output_significative, phenotype_type);
     }
 
     auto end_1 = std::chrono::high_resolution_clock::now();
@@ -368,6 +381,9 @@ int main(int argc, char* argv[]) {
 
 // QUANTITATIVE
 // ./stoat_cxx -p ../data/quantitative/pg.pg -d ../data/quantitative/pg.dist -v ../data/quantitative/merged_output.vcf.gz -q ../data/quantitative/phenotype.tsv --output ../output
+
+// EQTL
+// ./stoat_cxx -s ../test_data/quantitative/paths_snarl.tsv -v ../test_data/quantitative/variants.vcf -e ../test_data/quantitative/qtl.tsv --gene-position ../test_data/quantitative/gene_position.tsv --output ../output
 
 // TEST
 // ./stoat_cxx -p ../tests/graph_test/3th_snp.pg -d ../tests/graph_test/3th_snp.dist --output ../output

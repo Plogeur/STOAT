@@ -54,7 +54,7 @@ public:
         const std::string& chr, const std::vector<std::vector<double>>& covar,
         const double& maf, const KinshipMatrix& kinship, const size_t& num_threads, 
         const double& table_threshold, const std::string& regression_dir,
-        std::ofstream& outf);
+        const size_t& windows_gene_threshold, std::ofstream& outf);
 
     std::pair<std::vector<size_t>, std::vector<size_t>> create_table_short_path(const vector<std::string>& list_path_snarl);
 };
@@ -84,7 +84,8 @@ void chromosome_chuck_eqtl(htsFile* &ptr_vcf, bcf_hdr_t* &hdr, bcf1_t* &rec,
     const std::vector<std::vector<double>>& covar,
     const double& maf, const KinshipMatrix& kinship, 
     const size_t& num_threads, const double& table_threshold, 
-    const std::string& regression_dir, const std::string& out_eqtl);
+    const std::string& regression_dir, const size_t& windows_gene_threshold, 
+    const std::string& out_eqtl);
 
 void chromosome_chuck_make_bed(htsFile* &ptr_vcf, bcf_hdr_t* &hdr, bcf1_t* &rec, 
     const std::vector<std::string> &list_samples,
@@ -97,7 +98,7 @@ std::vector<size_t> found_gene_snarl(
     const std::vector<std::tuple<std::string, std::vector<double>, size_t, size_t>>& gene_position, 
     const size_t& start_pos, 
     const size_t& end_pos,
-    const size_t& size_threshold=1000000);
+    const size_t& windows_gene_threshold);
 
 void create_fam(const std::vector<std::pair<std::string, int>> &pheno, 
     const std::string& output_path);
