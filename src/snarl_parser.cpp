@@ -560,7 +560,7 @@ void SnarlParser::binary_table(const std::vector<std::tuple<std::string, std::ve
                     }
                     
                     // Plot regression table  for boxplot visualization
-                    if (table_threshold > 0.0) { //&& isPValueSignificant(table_threshold, p_value)) {
+                    if (table_threshold != -1 && isPValueSignificant(table_threshold, p_value)) {
                         string variant_file_name = regression_dir + "/" + snarl + ".tsv";
                         writeSignificantTableToTSV(df, list_snarl, sampleNames, variant_file_name);
                     }
@@ -638,7 +638,7 @@ void SnarlParser::quantitative_table(const std::vector<std::tuple<string, vector
                 bool df_filtration = false;
                 bool df_empty = false;
 
-                if (allele_number < 5) { // avoid too small table
+                if (allele_number < 5) {
                     df_empty = true;
                 } else {
                     df_filtration = check_MAF_threshold_quantitative(df, maf); // error correct
@@ -667,7 +667,7 @@ void SnarlParser::quantitative_table(const std::vector<std::tuple<string, vector
                     linear_regression(df, phenotype_filtered, p_value, beta, se, r2);
                 }
 
-                if (table_threshold >= 0 && isPValueSignificant(table_threshold, p_value)) {
+                if (table_threshold != -1 && isPValueSignificant(table_threshold, p_value)) {
                     string variant_file_name = regression_dir + "/" + snarl + ".tsv";
                     writeSignificantTableToTSV(df, list_snarl, sampleNames, variant_file_name);
                 }
@@ -806,7 +806,7 @@ void SnarlParser::eqtl_table(
                         linear_regression(df, gene_expression, p_value, beta, se, r2);
                     }
 
-                    if (table_threshold >= 0 && isPValueSignificant(table_threshold, p_value)) {
+                    if (table_threshold != -1 && isPValueSignificant(table_threshold, p_value)) {
                         string variant_file_name = regression_dir + "/" + snarl + ".tsv";
                         writeSignificantTableToTSV(df, list_snarl, sampleNames, variant_file_name);
                     }

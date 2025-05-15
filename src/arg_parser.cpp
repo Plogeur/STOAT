@@ -278,19 +278,33 @@ parse_snarl_path(const std::string& file_path) {
     if (!std::getline(file, line)) {
         throw std::runtime_error("Empty file or failed to read header.");
     }
+    
+    // Parse actual header fields
+    vector<string> header_fields;
+    istringstream header_stream(line);
+    string field;
+    while (getline(header_stream, field, '\t')) {
+        header_fields.push_back(field);
+    }
 
-    std::istringstream header_stream(line);
-    std::string h1, h2, h3, h4, h5, h6, h7;
-    if (!(std::getline(header_stream, h1, '\t') &&
-          std::getline(header_stream, h2, '\t') &&
-          std::getline(header_stream, h3, '\t') &&
-          std::getline(header_stream, h4, '\t') &&
-          std::getline(header_stream, h5, '\t') &&
-          std::getline(header_stream, h6, '\t') &&
-          std::getline(header_stream, h7, '\t')) ||
-        h1 != "CHR" || h2 != "START_POS" || h3 != "END_POS" ||
-        h4 != "SNARL" || h5 != "PATHS" || h6 != "TYPE" || h7 != "REF") {
-        throw std::runtime_error("Error: In parsing snarl paths, invalid header format. Expected: CHR\tSTART_POS\tEND_POS\tSNARL\tPATHS\tTYPE\tREF");
+    // Expected header
+    vector<string> expected_header = {"CHR", "START_POS", "END_POS", "SNARL", "PATHS", "TYPE", "REF"};
+
+    if (header_fields != expected_header) {
+        // Build detailed error message
+        ostringstream oss;
+        oss << "Error: Invalid header format in file: " << file_path << "\n";
+        oss << "  ➤ Expected: ";
+        for (size_t i = 0; i < expected_header.size(); ++i) {
+            oss << expected_header[i];
+            if (i < expected_header.size() - 1) oss << "\\t";
+        }
+        oss << "\n  ➤ Got:      ";
+        for (size_t i = 0; i < header_fields.size(); ++i) {
+            oss << header_fields[i];
+            if (i < header_fields.size() - 1) oss << "\\t";
+        }
+        throw runtime_error(oss.str());
     }
 
     // Process each line

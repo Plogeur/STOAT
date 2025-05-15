@@ -15,36 +15,76 @@ void linear_regression(
     size_t num_samples = df.size();
     size_t max_paths = df[0].size();
 
-    Eigen::MatrixXd X(num_samples, max_paths);
-    X.setZero(); // Initialize matrix with zeros
-    Eigen::VectorXd y(num_samples);
-
-    for (size_t row=0; row < num_samples; ++row) {
-        y(row) = quantitative_phenotype[row];
+    // Include intercept → +1 column
+    Eigen::MatrixXd X(num_samples, max_paths + 1);
+    X.col(0) = Eigen::VectorXd::Ones(num_samples); // intercept
+    for (size_t row = 0; row < num_samples; ++row) {
         for (size_t col = 0; col < max_paths; ++col) {
-            X(row, col) = static_cast<double>(df[row][col]);
+            X(row, col + 1) = static_cast<double>(df[row][col]);
         }
     }
 
+    Eigen::VectorXd y(num_samples);
+    for (size_t row = 0; row < num_samples; ++row) {
+        y(row) = quantitative_phenotype[row];
+    }
+
+    // Coefficients (beta)
     Eigen::VectorXd beta = (X.transpose() * X).ldlt().solve(X.transpose() * y);
     Eigen::VectorXd y_pred = X * beta;
     Eigen::VectorXd residuals = y - y_pred;
-    
+
+    // R² 
     double rss = residuals.squaredNorm();
-    double tss = (y.array() - y.mean()).matrix().squaredNorm();
+    double tss = (y.array() - y.mean()).square().sum();
     double r2 = 1 - (rss / tss);
 
-    int df_reg = max_paths - 1; // degrees of freedom
-    int df_res = num_samples - max_paths;
+    int df_reg = max_paths - 1;
+    int df_res = num_samples - (max_paths + 1); // Degrees of freedom
     double mse = rss / df_res;  // Mean Squared Error (MSE)
     
+    // Standard errors
     Eigen::MatrixXd cov_matrix = (X.transpose() * X).inverse();
+    // Eigen::MatrixXd cov_matrix = (X.transpose() * X).ldlt().solve(Eigen::MatrixXd::Identity(X.cols(), X.cols()));
     Eigen::VectorXd se = (cov_matrix.diagonal() * mse).array().sqrt().matrix();
 
     // Compute F-statistic
     double f_stat = (r2 / df_reg) / ((1 - r2) / df_res);
     boost::math::fisher_f dist(df_reg, df_res);
     double p_value = boost::math::cdf(boost::math::complement(dist, std::abs(f_stat)));
+
+    // t-statistics
+    Eigen::VectorXd t_stats = beta.array() / se.array();
+
+    // Print beta
+    std::cout << "Beta (coefficients) :\n";
+    for (int i = 0; i < beta.size(); ++i) {
+        std::cout << beta[i] << " ";
+    }
+    std::cout << "\n";
+
+    // Print standard errors
+    std::cout << "Standard Errors :\n";
+    for (int i = 0; i < se.size(); ++i) {
+        std::cout << se[i] << " ";
+    }
+    std::cout << "\n";
+
+    // Print t-statistics
+    std::cout << "t-statistics :\n";
+    for (int i = 0; i < t_stats.size(); ++i) {
+        std::cout << t_stats[i] << " ";
+    }
+    std::cout << "\n";
+
+
+    // p-values using t-distribution
+    boost::math::students_t t_dist(df_res);
+    Eigen::VectorXd p_values(beta.size());
+    for (int i = 0; i < beta.size(); ++i) {
+        p_values[i] = 2 * boost::math::cdf(boost::math::complement(t_dist, std::abs(t_stats[i]))); // two-tailed
+        cout << "p_values[i] : " << p_values[i] << endl;
+    }
 
     // set precision : 4 digit
     r2_str = set_precision(r2);
@@ -134,7 +174,7 @@ std::tuple<std::vector<std::vector<double>>, std::vector<T>, size_t> create_quan
     std::vector<std::vector<double>> genotypes(length_sample, std::vector<double>(length_column, 0.0));
     std::unordered_set<size_t> index_used;
 
-    for (size_t col_idx = 0; col_idx < length_column; ++col_idx) {
+    for (size_t col_idx = 0; col_idx < length_column-1; ++col_idx) { // fill df with length_column - 1 
         const std::string& path_snarl = column_headers[col_idx];
         std::vector<std::string> decomposed_snarl = decompose_string(path_snarl);
         std::vector<size_t> idx_srr_save = identify_correct_path(decomposed_snarl, matrix, length_sample * 2);
@@ -157,7 +197,7 @@ std::tuple<std::vector<std::vector<double>>, std::vector<T>, size_t> create_quan
         double row_sum = std::accumulate(genotypes[i].begin(), genotypes[i].end(), 0.0);
 
         std::vector<double> normalized_row;
-        normalized_row.reserve(length_column);
+        normalized_row.reserve(length_column-1);
         for (double allele : genotypes[i]) {
             normalized_row.push_back(allele > 0.0 ? allele / row_sum : 0.0);
         }
