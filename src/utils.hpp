@@ -35,4 +35,6 @@ void writeSignificantTableToTSV(
 
 bool isPValueSignificant(double pvalue_threshold, const std::string& pvalue_str);
 
+std::vector<double> adjusted_holm(const std::vector<double>& p_values);
+
 #endif

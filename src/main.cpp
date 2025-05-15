@@ -159,8 +159,8 @@ int main(int argc, char* argv[]) {
         } else if ((arg == "--table-threshold") && i + 1 < argc) {
             // convert str to int and verify that it is a positive number
             table_threshold = std::stoi(argv[++i]);
-            if (table_threshold < 0) {
-                std::cerr << "Error: Pvalue threshold for table threshold must be a positive integer\n";
+            if (table_threshold < 0 && table_threshold > 1) {
+                std::cerr << "Error: Pvalue threshold for table threshold must be ∈ ]0;1] \n";
                 return EXIT_FAILURE;
             }
         } else if ((arg == "--windows-gene") && i + 1 < argc) {
@@ -213,7 +213,7 @@ int main(int argc, char* argv[]) {
     std::unordered_set<std::string> ref_chr = (!chromosome_path.empty()) ? parse_chromosome_reference(chromosome_path) : std::unordered_set<std::string>{"ref"};
     std::string regression_dir = output_dir + "/regression";
 
-    if (table_threshold > 0) {
+    if (table_threshold != -1) {
         std::filesystem::create_directory(regression_dir);
     }
 

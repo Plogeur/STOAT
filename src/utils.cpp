@@ -109,3 +109,32 @@ void writeSignificantTableToTSV(
     }
     outFile.close();
 }
+
+// Adjust p-values using Holm-Bonferroni correction
+std::vector<double> adjusted_holm(const std::vector<double>& p_values) {
+    int m = p_values.size();
+    std::vector<std::pair<double, int>> indexed;
+    for (int i = 0; i < m; ++i) {
+        indexed.emplace_back(p_values[i], i);
+    }
+
+    // Sort by p-value
+    std::sort(indexed.begin(), indexed.end());
+
+    std::vector<double> adjusted(m);
+    double prev = 0.0;
+    for (int i = 0; i < m; ++i) {
+        double raw = (m - i) * indexed[i].first;
+        raw = std::min(raw, 1.0);
+        adjusted[i] = std::max(prev, raw); // ensure monotonicity
+        prev = adjusted[i];
+    }
+
+    // Reorder to original positions
+    std::vector<double> reordered(m);
+    for (int i = 0; i < m; ++i) {
+        reordered[indexed[i].second] = adjusted[i];
+    }
+
+    return reordered;
+}

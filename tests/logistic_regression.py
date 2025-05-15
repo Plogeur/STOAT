@@ -27,3 +27,5 @@ result = model.fit(disp=False)
 
 # --- Output coefficients and p-values ---
 print(result.summary())  # Shows coef, std err, z, p-value, conf int
+
+# python3 
