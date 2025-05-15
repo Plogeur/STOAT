@@ -11,6 +11,7 @@
 #include <stdexcept>
 #include <algorithm>
 #include <tuple>
+#include <unordered_set>
 #include <iomanip>
 #include <Eigen/Dense>
 #include <fstream>
@@ -34,5 +35,6 @@ void writeSignificantTableToTSV(
     const std::string& filename);
 
 bool isPValueSignificant(double pvalue_threshold, const std::string& pvalue_str);
+void retain_indices(std::vector<double>& vec, const std::unordered_set<size_t>& indices_to_keep);
 
 #endif

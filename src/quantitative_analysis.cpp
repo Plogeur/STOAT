@@ -34,7 +34,7 @@ void linear_regression(
     double tss = (y.array() - y.mean()).matrix().squaredNorm();
     double r2 = 1 - (rss / tss);
 
-    int df_reg = max_paths - 1;
+    int df_reg = max_paths - 1; // degrees of freedom
     int df_res = num_samples - max_paths;
     double mse = rss / df_res;  // Mean Squared Error (MSE)
     
@@ -167,4 +167,45 @@ std::tuple<std::vector<std::vector<double>>, std::vector<T>, size_t> create_quan
     }
 
     return {genotypes_filtered, phenotype_filtered, allele_number};
+}
+
+std::tuple<std::vector<std::vector<double>>, std::unordered_set<size_t>, size_t> create_eqtl_table(
+    const size_t& length_sample,
+    const std::vector<std::string>& column_headers,
+    Matrix& matrix) {
+
+    size_t allele_number = 0;
+    size_t length_column = column_headers.size();
+
+    std::vector<std::vector<double>> genotypes(length_sample, std::vector<double>(length_column, 0.0));
+    std::unordered_set<size_t> index_used;
+
+    for (size_t col_idx = 0; col_idx < length_column; ++col_idx) {
+        const std::string& path_snarl = column_headers[col_idx];
+        std::vector<std::string> decomposed_snarl = decompose_string(path_snarl);
+        std::vector<size_t> idx_srr_save = identify_correct_path(decomposed_snarl, matrix, length_sample * 2);
+
+        for (size_t idx : idx_srr_save) {
+            size_t srr_idx = idx / 2;
+            genotypes[srr_idx][col_idx] += 1.0;
+            index_used.insert(srr_idx);
+            allele_number++;
+        }
+    }
+
+    std::vector<std::vector<double>> genotypes_filtered;
+    genotypes_filtered.reserve(index_used.size());
+
+    for (size_t i : index_used) {
+        double row_sum = std::accumulate(genotypes[i].begin(), genotypes[i].end(), 0.0);
+
+        std::vector<double> normalized_row;
+        normalized_row.reserve(length_column);
+        for (double allele : genotypes[i]) {
+            normalized_row.push_back(allele > 0.0 ? allele / row_sum : 0.0);
+        }
+        genotypes_filtered.push_back(std::move(normalized_row));
+    }
+
+    return {genotypes_filtered, index_used, allele_number};
 }

@@ -15,92 +15,77 @@ generate_boxplots <- function(phenotype_file, dir_path, output_path) {
   # List all files in the provided directory path (N-table files)
   n_table_files <- list.files(path = dir_path, full.names = TRUE)
   
-  # Loop over each N-table file
   for (n_table_file in n_table_files) {
     
-    # Read the raw first line to get the header
     base_name <- tools::file_path_sans_ext(basename(n_table_file))
     raw_header <- readLines(n_table_file, n = 1)
     header_cols <- strsplit(raw_header, "\t")[[1]]
     
-    # Now read the rest of the file without header
     n_table <- read.table(n_table_file, header = FALSE, sep = "\t", skip = 1, stringsAsFactors = FALSE)
-    
-    # Set the correct header
     colnames(n_table) <- header_cols
-  
-    # Rename the Sample_Name column (change 'sample_name' to the actual column name found)
+    
+    # Rename first column to IID
+    colnames(n_table)[1] <- "IID"
+    
     merged_data <- n_table %>%
-      rename(IID = sample_name) %>%
       left_join(pheno_data, by = "IID")
     
-    # Classify the genotype based on the allele counts in the genotype columns
-    genotype_columns <- header_cols[-1]
+    genotype_columns <- setdiff(colnames(merged_data), c("IID", "PHENO"))
     
-    # Create a function to classify the genotype
+    # Function to classify genotype based on normalized allele values
     classify_genotype <- function(row) {
-      alleles_path1 <- row[genotype_columns[1]]
-      alleles_path2 <- row[genotype_columns[2]]
+      values <- as.numeric(row[genotype_columns])
+      if (all(is.na(values))) return(NA)
+      top_two <- sort(values, decreasing = TRUE)[1:2]
+      top_indices <- order(values, decreasing = TRUE)[1:2]
       
-      if (alleles_path1 == 2) {
-        return(paste(genotype_columns[1], "/", genotype_columns[1], sep = ""))
-      } else if (alleles_path2 == 2) {
-        return(paste(genotype_columns[2], "/", genotype_columns[2], sep = ""))
+      tol <- 1e-6
+      
+      if (abs(top_two[1] - 1) < tol) {
+        return(paste0(genotype_columns[top_indices[1]], "/", genotype_columns[top_indices[1]]))
+      } else if (abs(top_two[1] - 0.5) < tol && abs(top_two[2] - 0.5) < tol) {
+        return(paste0(genotype_columns[top_indices[1]], "/", genotype_columns[top_indices[2]]))
       } else {
-        return(paste(genotype_columns[1], "/", genotype_columns[2], sep = ""))
+        return("Other")
       }
     }
     
-    # Create a new Genotype column based on the classification
     merged_data$Genotype <- apply(merged_data, 1, classify_genotype)
+    merged_data <- merged_data %>% filter(!is.na(PHENO) & !is.na(Genotype))
     
-    # Adjust the Genotype labels by replacing "/" with "\n" to avoid long strings
-    merged_data$Genotype <- gsub("/", "\n", merged_data$Genotype)
-    
-    # Calculate the count of values for each genotype
     genotype_counts <- merged_data %>%
       group_by(Genotype) %>%
-      summarise(count = n()) %>%
-      ungroup()
+      summarise(count = n(), .groups = "drop")
     
-    # Merge the counts back into the data to append to the Genotype labels
     merged_data <- merged_data %>%
       left_join(genotype_counts, by = "Genotype") %>%
-      mutate(Genotype = paste(Genotype, "\n(", count, ")", sep = ""))  # Add count to Genotype label
+      mutate(Genotype = paste0(gsub("/", "\n", Genotype), "\n(", count, ")"))
     
-    # Create a plot with both boxplot and violin curve
+    # Plot
     p <- ggplot(merged_data, aes(x = Genotype, y = PHENO)) +
-      geom_boxplot(width = 0.2, outlier.size = 2, outlier.colour = "red", alpha = 0.5, fill = "darkcyan") +  # Boxplot
-      geom_violin(aes(x = Genotype, y = PHENO), alpha = 0.3, fill = "cadetblue3") +  # Violin plot for distribution
-      labs(x = "Genotype", y = "Phenotype", title = paste("Boxplot-", base_name)) +
+      geom_violin(fill = "cadetblue3", alpha = 0.3) +
+      geom_boxplot(width = 0.2, outlier.size = 2, outlier.colour = "red", alpha = 0.5, fill = "darkcyan") +
+      labs(x = "Genotype", y = "Phenotype", title = paste("Boxplot -", base_name)) +
       theme_minimal() +
-      theme(axis.title.x = element_text(size = 14, color = "cadetblue4"),  # Axis titles custom
-            axis.title.y = element_text(size = 14, color = "cadetblue4"), 
-            plot.title = element_text(size = 16, color = "cadetblue4", face = "bold", hjust = 0.5))
-      
-    # Define output file name (based on the N-table file name) and add the output path
+      theme(
+        axis.title.x = element_text(size = 14, color = "cadetblue4"),
+        axis.title.y = element_text(size = 14, color = "cadetblue4"),
+        plot.title = element_text(size = 16, color = "cadetblue4", face = "bold", hjust = 0.5)
+      )
+    
     output_file <- file.path(output_path, paste0(base_name, "_boxplot.jpeg"))
-    
-    # Save the plot to a PNG in the specified output directory
     ggsave(output_file, plot = p, device = "jpeg", width = 8, height = 6, dpi = 300)
-    
-    # Print a message indicating the plot has been saved
     message("Saved plot for ", base_name, " as ", output_file)
   }
-  
 }
 
-# Print a message when the program finishes
-print("Program finished")
-
-# Get the command line arguments
+# Command line arguments
 args <- commandArgs(trailingOnly = TRUE)
-
-# Parse the arguments manually (example: -d <directory>, -p <phenotype_file>, -o <output_directory>)
 dir_path <- args[which(args == "-d") + 1]
 phenotype_file <- args[which(args == "-p") + 1]
 output_path <- args[which(args == "-o") + 1]
 
 generate_boxplots(phenotype_file, dir_path, output_path)
+print("Program finished")
 
 # Rscript box_plox.R -d ../output/regression -p ../data/quantitative/phenotype.tsv -o ../output/plots

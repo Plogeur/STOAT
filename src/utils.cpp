@@ -109,3 +109,13 @@ void writeSignificantTableToTSV(
     }
     outFile.close();
 }
+
+void retain_indices(std::vector<double>& vec, const std::unordered_set<size_t>& indices_to_keep) {
+    size_t write_idx = 0;
+    for (size_t read_idx = 0; read_idx < vec.size(); ++read_idx) {
+        if (indices_to_keep.count(read_idx)) {
+            vec[write_idx++] = vec[read_idx];
+        }
+    }
+    vec.resize(write_idx);
+}

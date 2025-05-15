@@ -159,8 +159,8 @@ int main(int argc, char* argv[]) {
         } else if ((arg == "--table-threshold") && i + 1 < argc) {
             // convert str to int and verify that it is a positive number
             table_threshold = std::stoi(argv[++i]);
-            if (table_threshold < 0) {
-                std::cerr << "Error: Pvalue threshold for table threshold must be a positive integer\n";
+            if (table_threshold < 0  || table_threshold > 1) {
+                std::cerr << "Error: Pvalue threshold for table threshold must be a positive integer and <= 1.\n";
                 return EXIT_FAILURE;
             }
         } else if ((arg == "--windows-gene") && i + 1 < argc) {
