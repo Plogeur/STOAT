@@ -543,7 +543,9 @@ void SnarlParser::binary_table(const std::vector<std::tuple<std::string, std::ve
                     if (allele_number < 5) {
                         df_empty = true;
                     } else {
-                        df_filtration = check_MAF_threshold_quantitative(df, maf); // TODO correct 
+                        if (df[0].size() > 1) {
+                            df_filtration = check_MAF_threshold_quantitative(df, maf);
+                        }
                     }
 
                     std::string p_value = "NA", beta = "NA", se = "NA", r2 = "NA";
@@ -641,7 +643,9 @@ void SnarlParser::quantitative_table(const std::vector<std::tuple<string, vector
                 if (allele_number < 5) {
                     df_empty = true;
                 } else {
-                    df_filtration = check_MAF_threshold_quantitative(df, maf); // error correct
+                    if (df[0].size() > 1) {
+                        df_filtration = check_MAF_threshold_quantitative(df, maf);
+                    }
                 }
 
                 // make a string separated by ',' from a vector of string
@@ -656,7 +660,6 @@ void SnarlParser::quantitative_table(const std::vector<std::tuple<string, vector
 
                 if (df_empty || df_filtration) { // filtred variant
                     // do nothing
-                    cout << "filtered snarl : " << snarl << endl;
                 } else if (covar.size() > 0 && !kinship.empty()) { // lmm
                     lmm_quantitative(df, phenotype_filtered, kinship, covar, p_value, beta, se, r2);
 
@@ -709,7 +712,6 @@ bool check_MAF_threshold_quantitative(const std::vector<std::vector<double>>& df
     for (double val : table) {
         if (val / totalSum >= maf) {
             cout << "val / sum : " << val / totalSum << endl;
-            // val / sum : 1.17153
             return true; // If any value exceeds the threshold, return false
         }
     }
@@ -774,7 +776,9 @@ void SnarlParser::eqtl_table(
                 if (allele_number < 2) {
                     df_empty = true;
                 } else {
-                    df_filtration = check_MAF_threshold_quantitative(df, maf); // error correct
+                    if (df[0].size() > 1) {
+                        df_filtration = check_MAF_threshold_quantitative(df, maf);
+                    }
                 }
 
                 for (size_t i = 0; i < list_gene_index.size(); ++i) {

@@ -15,37 +15,33 @@ void linear_regression(
     size_t num_samples = df.size();
     size_t max_paths = df[0].size();
 
-    // Include intercept → +1 column
-    Eigen::MatrixXd X(num_samples, max_paths + 1);
-    X.col(0) = Eigen::VectorXd::Ones(num_samples); // intercept
-    for (size_t row = 0; row < num_samples; ++row) {
+    Eigen::MatrixXd X(num_samples, max_paths);
+    X.setZero(); // Initialize matrix with zeros
+    Eigen::VectorXd y(num_samples);
+    
+    for (size_t row=0; row < num_samples; ++row) {
+        y(row) = quantitative_phenotype[row];
         for (size_t col = 0; col < max_paths; ++col) {
-            X(row, col + 1) = static_cast<double>(df[row][col]);
+            X(row, col) = df[row][col];
         }
     }
-
-    Eigen::VectorXd y(num_samples);
-    for (size_t row = 0; row < num_samples; ++row) {
-        y(row) = quantitative_phenotype[row];
-    }
-
-    // Coefficients (beta)
+    
+    // Coefficients beta
     Eigen::VectorXd beta = (X.transpose() * X).ldlt().solve(X.transpose() * y);
     Eigen::VectorXd y_pred = X * beta;
     Eigen::VectorXd residuals = y - y_pred;
 
     // R² 
     double rss = residuals.squaredNorm();
-    double tss = (y.array() - y.mean()).square().sum();
+    double tss = (y.array() - y.mean()).matrix().squaredNorm();
     double r2 = 1 - (rss / tss);
 
-    int df_reg = max_paths - 1;
-    int df_res = num_samples - (max_paths + 1); // Degrees of freedom
+    int df_reg = max_paths - 1; // Degree of Freedom
+    int df_res = num_samples - max_paths;
     double mse = rss / df_res;  // Mean Squared Error (MSE)
     
     // Standard errors
     Eigen::MatrixXd cov_matrix = (X.transpose() * X).inverse();
-    // Eigen::MatrixXd cov_matrix = (X.transpose() * X).ldlt().solve(Eigen::MatrixXd::Identity(X.cols(), X.cols()));
     Eigen::VectorXd se = (cov_matrix.diagonal() * mse).array().sqrt().matrix();
 
     // Compute F-statistic
@@ -55,42 +51,20 @@ void linear_regression(
 
     // t-statistics
     Eigen::VectorXd t_stats = beta.array() / se.array();
-
-    // Print beta
-    std::cout << "Beta (coefficients) :\n";
-    for (int i = 0; i < beta.size(); ++i) {
-        std::cout << beta[i] << " ";
-    }
-    std::cout << "\n";
-
-    // Print standard errors
-    std::cout << "Standard Errors :\n";
-    for (int i = 0; i < se.size(); ++i) {
-        std::cout << se[i] << " ";
-    }
-    std::cout << "\n";
-
-    // Print t-statistics
-    std::cout << "t-statistics :\n";
-    for (int i = 0; i < t_stats.size(); ++i) {
-        std::cout << t_stats[i] << " ";
-    }
-    std::cout << "\n";
-
-
-    // p-values using t-distribution
     boost::math::students_t t_dist(df_res);
-    Eigen::VectorXd p_values(beta.size());
+    std::vector<double> p_values(beta.size());
     for (int i = 0; i < beta.size(); ++i) {
         p_values[i] = 2 * boost::math::cdf(boost::math::complement(t_dist, std::abs(t_stats[i]))); // two-tailed
-        cout << "p_values[i] : " << p_values[i] << endl;
     }
+
+    std::vector<double> p_values_adjusted = adjusted_holm(p_values);
+    double min_p_values_adjusted = *std::min_element(p_values_adjusted.begin(), p_values_adjusted.end());
 
     // set precision : 4 digit
     r2_str = set_precision(r2);
-    beta_str = set_precision(beta.mean());
-    se_str = set_precision(se.mean());
-    p_value_str = set_precision(p_value);
+    beta_str = set_precision(beta[0]);
+    se_str = set_precision(se[0]);
+    p_value_str = set_precision(min_p_values_adjusted);
 }
 
 void glm_quantitative(
@@ -174,7 +148,7 @@ std::tuple<std::vector<std::vector<double>>, std::vector<T>, size_t> create_quan
     std::vector<std::vector<double>> genotypes(length_sample, std::vector<double>(length_column, 0.0));
     std::unordered_set<size_t> index_used;
 
-    for (size_t col_idx = 0; col_idx < length_column-1; ++col_idx) { // fill df with length_column - 1 
+    for (size_t col_idx = 0; col_idx < length_column; ++col_idx) { // fill df with length_column - 1 
         const std::string& path_snarl = column_headers[col_idx];
         std::vector<std::string> decomposed_snarl = decompose_string(path_snarl);
         std::vector<size_t> idx_srr_save = identify_correct_path(decomposed_snarl, matrix, length_sample * 2);
@@ -197,7 +171,7 @@ std::tuple<std::vector<std::vector<double>>, std::vector<T>, size_t> create_quan
         double row_sum = std::accumulate(genotypes[i].begin(), genotypes[i].end(), 0.0);
 
         std::vector<double> normalized_row;
-        normalized_row.reserve(length_column-1);
+        normalized_row.reserve(length_column);
         for (double allele : genotypes[i]) {
             normalized_row.push_back(allele > 0.0 ? allele / row_sum : 0.0);
         }
@@ -215,7 +189,7 @@ std::tuple<std::vector<std::vector<double>>, std::unordered_set<size_t>, size_t>
     Matrix& matrix) {
 
     size_t allele_number = 0;
-    size_t length_column = column_headers.size();
+    size_t length_column = column_headers.size()-1;
 
     std::vector<std::vector<double>> genotypes(length_sample, std::vector<double>(length_column, 0.0));
     std::unordered_set<size_t> index_used;
