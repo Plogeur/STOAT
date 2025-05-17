@@ -16,6 +16,7 @@ void linear_regression(
     size_t max_paths = df[0].size();
 
     Eigen::MatrixXd X(num_samples, max_paths);
+    // Add intercept here 
     X.setZero(); // Initialize matrix with zeros
     Eigen::VectorXd y(num_samples);
     
@@ -26,20 +27,31 @@ void linear_regression(
         }
     }
     
+    // Coefficients beta
     Eigen::VectorXd beta = (X.transpose() * X).ldlt().solve(X.transpose() * y);
     Eigen::VectorXd y_pred = X * beta;
     Eigen::VectorXd residuals = y - y_pred;
-    
+
+    for (auto b : beta) {
+        cout << "beta : " << b << endl;
+    }
+
+    // R² 
     double rss = residuals.squaredNorm();
     double tss = (y.array() - y.mean()).matrix().squaredNorm();
     double r2 = 1 - (rss / tss);
 
-    int df_reg = max_paths - 1;
+    int df_reg = max_paths - 1; // Degree of Freedom
     int df_res = num_samples - max_paths;
     double mse = rss / df_res;  // Mean Squared Error (MSE)
     
+    // Standard errors
     Eigen::MatrixXd cov_matrix = (X.transpose() * X).inverse();
     Eigen::VectorXd se = (cov_matrix.diagonal() * mse).array().sqrt().matrix();
+
+    for (auto s : se) {
+        cout << "se : " << s << endl;
+    }
 
     // Compute F-statistic
     double f_stat = (r2 / df_reg) / ((1 - r2) / df_res);
@@ -48,34 +60,16 @@ void linear_regression(
 
     // t-statistics
     Eigen::VectorXd t_stats = beta.array() / se.array();
-
-    std::cout << std::fixed << std::setprecision(6);
-    std::cout << "Coefficients (beta):\n";
-    for (int i = 0; i < beta.size(); ++i)
-        std::cout << "  β[" << i << "] = " << beta[i] << "\n";
-
-    std::cout << "\nStandard Errors:\n";
-    for (int i = 0; i < se.size(); ++i)
-        std::cout << "  SE[" << i << "] = " << se[i] << "\n";
-
-    std::cout << "\nt-values:\n";
-    for (int i = 0; i < t_stats.size(); ++i)
-        std::cout << "  t[" << i << "] = " << t_stats[i] << "\n";
-
-    std::cout << "\np-values:\n";
     boost::math::students_t t_dist(df_res);
-    Eigen::VectorXd p_values(beta.size());
+    std::vector<double> p_values(beta.size());
     for (int i = 0; i < beta.size(); ++i) {
         p_values[i] = 2 * boost::math::cdf(boost::math::complement(t_dist, std::abs(t_stats[i]))); // two-tailed
-        cout << "p_values[i] : " << p_values[i] << endl;
+        cout << "p_values : " << p_values[i] << endl; 
     }
-
-    std::cout << "\nR²: " << r2 << "\n";
 }
 
 int main() {
 
-    // Your data
     std::vector<std::vector<double>> X = {
     {1, 0}, {1, 0}, {1, 0}, {1, 0}, {1, 0}, {1, 0},
     {0, 1}, {0, 1},

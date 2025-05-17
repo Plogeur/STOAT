@@ -58,13 +58,14 @@ void linear_regression(
     }
 
     std::vector<double> p_values_adjusted = adjusted_holm(p_values);
-    double min_p_values_adjusted = *std::min_element(p_values_adjusted.begin(), p_values_adjusted.end());
+    size_t min_index = std::distance(p_values_adjusted.begin(), std::min_element(p_values_adjusted.begin(), p_values_adjusted.end()));
+    double min_p_value_adjusted = p_values_adjusted[min_index];
 
     // set precision : 4 digit
     r2_str = set_precision(r2);
-    beta_str = set_precision(beta[0]);
-    se_str = set_precision(se[0]);
-    p_value_str = set_precision(min_p_values_adjusted);
+    beta_str = set_precision(beta[min_index]);
+    se_str = set_precision(se[min_index]);
+    p_value_str = set_precision(min_p_value_adjusted);
 }
 
 void glm_quantitative(
@@ -107,16 +108,29 @@ void glm_quantitative(
 
     Eigen::MatrixXd cov_matrix = (X.transpose() * X).inverse();
     Eigen::VectorXd se = (cov_matrix.diagonal() * mse).array().sqrt().matrix();
-
+    
+    // Compute F-statistic
     double f_stat = (r2 / df_reg) / ((1 - r2) / df_res);
     boost::math::fisher_f dist(df_reg, df_res);
     double p_value = boost::math::cdf(boost::math::complement(dist, std::abs(f_stat)));
 
-    // Output (mean of all variant betas and SEs)
-    beta_str = set_precision(beta.segment(1, num_variants).mean());
-    se_str = set_precision(se.segment(1, num_variants).mean());
+    // t-statistics
+    Eigen::VectorXd t_stats = beta.array() / se.array();
+    boost::math::students_t t_dist(df_res);
+    std::vector<double> p_values(num_variants);
+    for (int i = 0; i < num_variants; ++i) {
+        p_values[i] = 2 * boost::math::cdf(boost::math::complement(t_dist, std::abs(t_stats[i]))); // two-tailed
+    }
+
+    std::vector<double> p_values_adjusted = adjusted_holm(p_values);
+    size_t min_index = std::distance(p_values_adjusted.begin(), std::min_element(p_values_adjusted.begin(), p_values_adjusted.end()));
+    double min_p_value_adjusted = p_values_adjusted[min_index];
+
+    // set precision : 4 digit
     r2_str = set_precision(r2);
-    p_value_str = set_precision(p_value);
+    beta_str = set_precision(beta[min_index]);
+    se_str = set_precision(se[min_index]);
+    p_value_str = set_precision(min_p_value_adjusted);
 }
 
 // Explicit template instantiations

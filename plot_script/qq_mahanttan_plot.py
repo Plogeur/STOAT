@@ -87,8 +87,8 @@ if __name__ == "__main__" :
 
     parser = argparse.ArgumentParser(description="Run the Pvalue Stoat GWAS analysis")
     parser.add_argument("--pvalue",type=str, required=True)
-    parser.add_argument("--qq",type=str, required=True)
-    parser.add_argument("--manh",type=str, required=True)
+    parser.add_argument("--qq", type=str, default="qq.png", required=False)
+    parser.add_argument("--manh", type=str, default="mahanttan.png",required=False)
 
     group = parser.add_mutually_exclusive_group(required=True)
     group.add_argument("-b", "--binary", action="store_true")
@@ -102,3 +102,5 @@ if __name__ == "__main__" :
     elif args.quantitative :
         qq_plot_quantitatif(args.pvalue, args.qq)
         plot_manhattan_quantitatif(args.pvalue, args.manh)
+
+# python3 qq_

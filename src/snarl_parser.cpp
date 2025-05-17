@@ -711,7 +711,6 @@ bool check_MAF_threshold_quantitative(const std::vector<std::vector<double>>& df
     // Check if any column's sum proportion exceeds the threshold
     for (double val : table) {
         if (val / totalSum >= maf) {
-            cout << "val / sum : " << val / totalSum << endl;
             return true; // If any value exceeds the threshold, return false
         }
     }

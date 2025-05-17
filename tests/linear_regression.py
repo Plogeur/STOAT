@@ -28,7 +28,7 @@ X = np.array([
 phenotype = np.array([0,1,1,1,1,1,1,0,0,0,0,0,0,0,1,1,1,1,0,0])
 
 # Add intercept
-# X = sm.add_constant(X)
+X = sm.add_constant(X)
 
 # Fit OLS model
 model = sm.OLS(phenotype, X).fit()
