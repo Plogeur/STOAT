@@ -72,7 +72,7 @@ generate_boxplots <- function(phenotype_file, dir_path, output_path) {
         axis.title.y = element_text(size = 14, color = "cadetblue4"),
         plot.title = element_text(size = 16, color = "cadetblue4", face = "bold", hjust = 0.5)
       )
-    
+
     output_file <- file.path(output_path, paste0(base_name, "_boxplot.jpeg"))
     ggsave(output_file, plot = p, device = "jpeg", width = 8, height = 6, dpi = 300)
     message("Saved plot for ", base_name, " as ", output_file)

@@ -6,7 +6,7 @@ Matrix::Matrix(size_t rows, size_t cols) : cols_(cols) {
     size_t length_matrix = (rows * cols + 7) / 8;
     MaxElement = (length_matrix * 8) / cols_; // get the number of element in the matrix
     row_header.rehash(rows);
-    matrix_1D.reserve(length_matrix);  // Reserve capacity to avoid frequent reallocations
+    matrix_1D.reserve(length_matrix); // Reserve capacity to avoid frequent reallocations
     matrix_1D.resize(length_matrix, 0); // Initialize with zeros
 }
 
@@ -57,7 +57,8 @@ bool Matrix::operator()(size_t row, size_t col) const {
     size_t bitIndex = row * cols_ + col;
     size_t byteIndex = bitIndex / 8;
     size_t bitPosition = bitIndex % 8;
-    if (byteIndex >= matrix_1D.size()) return false; // Bounds check to avoid out-of-range access
+    // Bounds check to avoid out-of-range access
+    // if (byteIndex >= matrix_1D.size()) return false;
     return (matrix_1D[byteIndex] >> bitPosition) & 1U;
 }
 
@@ -66,7 +67,8 @@ void Matrix::set(size_t row, size_t col) {
     size_t bitIndex = row * cols_ + col;
     size_t byteIndex = bitIndex / 8;
     size_t bitPosition = bitIndex % 8;
-    if (byteIndex >= matrix_1D.size()) return; // Bounds check to avoid out-of-range access
+    // Bounds check to avoid out-of-range access
+    // if (byteIndex >= matrix_1D.size()) return;
     matrix_1D[byteIndex] |= (1U << bitPosition);
 }
 

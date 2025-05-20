@@ -158,8 +158,8 @@ std::tuple<std::vector<std::vector<double>>, std::vector<T>, size_t> create_quan
     const size_t& length_sample,
     const std::vector<std::string>& column_headers,
     const std::vector<T>& phenotype,
-    Matrix& matrix) 
-{
+    Matrix& matrix) {
+
     size_t allele_number = 0;
     size_t length_column = column_headers.size();
 
@@ -168,7 +168,7 @@ std::tuple<std::vector<std::vector<double>>, std::vector<T>, size_t> create_quan
     for (size_t i = 0; i < length_sample; ++i)
         genotypes[i].reserve(length_column);
 
-    std::vector<size_t> kept_columns;  // Indices of valid columns
+    std::vector<size_t> kept_columns; // Indices of valid columns
     std::unordered_set<size_t> index_used;
 
     // Loop over all columns
@@ -178,9 +178,9 @@ std::tuple<std::vector<std::vector<double>>, std::vector<T>, size_t> create_quan
         std::vector<size_t> idx_srr_save = identify_correct_path(decomposed_snarl, matrix, length_sample * 2);
 
         if (idx_srr_save.empty())
-            continue;  // Skip if column is empty
+            continue; // Skip if column is empty
 
-        kept_columns.push_back(col_idx);  // Valid column
+        kept_columns.push_back(col_idx); // Valid column
 
         // Ensure rows have space for new column
         for (size_t i = 0; i < length_sample; ++i) {
