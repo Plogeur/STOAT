@@ -148,3 +148,16 @@ void retain_indices(std::vector<double>& vec, const std::unordered_set<size_t>& 
     }
     vec.resize(write_idx);
 }
+
+template std::string vector_to_string(const std::vector<std::string>& vec);
+template std::string vector_to_string(const std::vector<size_t>& vec);
+
+template<typename T>
+std::string vector_to_string(const std::vector<T>& vec) {
+    std::ostringstream oss;
+    for (size_t i = 0; i < vec.size(); ++i) {
+        if (i > 0) oss << ",";
+        oss << vec[i];
+    }
+    return oss.str();
+}

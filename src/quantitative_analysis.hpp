@@ -37,13 +37,13 @@ void glm_quantitative(
     std::string& se_str, std::string& r2_str);
 
 template <typename T>
-std::tuple<std::vector<std::vector<double>>, std::vector<T>, size_t> create_quantitative_table(
+std::tuple<std::vector<std::vector<double>>, std::vector<T>, size_t, std::vector<size_t>> create_quantitative_table(
     const size_t& sampleCount,
     const std::vector<std::string>& columnHeaders,
     const std::vector<T>& phenotype,
     Matrix& matrix);
 
-std::tuple<std::vector<std::vector<double>>, std::unordered_set<size_t>, size_t> create_eqtl_table(
+std::tuple<std::vector<std::vector<double>>, std::unordered_set<size_t>, size_t, std::vector<size_t>> create_eqtl_table(
     const size_t& length_sample,
     const std::vector<std::string>& column_headers,
     Matrix& matrix);
