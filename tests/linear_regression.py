@@ -1,18 +1,14 @@
 import sys
 import pandas as pd
 import statsmodels.api as sm
-from statsmodels.stats.multitest import multipletests
 
-# --- Load input files from command line ---
-feature_file = sys.argv[1]
-pheno_file = sys.argv[2]
-
-# --- Load features ---
-features = pd.read_csv(feature_file, sep='\t')
-features = features.rename(columns={features.columns[0]: "IID"})
-
-# --- Load phenotype ---
-pheno = pd.read_csv(pheno_file, sep='\t', usecols=["IID", "PHENO"])
+# Predictor matrix X (20 rows, 1 column)
+X = np.array([
+    [0], [0], [0], [0], [0], [0],
+    [1], [1],
+    [0.5], [0.5], [0.5], [0.5],
+    [1], [1], [1], [1], [1], [1], [1], [1]
+])
 
 # --- Merge on sample ID ---
 df = pd.merge(features, pheno, on="IID")
@@ -30,5 +26,7 @@ model = sm.OLS(y, X).fit()
 
 # Print full summary
 print(model.summary())
+
+# python3 linear_regression.py ../output/regression/4220_4223.tsv ../data/quantitative/phenotype.tsv
 
 # python3 linear_regression.py ../output/regression/4220_4223.tsv ../data/quantitative/phenotype.tsv
