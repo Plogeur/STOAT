@@ -14,22 +14,37 @@ void linear_regression(
 
     size_t num_samples = df.size();
     size_t max_paths = df[0].size();
-
-    Eigen::MatrixXd X(num_samples, max_paths);
-    X.setZero(); // Initialize matrix with zeros
     Eigen::VectorXd y(num_samples);
+    for (size_t i = 0; i < num_samples; ++i) {
+        y(i) = quantitative_phenotype[i];
+    }
+
+    // Eigen::MatrixXd X(num_samples, max_paths);
+    // X.setZero(); // Initialize matrix with zeros    
+    // for (size_t row=0; row < num_samples; ++row) {
+    //     y(row) = quantitative_phenotype[row];
+    //     for (size_t col = 0; col < max_paths; ++col) {
+    //         X(row, col) = df[row][col];
+    //     }
+    // }
     
-    for (size_t row=0; row < num_samples; ++row) {
-        y(row) = quantitative_phenotype[row];
-        for (size_t col = 0; col < max_paths; ++col) {
-            X(row, col) = df[row][col];
+    // Create matrix X with intercept
+    Eigen::MatrixXd X(num_samples, max_paths + 1);
+    X.col(0) = Eigen::VectorXd::Ones(num_samples);  // Intercept
+    for (size_t i = 0; i < num_samples; ++i) {
+        for (size_t j = 0; j < max_paths; ++j) {
+            X(i, j + 1) = df[i][j];
         }
     }
-    
+
     // Coefficients beta
     Eigen::VectorXd beta = (X.transpose() * X).ldlt().solve(X.transpose() * y);
     Eigen::VectorXd y_pred = X * beta;
     Eigen::VectorXd residuals = y - y_pred;
+
+    for (auto b : beta) {
+        cout << "beta : " << b << endl;
+    }
 
     // R² 
     double rss = residuals.squaredNorm();
@@ -43,6 +58,10 @@ void linear_regression(
     // Standard errors
     Eigen::MatrixXd cov_matrix = (X.transpose() * X).inverse();
     Eigen::VectorXd se = (cov_matrix.diagonal() * mse).array().sqrt().matrix();
+
+    for (auto s : se) {
+        cout << "se : " << s << endl;
+    }
 
     // Compute F-statistic
     double f_stat = (r2 / df_reg) / ((1 - r2) / df_res);

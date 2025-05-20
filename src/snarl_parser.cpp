@@ -657,7 +657,9 @@ void SnarlParser::quantitative_table(const std::vector<std::tuple<string, vector
                 std::string type_var_str = oss.str();
                 std::stringstream data;
                 std::string p_value = "NA", beta = "NA", se = "NA", r2 = "NA";
-
+                
+                cout << "snarl : " << snarl << endl;
+                
                 if (df_empty || df_filtration) { // filtred variant
                     // do nothing
                 } else if (covar.size() > 0 && !kinship.empty()) { // lmm
