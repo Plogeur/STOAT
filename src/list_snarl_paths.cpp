@@ -509,18 +509,6 @@ std::unordered_map<std::string, std::vector<std::tuple<string, vector<string>, s
         if (not_break) {
             // pair<vector<string>, vector<string>>
             auto [pretty_paths, type_variants] = fill_pretty_paths(stree, pg, finished_paths);
-            std::ostringstream pretty_paths_stream, type_variants_stream;
-
-            // Convert pretty_paths (vector<string>) into a comma-separated string
-            for (size_t i = 0; i < pretty_paths.size(); ++i) {
-                if (i > 0) {pretty_paths_stream << ",";}
-                pretty_paths_stream << pretty_paths[i];
-            }
- 
-            for (size_t i = 0; i < type_variants.size(); ++i) {
-                if (i > 0) {type_variants_stream << ",";}  // Add a comma and space between strings
-                type_variants_stream << type_variants[i];
-            }
 
             // snarl_id chromosome   start_position  end_position    paths    type
             string chr = std::get<1>(snarl_path_pos);
@@ -531,8 +519,8 @@ std::unordered_map<std::string, std::vector<std::tuple<string, vector<string>, s
 
             if (bool_return) {
                 out_snarl << chr << "\t" << strat_pos << "\t" << end_pos
-                    << "\t" << snarl_id << "\t" << pretty_paths_stream.str() 
-                    << "\t" << type_variants_stream.str() << "\t" << str_reference << "\n";
+                    << "\t" << snarl_id << "\t" << vector_to_string(pretty_paths)
+                    << "\t" << vector_to_string(type_variants) << "\t" << str_reference << "\n";
             } else {
                 // case new chr
                 if (chr != save_chr && !save_chr.empty()) {

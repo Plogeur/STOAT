@@ -64,7 +64,7 @@ void chromosome_chuck_quantitative(htsFile* &ptr_vcf, bcf_hdr_t* &hdr, bcf1_t* &
     if (covar.size() > 0) {
         headers = "CHR\tPOS\tSNARL\tTYPE\tP\tRSQUARED\tBETA\tSE\tALLELE_NUM\n";
     } else {
-        headers = "CHR\tPOS\tSNARL\tTYPE\tP\tP_ADJUSTED\tRSQUARE\tBETA\tSE\tALLELE_NUM\n";
+        headers = "CHR\tPOS\tSNARL\tTYPE\tP\tP_ADJUSTED\tRSQUARE\tBETA\tSE\tALLELE_NUM\tALLELE_PATHS\n";
     }
     outf.write(headers.c_str(), headers.size());
 
@@ -102,7 +102,7 @@ void chromosome_chuck_eqtl(htsFile* &ptr_vcf, bcf_hdr_t* &hdr, bcf1_t* &rec,
     const size_t& windows_gene_threshold, const std::string& out_eqtl) {
 
     std::ofstream outf(out_eqtl, std::ios::binary);
-    std::string headers = "CHR\tPOS\tSNARL\tTYPE\tGENE\tP\tP_ADJUSTED\tRSQUARE\tBETA\tSE\tALLELE_NUM\n";
+    std::string headers = "CHR\tPOS\tSNARL\tTYPE\tGENE\tP\tP_ADJUSTED\tRSQUARE\tBETA\tSE\tALLELE_NUM\tALLELE_PATHS\n";
     outf.write(headers.c_str(), headers.size());
     
     std::cout << "GWAS analysis for chromosome : " << std::endl;
@@ -141,7 +141,7 @@ void chromosome_chuck_binary(htsFile* &ptr_vcf, bcf_hdr_t* &hdr, bcf1_t* &rec,
     std::ofstream outf(output_binary, std::ios::binary);
     std::string headers;
     if (covar.size() > 0) {
-        headers = "CHR\tPOS\tSNARL\tTYPE\tP\tP_ADJUSTED\tBETA\tSE\tALLELE_NUM\n";
+        headers = "CHR\tPOS\tSNARL\tTYPE\tP\tP_ADJUSTED\tBETA\tSE\tALLELE_NUM\tALLELE_PATHS\n";
     } else {
         headers = "CHR\tPOS\tSNARL\tTYPE\tP_FISHER\tP_CHI2\tP_ADJUSTED\tALLELE_NUM\tMIN_ROW_INDEX\tNUM_COLUM\tINTER_GROUP\tAVERAGE\tGROUP_PATHS\n";
     }
@@ -536,7 +536,7 @@ void SnarlParser::binary_table(const std::vector<std::tuple<std::string, std::ve
 
                 if (!covar.empty()) {
                     // Logistic regression
-                    auto [df, phenotype_filtered, allele_number] = create_quantitative_table(length_sample, list_snarl, binary_phenotype, matrix);
+                    auto [df, phenotype_filtered, allele_number, allele_paths] = create_quantitative_table(length_sample, list_snarl, binary_phenotype, matrix);
                     bool df_filtration = false;
                     bool df_empty = false;
 
@@ -570,7 +570,7 @@ void SnarlParser::binary_table(const std::vector<std::tuple<std::string, std::ve
                     // chr, pos, snarl, type, p_value, p_adjusted, t-dist, beta, se, allele_number
                     data << chr << "\t" << start_pos << "\t" << snarl << "\t" << type_var_str
                     << "\t" << p_value << "\t" << "" << "\t" << r2 << "\t" << beta << "\t" << se 
-                    << "\t" << allele_number << "\n";
+                    << "\t" << allele_number << "\t" << vector_to_string(allele_paths) << "\n";
                                 
                 } else {
                     size_t length_column_headers = list_snarl.size();
@@ -636,7 +636,7 @@ void SnarlParser::quantitative_table(const std::vector<std::tuple<string, vector
             for (size_t itr = 0; itr < snarls.size(); ++itr) {
                 const auto& [snarl, list_snarl, start_pos, end_pos, type_var] = snarls[itr];
 
-                auto [df, phenotype_filtered, allele_number] = create_quantitative_table(length_sample, list_snarl, quantitative_phenotype, matrix);
+                auto [df, phenotype_filtered, allele_number, allele_paths] = create_quantitative_table(length_sample, list_snarl, quantitative_phenotype, matrix);
                 bool df_filtration = false;
                 bool df_empty = false;
 
@@ -658,8 +658,6 @@ void SnarlParser::quantitative_table(const std::vector<std::tuple<string, vector
                 std::stringstream data;
                 std::string p_value = "NA", beta = "NA", se = "NA", r2 = "NA";
                 
-                cout << "snarl : " << snarl << endl;
-                
                 if (df_empty || df_filtration) { // filtred variant
                     // do nothing
                 } else if (covar.size() > 0 && !kinship.empty()) { // lmm
@@ -680,7 +678,7 @@ void SnarlParser::quantitative_table(const std::vector<std::tuple<string, vector
                 // chr, pos, snarl, type, p_value, p_adjusted, r2, beta, se, allele_number
                 data << chr << "\t" << start_pos << "\t" << snarl << "\t" << type_var_str
                 << "\t" << p_value  << "\t" << "" << "\t" << r2 << "\t" << beta << "\t" << se 
-                << "\t" << allele_number << "\n";
+                << "\t" << allele_number << "\t" << vector_to_string(allele_paths) << "\n";
                 local_buffer << data.str();
             }
 
@@ -770,11 +768,11 @@ void SnarlParser::eqtl_table(
                 const auto& [snarl, list_snarl, start_pos, end_pos, type_var] = snarls[itr];
                 std::vector<size_t> list_gene_index = found_gene_snarl(eqtl, start_pos, end_pos, windows_gene_threshold);
 
-                auto [df, index_filtered, allele_number] = create_eqtl_table(length_sample, list_snarl, matrix);
+                auto [df, index_filtered, allele_number, allele_paths] = create_eqtl_table(length_sample, list_snarl, matrix);
                 bool df_filtration = false;
                 bool df_empty = false;
 
-                if (allele_number < 2) {
+                if (allele_number < 5) {
                     df_empty = true;
                 } else {
                     if (df[0].size() > 1) {
@@ -819,7 +817,8 @@ void SnarlParser::eqtl_table(
                    // "CHR\tPOS\tSNARL\tTYPE\tGENE\tP\tP_ADJUSTED\tRSQUARE\tBETA\tSE\tALLELE_NUM\n";
                     data << chr << "\t" << start_pos << "\t" << snarl << "\t" << type_var_str
                     << "\t" << gene_name << "\t" << p_value  << "\t" << "" << "\t" << r2
-                    << "\t" << beta << "\t" << se << "\t" << allele_number << "\n";
+                    << "\t" << beta << "\t" << se << "\t" << allele_number << "\t" << vector_to_string(allele_paths) << "\n";
+
                     local_buffer << data.str();
                 }
             }

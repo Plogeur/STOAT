@@ -56,9 +56,9 @@ void linear_regression(
     // t-statistics
     Eigen::VectorXd t_stats = beta.array() / se.array();
     boost::math::students_t t_dist(df_res);
-    std::vector<double> p_values;
-    for (int i = 1; i < beta.size(); ++i) {
-        p_values.push_back(2 * boost::math::cdf(boost::math::complement(t_dist, std::abs(t_stats[i])))); // two-tailed
+    std::vector<double> p_values(beta.size());
+    for (int i = 0; i < beta.size(); ++i) {
+        p_values[i] = 2 * boost::math::cdf(boost::math::complement(t_dist, std::abs(t_stats[i]))); // two-tailed
     }
 
     std::vector<double> p_values_adjusted = adjusted_holm(p_values);
@@ -84,12 +84,13 @@ void glm_quantitative(
     size_t num_covariates = covar.empty() ? 0 : covar[0].size();
     size_t num_features = num_variants + num_covariates;
 
-    Eigen::MatrixXd X(num_samples, num_features);
+    Eigen::MatrixXd X(num_samples, num_features + 1);
+    X.col(0) = Eigen::VectorXd::Ones(num_samples);  // Intercept column
     Eigen::VectorXd y(num_samples);
-    
+        
     for (size_t i = 0; i < num_samples; ++i) {
         y(i) = quantitative_phenotype[i];
-        size_t col = 0;
+        size_t col = 1; // Start at 1 to skip intercept column
         for (size_t j = 0; j < num_variants; ++j) {
             X(i, col++) = df[i][j];
         }
@@ -98,21 +99,24 @@ void glm_quantitative(
         }
     }
     
+   // Coefficients beta
     Eigen::VectorXd beta = (X.transpose() * X).ldlt().solve(X.transpose() * y);
     Eigen::VectorXd y_pred = X * beta;
     Eigen::VectorXd residuals = y - y_pred;
 
+    // R² 
     double rss = residuals.squaredNorm();
     double tss = (y.array() - y.mean()).matrix().squaredNorm();
     double r2 = 1 - (rss / tss);
 
-    int df_reg = num_features - 1;
-    int df_res = num_samples - num_features;
+    int df_reg = X.cols() - 1;              // exclude intercept from model df
+    int df_res = num_samples - X.cols();    // residual degrees of freedom
     double mse = rss / df_res;
 
+    // Standard errors
     Eigen::MatrixXd cov_matrix = (X.transpose() * X).inverse();
     Eigen::VectorXd se = (cov_matrix.diagonal() * mse).array().sqrt().matrix();
-    
+
     // Compute F-statistic
     double f_stat = (r2 / df_reg) / ((1 - r2) / df_res);
     boost::math::fisher_f dist(df_reg, df_res);
@@ -121,9 +125,9 @@ void glm_quantitative(
     // t-statistics
     Eigen::VectorXd t_stats = beta.array() / se.array();
     boost::math::students_t t_dist(df_res);
-    std::vector<double> p_values;
-    for (int i = 1; i < num_variants; ++i) {
-        p_values.push_back(2 * boost::math::cdf(boost::math::complement(t_dist, std::abs(t_stats[i])))); // two-tailed
+    std::vector<double> p_values(beta.size());
+    for (int i = 0; i < beta.size(); ++i) {
+        p_values[i] = 2 * boost::math::cdf(boost::math::complement(t_dist, std::abs(t_stats[i]))); // two-tailed
     }
 
     std::vector<double> p_values_adjusted = adjusted_holm(p_values);
@@ -162,13 +166,13 @@ std::tuple<std::vector<std::vector<double>>, std::vector<T>, size_t, std::vector
 
     size_t allele_number = 0;
     size_t length_column = column_headers.size();
-
-    std::vector<size_t> allele_paths(length_column, 0);
+    std::vector<size_t> allele_paths;
+    allele_paths.reserve(length_column);
 
     // Prepare genotypes structure
     std::vector<std::vector<double>> genotypes(length_sample);
-    for (auto& row : genotypes)
-        row.reserve(length_column);
+    for (size_t i = 0; i < length_sample; ++i)
+        genotypes[i].reserve(length_column);
 
     std::vector<size_t> kept_columns;  // Indices of valid columns
     std::unordered_set<size_t> index_used;
@@ -179,8 +183,10 @@ std::tuple<std::vector<std::vector<double>>, std::vector<T>, size_t, std::vector
         std::vector<std::string> decomposed_snarl = decompose_string(path_snarl);
         std::vector<size_t> idx_srr_save = identify_correct_path(decomposed_snarl, matrix, length_sample * 2);
 
+        // Case empty column
         if (idx_srr_save.empty())
-            continue;  // Skip if column is empty
+            allele_paths.push_back(0);
+            continue; // Skip
 
         kept_columns.push_back(col_idx);  // Valid column
 
@@ -192,7 +198,7 @@ std::tuple<std::vector<std::vector<double>>, std::vector<T>, size_t, std::vector
 
         size_t numb_all = idx_srr_save.size();
         allele_number += numb_all;
-        allele_paths[col_idx] = numb_all;
+        allele_paths.push_back(numb_all);
 
         // Fill genotype matrix
         for (size_t idx : idx_srr_save) {
@@ -237,12 +243,13 @@ std::tuple<std::vector<std::vector<double>>, std::unordered_set<size_t>, size_t,
 
     size_t allele_number = 0;
     size_t length_column = column_headers.size();
-    std::vector<size_t> allele_paths(length_column, 0);
+    std::vector<size_t> allele_paths;
+    allele_paths.reserve(length_column);
 
     // Prepare genotypes structure
     std::vector<std::vector<double>> genotypes(length_sample);
-    for (auto& row : genotypes)
-        row.reserve(length_column);
+    for (size_t i = 0; i < length_sample; ++i)
+        genotypes[i].reserve(length_column);
 
     std::vector<size_t> kept_columns;  // Indices of valid columns
     std::unordered_set<size_t> index_used;
@@ -253,8 +260,10 @@ std::tuple<std::vector<std::vector<double>>, std::unordered_set<size_t>, size_t,
         std::vector<std::string> decomposed_snarl = decompose_string(path_snarl);
         std::vector<size_t> idx_srr_save = identify_correct_path(decomposed_snarl, matrix, length_sample * 2);
 
+        // Case empty column
         if (idx_srr_save.empty())
-            continue;  // Skip if column is empty
+            allele_paths.push_back(0);
+            continue; // Skip
 
         kept_columns.push_back(col_idx);  // Valid column
 
@@ -266,7 +275,7 @@ std::tuple<std::vector<std::vector<double>>, std::unordered_set<size_t>, size_t,
 
         size_t numb_all = idx_srr_save.size();
         allele_number += numb_all;
-        allele_paths[col_idx] = numb_all;
+        allele_paths.push_back(numb_all);
 
         // Fill genotype matrix
         for (size_t idx : idx_srr_save) {
@@ -282,7 +291,6 @@ std::tuple<std::vector<std::vector<double>>, std::unordered_set<size_t>, size_t,
     std::vector<std::vector<double>> genotypes_filtered;
     genotypes_filtered.reserve(index_used.size());
 
-
     for (size_t i : index_used) {
         const auto& row = genotypes[i];
         double row_sum = std::accumulate(row.begin(), row.end(), 0.0);
@@ -294,7 +302,6 @@ std::tuple<std::vector<std::vector<double>>, std::unordered_set<size_t>, size_t,
         for (size_t j = 0; j < max_col; ++j) {
             normalized_row.push_back(row[j] > 0.0 ? row[j] / row_sum : 0.0);
         }
-
         genotypes_filtered.push_back(std::move(normalized_row));
     }
 

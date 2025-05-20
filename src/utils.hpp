@@ -39,4 +39,7 @@ void retain_indices(std::vector<double>& vec, const std::unordered_set<size_t>& 
 
 std::vector<double> adjusted_holm(const std::vector<double>& p_values);
 
+template <typename T>
+std::string vector_to_string(const std::vector<T>& vec);
+
 #endif
