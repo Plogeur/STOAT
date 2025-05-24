@@ -11,6 +11,40 @@ def split_snarl(input_str):
     # Split the string and filter empty elements, then convert to integers
     return [str(num) for num in re.split(r'[><]', input_str) if num]
 
+def parse_sv_rows(file_path):
+    sv_indices_set = set()
+    
+    with open(file_path, 'r') as f:
+        lines = f.readlines()
+    
+    header = lines[0].strip().split('\t')
+    type_index = header.index('TYPE')
+    
+    for i, line in enumerate(lines[1:], start=1):  # start=1 to get correct line index (excluding header)
+        fields = line.strip().split('\t')
+        type_field = fields[type_index]
+        
+        # Handle multiple values separated by commas
+        values = []
+        for part in type_field.split(','):
+            for subpart in part.split('/'):  # in case of values like 508/508
+                try:
+                    values.append(int(subpart))
+                except ValueError:
+                    pass
+        
+        # Check absolute differences between all pairs
+        for j in range(len(values)):
+            for k in range(j + 1, len(values)):
+                if abs(values[j] - values[k]) >= 50:
+                    sv_indices_set.add(i)
+                    break  # no need to check more pairs for this row
+            else:
+                continue
+            break
+    
+    return sv_indices_set
+
 # Function to process the frequency file and get result list with differences
 def process_file(freq_file, threshold=0.2):
     df = pd.read_csv(freq_file, sep='\t')
@@ -71,7 +105,7 @@ def check_valid_snarl(start_node_1, next_node_1, start_node_2, next_node_2, snar
     # Return true only if both pairs are satisfied
     return contains_first_pair and contains_second_pair
 
-def match_snarl(freq_path_list, true_labels, list_diff, p_value_file, paths_file):
+def match_snarl(freq_path_list, true_labels, list_diff, p_value_file, paths_file, save_sv_snarl):
 
     p_value_df = pd.read_csv(p_value_file, sep='\t')
     paths_df = pd.read_csv(paths_file, sep='\t')['PATHS']
@@ -99,7 +133,10 @@ def match_snarl(freq_path_list, true_labels, list_diff, p_value_file, paths_file
         # Case where the snarl is found 
         if not matched_row.empty:
             indices = matched_row.index
-            split_paths = [paths_df[idx] for idx in indices]
+            if save_sv_snarl != None :
+                split_paths = [paths_df[idx] for idx in indices if idx+1 in save_sv_snarl]
+            else :
+                split_paths = [paths_df[idx] for idx in indices]
 
             # Check if at least one path in the snarl contains the start node followed by the next node
             for idx_paths, list_path in enumerate(split_paths):
@@ -321,6 +358,7 @@ if __name__ == "__main__":
     parser.add_argument("--p_value", help="Path to p_value gwas output file")
     parser.add_argument("--paths", help="Path to snarl paths list file")
     parser.add_argument("-t", "--threshold", type=float, required=False, help="Threshold to define the truth label")
+    parser.add_argument("--sv", action="store_true", required=False, help="Verify truth only for SV (>= 50 pb diff)")
 
     group = parser.add_mutually_exclusive_group(required=True)
     group.add_argument("-b", "--binary", action='store_true', help="binary test")
@@ -338,31 +376,20 @@ if __name__ == "__main__":
         output_diff = f"{output}"
         type_ = 'quantitative'
 
-    # THRESHOLD_FREQ : Threshold to define the truth label by comparing the frequence difference between both group
-    THRESHOLD_FREQ = 0.2
-
-    # Define Truth label from freq file
+    # THRESHOLD_FREQ = 0.0 : Case where just a difference between both group snarl is considered like Truth label
+    THRESHOLD_FREQ = 0.0
+    
+    save_sv_snarl = parse_sv_rows(args.p_value) if args.sv else None
     freq_test_path_list, test_true_labels, test_list_diff = process_file(args.freq, THRESHOLD_FREQ)
-    assert len(freq_test_path_list) == len(test_true_labels) == len(test_list_diff)
-
-    test_predicted_labels_10_2, test_predicted_labels_10_5, test_predicted_labels_10_8, cleaned_true_labels, clean_list_diff, _, _, _ = match_snarl(freq_test_path_list, test_true_labels, test_list_diff, args.p_value, args.paths)
-    
-    # Plot confusion matrix
+    test_predicted_labels_10_2, test_predicted_labels_10_5, test_predicted_labels_10_8, cleaned_true_labels, clean_list_diff, pvalue, num_sample, snarl_name = match_snarl(freq_test_path_list, test_true_labels, test_list_diff, args.p_value, args.paths, save_sv_snarl)
     print_confusion_matrix(test_predicted_labels_10_2, test_predicted_labels_10_5, test_predicted_labels_10_8, cleaned_true_labels, f"{output}/confusion_matrix_{THRESHOLD_FREQ}")
+    assert len(cleaned_true_labels) == len(clean_list_diff)
 
-    if args.binary or args.quantitative :
-        # THRESHOLD_FREQ = 0.0 : Case where just a difference between both group snarl is considered like Truth label
-        THRESHOLD_FREQ = 0.0
-        freq_test_path_list, test_true_labels, test_list_diff = process_file(args.freq, THRESHOLD_FREQ)
-        test_predicted_labels_10_2, test_predicted_labels_10_5, test_predicted_labels_10_8, cleaned_true_labels, clean_list_diff, pvalue, num_sample, snarl_name = match_snarl(freq_test_path_list, test_true_labels, test_list_diff, args.p_value, args.paths)
-        print_confusion_matrix(test_predicted_labels_10_2, test_predicted_labels_10_5, test_predicted_labels_10_8, cleaned_true_labels, f"{output}/confusion_matrix_{THRESHOLD_FREQ}")
-        assert len(cleaned_true_labels) == len(clean_list_diff)
+    print("Pourcentage of paths tested : ", (len(pvalue)/len(freq_test_path_list))*100*2) # *2 because we jump 2 per 2 the paths
+    # Plot distribution of p-values for false negatives and true positives
+    plot_diff_distribution(test_predicted_labels_10_2, cleaned_true_labels, clean_list_diff, output_diff, "10^-2")
+    p_value_distribution(test_predicted_labels_10_2, cleaned_true_labels, clean_list_diff, pvalue, num_sample, snarl_name, output_diff)
 
-        print("Pourcentage of paths tested : ", (len(pvalue)/len(freq_test_path_list))*100*2) # *2 because we jump 2 per 2 the paths
-        # Plot distribution of p-values for false negatives and true positives
-        plot_diff_distribution(test_predicted_labels_10_2, cleaned_true_labels, clean_list_diff, output_diff, "10^-2")
-        p_value_distribution(test_predicted_labels_10_2, cleaned_true_labels, clean_list_diff, pvalue, num_sample, snarl_name, output_diff)
-    
     """
     python3 tests/verify_truth.py --freq data/quantitative/pg.snarls.freq.tsv \
     --p_value output/quantitative_analysis.tsv --paths data/quantitative/snarl_analyse.tsv -q
