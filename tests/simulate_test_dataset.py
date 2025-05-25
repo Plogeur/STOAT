@@ -35,30 +35,60 @@ class Graph:
         self.paths = {}
         # map a snarl start to frequencies
         self.snarls_freq = {}
-        # phenotype for each sample (sample : phenotype)
+        # phenotypes
         self.phenotypes = []
+        # covariates
+        self.covariates = []
         # keep track of a few things
         self.next_node_id = 1
         self.ngroups = 2
 
-    def quantitativePhenotype(self, samp):
-        """Simulate a quantitative phenotype for a sample"""
-        samp_t = nsamp//2
-        for samp in range(0, nsamp):
-            if samp < samp_t:
-                self.phenotypes.append(random.uniform(0.0, 1.0))
-            else:
-                self.phenotypes.append(random.uniform(0.0, -1.0))
-
     def binaryPhenotype(self, samp):
-        """Simulate a binary phenotype for a sample"""
+        """Simulate a binary phenotype"""
         samp_t = nsamp//2
         for samp in range(0, nsamp):
             if samp < samp_t:
                 self.phenotypes.append(0)
             else:
                 self.phenotypes.append(1)
-    
+
+    def quantitativePhenotype(self, samp):
+        """Simulate a quantitative phenotype"""
+        samp_t = nsamp//2
+        for samp in range(0, nsamp):
+            if samp < samp_t:
+                self.phenotypes.append(random.uniform(0.0, 1.0))
+            else:
+                self.phenotypes.append(random.uniform(-1.0, 0.0))
+
+    def eqtlPhenotype(self, samp, gen_prob=0.1, ngene=100, gen_diff=2.0):
+        """Simulate an eQTL phenotype"""
+        samp_t = nsamp//2
+        for idx in range(ngene):
+            gene_expr = random.uniform(0, 8.0)
+            qtl_col = []
+            gen_signi = random.random()
+            bool_gene_signi = gen_signi <= gen_prob
+            for samp in range(0, nsamp):
+                if bool_gene_signi: # significant gene
+                    if samp < samp_t:
+                        qtl_col.append(gene_expr + random.uniform(0.0, gen_diff))
+                    else:
+                        qtl_col.append(gene_expr + random.uniform(-gen_diff, 0.0))
+                else: # not significant gene
+                    qtl_col.append(random.uniform(gene_expr - gen_diff, gene_expr + gen_diff))
+            self.phenotypes.append(qtl_col)
+
+    def covariate(self, ncov=3):
+        """Simulate a covariate phenotype for a sample"""
+        for idx in range(ncov):
+            bias = random.uniform(-10, 10)
+            cov = []
+            for _ in range(nsamp):
+                    cov_value = self.phenotypes[idx] + bias
+                    cov.append(cov_value)
+            self.covariates.append(cov)
+
     def addNode(self, pred_nodes=[], min_size=50, max_size=300):
         # create a node and connect it to specified predecessors
         seq = randSeq(random.randint(min_size, max_size))
@@ -200,6 +230,32 @@ class Graph:
             # write sample FID, ID and phenotype
             outf.write(f"samp_{idx}\tsamp_{idx}\t{samp}\n")
 
+    def writeCovariate(self, ncov, out_cov):
+        outf = open(out_cov, 'wt')
+        num_pc = '\t'.join([f"PC{i+1}" for i in range(0, ncov)])
+        outf.write(f"FID\tIID\t{num_pc}\n")
+        # write covariates
+        for idx in range(len(self.covariates[0])):
+            # write sample FID, ID and covariate
+            cov_col = '\t'.join([str(cov[idx]) for cov in self.covariates])
+            outf.write(f"samp_{idx}\tsamp_{idx}\t{cov_col}\n")
+
+    def writeEqtl(self, out_eqtl):
+        outf = open(out_eqtl, 'wt')
+        sample_names = '\t'.join([f'samp_{i}' for i in range(len(self.phenotypes))])
+        outf.write(f"gene_name\t{sample_names}\n")   
+        for idx, samp in enumerate(self.phenotypes):
+            # write sample FID, ID and eQTL phenotype
+            eqtl_col = '\t'.join([str(gene) for gene in samp])
+            outf.write(f'gene_{idx}\t{eqtl_col}\n')
+
+    def writeGenePosition(self, out_gp):
+        outf = open(out_gp, 'wt')
+        outf.write('gene_name\tchr\tstart\tend\n')
+        for idx in range(len(self.phenotypes)):
+            # write gene name and position
+            outf.write(f'gene_{idx}\tref\t{idx * 100}\t{(idx * 100)+10000}\n')
+
 if "__main__" == __name__ :
 
     # parse command line arguments
@@ -208,20 +264,30 @@ if "__main__" == __name__ :
     parser.add_argument('-n', '--nsamp', type=int, default=200, help='Number of samples (default: 100)')
     parser.add_argument('--snp_prop', type=float, default=0.7, help='Proportion of top-level variants that are SNPs (default: 0.7)')
     parser.add_argument('--nested_prop', type=float, default=0.8, help='Proportion of indels that we want to try to add nested SNPs into (default: 0.8)')
-    
+    parser.add_argument('-c', '--ncov', type=int, default=3, help='Number of covariate (default: 3)')
+    parser.add_argument('-g', '--ngene', type=int, default=100, help='Number of gene (default: 100) for eQTL phenotype')
+    parser.add_argument('--gene_prob', type=float, default=0.1, help='Probability of a gene being significatif (default: 0.1) for eQTL phenotype')
+
     group = parser.add_mutually_exclusive_group(required=True)
+    group.add_argument('-e', '--eqtl', action='store_true', help='eqtl phenotypre for each sample')
     group.add_argument('-b', '--binary', action='store_true', help='Binary phenotypre for each sample')
     group.add_argument('-q', '--quantitative', action='store_true', help='Quantitative phenotype for each sample')
     args = parser.parse_args()
 
     # number of top-level variants
-    nvar = 1000 if args.nvar is None else args.nvar
+    nvar = args.nvar
     # proportion of top-level variants that are SNPs also probability to add or keep adding SNPs when we want to add nested SNPs
-    snp_prop = .7 if args.snp_prop is None else args.snp_prop
+    snp_prop = args.snp_prop
     # proportion of indels that we want to try to add nested SNPs into
-    nested_prop = .8 if args.nested_prop is None else args.nested_prop
+    nested_prop = args.nested_prop
     # number of samples
-    nsamp = 200 if args.nsamp is None else args.nsamp
+    nsamp = args.nsamp
+    # number of covariates
+    ncov = args.ncov
+    # number of genes for eQTL phenotype
+    ngene = args.ngene
+    # probability of a gene being significatif for eQTL phenotype
+    gene_prob = args.gene_prob
     # random seed for reproducibility
     seed = 42
     random.seed(seed)
@@ -233,11 +299,20 @@ if "__main__" == __name__ :
         pg = Graph("binary")
         pg.binaryPhenotype(nsamp)
         pg.writePhenotype('pg.phenotypes.binary.tsv')
+        pg.writeCovariate(ncov, 'pg.covariates.binary.tsv')
 
     elif args.quantitative:
         pg = Graph("quantitative")
         pg.quantitativePhenotype(nsamp)
         pg.writePhenotype('pg.phenotypes.quantitative.tsv')
+        pg.writeCovariate(ncov, 'pg.covariates.quantitative.tsv')
+
+    elif args.eqtl:
+        pg = Graph("quantitative")
+        pg.eqtlPhenotype(nsamp, ngene)
+        pg.writeEqtl('pg.phenotypes.eqtl.tsv')
+        pg.writeGenePosition('pg.phenotypes.gene_position.tsv')
+        pg.writeCovariate(ncov, 'pg.covariates.eqtl.tsv')
 
     # first node larger than read length
     pnod = pg.addNode(min_size=300, max_size=500)

@@ -373,8 +373,8 @@ std::unordered_map<std::string, std::tuple<std::string, size_t, size_t>> parse_g
           std::getline(header_stream, col2, '\t') &&
           std::getline(header_stream, col3, '\t') &&
           std::getline(header_stream, col4, '\t')) ||
-        col1 != "gene_name" || col2 != "chr" || col3 != "start_pos" || col4 != "end_pos") {
-        throw std::runtime_error("Error: In parsing gene position file, invalid header format. Expected: gene_name\tchr\tstart_pos\tend_pos");
+        col1 != "gene_name" || col2 != "chr" || col3 != "start" || col4 != "end") {
+        throw std::runtime_error("Error: In parsing gene position file, invalid header format. Expected: gene_name\tchr\tstart\tend");
     }
 
     // Check for required columns
