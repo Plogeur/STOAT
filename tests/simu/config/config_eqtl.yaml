@@ -1,0 +1,3 @@
+nreads: 50000
+nsamp: 100
+full_gfa: "pg.eqtl.full.gfa"
