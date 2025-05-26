@@ -1,0 +1,80 @@
+Building DAG of jobs...
+Using shell: /usr/bin/bash
+Provided cores: 8
+Rules claiming more threads will be scaled down.
+Job stats:
+job                 count
+----------------  -------
+call_variants         400
+gfa_to_pg               1
+index_pg                1
+index_pg_giraffe        1
+index_variants        400
+main                    1
+map_reads             400
+merge_variants          1
+pack_gaf              400
+pg_simulate             1
+simulate_reads        400
+total                2006
+
+Select jobs to execute...
+Execute 1 jobs...
+
+[Mon May 26 19:01:54 2025]
+localrule pg_simulate:
+    output: binary/pg.binary.gfa
+    jobid: 5
+    reason: Missing output files: binary/pg.binary.gfa
+    wildcards: phenotype=binary
+    resources: tmpdir=/tmp
+
+[Mon May 26 19:01:56 2025]
+Finished job 5.
+1 of 2006 steps (0.0%) done
+Select jobs to execute...
+Execute 1 jobs...
+
+[Mon May 26 19:01:56 2025]
+localrule gfa_to_pg:
+    input: binary/pg.binary.gfa
+    output: binary/pg.binary.full.pg
+    jobid: 4
+    reason: Missing output files: binary/pg.binary.full.pg; Input files updated by another job: binary/pg.binary.gfa
+    wildcards: phenotype=binary
+    threads: 4
+    resources: tmpdir=/tmp
+
+[Mon May 26 19:01:57 2025]
+Finished job 4.
+2 of 2006 steps (0.1%) done
+Select jobs to execute...
+Failed to solve scheduling problem with ILP solver. Falling back to greedy solver. Run Snakemake with --verbose to see the full solver output for debugging the problem.
+Execute 1 jobs...
+
+[Mon May 26 19:01:57 2025]
+localrule simulate_reads:
+    input: binary/pg.binary.full.pg
+    output: binary/reads/samp_g1_195.fq.gz
+    jobid: 1589
+    reason: Missing output files: binary/reads/samp_g1_195.fq.gz; Input files updated by another job: binary/pg.binary.full.pg
+    wildcards: phenotype=binary, samp=samp_g1_195
+    threads: 8
+    resources: tmpdir=/tmp
+
+[Mon May 26 19:01:57 2025]
+Error in rule simulate_reads:
+    jobid: 1589
+    input: binary/pg.binary.full.pg
+    output: binary/reads/samp_g1_195.fq.gz
+    shell:
+        vg sim -t 8 -x binary/pg.binary.full.pg -n 50000 -l 150 -a -P samp_g1_195_h0 -P samp_g1_195_h1 | vg view -aX - | gzip > binary/reads/samp_g1_195.fq.gz
+        (one of the commands exited with non-zero exit code; note that snakemake uses bash strict mode!)
+
+Removing output files of failed job simulate_reads since they might be corrupted:
+binary/reads/samp_g1_195.fq.gz
+Shutting down, this might take some time.
+Exiting because a job execution failed. Look above for error message
+Complete log: .snakemake/log/2025-05-26T190154.090117.snakemake.log
+WorkflowError:
+At least one job did not complete successfully.

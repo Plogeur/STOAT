@@ -281,6 +281,7 @@ if "__main__" == __name__ :
     parser.add_argument('-c', '--ncov', type=int, default=3, help='Number of covariate (default: 3)')
     parser.add_argument('-g', '--ngene', type=int, default=100, help='Number of gene (default: 100) for eQTL phenotype')
     parser.add_argument('--gene_prob', type=float, default=0.1, help='Probability of a gene being significatif (default: 0.1) for eQTL phenotype')
+    parser.add_argument('-o', '--output', type=str, default="output", help='Output directory (default: output)')
 
     group = parser.add_mutually_exclusive_group(required=True)
     group.add_argument('-e', '--eqtl', action='store_true', help='eqtl phenotypre for each sample')
@@ -288,6 +289,8 @@ if "__main__" == __name__ :
     group.add_argument('-q', '--quantitative', action='store_true', help='Quantitative phenotype for each sample')
     args = parser.parse_args()
 
+    # output directory
+    output_dir = args.output
     # number of top-level variants
     nvar = args.nvar
     # proportion of top-level variants that are SNPs also probability to add or keep adding SNPs when we want to add nested SNPs
@@ -310,36 +313,36 @@ if "__main__" == __name__ :
 
     # write phenotypes
     if args.binary:
-        pg_gfa = 'pg.binary.gfa'
-        pg_gfa_full = 'pg.binary.full.gfa'
-        pg_snarl_freq = 'pg.snarls.freq.binary.tsv'
+        pg_gfa = f'{output_dir}/pg.binary.gfa'
+        pg_gfa_full = f'{output_dir}/pg.binary.full.gfa'
+        pg_snarl_freq = f'{output_dir}/pg.snarls.freq.binary.tsv'
         pg = Graph("binary")
         pg.binaryPhenotype(nsamp)
-        pg.writePhenotype('pg.phenotypes.binary.tsv')
+        pg.writePhenotype(f'{output_dir}/pg.phenotypes.binary.tsv')
         pg.covariate(ncov)
-        pg.writeCovariate(ncov, 'pg.covariates.binary.tsv')
+        pg.writeCovariate(ncov, f'{output_dir}/pg.covariates.binary.tsv')
 
     elif args.quantitative:
-        pg_gfa = 'pg.quantitative.gfa'
-        pg_gfa_full = 'pg.quantitative.full.gfa'
-        pg_snarl_freq = 'pg.snarls.freq.quantitative.tsv'
+        pg_gfa = f'{output_dir}/pg.quantitative.gfa'
+        pg_gfa_full = f'{output_dir}/pg.quantitative.full.gfa'
+        pg_snarl_freq = f'{output_dir}/pg.snarls.freq.quantitative.tsv'
         pg = Graph("quantitative")
         pg.quantitativePhenotype(nsamp)
-        pg.writePhenotype('pg.phenotypes.quantitative.tsv')
+        pg.writePhenotype(f'{output_dir}/pg.phenotypes.quantitative.tsv')
         pg.covariate(ncov)
-        pg.writeCovariate(ncov, 'pg.covariates.quantitative.tsv')
+        pg.writeCovariate(ncov, f'{output_dir}/pg.covariates.quantitative.tsv')
 
     elif args.eqtl:
-        pg_gfa = 'pg.eqtl.gfa'
-        pg_gfa_full = 'pg.eqtl.full.gfa'
-        pg_snarl_freq = 'pg.snarls.freq.eqtl.tsv'
+        pg_gfa = f'{output_dir}/pg.eqtl.gfa'
+        pg_gfa_full = f'{output_dir}/pg.eqtl.full.gfa'
+        pg_snarl_freq = f'{output_dir}/pg.snarls.freq.eqtl.tsv'
         pg = Graph("quantitative")
         pg.quantitativePhenotype(nsamp)
         pg.eqtlPhenotype(nsamp, ngene)
-        pg.writeEqtl('pg.phenotypes.eqtl.tsv')
-        pg.writeGenePosition('pg.phenotypes.gene_position.tsv')
+        pg.writeEqtl(f'{output_dir}/pg.phenotypes.eqtl.tsv')
+        pg.writeGenePosition(f'{output_dir}/pg.phenotypes.gene_position.tsv')
         pg.covariate(ncov)
-        pg.writeCovariate(ncov, 'pg.covariates.eqtl.tsv')
+        pg.writeCovariate(ncov, f'{output_dir}/pg.covariates.eqtl.tsv')
 
     # first node larger than read length
     pnod = pg.addNode(min_size=300, max_size=500)
