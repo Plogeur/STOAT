@@ -30,7 +30,7 @@
 using namespace std;
 
 void print_help() {
-    std::cout << "Usage: SnarlParser [options]\n\n"
+    std::cout << "Usage: stoat_cxx [options]\n\n"
               << "Options:\n"
               << "  -v, --vcf <path>            Path to the VCF file (.vcf or .vcf.gz)\n"
               << "  -s, --snarl <path>          Path to the snarl file (.txt or .tsv)\n"
