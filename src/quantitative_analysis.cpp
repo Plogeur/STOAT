@@ -40,18 +40,12 @@ void linear_regression(
     double tss = (y.array() - y.mean()).matrix().squaredNorm();
     double r2 = 1 - (rss / tss);
 
-    int df_reg = X.cols() - 1;              // exclude intercept from model df
     int df_res = num_samples - X.cols();    // residual degrees of freedom
     double mse = rss / df_res;
 
     // Standard errors
     Eigen::MatrixXd cov_matrix = (X.transpose() * X).inverse();
     Eigen::VectorXd se = (cov_matrix.diagonal() * mse).array().sqrt().matrix();
-
-    // Compute F-statistic
-    double f_stat = (r2 / df_reg) / ((1 - r2) / df_res);
-    boost::math::fisher_f dist(df_reg, df_res);
-    double p_value = boost::math::cdf(boost::math::complement(dist, std::abs(f_stat)));
 
     // t-statistics
     Eigen::VectorXd t_stats = beta.array() / se.array();
@@ -106,17 +100,11 @@ void glm_quantitative(
     double tss = (y.array() - y.mean()).matrix().squaredNorm();
     double r2 = 1 - (rss / tss);
 
-    int df_reg = num_features - 1;
     int df_res = num_samples - num_features;
     double mse = rss / df_res;
 
     Eigen::MatrixXd cov_matrix = (X.transpose() * X).inverse();
     Eigen::VectorXd se = (cov_matrix.diagonal() * mse).array().sqrt().matrix();
-    
-    // Compute F-statistic
-    double f_stat = (r2 / df_reg) / ((1 - r2) / df_res);
-    boost::math::fisher_f dist(df_reg, df_res);
-    double p_value = boost::math::cdf(boost::math::complement(dist, std::abs(f_stat)));
 
     // t-statistics
     Eigen::VectorXd t_stats = beta.array() / se.array();
