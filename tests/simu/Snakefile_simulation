@@ -1,5 +1,5 @@
 
-# snakemake --cores 8 --snakefile Snakefile_simulation --configfile config/config_binary.yaml
+# snakemake --cores 4 --snakefile Snakefile_simulation --configfile config/config_binary.yaml
 
 NREADS = config['nreads']
 NVAR = config['nvar']
@@ -13,10 +13,10 @@ PHENOTYPE = config['phenotype']
 GROUPS = ['0','1']
 
 rule main:
-    input: f"merged_{PHENOTYPE}.vcf.gz"
+    input: f"{PHENOTYPE}/merged_{PHENOTYPE}.vcf.gz"
 
 rule pg_simulate:
-    output: '{phenotype}/pg.{phenotype}.gfa'
+    output: '{phenotype}/pg.{phenotype}.full.gfa'
     shell: 
         """
         python3 simulate_test_dataset.py \
@@ -26,7 +26,7 @@ rule pg_simulate:
         """
 
 rule gfa_to_pg:
-    input: '{phenotype}/pg.{phenotype}.gfa'
+    input: '{phenotype}/pg.{phenotype}.full.gfa'
     output: '{phenotype}/pg.{phenotype}.full.pg'
     threads: 4
     shell: "vg convert -t {threads} -g {input}  > {output}"
@@ -72,12 +72,27 @@ rule call_variants:
         pack='{phenotype}/gafs/samp_g{group}_{samp}.pack'
     output: '{phenotype}/calls/samp_g{group}_{samp}.vcf.gz'
     threads: 4
-    shell: 'vg call -t {threads} -a -A -p ref -k {input.pack} {input.xg} | bgzip > {output}'
+    shell:
+        """
+        vg call -t {threads} -a -A -p ref -k {input.pack} {input.xg} | bgzip > {output}
+        """
+
+rule reheader_variants:
+    input:
+        vcf='{phenotype}/calls/samp_g{group}_{samp}.vcf.gz'
+    output: '{phenotype}/calls/samp_g{group}_{samp}.vcf.rh.gz'
+    params:
+        samp="temp_{samp}.txt"
+    shell:
+        """
+        echo samp_g{wildcards.group}_{wildcards.samp} > {params.samp}
+        bcftools reheader {input.vcf} -s {params.samp} -o {output}
+        """
 
 rule index_variants:
     input:
-        vcf='{phenotype}/calls/samp_g{group}_{samp}.vcf.gz'
-    output: '{phenotype}/calls/samp_g{group}_{samp}.vcf.gz.csi'
+        vcf='{phenotype}/calls/samp_g{group}_{samp}.vcf.rh.gz'
+    output: '{phenotype}/calls/samp_g{group}_{samp}.vcf.rh.gz.csi'
     threads: 4
     shell:
         """
@@ -86,9 +101,9 @@ rule index_variants:
 
 rule merge_variants:
     input:
-        vcf=expand('{phenotype}/calls/samp_g{group}_{samp}.vcf.gz', group=GROUPS, samp=list(range(NSAMP)), phenotype=PHENOTYPE),
-        idx_vcf=expand('{phenotype}/calls/samp_g{group}_{samp}.vcf.gz.csi', group=GROUPS, samp=list(range(NSAMP)), phenotype=PHENOTYPE)
-    output: "merged_{phenotype}.vcf.gz"
+        vcf=expand('{phenotype}/calls/samp_g{group}_{samp}.vcf.rh.gz', group=GROUPS, samp=list(range(NSAMP)), phenotype=PHENOTYPE),
+        idx_vcf=expand('{phenotype}/calls/samp_g{group}_{samp}.vcf.rh.gz.csi', group=GROUPS, samp=list(range(NSAMP)), phenotype=PHENOTYPE)
+    output: "{phenotype}/merged_{phenotype}.vcf.gz"
     threads: 6
     shell:
         """
