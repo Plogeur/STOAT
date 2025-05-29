@@ -172,25 +172,25 @@ class Graph:
             # if there are some, pick one randomly
             if len(snodes) > 0:
                 if path[-1] in self.snarls_freq:
+                    # pick next node based on group frequencies
                     freqs = self.snarls_freq[path[-1]]
+                    tot_freq = 0
                     rr = random.random()
-
                     # pick next node based on phenotype
                     if self.phenotype_type == 'binary':
-                        tot_freq = 0
                         # choose path base on group
                         for snode in freqs:
                             tot_freq += freqs[snode][group]
                             if rr < tot_freq:
                                 break
+                        path.append(snode)
 
                     else : # quantitative or eqtl
                         sample_pheno = (self.phenotypes[samp] / 2) + 0.5  # [0,1]
                         for snode in freqs: # loop only 2 times 
                             if rr < sample_pheno:
                                 break
-
-                    path.append(snode)
+                        path.append(snode)
                 else:
                     path.append(random.sample(snodes, 1)[0])
         self.paths[path_name] = path
