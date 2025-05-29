@@ -95,7 +95,6 @@ void glm_quantitative(
     }
     
     Eigen::VectorXd beta = (X.transpose() * X).ldlt().solve(X.transpose() * y);
-    std::cout << "beta : " << beta.transpose() << std::endl;
     Eigen::VectorXd y_pred = X * beta;
     Eigen::VectorXd residuals = y - y_pred;
 
