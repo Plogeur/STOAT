@@ -17,3 +17,4 @@ tests/simu_test/
 logistic_reg/logistic_regression.cpp
 logistic_reg/README
 .Rproj.user
+data/new_quantitative/

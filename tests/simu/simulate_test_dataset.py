@@ -2,7 +2,7 @@ import random
 import argparse
 # -*- coding: utf-8 -*-
 
-# Written by Jean Monlong (jean.monlong@inserm.fr)
+# Written by Jean Monlong (jean.monlong@inserm.fr) modified by Matis Alias-Bagarre
 # Simulate a simple pangenome graph with SNPs and indels. Some indels can have
 # nested SNPs too. See below for the parameters used.
 
@@ -24,7 +24,7 @@ def randSeq(length):
     return ''.join(random.choices(_nuc, k=length))
 
 class Graph:
-    def __init__(self, phenotype_type_='binary'):
+    def __init__(self, phenotype_type_):
         # phenotype type
         self.phenotype_type = phenotype_type_
         # map node name to sequence
@@ -36,7 +36,8 @@ class Graph:
         # map a snarl start to frequencies
         self.snarls_freq = {}
         # phenotypes
-        self.phenotypes = []
+        self.phenotypes_value = []
+        self.phenotypes_name = []
         # eqtl phenotypes
         self.eqtl_phenotypes = []
         # covariates
@@ -45,25 +46,29 @@ class Graph:
         self.next_node_id = 1
         self.ngroups = 2
 
-    def binaryPhenotype(self, samp):
+    def binaryPhenotype(self, nsamp):
         """Simulate a binary phenotype"""
         samp_t = nsamp//2
         for samp in range(0, nsamp):
             if samp < samp_t:
-                self.phenotypes.append(1)
+                self.phenotypes_value.append(1)
+                self.phenotypes_name.append(f"samp_{samp}_g{0}")
             else:
-                self.phenotypes.append(2)
+                self.phenotypes_value.append(2)
+                self.phenotypes_name.append(f"samp_{samp}_g{1}")
 
-    def quantitativePhenotype(self, samp):
+    def quantitativePhenotype(self, nsamp):
         """Simulate a quantitative phenotype"""
         samp_t = nsamp//2
         for samp in range(0, nsamp):
             if samp < samp_t:
-                self.phenotypes.append(random.uniform(0.0, 1.0))
+                self.phenotypes_value.append(random.uniform(0.0, 1.0))
+                self.phenotypes_name.append(f"samp_{samp}_g{0}")
             else:
-                self.phenotypes.append(random.uniform(-1.0, 0.0))
+                self.phenotypes_value.append(random.uniform(-1.0, 0.0))
+                self.phenotypes_name.append(f"samp_{samp}_g{1}")
 
-    def eqtlPhenotype(self, samp, gen_prob=0.1, ngene=100):
+    def eqtlPhenotype(self, nsamp, gen_prob=0.1, ngene=100):
         """Simulate an eQTL phenotype"""
         for idx in range(ngene):
             gene_expr = random.uniform(0, 8.0)
@@ -72,12 +77,12 @@ class Graph:
             bool_gene_signi = gen_signi <= gen_prob
             for samp in range(0, nsamp):
                 if bool_gene_signi: # significant gene
-                   qtl_col.append(gene_expr + (gene_expr * self.phenotypes[samp]))
+                   qtl_col.append(gene_expr + (gene_expr * self.phenotypes_value[samp]))
                 else: # not significant gene
                     qtl_col.append(gene_expr + (gene_expr * random.uniform(-1.0, 1.0)))
             self.eqtl_phenotypes.append(qtl_col)
 
-    def covariate(self, ncov=3):
+    def covariate(self, nsamp, ncov=3):
         """Simulate a covariate phenotype for a sample"""
         covar_effect = [0] + [random.uniform(0.1, 0.5) for _ in range(1, ncov)]
         for idx in range(ncov):
@@ -85,7 +90,7 @@ class Graph:
             cov = []
             for _ in range(nsamp):
                 disp = random.uniform(-1, 1)
-                cov_value = self.phenotypes[idx] * covar_effect[idx] + bias + disp
+                cov_value = self.phenotypes_value[idx] * covar_effect[idx] + bias + disp
                 cov.append(cov_value)
             self.covariates.append(cov)
 
@@ -98,7 +103,7 @@ class Graph:
             cov = []
             for _ in range(nsamp):
                 disp = random.uniform(-1, 1)
-                cov_value = self.phenotypes[idx] * covar_effect + bias + disp
+                cov_value = self.phenotypes_value[idx] * covar_effect + bias + disp
                 cov.append(cov_value)
             self.covariates.append(cov)
 
@@ -186,7 +191,7 @@ class Graph:
                         path.append(snode)
 
                     else : # quantitative or eqtl
-                        sample_pheno = (self.phenotypes[samp] / 2) + 0.5  # [0,1]
+                        sample_pheno = (self.phenotypes_value[samp] / 2) + 0.5  # [0,1]
                         for snode in freqs: # loop only 2 times 
                             if rr < sample_pheno:
                                 break
@@ -240,9 +245,9 @@ class Graph:
     def writePhenotype(self, out_ph):
         outf = open(out_ph, 'wt')
         outf.write('FID\tIID\tPHENO\n')
-        for idx, samp in enumerate(self.phenotypes):
+        for samp_name, samp_val in zip(self.phenotypes_name, self.phenotypes_value):
             # write sample FID, ID and phenotype
-            outf.write(f"samp_{idx}\tsamp_{idx}\t{samp}\n")
+            outf.write(f"{samp_name}\t{samp_name}\t{samp_val}\n")
 
     def writeCovariate(self, ncov:int, out_cov:str):
         outf = open(out_cov, 'wt')
@@ -252,11 +257,11 @@ class Graph:
         for idx in range(len(self.covariates[0])):
             # write sample FID, ID and covariate
             cov_col = '\t'.join([str(cov[idx]) for cov in self.covariates])
-            outf.write(f"samp_{idx}\tsamp_{idx}\t{cov_col}\n")
+            outf.write(f"{self.phenotypes_name[idx]}\t{self.phenotypes_name[idx]}\t{cov_col}\n")
 
     def writeEqtl(self, out_eqtl):
         outf = open(out_eqtl, 'wt')
-        sample_names = '\t'.join([f'samp_{i}' for i in range(len(self.phenotypes))])
+        sample_names = '\t'.join([f'samp_{i}' for i in range(len(self.phenotypes_value))])
         outf.write(f"gene_name\t{sample_names}\n")   
         for idx, samp in enumerate(self.eqtl_phenotypes):
             # write sample FID, ID and eQTL phenotype
@@ -266,7 +271,7 @@ class Graph:
     def writeGenePosition(self, out_gp):
         outf = open(out_gp, 'wt')
         outf.write('gene_name\tchr\tstart\tend\n')
-        for idx in range(len(self.phenotypes)):
+        for idx in range(len(self.phenotypes_value)):
             # write gene name and position
             outf.write(f'gene_{idx}\tref\t{idx * 100}\t{(idx * 100)+10000}\n')
 
@@ -275,7 +280,7 @@ if "__main__" == __name__ :
     # parse command line arguments
     parser = argparse.ArgumentParser(description='Simulate a simple pangenome graph with SNPs and indels.')
     parser.add_argument('-v', '--nvar', type=int, default=1000, help='Number of top-level variants (default: 1000)')
-    parser.add_argument('-n', '--nsamp', type=int, default=200, help='Number of samples (default: 100)')
+    parser.add_argument('-n', '--nsamp', type=int, default=200, help='Number of samples in total (default: 100)')
     parser.add_argument('--snp_prop', type=float, default=0.7, help='Proportion of top-level variants that are SNPs (default: 0.7)')
     parser.add_argument('--nested_prop', type=float, default=0.8, help='Proportion of indels that we want to try to add nested SNPs into (default: 0.8)')
     parser.add_argument('-c', '--ncov', type=int, default=3, help='Number of covariate (default: 3)')
@@ -309,40 +314,43 @@ if "__main__" == __name__ :
     seed = 42
     random.seed(seed)
 
+    if nsamp % 2 != 0:
+        raise ValueError("Number of samples must be even")
+
     _nuc = ["A", "T", "C", "G"]
 
     # write phenotypes
     if args.binary:
         pg_gfa = f'{output_dir}/pg.binary.gfa'
         pg_gfa_full = f'{output_dir}/pg.binary.full.gfa'
-        pg_snarl_freq = f'{output_dir}/pg.snarls.freq.binary.tsv'
+        pg_snarl_freq = f'{output_dir}/pg.binary.snarls.freq.tsv'
         pg = Graph("binary")
         pg.binaryPhenotype(nsamp)
-        pg.writePhenotype(f'{output_dir}/pg.phenotypes.binary.tsv')
-        pg.covariate(ncov)
-        pg.writeCovariate(ncov, f'{output_dir}/pg.covariates.binary.tsv')
+        pg.writePhenotype(f'{output_dir}/pg.binary.phenotypes.tsv')
+        pg.covariate(nsamp, ncov)
+        pg.writeCovariate(ncov, f'{output_dir}/pg.binary.covariates.tsv')
 
     elif args.quantitative:
         pg_gfa = f'{output_dir}/pg.quantitative.gfa'
         pg_gfa_full = f'{output_dir}/pg.quantitative.full.gfa'
-        pg_snarl_freq = f'{output_dir}/pg.snarls.freq.quantitative.tsv'
+        pg_snarl_freq = f'{output_dir}/pg.quantitative.snarls.freq.tsv'
         pg = Graph("quantitative")
         pg.quantitativePhenotype(nsamp)
-        pg.writePhenotype(f'{output_dir}/pg.phenotypes.quantitative.tsv')
-        pg.covariate(ncov)
-        pg.writeCovariate(ncov, f'{output_dir}/pg.covariates.quantitative.tsv')
+        pg.writePhenotype(f'{output_dir}/pg.quantitative.phenotypes.tsv')
+        pg.covariate(nsamp, ncov)
+        pg.writeCovariate(ncov, f'{output_dir}/pg.quantitative.covariates.tsv')
 
     elif args.eqtl:
         pg_gfa = f'{output_dir}/pg.eqtl.gfa'
         pg_gfa_full = f'{output_dir}/pg.eqtl.full.gfa'
-        pg_snarl_freq = f'{output_dir}/pg.snarls.freq.eqtl.tsv'
+        pg_snarl_freq = f'{output_dir}/pg.eqtl.snarls.freq.tsv'
         pg = Graph("quantitative")
         pg.quantitativePhenotype(nsamp)
         pg.eqtlPhenotype(nsamp, ngene)
-        pg.writeEqtl(f'{output_dir}/pg.phenotypes.eqtl.tsv')
-        pg.writeGenePosition(f'{output_dir}/pg.phenotypes.gene_position.tsv')
-        pg.covariate(ncov)
-        pg.writeCovariate(ncov, f'{output_dir}/pg.covariates.eqtl.tsv')
+        pg.writeEqtl(f'{output_dir}/pg.eqtl.phenotypes.tsv')
+        pg.writeGenePosition(f'{output_dir}/pg.eqtl.phenotypes.gene_position.tsv')
+        pg.covariate(nsamp, ncov)
+        pg.writeCovariate(ncov, f'{output_dir}/pg.eqtl.covariates.tsv')
 
     # first node larger than read length
     pnod = pg.addNode(min_size=300, max_size=500)
@@ -375,11 +383,11 @@ if "__main__" == __name__ :
     # traverse the graph to create samples for each group
     # two haplotypes for each sample
     # one sample per group
-    for samp in range(nsamp):
-        pg.addPath('samp_g0_' + str(samp) + '_h0', group=0, samp=samp)
-        pg.addPath('samp_g0_' + str(samp) + '_h1', group=0, samp=samp)
-        pg.addPath('samp_g1_' + str(samp) + '_h0', group=1, samp=samp)
-        pg.addPath('samp_g1_' + str(samp) + '_h1', group=1, samp=samp)
+    for samp_ in range(nsamp//2):
+        pg.addPath('samp_g0_' + str(samp_) + '_h0', group=0, samp=samp_)
+        pg.addPath('samp_g0_' + str(samp_) + '_h1', group=0, samp=samp_)
+        pg.addPath('samp_g1_' + str(samp_) + '_h0', group=1, samp=samp_)
+        pg.addPath('samp_g1_' + str(samp_) + '_h1', group=1, samp=samp_)
 
     # write GFA containing all those haplotype paths
     pg.writeGfa(pg_gfa_full)
