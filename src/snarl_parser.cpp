@@ -553,7 +553,7 @@ void SnarlParser::binary_table(const std::vector<std::tuple<std::string, std::ve
                     // chr, pos, snarl, type, p_value, p_adjusted, r2, beta, se, allele_number
                     if (df_empty || df_filtration) {
                         // do nothing
-                        cout << "snarl filtered : " << snarl << endl;
+                        // cout << "snarl filtered : " << snarl << endl;
                     } else if (kinship.empty()) { // logistic regression + covar
                         logistic_regression(df, phenotype_filtered, p_value, beta, se, r2);
                         // glm_logistic_covar(df, phenotype_filtered, covar, p_value, beta, se, r2);

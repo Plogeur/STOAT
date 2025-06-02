@@ -45,6 +45,12 @@ static const double kExactTestBias = 0.00000000000000000000000010339757656912845
 
 // ------------------------ Logistic regression ------------------------
 
+// Standard normal cumulative distribution function
+double normal_cdf(double z) {
+    static const boost::math::normal_distribution<> standard_normal(0.0, 1.0);
+    return boost::math::cdf(standard_normal, z);
+}
+
 // Sigmoid function
 inline double sigmoid(double x) {
     return 1.0 / (1.0 + std::exp(-x));

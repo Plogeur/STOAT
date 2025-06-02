@@ -24,6 +24,15 @@
 
 // ------------------------ Logistic regression ------------------------
 
+// Standard normal cumulative distribution function
+double normal_cdf(double z);
+
+// Sigmoid function
+inline double sigmoid(double x);
+
+// Clamp helper
+inline double clamp(double x, double lo, double hi);
+
 void logistic_regression(
     const std::vector<std::vector<double>>& variants_data,
     const std::vector<bool>& phenotype,
