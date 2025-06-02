@@ -35,7 +35,7 @@ void linear_regression(
     Eigen::VectorXd y_pred = X * beta;
     Eigen::VectorXd residuals = y - y_pred;
 
-    // R² 
+    // R²
     double rss = residuals.squaredNorm();
     double tss = (y.array() - y.mean()).matrix().squaredNorm();
     double r2 = 1 - (rss / tss);
@@ -51,7 +51,7 @@ void linear_regression(
     Eigen::VectorXd t_stats = beta.array() / se.array();
     boost::math::students_t t_dist(df_res);
     std::vector<double> p_values;
-    for (int i = 1; i < beta.size(); ++i) {
+    for (int i = 1; i < num_features+1; ++i) {
         p_values.push_back(2 * boost::math::cdf(boost::math::complement(t_dist, std::abs(t_stats[i])))); // two-tailed
     }
 
@@ -61,11 +61,12 @@ void linear_regression(
 
     // set precision : 4 digit
     r2_str = set_precision(r2);
-    beta_str = set_precision(beta[min_index]);
-    se_str = set_precision(se[min_index]);
+    beta_str = set_precision(beta[min_index+1]);
+    se_str = set_precision(se[min_index+1]);
     p_value_str = set_precision(min_p_value_adjusted);
 }
 
+// Linear regression function OLS with intercept + covariate
 void glm_quantitative(
     const std::vector<std::vector<double>>& df,
     const std::vector<double>& quantitative_phenotype,
@@ -75,15 +76,16 @@ void glm_quantitative(
 
     size_t num_samples = df.size();
     size_t num_variants = df[0].size();
-    size_t num_covariates = covar.empty() ? 0 : covar[0].size();
+    size_t num_covariates = covar[0].size();
     size_t num_features = num_variants + num_covariates;
 
-    Eigen::MatrixXd X(num_samples, num_features);
+    Eigen::MatrixXd X(num_samples, num_features + 1);
+    X.col(0) = Eigen::VectorXd::Ones(num_samples);  // Intercept column
     Eigen::VectorXd y(num_samples);
     
     for (size_t i = 0; i < num_samples; ++i) {
         y(i) = quantitative_phenotype[i];
-        size_t col = 0;
+        size_t col = 1;
         for (size_t j = 0; j < num_variants; ++j) {
             X(i, col++) = df[i][j];
         }
@@ -96,21 +98,28 @@ void glm_quantitative(
     Eigen::VectorXd y_pred = X * beta;
     Eigen::VectorXd residuals = y - y_pred;
 
+    // R²
     double rss = residuals.squaredNorm();
     double tss = (y.array() - y.mean()).matrix().squaredNorm();
-    double r2 = 1 - (rss / tss);
+    double r2 = 1.0 - (rss / tss);
 
-    int df_res = num_samples - num_features;
+    int df_res = num_samples - X.cols();    // residual degrees of freedom
     double mse = rss / df_res;
 
-    Eigen::MatrixXd cov_matrix = (X.transpose() * X).inverse();
-    Eigen::VectorXd se = (cov_matrix.diagonal() * mse).array().sqrt().matrix();
+    // Standard errors
+    Eigen::LDLT<Eigen::MatrixXd> ldlt(X.transpose() * X);
+    Eigen::MatrixXd cov_matrix = ldlt.solve(Eigen::MatrixXd::Identity(X.cols(), X.cols()));
+    Eigen::VectorXd se = (cov_matrix.diagonal() * mse).array().sqrt();
+
+    // Standard errors
+    // Eigen::MatrixXd cov_matrix = (X.transpose() * X).inverse();
+    // Eigen::VectorXd se = (cov_matrix.diagonal() * mse).array().sqrt().matrix();
 
     // t-statistics
     Eigen::VectorXd t_stats = beta.array() / se.array();
     boost::math::students_t t_dist(df_res);
     std::vector<double> p_values;
-    for (int i = 1; i < num_variants; ++i) {
+    for (int i = 1; i < num_variants+1; ++i) {
         p_values.push_back(2 * boost::math::cdf(boost::math::complement(t_dist, std::abs(t_stats[i])))); // two-tailed
     }
 
@@ -120,10 +129,12 @@ void glm_quantitative(
 
     // set precision : 4 digit
     r2_str = set_precision(r2);
-    beta_str = set_precision(beta[min_index]);
-    se_str = set_precision(se[min_index]);
+    beta_str = set_precision(beta[min_index+1]);
+    se_str = set_precision(se[min_index+1]);
     p_value_str = set_precision(min_p_value_adjusted);
 }
+
+// libc++abi: terminating with uncaught exception of type boost::wrapexcept<std::domain_error>: Error in function boost::math::cdf(const students_t_distribution<double>&, double): Random variate x is nan, but must be finite or + or - infinity!
 
 // Explicit template instantiations
 template std::tuple<std::vector<std::vector<double>>, std::vector<double>, size_t, std::vector<size_t>>

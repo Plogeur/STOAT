@@ -23,6 +23,10 @@
 #include "utils.hpp"
 
 // ------------------------ Logistic regression ------------------------
+double normal_cdf(double z);
+inline double sigmoid(double x);
+inline double clamp(double x, double lo, double hi);
+double calculate_log_likelihood(const Eigen::VectorXd& y, const Eigen::VectorXd& p);
 
 // Standard normal cumulative distribution function
 double normal_cdf(double z);

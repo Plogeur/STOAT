@@ -61,11 +61,7 @@ void chromosome_chuck_quantitative(htsFile* &ptr_vcf, bcf_hdr_t* &hdr, bcf1_t* &
 
     std::ofstream outf(output_quantitive, std::ios::binary);
     std::string headers;
-    if (covar.size() > 0) {
-        headers = "CHR\tPOS\tSNARL\tTYPE\tP\tRSQUARED\tBETA\tSE\tALLELE_NUM\n";
-    } else {
-        headers = "CHR\tPOS\tSNARL\tTYPE\tP\tP_ADJUSTED\tRSQUARE\tBETA\tSE\tALLELE_NUM\tALLELE_PATHS\n";
-    }
+    headers = "CHR\tPOS\tSNARL\tTYPE\tP\tP_ADJUSTED\tRSQUARE\tBETA\tSE\tALLELE_NUM\tALLELE_PATHS\n";
     outf.write(headers.c_str(), headers.size());
 
     std::cout << "GWAS analysis for chromosome : " << std::endl;
@@ -543,9 +539,7 @@ void SnarlParser::binary_table(const std::vector<std::tuple<std::string, std::ve
                     if (allele_number < 5) {
                         df_empty = true;
                     } else {
-                        if (df[0].size() > 1) {
-                            df_filtration = check_MAF_threshold_quantitative(df, maf);
-                        }
+                        df_filtration = check_MAF_threshold_quantitative(df, maf);
                     }
 
                     std::string p_value = "NA", beta = "NA", se = "NA", r2 = "NA";
@@ -643,9 +637,7 @@ void SnarlParser::quantitative_table(const std::vector<std::tuple<string, vector
                 if (allele_number < 5) {
                     df_empty = true;
                 } else {
-                    if (df[0].size() > 1) {
-                        df_filtration = check_MAF_threshold_quantitative(df, maf);
-                    }
+                    df_filtration = check_MAF_threshold_quantitative(df, maf);
                 }
 
                 // make a string separated by ',' from a vector of string
@@ -708,10 +700,17 @@ bool check_MAF_threshold_quantitative(const std::vector<std::vector<double>>& df
         }
     }
 
-    // Check if any column's sum proportion exceeds the threshold
-    for (double val : table) {
-        if (val / totalSum >= maf) {
-            return true; // If any value exceeds the threshold, return false
+    if (df[0].size() == 1) {
+        if (totalSum == df.size()) {
+            return true; // Case where all values are 1, return true avoiding const df 
+        }
+    
+    } else {
+        // Check if any column's sum proportion exceeds the threshold
+        for (double val : table) {
+            if (val / totalSum >= maf) {
+                return true; // If any value exceeds the threshold, return false
+            }
         }
     }
 
