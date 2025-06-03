@@ -512,6 +512,9 @@ std::unordered_map<std::string, std::vector<std::tuple<string, vector<string>, s
 
             // snarl_id chromosome   start_position  end_position    paths    type
             string chr = std::get<1>(snarl_path_pos);
+            if (chr.empty()) {
+                continue; // skip this snarl with no chr ref in it
+            }
             size_t strat_pos = std::get<2>(snarl_path_pos);
             size_t end_pos = std::get<3>(snarl_path_pos);
             paths_number_analysis += pretty_paths.size();
@@ -524,7 +527,6 @@ std::unordered_map<std::string, std::vector<std::tuple<string, vector<string>, s
             } else {
                 // case new chr
                 if (chr != save_chr && !save_chr.empty()) {
-                    cout << "cleaning" << endl; 
                     chr_snarl_matrix[save_chr] = std::move(snarl_paths);
                     snarl_paths.clear();
                 }
