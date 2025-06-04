@@ -411,8 +411,8 @@ tuple<vector<string>, vector<string>> fill_pretty_paths(
                 assert(max_dist != static_cast<size_t>(INT_MAX) && "Overflow max distance");
                 assert(min_dist != static_cast<size_t>(INT_MAX) && "Overflow min distance");
 
-                minimum_distance = size_chain + min_dist;
-                maximun_distance = size_chain + max_dist;
+                minimum_distance += size_chain + min_dist;
+                maximun_distance += size_chain + max_dist;
             }
         }
 
