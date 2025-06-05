@@ -70,7 +70,7 @@ class Graph:
 
     def eqtlPhenotype(self, nsamp, gen_prob=0.1, ngene=100):
         """Simulate an eQTL phenotype"""
-        for idx in range(ngene):
+        for _ in range(ngene):
             gene_expr = random.uniform(0, 8.0)
             qtl_col = []
             gen_signi = random.random()
@@ -148,6 +148,36 @@ class Graph:
         self.snarls_freq[pred_node] = freqs
         return (suc_node)
 
+    def addSNP_Npath(self, pred_node, npath):
+        assert npath != 3 or npath != 4, "Error npath must be 3 or 4"
+        # pick two different alleles for the SNP
+        list_nucleotide = random.sample(_nuc, npath)
+        # create nodes and edges to predecessors
+        node_list = []
+        for nuc in list_nucleotide :
+            node_n = self.next_node_id
+            self.nodes[node_n] = nuc
+            self.next_node_id += 1
+            node_list.append(node_n)
+
+            # add edges
+            self.addEdge(pred_node, node_n)
+
+        # create a successor node
+        suc_node = self.addNode(node_n)
+        # init snarl frequency (same in all groups)
+        freqs = {}
+        freq_init = random.random()
+
+        pathn_freq = 0.05 if npath == 3 else 0.025
+        freqs[node_n[0]] = [freq_init-pathn_freq] * self.ngroups
+        freqs[node_n[1]] = [1 - freq_init-pathn_freq] * self.ngroups
+        for idex_node in range(len(node_list-2)) :
+            freqs[node_list[idex_node]] = [pathn_freq*2] * self.ngroups
+        
+        self.snarls_freq[pred_node] = freqs
+        return (suc_node)
+    
     def addIndel(self, pred_node, snp_prob=.5):
         # create a middle node
         mid_node = self.addNode([pred_node])

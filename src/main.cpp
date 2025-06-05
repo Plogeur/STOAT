@@ -94,7 +94,7 @@ int main(int argc, char* argv[]) {
         } else if ((arg == "-d" || arg == "--dist") && i + 1 < argc) {
             dist_path = argv[++i];
             check_file(dist_path);
-        } else if ((arg == "--chr") && i + 1 < argc) {
+        } else if ((arg == "-r" || arg == "--chr") && i + 1 < argc) {
             chromosome_path = argv[++i];
             check_file(chromosome_path);
         } else if ((arg == "--make-bed")) {
