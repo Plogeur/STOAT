@@ -65,7 +65,7 @@ std::tuple<std::unique_ptr<bdsg::SnarlDistanceIndex>,
 parse_graph_tree(const std::string& pg_file, const std::string& dist_file);
 
 // Function to calculate the type of variant
-vector<string> calcul_pos_type_variant(const vector<tuple<string, size_t, size_t, size_t, size_t>>& list_length_paths);
+vector<string> calcul_pos_type_variant(const vector<tuple<string, size_t, size_t, size_t, size_t, bool>>& list_length_paths);
 
 // Function to find snarl ID
 string find_snarl_id(SnarlDistanceIndex& stree, net_handle_t& snarl);

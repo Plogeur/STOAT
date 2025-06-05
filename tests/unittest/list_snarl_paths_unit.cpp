@@ -38,46 +38,6 @@ TEST_CASE("Test de la classe Path", "[Path]") {
     }
 }
 
-TEST_CASE("Test de calcul_pos_type_variant", "[calcul_pos_type_variant]") {
-
-    SECTION("Liste simple") {
-        std::vector<std::tuple<std::string, size_t, size_t, size_t, size_t>> list_paths = {
-            {"T", 0, 0, 3, 0},  // SNP: "T", length 1
-            {"TT", 0, 0, 3, 0}, // INS: "TT", length 2
-            {"", 0, 0, 2, 0}    // DEL: "", length 0
-        };
-        auto types = calcul_pos_type_variant(list_paths);
-        REQUIRE(types.size() == 3);
-        REQUIRE(types[0] == "1");  // SNP
-        REQUIRE(types[1] == "2");  // INS
-        REQUIRE(types[2] == "0");  // DEL
-    }
-
-    SECTION("Cas SNP uniquement") {
-        std::vector<std::tuple<std::string, size_t, size_t, size_t, size_t>> list_paths = {
-            {"T", 0, 0, 3, 0},
-            {"G", 0, 0, 3, 0}
-        };
-        auto types = calcul_pos_type_variant(list_paths);
-        REQUIRE(types.size() == 2);
-        REQUIRE(types[0] == "1");
-        REQUIRE(types[1] == "1");
-    }
-
-    SECTION("Cas complexe") {
-        std::vector<std::tuple<std::string, size_t, size_t, size_t, size_t>> list_paths = {
-            {"_", 10, 20, 10, 0},   // Complex path > 3
-            {"TTTT", 0, 0, 3, 0},   // Insertion
-            {"", 0, 0, 2, 0}        // Deletion
-        };
-        auto types = calcul_pos_type_variant(list_paths);
-        REQUIRE(types.size() == 3);
-        REQUIRE(types[0] == "10/20");
-        REQUIRE(types[1] == "4");
-        REQUIRE(types[2] == "0");
-    }
-}
-
 TEST_CASE("Test simulated case", "[Path]") {
 
     std::unique_ptr<bdsg::SnarlDistanceIndex> stree;
@@ -322,6 +282,14 @@ TEST_CASE("Test simulated case", "[Path]") {
         REQUIRE(std::get<2>(snarls_chr["ref"][0]) == 8);
         REQUIRE(std::get<3>(snarls_chr["ref"][0]) == 10);
         REQUIRE(std::get<4>(snarls_chr["ref"][0]) == std::vector<std::string>{"3/8","3/8","1"});
+
+        REQUIRE(snarls_chr["ref"].size() == 2);
+        REQUIRE(std::get<0>(snarls_chr["ref"][0]) == "3_6");
+        REQUIRE(std::get<1>(snarls_chr["ref"][0]) == std::vector<std::string>{">2>3>*>6>8",">2>3>*>6>3>*>6>8",">2>7>8"});
+        REQUIRE(std::get<2>(snarls_chr["ref"][0]) == 8);
+        REQUIRE(std::get<3>(snarls_chr["ref"][0]) == 10);
+        REQUIRE(std::get<4>(snarls_chr["ref"][0]) == std::vector<std::string>{"3/8","3/8","1"});
+
     }
 
     SECTION("repetition") {
@@ -379,5 +347,28 @@ TEST_CASE("Test simulated case", "[Path]") {
         REQUIRE(std::get<2>(snarls_chr["ref"][1]) == 8);
         REQUIRE(std::get<3>(snarls_chr["ref"][1]) == 10);
         REQUIRE(std::get<4>(snarls_chr["ref"][1]) == std::vector<std::string>{"1","2"});
+    }
+
+    SECTION("nested_plus") {
+        std::string pg_path = "../tests/graph_test/nested_plus.pg";
+        std::string dist_path = "../tests/graph_test/nested_plus.dist";
+
+        std::tie(stree, pg, root, pp_overlay) = parse_graph_tree(pg_path, dist_path);
+        auto snarls = save_snarls(*stree, root, *pg, ref_chr, *pp_overlay);
+        auto snarls_chr = loop_over_snarls_write(*stree, snarls, *pg, output_file, output_snarl_not_analyse, children_threshold, path_length_threshold, 0, only_snarl_parsing);
+
+        REQUIRE(snarls_chr.size() == 1);
+        REQUIRE(snarls_chr["ref"].size() == 2);
+        REQUIRE(std::get<0>(snarls_chr["ref"][0]) == "2_8");
+        REQUIRE(std::get<1>(snarls_chr["ref"][0]) == std::vector<std::string>{">2>8", ">2>3>*>6>7>8", ">2>3>*>6>8"});
+        REQUIRE(std::get<2>(snarls_chr["ref"][0]) == 8);
+        REQUIRE(std::get<3>(snarls_chr["ref"][0]) == 13);
+        REQUIRE(std::get<4>(snarls_chr["ref"][0]) == std::vector<std::string>{"0","5/5", "4/4"});
+
+        REQUIRE(std::get<0>(snarls_chr["ref"][1]) == "3_6");
+        REQUIRE(std::get<1>(snarls_chr["ref"][1]) == std::vector<std::string>{">3>5>6", ">3>4>6"});
+        REQUIRE(std::get<2>(snarls_chr["ref"][1]) == 9);
+        REQUIRE(std::get<3>(snarls_chr["ref"][1]) == 12);
+        REQUIRE(std::get<4>(snarls_chr["ref"][1]) == std::vector<std::string>{"2","2"});
     }
 }

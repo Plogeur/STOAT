@@ -436,6 +436,32 @@ def create_inversion_graph(filename="inversion.hg"):
     vg_view(filename, 7)
     print("inversion graph created")
 
+def create_nested_plus_graph(filename="nested_plus.hg"):
+    gr = HashGraph()
+    seqs = ["TTTT", "AAAA", "A", "TT", "AC", "T", "C", "AAAA", "TTTT"]
+    nodes = [gr.create_handle(s) for s in seqs]
+
+    gr.create_edge(nodes[0], nodes[1])
+    gr.create_edge(nodes[1], nodes[2])
+    gr.create_edge(nodes[1], nodes[7])
+    gr.create_edge(nodes[2], nodes[3]) # nested
+    gr.create_edge(nodes[2], nodes[4]) # nested
+    gr.create_edge(nodes[3], nodes[5])
+    gr.create_edge(nodes[4], nodes[5])
+    gr.create_edge(nodes[5], nodes[6])
+    gr.create_edge(nodes[6], nodes[7])
+    gr.create_edge(nodes[5], nodes[7])
+    gr.create_edge(nodes[7], nodes[8])
+
+    path1 = gr.create_path_handle("ref")
+    for idx in [0, 1, 2, 3, 5, 7, 8]:
+        gr.append_step(path1, nodes[idx])
+
+    gr.serialize(filename)
+    vg_process(filename)
+    vg_view(filename, 9)
+    print("nested_plus graph created")
+
 def create_jean_graph(filename="jean.hg"):
     gr = HashGraph()
     seqs = ["TTTT", "AAAA", "T", "AT", "CAT", "AAAA", "TTTT"]
@@ -490,6 +516,7 @@ if __name__ == "__main__":
     create_repetition_graph(wrap_filename("repetition.hg"))
     create_large_del_graph(wrap_filename("large_del.hg"))
     create_inversion_graph(wrap_filename("inversion.hg"))
+    create_nested_plus_graph(wrap_filename("nested_plus.hg"))
     create_jean_graph(wrap_filename("jean.hg"))
 # python3 create_graph.py
 

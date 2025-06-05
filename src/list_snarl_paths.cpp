@@ -91,14 +91,15 @@ size_t Path::nreversed() const {
 // Function to calculate the type of variant
 // tuple<string, size_t, size_t, size_t>
 // seq_net, minimum_distance, maximun_distance, size_path, sum_path
-vector<string> calcul_pos_type_variant(const vector<tuple<string, size_t, size_t, size_t, size_t>>& list_length_paths) {
+vector<string> calcul_pos_type_variant(const vector<tuple<string, size_t, size_t, size_t, size_t, bool>>& list_length_paths) {
     vector<string> list_type_variant;
 
     for (const auto& tuple_info : list_length_paths) {
         size_t path_length = std::get<3>(tuple_info);
         size_t sum_path = std::get<4>(tuple_info);
+        bool is_complex = std::get<5>(tuple_info);
         if (path_length > 3) {
-            if (sum_path == 0) { // Case complex 
+            if (is_complex) { // Case complex
                 string complex = to_string(std::get<1>(tuple_info)) + "/" + to_string(std::get<2>(tuple_info));
                 list_type_variant.push_back(complex);
             } else { // Case multiple nodes (ex : INS+SNP+...)
@@ -313,7 +314,7 @@ tuple<vector<string>, vector<string>> fill_pretty_paths(
     vector<string> pretty_paths;
 
     // seq_net, minimum_distance, maximun_distance, size_path, sum_path
-    vector<tuple<string, size_t, size_t, size_t, size_t>> seq_net_paths;
+    vector<tuple<string, size_t, size_t, size_t, size_t, bool>> seq_net_paths;
 
     for (const auto& path : finished_paths) {
         Path ppath;
@@ -406,7 +407,7 @@ tuple<vector<string>, vector<string>> fill_pretty_paths(
                 size_t size_chain = size_start_node + size_end_node;
                 size_t min_dist = stree.minimum_distance(complex_start_id, revl, size_start_node, complex_end_id, revr, 0);
                 size_t max_dist = stree.maximum_distance(complex_start_id, revl, size_start_node, complex_end_id, revr, 0);
-                
+
                 // Fail case 
                 assert(max_dist != static_cast<size_t>(INT_MAX) && "Overflow max distance");
                 assert(min_dist != static_cast<size_t>(INT_MAX) && "Overflow min distance");
@@ -421,7 +422,10 @@ tuple<vector<string>, vector<string>> fill_pretty_paths(
         }
 
         if (is_complex) { // Case of complex found
-            sum_path = 0;
+            for (size_t i = 1; i < size_node.size()-1; ++i) {
+                maximun_distance += size_node[i];
+                minimum_distance += size_node[i];
+            }
         } else {
             for (size_t i = 1; i < size_node.size()-1; ++i) {
                 sum_path += size_node[i];
@@ -430,7 +434,7 @@ tuple<vector<string>, vector<string>> fill_pretty_paths(
 
         pretty_paths.push_back(ppath.print());
         size_t size_path = ppath.size();
-        seq_net_paths.push_back(std::make_tuple(seq_net, minimum_distance, maximun_distance, size_path, sum_path));
+        seq_net_paths.push_back(std::make_tuple(seq_net, minimum_distance, maximun_distance, size_path, sum_path, is_complex));
     }
 
     vector<string> type_variants = calcul_pos_type_variant(seq_net_paths);
@@ -549,3 +553,5 @@ std::unordered_map<std::string, std::vector<std::tuple<string, vector<string>, s
 
     return {chr_snarl_matrix};
 }
+
+// vg find -x ../snarl_data/fly.gbz -r 5176878:5176884 -c 10 | vg view -dp - | dot -Tsvg -o ../snarl_data/subgraph.svg

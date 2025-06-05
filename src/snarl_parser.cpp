@@ -27,6 +27,25 @@ void chromosome_chuck_make_bed(htsFile* &ptr_vcf, bcf_hdr_t* &hdr, bcf1_t* &rec,
     while (bcf_read(ptr_vcf, hdr, rec) >= 0) {
 
         string chr = bcf_hdr_id2name(hdr, rec->rid);
+        // Skip chromosomes not in snarl_chr
+        while (snarl_chr.find(chr) == snarl_chr.end()) {
+            std::cerr << "Warning: Chromosome " << chr << " not found in snarl paths file. Skipping." << std::endl;
+
+            bool found_new_chr = false;
+            while (bcf_read(ptr_vcf, hdr, rec) >= 0) {
+                string chr_next = bcf_hdr_id2name(hdr, rec->rid);
+                if (chr_next != chr) {
+                    chr = chr_next;  // Update to the new chromosome
+                    found_new_chr = true;
+                    break;
+                }
+            }
+
+            if (!found_new_chr) {
+                return;  // exit if no more records are available
+            }
+        }
+
         std::cout << "> " << chr << std::endl;
         size_t size_chr = snarl_chr.at(chr).size();
 
@@ -68,6 +87,25 @@ void chromosome_chuck_quantitative(htsFile* &ptr_vcf, bcf_hdr_t* &hdr, bcf1_t* &
     while (bcf_read(ptr_vcf, hdr, rec) >= 0) {
 
         string chr = bcf_hdr_id2name(hdr, rec->rid);
+        // Skip chromosomes not in snarl_chr
+        while (snarl_chr.find(chr) == snarl_chr.end()) {
+            std::cerr << "Warning: Chromosome " << chr << " not found in snarl paths file. Skipping." << std::endl;
+
+            bool found_new_chr = false;
+            while (bcf_read(ptr_vcf, hdr, rec) >= 0) {
+                string chr_next = bcf_hdr_id2name(hdr, rec->rid);
+                if (chr_next != chr) {
+                    chr = chr_next;  // Update to the new chromosome
+                    found_new_chr = true;
+                    break;
+                }
+            }
+
+            if (!found_new_chr) {
+                return;  // exit if no more records are available
+            }
+        }
+
         std::cout << "> " << chr << std::endl;
         size_t size_chr = snarl_chr.at(chr).size();
 
@@ -105,6 +143,24 @@ void chromosome_chuck_eqtl(htsFile* &ptr_vcf, bcf_hdr_t* &hdr, bcf1_t* &rec,
     while (bcf_read(ptr_vcf, hdr, rec) >= 0) {
 
         string chr = bcf_hdr_id2name(hdr, rec->rid);
+        // Skip chromosomes not in snarl_chr
+        while (snarl_chr.find(chr) == snarl_chr.end()) {
+            std::cerr << "Warning: Chromosome " << chr << " not found in snarl paths file. Skipping." << std::endl;
+
+            bool found_new_chr = false;
+            while (bcf_read(ptr_vcf, hdr, rec) >= 0) {
+                string chr_next = bcf_hdr_id2name(hdr, rec->rid);
+                if (chr_next != chr) {
+                    chr = chr_next;  // Update to the new chromosome
+                    found_new_chr = true;
+                    break;
+                }
+            }
+
+            if (!found_new_chr) {
+                return;  // exit if no more records are available
+            }
+        }
         std::cout << "> " << chr << std::endl;
         size_t size_chr = snarl_chr.at(chr).size();
 
@@ -147,6 +203,24 @@ void chromosome_chuck_binary(htsFile* &ptr_vcf, bcf_hdr_t* &hdr, bcf1_t* &rec,
     while (bcf_read(ptr_vcf, hdr, rec) >= 0) {
 
         string chr = bcf_hdr_id2name(hdr, rec->rid);
+        // Skip chromosomes not in snarl_chr
+        while (snarl_chr.find(chr) == snarl_chr.end()) {
+            std::cerr << "Warning: Chromosome " << chr << " not found in snarl paths file. Skipping." << std::endl;
+
+            bool found_new_chr = false;
+            while (bcf_read(ptr_vcf, hdr, rec) >= 0) {
+                string chr_next = bcf_hdr_id2name(hdr, rec->rid);
+                if (chr_next != chr) {
+                    chr = chr_next;  // Update to the new chromosome
+                    found_new_chr = true;
+                    break;
+                }
+            }
+
+            if (!found_new_chr) {
+                return;  // exit if no more records are available
+            }
+        }
         std::cout << "> " << chr << std::endl;
         size_t size_chr = snarl_chr.at(chr).size();
 
