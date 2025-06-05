@@ -281,15 +281,13 @@ TEST_CASE("Test simulated case", "[Path]") {
         REQUIRE(std::get<1>(snarls_chr["ref"][0]) == std::vector<std::string>{">2>3>*>6>8",">2>3>*>6>3>*>6>8",">2>7>8"});
         REQUIRE(std::get<2>(snarls_chr["ref"][0]) == 8);
         REQUIRE(std::get<3>(snarls_chr["ref"][0]) == 10);
-        REQUIRE(std::get<4>(snarls_chr["ref"][0]) == std::vector<std::string>{"3/8","3/8","1"});
+        REQUIRE(std::get<4>(snarls_chr["ref"][0]) == std::vector<std::string>{"3/8","6/16","1"});
 
-        REQUIRE(snarls_chr["ref"].size() == 2);
         REQUIRE(std::get<0>(snarls_chr["ref"][0]) == "3_6");
-        REQUIRE(std::get<1>(snarls_chr["ref"][0]) == std::vector<std::string>{">2>3>*>6>8",">2>3>*>6>3>*>6>8",">2>7>8"});
+        REQUIRE(std::get<1>(snarls_chr["ref"][0]) == std::vector<std::string>{">3>5>6",">3>4>6"});
         REQUIRE(std::get<2>(snarls_chr["ref"][0]) == 8);
         REQUIRE(std::get<3>(snarls_chr["ref"][0]) == 10);
-        REQUIRE(std::get<4>(snarls_chr["ref"][0]) == std::vector<std::string>{"3/8","3/8","1"});
-
+        REQUIRE(std::get<4>(snarls_chr["ref"][0]) == std::vector<std::string>{"2","1"});
     }
 
     SECTION("repetition") {
