@@ -1,7 +1,7 @@
 # STOAT (Snarl Tree Orchestrated Association Test)
 
 <p align="center">
-    <a href="https://www.python.org/downloads/release/python-3100/"><img src="https://img.shields.io/badge/Python-3.10-blue.svg"></a>
+    <a href="https://isocpp.org/"><img src="https://img.shields.io/badge/C++-17-blue.svg"></a>
     <a href="https://github.com/vgteam/libbdsg/releases/tag/v0.3"><img src="https://img.shields.io/badge/bdsg-0.3-green.svg"></a>
 </p>
 
