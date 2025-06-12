@@ -210,6 +210,11 @@ int main(int argc, char* argv[]) {
 
     auto start_1 = std::chrono::high_resolution_clock::now();
     std::filesystem::create_directory(output_dir);
+    
+    if (chromosome_path.empty()) {
+        std::cout << "Warning : chromosome_path file not provided, 'ref' reference chromosome name will be used instead" << std::endl;
+    }
+
     std::unordered_set<std::string> ref_chr = (!chromosome_path.empty()) ? parse_chromosome_reference(chromosome_path) : std::unordered_set<std::string>{"ref"};
     std::string regression_dir = output_dir + "/regression";
 
