@@ -372,6 +372,18 @@ int main(int argc, char* argv[]) {
 
     return EXIT_SUCCESS;
 }
+   
+// DROSO
+// ./stoat_cxx -p ../data/droso/fly.pg -d ../data/droso/fly.dist -r ../data/droso/chromosome_ref.tsv --output ../output_droso
+// sed -i 's/dm6#0#chr2L/1/g' ../output_droso/snarl_analyse.tsv
+// sed -i 's/dm6#0#chr2R/2/g' ../output_droso/snarl_analyse.tsv
+// sed -i 's/dm6#0#chr3L/3/g' ../output_droso/snarl_analyse.tsv
+// sed -i 's/dm6#0#chr3R/4/g' ../output_droso/snarl_analyse.tsv
+// sed -i 's/dm6#0#chr4/5/g' ../output_droso/snarl_analyse.tsv
+// sed -i 's/dm6#0#chrX/6/g' ../output_droso/snarl_analyse.tsv
+// sed -i 's/dm6#0#chrY/7/g' ../output_droso/snarl_analyse.tsv
+// sed -i 's/dm6#0#chrM/8/g' ../output_droso/snarl_analyse.tsv
+// ./stoat_cxx -s ../output_droso/snarl_analyse.tsv -v ../data/droso/merging_stoat.vcf -q ../data/droso/pangenome_pheno.tsv --output ../output_droso
 
 // BINARY
 // ./stoat_cxx -p ../data/binary/pg.pg -d ../data/binary/pg.dist -v ../data/binary/merged_output.vcf.gz -b ../data/binary/phenotype.tsv --output ../output

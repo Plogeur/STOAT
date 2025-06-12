@@ -223,14 +223,12 @@ void chromosome_chuck_binary(htsFile* &ptr_vcf, bcf_hdr_t* &hdr, bcf1_t* &rec,
         }
         std::cout << "> " << chr << std::endl;
         size_t size_chr = snarl_chr.at(chr).size();
-
         // Make genotype matrix by chromosome    
         auto [vcf_object, ptr_vcf_new, hdr_new, rec_new] = make_matrix(ptr_vcf, hdr, rec, list_samples, chr, size_chr);
         ptr_vcf = ptr_vcf_new;
         hdr = hdr_new;
         rec = rec_new;
         auto& snarl = snarl_chr.at(chr);
-
         // Gwas analysis by chromosome
         vcf_object.binary_table(snarl, binary_pheno, chr, covar, maf, kinship, num_threads, table_threshold, regression_dir, outf);
     }

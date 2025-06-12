@@ -53,21 +53,16 @@ void linear_regression(
         Eigen::MatrixXd XtX = X.transpose() * X;
         Eigen::MatrixXd cov_matrix = XtX.ldlt().solve(Eigen::MatrixXd::Identity(X.cols(), X.cols()));
         se = (cov_matrix.diagonal() * mse).array().sqrt().matrix();
-        std::cerr << "Warning: se is nan" << std::endl;
     }
 
     // t-statistics
     Eigen::VectorXd t_stats = beta.array() / se.array();
     boost::math::students_t t_dist(df_res);
-    // terminate called after throwing an instance of 'boost::wrapexcept<std::domain_error>'
-    // what():  Error in function boost::math::students_t_distribution<double>::students_t_distribution: Degrees of freedom argument is 0, but must be > 0 !
 
     std::vector<double> p_values;
     for (int i = 1; i < num_features+1; ++i) {
         if (std::isnan(t_stats[i]) || std::isinf(t_stats[i])) {
             p_values.push_back(1.0); // Assign a high p-value for invalid t-statistics
-            // print beta, se
-            std::cerr << "Warning : beta : " << beta[i] << ", se : " << se[i] << " at index " << i << std::endl;
             continue;
         }
         p_values.push_back(2 * boost::math::cdf(boost::math::complement(t_dist, std::abs(t_stats[i])))); // two-tailed

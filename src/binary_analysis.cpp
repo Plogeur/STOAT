@@ -300,21 +300,24 @@ std::string chi2_2x2(const std::vector<size_t>& g0, const std::vector<size_t>& g
     int c = g1[0];
     int d = g1[1];
 
-    int row1 = a + b;
-    int row2 = c + d;
-    int col1 = a + c;
-    int col2 = b + d;
-    int total = row1 + row2;
+    int64_t row1 = a + b;
+    int64_t row2 = c + d;
+    int64_t col1 = a + c;
+    int64_t col2 = b + d;
+    int64_t total = row1 + row2;
 
     if (row1 == 0 || row2 == 0 || col1 == 0 || col2 == 0) {
         return "NA";
     }
 
-    double numerator = static_cast<double>(a * d - b * c);
-    numerator = std::abs(numerator) - 0.5 * total;
+    // compute numerator safely using int64_t everywhere
+    int64_t ad = a * d;
+    int64_t bc = b * c;
+    double numerator = static_cast<double>(std::abs(ad - bc)) - 0.5 * static_cast<double>(total);
     numerator = std::max(0.0, numerator);
     numerator *= numerator;
-    double denominator = static_cast<double>(row1 * row2 * col1 * col2) / total;
+
+    double denominator = static_cast<double>(row1) * static_cast<double>(row2) * static_cast<double>(col1) * static_cast<double>(col2) / static_cast<double>(total);
     long double chi2_stat = numerator / denominator;
 
     if (chi2_stat > 85.0) {
@@ -398,16 +401,19 @@ std::string fastFishersExactTest(const std::vector<size_t>& g0, const std::vecto
     double cur11, cur12, cur21, cur22;
     double preaddp;
 
+    // Ensure we are left of the distribution center, m11 <= m22, and m12 <= m21.
     if (m12 > m21) {
         uii = m12;
         m12 = m21;
         m21 = uii;
     }
+
     if (m11 > m22) {
         uii = m11;
         m11 = m22;
         m22 = uii;
     }
+    
     if ((S_CAST(size_t, m11) * m22) > (S_CAST(size_t, m12) * m21)) {
         uii = m11;
         m11 = m12;
