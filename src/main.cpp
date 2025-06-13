@@ -210,8 +210,8 @@ int main(int argc, char* argv[]) {
 
     auto start_1 = std::chrono::high_resolution_clock::now();
     std::filesystem::create_directory(output_dir);
-    
-    if (chromosome_path.empty()) {
+
+    if (chromosome_path.empty() && snarl_path.empty()) {
         std::cout << "Warning : chromosome_path file not provided, 'ref' reference chromosome name will be used instead" << std::endl;
     }
 

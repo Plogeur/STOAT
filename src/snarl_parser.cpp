@@ -739,6 +739,11 @@ void SnarlParser::quantitative_table(const std::vector<std::tuple<string, vector
                     writeSignificantTableToTSV(df, list_snarl, sampleNames, variant_file_name);
                 }
 
+                if (snarl == "7690843_7690846") {
+                    string variant_file_name = regression_dir + "/" + snarl + ".tsv";
+                    writeSignificantTableToTSV(df, list_snarl, sampleNames, variant_file_name);
+                }
+                
                 // chr, pos, snarl, type, p_value, p_adjusted, r2, beta, se, allele_number
                 data << chr << "\t" << start_pos << "\t" << snarl << "\t" << type_var_str
                 << "\t" << p_value  << "\t" << "" << "\t" << r2 << "\t" << beta << "\t" << se 
