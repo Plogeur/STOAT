@@ -49,7 +49,7 @@ void print_help() {
               << "  -k, --kinship <path>        Path to the kinship matrix file (.txt or .tsv)\n"
               << "  --make-bed                  Create a plink format files (.bed, .bim, .fam)\n"
               << "  --windows-gene <int>        Defines a window threshold length from the gene's start to end positions to test all snarls within. (defauld : 1 000 000)\n"
-              << "  --table-threshold <int>     The p-value threshold for regression table file (defauld : disable)\n"
+              << "  --table-threshold <double>  The p-value threshold for regression table file (defauld : disable)\n"
               << "  --cycle <int>               Max number of authorized cycle use in snarl parsing (defauld : 1)\n"
               << "  --maf                       Add a maf (Minimum allele frequency) thresold (defauld : 0.01)\n"
               << "  -o, --output <name>         Output dir name\n"
@@ -158,7 +158,7 @@ int main(int argc, char* argv[]) {
             }
         } else if ((arg == "--table-threshold") && i + 1 < argc) {
             // convert str to int and verify that it is a positive number
-            table_threshold = std::stoi(argv[++i]);
+            table_threshold = std::stod(argv[++i]);
             if (table_threshold < 0 && table_threshold > 1) {
                 std::cerr << "Error: Pvalue threshold for table threshold must be ∈ ]0;1] \n";
                 return EXIT_FAILURE;
@@ -172,7 +172,7 @@ int main(int argc, char* argv[]) {
             }
         } else if ((arg == "--maf") && i + 1 < argc) {
             // convert str to int and verify that it is a positive number
-            maf = 1-std::stoi(argv[++i]);
+            maf = 1-std::stod(argv[++i]);
             if (maf < 0 || maf > 1) {
                 std::cerr << "Error: maf threshold must be a between 0 and 1\n";
                 return EXIT_FAILURE;

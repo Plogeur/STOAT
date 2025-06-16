@@ -60,7 +60,7 @@ void linear_regression(
     boost::math::students_t t_dist(df_res);
 
     std::vector<double> p_values;
-    for (int i = 1; i < num_features+1; ++i) {
+    for (int i = 1; i < num_features+1; ++i) { // i = 1 avoid const p-value
         if (std::isnan(t_stats[i]) || std::isinf(t_stats[i])) {
             p_values.push_back(1.0); // Assign a high p-value for invalid t-statistics
             continue;
@@ -68,15 +68,26 @@ void linear_regression(
         p_values.push_back(2 * boost::math::cdf(boost::math::complement(t_dist, std::abs(t_stats[i])))); // two-tailed
     }
 
-    std::vector<double> p_values_adjusted = adjusted_holm(p_values);
-    size_t min_index = std::distance(p_values_adjusted.begin(), std::min_element(p_values_adjusted.begin(), p_values_adjusted.end()));
-    double min_p_value_adjusted = p_values_adjusted[min_index];
+    double p_value_adjusted = 0;
+    double beta_adjusted = 0;
+    double se_adjusted = 0;
+    if (p_values.size() > 1) {
+        std::vector<double> p_values_adjusted = adjusted_holm(p_values);
+        size_t min_index = std::distance(p_values_adjusted.begin(), std::min_element(p_values_adjusted.begin(), p_values_adjusted.end()));
+        p_value_adjusted = p_values_adjusted[min_index];
+        beta_adjusted = beta[min_index+1];
+        se_adjusted = se[min_index+1];
+    } else {
+        p_value_adjusted = p_values[0];
+        beta_adjusted = beta[0];
+        se_adjusted = se[0];
+    }
 
     // set precision : 4 digit
     r2_str = set_precision(r2);
-    beta_str = set_precision(beta[min_index+1]);
-    se_str = set_precision(se[min_index+1]);
-    p_value_str = set_precision(min_p_value_adjusted);
+    beta_str = set_precision(beta_adjusted);
+    se_str = set_precision(se_adjusted);
+    p_value_str = set_precision(p_value_adjusted);
 }
 
 // Linear regression function OLS with intercept + covariate
@@ -136,15 +147,26 @@ void glm_quantitative(
         p_values.push_back(2 * boost::math::cdf(boost::math::complement(t_dist, std::abs(t_stats[i])))); // two-tailed
     }
 
-    std::vector<double> p_values_adjusted = adjusted_holm(p_values);
-    size_t min_index = std::distance(p_values_adjusted.begin(), std::min_element(p_values_adjusted.begin(), p_values_adjusted.end()));
-    double min_p_value_adjusted = p_values_adjusted[min_index];
+    double p_value_adjusted = 0;
+    double beta_adjusted = 0;
+    double se_adjusted = 0;
+    if (p_values.size() > 1) {
+        std::vector<double> p_values_adjusted = adjusted_holm(p_values);
+        size_t min_index = std::distance(p_values_adjusted.begin(), std::min_element(p_values_adjusted.begin(), p_values_adjusted.end()));
+        p_value_adjusted = p_values_adjusted[min_index];
+        beta_adjusted = beta[min_index+1];
+        se_adjusted = se[min_index+1];
+    } else {
+        p_value_adjusted = p_values[0];
+        beta_adjusted = beta[0];
+        se_adjusted = se[0];
+    }
 
     // set precision : 4 digit
     r2_str = set_precision(r2);
-    beta_str = set_precision(beta[min_index+1]);
-    se_str = set_precision(se[min_index+1]);
-    p_value_str = set_precision(min_p_value_adjusted);
+    beta_str = set_precision(beta_adjusted);
+    se_str = set_precision(se_adjusted);
+    p_value_str = set_precision(p_value_adjusted);
 }
 
 // libc++abi: terminating with uncaught exception of type boost::wrapexcept<std::domain_error>: Error in function boost::math::cdf(const students_t_distribution<double>&, double): Random variate x is nan, but must be finite or + or - infinity!
