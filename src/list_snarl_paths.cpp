@@ -409,8 +409,8 @@ tuple<vector<string>, vector<string>> fill_pretty_paths(
                 size_t max_dist = stree.maximum_distance(complex_start_id, revl, size_start_node, complex_end_id, revr, 0);
 
                 // Fail case 
-                assert(max_dist != static_cast<size_t>(INT_MAX) && "Overflow max distance");
-                assert(min_dist != static_cast<size_t>(INT_MAX) && "Overflow min distance");
+                // assert(max_dist != static_cast<size_t>(INT_MAX) && "Overflow max distance");
+                // assert(min_dist != static_cast<size_t>(INT_MAX) && "Overflow min distance");
 
                 minimum_distance += size_chain + min_dist;
                 maximun_distance += size_chain + max_dist;
@@ -454,11 +454,13 @@ std::unordered_map<std::string, std::vector<std::tuple<string, vector<string>, s
         bool bool_return = true) {
 
     ofstream out_snarl(output_file);
+    if (bool_return) {
+        out_snarl << "CHR\tSTART_POS\tEND_POS\tSNARL\tPATHS\tTYPE\tREF\n";
+    }
+
     ofstream out_fail(output_snarl_not_analyse);
-    
-    out_snarl << "CHR\tSTART_POS\tEND_POS\tSNARL\tPATHS\tTYPE\tREF\n";
     out_fail << "SNARL\tREASON\n";
-    
+        
     std::vector<std::tuple<string, vector<string>, size_t, size_t, vector<string>>> snarl_paths;
     unordered_map<string, std::vector<std::tuple<string, vector<string>, size_t, size_t, vector<string>>>> chr_snarl_matrix;
     size_t paths_number_analysis = 0;

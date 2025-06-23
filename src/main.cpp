@@ -48,8 +48,8 @@ void print_help() {
               << "  --gene-position <path>      Path to the Gene position file (.txt or .tsv)\n"
               << "  -k, --kinship <path>        Path to the kinship matrix file (.txt or .tsv)\n"
               << "  --make-bed                  Create a plink format files (.bed, .bim, .fam)\n"
-              << "  --windows-gene <int>        Defines a window threshold length from the gene's start to end positions to test all snarls within. (defauld : 1 000 000)\n"
-              << "  --table-threshold <double>  The p-value threshold for regression table file (defauld : disable)\n"
+              << "  --windows-gene <int>        Defines a window threshold length from the gene's start to end positions to test all snarls within in eqtl analysis. (defauld : 1 000 000)\n"
+              << "  --table-threshold <double>  The p-value threshold for regression table file (only for regression assoc) (defauld : disable)\n"
               << "  --cycle <int>               Max number of authorized cycle use in snarl parsing (defauld : 1)\n"
               << "  --maf                       Add a maf (Minimum allele frequency) thresold (defauld : 0.01)\n"
               << "  -o, --output <name>         Output dir name\n"
@@ -210,7 +210,7 @@ int main(int argc, char* argv[]) {
 
     auto start_1 = std::chrono::high_resolution_clock::now();
     std::filesystem::create_directory(output_dir);
-
+    
     if (chromosome_path.empty() && snarl_path.empty()) {
         std::cout << "Warning : chromosome_path file not provided, 'ref' reference chromosome name will be used instead" << std::endl;
     }
@@ -289,14 +289,14 @@ int main(int argc, char* argv[]) {
     // chr : <snarl, paths, pos(start, end), type>
     // TODO : replace std::tuple<string, vector<string>, size_t, size_t, vector<string>> to 5 vector (to reduce space/time usage)
     std::unordered_map<std::string, std::vector<std::tuple<string, vector<string>, size_t, size_t, vector<string>>>> snarls_chr;
+    std::unique_ptr<bdsg::SnarlDistanceIndex> stree;
+    std::unique_ptr<bdsg::PackedGraph> pg;
+    handlegraph::net_handle_t root;
+    std::unique_ptr<bdsg::PackedPositionOverlay> pp_overlay;
 
     if (!snarl_path.empty()){
         snarls_chr = parse_snarl_path(snarl_path);
     } else {
-        std::unique_ptr<bdsg::SnarlDistanceIndex> stree;
-        std::unique_ptr<bdsg::PackedGraph> pg;
-        handlegraph::net_handle_t root;
-        std::unique_ptr<bdsg::PackedPositionOverlay> pp_overlay;
 
         std::cout << "Start snarl analysis... " << std::endl;
         auto start_0 = std::chrono::high_resolution_clock::now();
@@ -375,9 +375,11 @@ int main(int argc, char* argv[]) {
     auto end_1 = std::chrono::high_resolution_clock::now();
     std::cout << "Snarl analysis : " << std::chrono::duration<double>(end_1 - start_2).count() << " s" << std::endl;
     std::cout << "Time Gwas analysis : " << std::chrono::duration<double>(end_1 - start_1).count() << " s" << std::endl;
-
     return EXIT_SUCCESS;
 }
+
+// DROSO
+// ./stoat_cxx -p ../data_droso/fly.pg -d ../data_droso/fly.dist -v ../data_droso/merged.vcf -q ../data_droso/phenotype.tsv --output ../output_droso
    
 // DROSO
 // ./stoat_cxx -p ../data/droso/fly.pg -d ../data/droso/fly.dist -r ../data/droso/chromosome_ref.tsv --output ../output_droso

@@ -32,7 +32,7 @@ Manual installation :
 
 Or you can use the `Dockerfile` or the compiled unbuntu version provided (coming soon).
 
-## Building
+## Build
 
 ```bash
 git clone --branch stoat_cxx https://github.com/Plogeur/STOAT.git

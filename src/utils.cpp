@@ -65,13 +65,14 @@ double string_to_pvalue(const std::string& p1) {
 }
 
 // Function to check significance from a string
-bool isPValueSignificant(double pvalue_threshold, const std::string& pvalue_str) {
+bool isPValueSignificant(const double& pvalue_threshold, const std::string& pvalue_str) {
     double pvalue;
     try {
         if (pvalue_str == "NA") {
             return false; // Treat "NA" as not significant
         } else {
             pvalue = std::stod(pvalue_str);
+            cout << "pvalue : " << pvalue << endl;
         }
     } catch (const std::exception& e) {
         std::cerr << "Error parsing pvalue string : " << pvalue_str << " " << e.what() << "\n";
