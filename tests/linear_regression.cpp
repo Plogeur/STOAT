@@ -1,6 +1,5 @@
 #include <boost/math/distributions/fisher_f.hpp>
 #include <boost/math/distributions/students_t.hpp>  // For t-distribution
-#include <boost/math/distributions/chi_squared.hpp>
 #include <string>
 #include <iomanip>
 #include <iostream>
@@ -26,10 +25,10 @@ void linear_regression(
     size_t num_features = df[0].size();
 
     // Add intercept: X with one additional column for intercept
-    Eigen::MatrixXd X(num_samples, num_features); // remove 1 column num_features + 1 (intercept) -1 (remove 1 column)
+    Eigen::MatrixXd X(num_samples, num_features + 1);
     X.col(0) = Eigen::VectorXd::Ones(num_samples);  // Intercept column
     for (size_t row = 0; row < num_samples; ++row) {
-        for (size_t col = 0; col < num_features-1; ++col) { // remove 1 column 
+        for (size_t col = 0; col < num_features; ++col) {
             X(row, col + 1) = df[row][col];
         }
     }
@@ -45,31 +44,52 @@ void linear_regression(
     Eigen::VectorXd y_pred = X * beta;
     Eigen::VectorXd residuals = y - y_pred;
 
-    // R² 
+    // R²
     double rss = residuals.squaredNorm();
     double tss = (y.array() - y.mean()).matrix().squaredNorm();
     double r2 = 1 - (rss / tss);
 
-    int df_reg = X.cols() - 1;              // exclude intercept from model df
-    int df_res = num_samples - X.cols();    // residual degrees of freedom
+    int df_res = (num_samples - X.cols() + 1); // residual degrees of freedom
+    df_res = std::max(df_res, 1); // Ensure df_res is at least 1 to avoid division by zero
     double mse = rss / df_res;
 
     // Standard errors
-    Eigen::MatrixXd cov_matrix = (X.transpose() * X).inverse();
+    Eigen::MatrixXd cov_matrix = (X.transpose() * X).inverse();    
     Eigen::VectorXd se = (cov_matrix.diagonal() * mse).array().sqrt().matrix();
 
-    // Compute F-statistic
-    double f_stat = (r2 / df_reg) / ((1 - r2) / df_res);
-    boost::math::fisher_f dist(df_reg, df_res);
-    double p_value = boost::math::cdf(boost::math::complement(dist, std::abs(f_stat)));
+    // change cov_matrix calcul if X.transpose() * X might be ill-conditioned or nearly singular
+    if (se.hasNaN()) {
+        Eigen::MatrixXd XtX = X.transpose() * X;
+        Eigen::MatrixXd cov_matrix = XtX.ldlt().solve(Eigen::MatrixXd::Identity(X.cols(), X.cols()));
+        se = (cov_matrix.diagonal() * mse).array().sqrt().matrix();
+    }
 
     // t-statistics
     Eigen::VectorXd t_stats = beta.array() / se.array();
     boost::math::students_t t_dist(df_res);
-    std::vector<double> p_values(beta.size());
-    for (int i = 0; i < beta.size(); ++i) {
-        p_values[i] = 2 * boost::math::cdf(boost::math::complement(t_dist, std::abs(t_stats[i]))); // two-tailed
+
+    std::vector<double> p_values;
+    for (int i = 0; i < num_features+1; ++i) { // i = 1 avoid const p-value
+        if (std::isnan(t_stats[i]) || std::isinf(t_stats[i])) {
+            p_values.push_back(1.0); // Assign a high p-value for invalid t-statistics
+            continue;
+        }
+        p_values.push_back(2 * boost::math::cdf(boost::math::complement(t_dist, std::abs(t_stats[i])))); // two-tailed
+        cout << "p_values[" << i << "] : " << p_values[i] << endl;
     }
+
+    cout << endl;
+    std::vector<double> p_values_2;
+    for (int i = 1; i < num_features+1; ++i) { // i = 1 avoid const p-value
+        if (std::isnan(t_stats[i]) || std::isinf(t_stats[i])) {
+            p_values_2.push_back(1.0); // Assign a high p-value for invalid t-statistics
+            continue;
+        }
+        p_values_2.push_back(2 * boost::math::cdf(boost::math::complement(t_dist, std::abs(t_stats[i])))); // two-tailed
+        cout << "p_values_2[" << i << "] : " << p_values_2[i-1] << endl;
+    }
+
+    // p_values[1] : 0.841009
 }
 
 // Function to parse the feature file
@@ -139,9 +159,14 @@ void parse_phenotype_file(
 }
 
 // Example usage
-int main() {
-    std::string feature_file = "../output/regression/4220_4223.tsv";
-    std::string phenotype_file = "../data/quantitative/phenotype.tsv";
+int main(int argc, char* argv[]) {
+    if (argc != 3) {
+        std::cerr << "Usage: " << argv[0] << " <feature_file> <phenotype_file>\n";
+        return 1;
+    }
+
+    std::string feature_file = argv[1];
+    std::string phenotype_file = argv[2];
 
     std::vector<std::string> sample_ids;
     std::vector<std::vector<double>> features;
@@ -155,23 +180,15 @@ int main() {
                   << features[0].size() << " features.\n";
         std::cout << "Parsed " << phenotype.size() << " phenotype values.\n";
 
+        linear_regression(features, phenotype);
     } catch (const std::exception& e) {
         std::cerr << "Error: " << e.what() << "\n";
+        return 1;
     }
 
-    linear_regression(features, phenotype);
-    return 0;
+    return EXIT_SUCCESS;
 }
 
-// python without intercept:
-//                       coef    std err          t      P>|t|      [0.025      0.975]
-// >4220>4221>4223     0.0338      0.097      0.349      0.727      -0.157       0.225
-// >4220>4222>4223     0.1739      0.161      1.078      0.282      -0.144       0.492
-
-// python with intercept + remove 1 column :
-//                       coef    std err          t      P>|t|      [0.025      0.975]
-// const               0.0692      0.052      1.327      0.186      -0.034       0.172
-// >4220>4221>4223    -0.0354      0.097     -0.364      0.716      -0.227       0.156
-// >4220>4222>4223     0.1047      0.123      0.854      0.394      -0.137       0.346
-
 // g++ -std=c++17 -I/usr/local/include/eigen3 -lboost_math_c99 -lgsl -lgslcblas -o linear_regression linear_regression.cpp
+// g++ -std=c++17 -I/usr/local/eigen3 -lboost_math_c99 -o linear_regression linear_regression.cpp
+// ./linear_regression 7 ../output_droso/regression/7690843_7690846.tsv ../data/droso/pangenome_pheno.tsv

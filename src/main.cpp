@@ -1,4 +1,4 @@
-// This file is part of STOAT 0.0.1, copyright (C) 2024-2025 Matis Alias-Bagarre, Jean Monlong.
+// This file is part of STOAT 0.0.1, copyright (C) 2024-2025 Matis Alias-Bagarre, Jean Monlong & Xian-hui Chang.
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -67,17 +67,17 @@ int main(int argc, char* argv[]) {
     size_t num_threads = 1;
     size_t phenotype = 0;
     size_t cycle_threshold = 1;
-    double table_threshold = -1;
     size_t children_threshold = 50;
     size_t path_length_threshold = 10000;
     size_t windows_gene_threshold = 1000000;
-    std::vector<std::string> covar_names;
-
+    double table_threshold = -1;
     double maf = 0.99;
     bool gaf = false;
     bool only_snarl_parsing = false;
     bool show_help = false;
     bool make_bed = false;
+
+    std::vector<std::string> covar_names;
 
     // Parse arguments manually
     for (int i = 1; i < argc; ++i) {
@@ -252,7 +252,6 @@ int main(int argc, char* argv[]) {
     }
 
     std::vector<std::string> list_samples;
-
     htsFile* ptr_vcf;
     bcf_hdr_t* hdr;
     bcf1_t* rec;
@@ -287,16 +286,18 @@ int main(int argc, char* argv[]) {
     }
 
     // scope declaration
-    // chr : <snarl, paths, pos, type>
+    // chr : <snarl, paths, pos(start, end), type>
+    // TODO : replace std::tuple<string, vector<string>, size_t, size_t, vector<string>> to 5 vector (to reduce space/time usage)
     std::unordered_map<std::string, std::vector<std::tuple<string, vector<string>, size_t, size_t, vector<string>>>> snarls_chr;
-    std::unique_ptr<bdsg::SnarlDistanceIndex> stree;
-    std::unique_ptr<bdsg::PackedGraph> pg;
-    handlegraph::net_handle_t root;
-    std::unique_ptr<bdsg::PackedPositionOverlay> pp_overlay;
 
     if (!snarl_path.empty()){
         snarls_chr = parse_snarl_path(snarl_path);
     } else {
+        std::unique_ptr<bdsg::SnarlDistanceIndex> stree;
+        std::unique_ptr<bdsg::PackedGraph> pg;
+        handlegraph::net_handle_t root;
+        std::unique_ptr<bdsg::PackedPositionOverlay> pp_overlay;
+
         std::cout << "Start snarl analysis... " << std::endl;
         auto start_0 = std::chrono::high_resolution_clock::now();
         std::tie(stree, pg, root, pp_overlay) = parse_graph_tree(pg_path, dist_path);

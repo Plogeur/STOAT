@@ -728,7 +728,7 @@ void SnarlParser::quantitative_table(const std::vector<std::tuple<string, vector
                     lmm_quantitative(df, phenotype_filtered, kinship, covar, p_value, beta, se, r2);
 
                 } else if (covar.size() > 0 && kinship.empty()) { // glm
-                    glm_quantitative(df, phenotype_filtered, covar, p_value, beta, se, r2); // TODO : se nan problem
+                    glm_quantitative(df, phenotype_filtered, covar, p_value, beta, se, r2);
 
                 } else { // single test
                     linear_regression(df, phenotype_filtered, p_value, beta, se, r2);
