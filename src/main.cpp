@@ -29,30 +29,46 @@
 
 using namespace std;
 
+// 
+// stoat vcf ...
+// stoat graph ... 
 void print_help() {
     std::cout << "Usage: stoat [options]\n\n"
+              << "  -p, --pg FILE                Path to the packed graph file (.pg)\n"
+              << "  -d, --dist FILE              Path to the packed distance index file (.dist)\n"
               << "  -v, --vcf FILE               Path to the VCF file (.vcf or .vcf.gz)\n"
+
+              << "  -H, --graph-hash FILE        Path to the hash graph file (.hg)\n"
+              << "  -D, --dist-hash FILE         Path to the hash distance index (.dist)\n"
+              << "  -S, --sample NAME            Sample name with the trait of interest (may repeat)\n"
+              << "  -a, --assoc-file FILE        Write the records for the associated samples to FILE\n"
+              << "  -u, --unassoc-file FILE      Write the records for the unassociated samples to FILE\n"
+              << "  -A, --test-assoc NAME        Which test will be used to determine association (exact / fishers / chi2) (default: exact)\n"
+              << "  -P, --p-threshold FLOAT      Threshold p-value to be considered significant (default: 0.05)\n"
+              << "  -E, --method NAME            Method use to find associations (paths) (default: paths)\n"
+              << "  -L, --allele-size-limit INT  Report only variants with allele size smaller than this threshold (default: 0)\n"
+              << "  -R, --reference-sample NAME  Use this sample as the reference if no reference path exists in the graph\n"
+              << "  -o, --output-format NAME     Format of the output (STOAT GWAS on graph only) (tsv / fasta) (default: tsv)\n"
+
               << "  -s, --snarl FILE             Path to the snarl file (.txt or .tsv)\n"
-              << "  -p, --pg FILE                Path to the pg file (.pg)\n"
-              << "  -d, --dist FILE              Path to the dist file (.dist)\n"
               << "  -r, --chr FILE               Path to the chromosome reference file (.txt)\n"
               << "  -b, --binary FILE            Path to the binary group file (.txt or .tsv)\n"
               << "  -q, --quantitative FILE      Path to the quantitative phenotype file (.txt or .tsv)\n"
               << "  -e, --eqtl FILE              Path to the Expression Quantitative Trait Loci file (.txt or .tsv)\n"
-              << "  -m, --make-bed               Create a plink format files (.bed, .bim, .fam)\n"
+              << "  -m, --make-bed               Create a plink format files (aka .bed, .bim, .fam)\n"
               << "  -c, --covariate FILE         Path to the covariate file (.txt or .tsv)\n"
               << "  -C, --covar-name NAME        Covariate column name used in the gwas analyse\n"
               << "  -k, --kinship FILE           Path to the kinship matrix file (.txt or .tsv)\n"
               << "  -g, --gaf                    Make a GAF file from the GWAS analysis\n"
-              << "  -H, --children INT           Max number of children for a snarl in the snarl decomposition process (default = 50)\n"
-              << "  -y, --cycle INT              Max number of authorized cycle use in snarl decomposition (defauld : 1)\n"
-              << "  -l, --path-length INT        Max number of node in path in the snarl decomposition process (default = 10 000)\n"
+              << "  -I, --children INT           Max number of children for a snarl in the snarl decomposition process (default: 50)\n"
+              << "  -y, --cycle INT              Max number of authorized cycle use in snarl decomposition (defauld: 1)\n"
+              << "  -l, --path-length INT        Max number of node in path in the snarl decomposition process (default: 10 000)\n"
               << "  -G, --gene-position FILE     Path to the Gene position file (.txt or .tsv)\n"
               << "  -w, --windows-gene INT       Defines a window threshold length from the gene's start to end positions to test all snarls within in eqtl analysis. (defauld : 1 000 000)\n"
               << "  -T, --table-threshold FLOAT  The p-value threshold for regression table file (only for regression assoc) (defauld : disable)\n"
-              << "  -M, --maf FLOAT              Add a maf (Minimum allele frequency) thresold (defauld : 0.01)\n"
-              << "  -t, --thread INT             Number of threads\n"
-              << "  -o, --output DIR             Output dir name\n"
+              << "  -M, --maf FLOAT              Add a maf (Minimum allele frequency) thresold (defauld: 0.01)\n"
+              << "  -t, --thread INT             Number of threads (default: 1)\n"
+              << "  -O, --output DIR             Output dir name (STOAT GWAS on VCF only)\n"
               << "  -h, --help                   Print this help message\n";
 }
 
