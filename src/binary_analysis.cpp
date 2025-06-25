@@ -280,6 +280,13 @@ void glm_logistic_covar(
 
 // ------------------------ Chi2 test ------------------------
 std::string chi2_2x2(const std::vector<size_t>& g0, const std::vector<size_t>& g1) {
+
+    // Extract values from the table
+    size_t a = g0[0];
+    size_t b = g0[1];
+    size_t c = g1[0];
+    size_t d = g1[1];
+
     int64_t row1 = a + b;
     int64_t row2 = c + d;
     int64_t col1 = a + c;

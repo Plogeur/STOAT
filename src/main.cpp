@@ -19,6 +19,7 @@
 #include <chrono>
 #include <Eigen/Dense>
 #include <cstdlib>
+#include <getopt.h>
 
 #include "arg_parser.hpp"
 #include "snarl_parser.hpp"     
@@ -37,40 +38,28 @@ void print_help() {
               << "  -p, --pg FILE                Path to the packed graph file (.pg)\n"
               << "  -d, --dist FILE              Path to the packed distance index file (.dist)\n"
               << "  -v, --vcf FILE               Path to the VCF file (.vcf or .vcf.gz)\n"
-
-              << "  -H, --graph-hash FILE        Path to the hash graph file (.hg)\n"
-              << "  -D, --dist-hash FILE         Path to the hash distance index (.dist)\n"
-              << "  -S, --sample NAME            Sample name with the trait of interest (may repeat)\n"
-              << "  -a, --assoc-file FILE        Write the records for the associated samples to FILE\n"
-              << "  -u, --unassoc-file FILE      Write the records for the unassociated samples to FILE\n"
-              << "  -A, --test-assoc NAME        Which test will be used to determine association (exact / fishers / chi2) (default: exact)\n"
-              << "  -P, --p-threshold FLOAT      Threshold p-value to be considered significant (default: 0.05)\n"
-              << "  -E, --method NAME            Method use to find associations (paths) (default: paths)\n"
-              << "  -L, --allele-size-limit INT  Report only variants with allele size smaller than this threshold (default: 0)\n"
-              << "  -R, --reference-sample NAME  Use this sample as the reference if no reference path exists in the graph\n"
-              << "  -o, --output-format NAME     Format of the output (STOAT GWAS on graph only) (tsv / fasta) (default: tsv)\n"
-
               << "  -s, --snarl FILE             Path to the snarl file (.txt or .tsv)\n"
               << "  -r, --chr FILE               Path to the chromosome reference file (.txt)\n"
-              << "  -b, --binary FILE            Path to the binary group file (.txt or .tsv)\n"
+              << "  -b, --binary FILE            Path to the binary phenotype group file (.txt or .tsv)\n"
               << "  -q, --quantitative FILE      Path to the quantitative phenotype file (.txt or .tsv)\n"
               << "  -e, --eqtl FILE              Path to the Expression Quantitative Trait Loci file (.txt or .tsv)\n"
-              << "  -m, --make-bed               Create a plink format files (aka .bed, .bim, .fam)\n"
+              << "  -m, --make-bed               Create plink format files (.bed, .bim, .fam)\n"
               << "  -c, --covariate FILE         Path to the covariate file (.txt or .tsv)\n"
-              << "  -C, --covar-name NAME        Covariate column name used in the gwas analyse\n"
+              << "  -C, --covar-name NAME        Covariate column name(s) used for GWAS (comma-separated if multiple)\n"
               << "  -k, --kinship FILE           Path to the kinship matrix file (.txt or .tsv)\n"
-              << "  -g, --gaf                    Make a GAF file from the GWAS analysis\n"
-              << "  -I, --children INT           Max number of children for a snarl in the snarl decomposition process (default: 50)\n"
-              << "  -y, --cycle INT              Max number of authorized cycle use in snarl decomposition (defauld: 1)\n"
-              << "  -l, --path-length INT        Max number of node in path in the snarl decomposition process (default: 10 000)\n"
-              << "  -G, --gene-position FILE     Path to the Gene position file (.txt or .tsv)\n"
-              << "  -w, --windows-gene INT       Defines a window threshold length from the gene's start to end positions to test all snarls within in eqtl analysis. (defauld : 1 000 000)\n"
-              << "  -T, --table-threshold FLOAT  The p-value threshold for regression table file (only for regression assoc) (defauld : disable)\n"
-              << "  -M, --maf FLOAT              Add a maf (Minimum allele frequency) thresold (defauld: 0.01)\n"
-              << "  -t, --thread INT             Number of threads (default: 1)\n"
-              << "  -O, --output DIR             Output dir name (STOAT GWAS on VCF only)\n"
+              << "  -g, --gaf                    Generate a GAF file from GWAS results\n"
+              << "  -i, --children INT           Max number of children per snarl in decomposition (default: 50)\n"
+              << "  -y, --cycle INT              Max number of authorized cycles in snarl decomposition (default: 1)\n"
+              << "  -l, --path-length INT        Max number of nodes in paths during snarl decomposition (default: 10,000)\n"
+              << "  -G, --gene-position FILE     Path to the gene position file (.txt or .tsv)\n"
+              << "  -w, --windows-gene INT       Window length from gene boundaries for snarl inclusion in eQTL (default: 1,000,000)\n"
+              << "  -T, --table-threshold FLOAT  P-value threshold for regression table output (default: disabled)\n"
+              << "  -M, --maf FLOAT              Minimum allele frequency threshold (default: 0.01)\n"
+              << "  -t, --thread INT             Number of threads to use (default: 1)\n"
+              << "  -o, --output DIR             Output directory name (VCF GWAS mode)\n"
               << "  -h, --help                   Print this help message\n";
 }
+
 
 int main(int argc, char* argv[]) {
     // Declare variables to hold argument values
@@ -111,7 +100,7 @@ int main(int argc, char* argv[]) {
         {"covar-name", required_argument, 0, 'C'},
         {"kinship", required_argument, 0, 'k'},
         {"gaf", no_argument, 0, 'g'},
-        {"children", required_argument, 0, 'H'},
+        {"children", required_argument, 0, 'i'},
         {"cycle", required_argument, 0, 'y'},
         {"path-length", required_argument, 0, 'l'},
         {"gene-position", required_argument, 0, 'G'},
@@ -124,7 +113,7 @@ int main(int argc, char* argv[]) {
         {0, 0, 0, 0}
     };
 
-    while ((c = getopt_long(argc, argv, "v:s:p:d:r:b:q:e:mc:C:k:gH:y:l:G:w:T:M:t:o:h", long_options, nullptr)) != -1) {
+    while ((c = getopt_long(argc, argv, "v:s:p:d:r:b:q:e:m:c:C:k:g:i:y:l:G:w:T:M:t:o:h", long_options, nullptr)) != -1) {
         switch (c) {
             case 'v': vcf_path = optarg; check_file(vcf_path); break;
             case 's': snarl_path = optarg; check_file(snarl_path); break;
@@ -144,7 +133,7 @@ int main(int argc, char* argv[]) {
             }
             case 'k': kinship_path = optarg; check_file(kinship_path); break;
             case 'g': gaf = true; break;
-            case 'H':
+            case 'i':
                 children_threshold = std::stoi(optarg);
                 if (children_threshold < 2) {
                     std::cerr << "Error: Children threshold must be > 1\n";
