@@ -22,7 +22,7 @@
 using namespace std;
 
 std::string set_precision(const double& value);
-std::string set_precision_chi2(const boost::multiprecision::cpp_dec_float_50& value);
+std::string set_precision_float_50(const boost::multiprecision::cpp_dec_float_50& value);
 
 double combine_pvalue_from_strings(const std::string& p1, const std::string& p2);
 bool is_na(const std::string& s);

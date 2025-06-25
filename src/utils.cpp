@@ -12,7 +12,7 @@ std::string set_precision(const double& value) {
     return oss.str();
 }
 
-std::string set_precision_chi2(const boost::multiprecision::cpp_dec_float_50& value) {
+std::string set_precision_float_50(const boost::multiprecision::cpp_dec_float_50& value) {
     std::ostringstream oss;
     oss << std::setprecision(4);
     if (value < boost::multiprecision::cpp_dec_float_50("1e-4")) {

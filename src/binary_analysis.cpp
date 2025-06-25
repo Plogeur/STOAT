@@ -27,6 +27,8 @@ using boost::math::chi_squared_distribution;
 // 2^{-40} for now, since 2^{-44} was too small on real data
 static const double kExactTestEpsilon2 = 0.0000000000009094947017729282379150390625;
 static const double kExactTestBias = 0.00000000000000000000000010339757656912845935892608650874535669572651386260986328125;
+static const boost::math::chi_squared chi_squared_dist(1);
+chi_squared_distribution<cpp_dec_float_50> cpp_dec_float_50_dist(1);
 
 // ------------------------ Logistic regression ------------------------
 
@@ -277,44 +279,35 @@ void glm_logistic_covar(
 }
 
 // ------------------------ Chi2 test ------------------------
-
 std::string chi2_2x2(const std::vector<size_t>& g0, const std::vector<size_t>& g1) {
-
-    int a = g0[0];
-    int b = g0[1];
-    int c = g1[0];
-    int d = g1[1];
-
     int64_t row1 = a + b;
     int64_t row2 = c + d;
     int64_t col1 = a + c;
     int64_t col2 = b + d;
     int64_t total = row1 + row2;
 
-    if (row1 == 0 || row2 == 0 || col1 == 0 || col2 == 0) {
-        return "NA";
-    }
+    if (row1 == 0 || row2 == 0 || col1 == 0 || col2 == 0) return "0.0";
 
-    // compute numerator safely using int64_t everywhere
-    int64_t ad = a * d;
-    int64_t bc = b * c;
-    double numerator = static_cast<double>(std::abs(ad - bc)) - 0.5 * static_cast<double>(total);
-    numerator = std::max(0.0, numerator);
-    numerator *= numerator;
+    double expected_a = (double)(row1) * (col1) / total;
+    double expected_b = (double)(row1) * (col2) / total;
+    double expected_c = (double)(col1) * (row2) / total;
+    double expected_d = (double)(col2) * (row2) / total;
 
-    double denominator = static_cast<double>(row1) * static_cast<double>(row2) * static_cast<double>(col1) * static_cast<double>(col2) / static_cast<double>(total);
-    long double chi2_stat = numerator / denominator;
+    if (expected_a == 0 || expected_b == 0 || expected_c == 0 || expected_d == 0)
+        return set_precision(std::numeric_limits<double>::max());
+
+    double chi2_stat = 0;
+    chi2_stat += std::pow((double)a - expected_a, 2) / expected_a;
+    chi2_stat += std::pow((double)b - expected_b, 2) / expected_b;
+    chi2_stat += std::pow((double)c - expected_c, 2) / expected_c;
+    chi2_stat += std::pow((double)d - expected_d, 2) / expected_d;
 
     if (chi2_stat > 85.0) {
         cpp_dec_float_50 chi2_stat_float_50 = chi2_stat;
-        chi_squared_distribution<cpp_dec_float_50> dist(1);
-        cpp_dec_float_50 p_value = 1.0 - boost::math::cdf(dist, chi2_stat_float_50);
-        return set_precision_chi2(p_value);
+        cpp_dec_float_50 pval = 1.0 - boost::math::cdf(cpp_dec_float_50_dist, chi2_stat_float_50);
+        return set_precision_float_50(pval.convert_to<double>());
     }
-
-    boost::math::chi_squared dist(1);
-    long double p_value = 1.0 - boost::math::cdf(dist, chi2_stat);
-    return set_precision(p_value);
+    return set_precision(1.0 - boost::math::cdf(chi_squared_dist, chi2_stat));
 }
 
 // Check if the observed matrix is valid (no zero rows/columns)
@@ -350,16 +343,16 @@ std::string chi2_2xN(const std::vector<size_t>& g0, const std::vector<size_t>& g
         chi2 += (g1[i] - expected_1) * (g1[i] - expected_1) / expected_1;
     }
 
+    size_t df = cols - 1;
     if (chi2 > 85.0) { // avoiding case 0.000+00 precision
         cpp_dec_float_50 chi2_stat_float_50 = chi2;
-        chi_squared_distribution<cpp_dec_float_50> dist(1);
-        cpp_dec_float_50 p_value = 1.0 - boost::math::cdf(dist, chi2_stat_float_50);
-        return set_precision_chi2(p_value);
+        chi_squared_distribution<cpp_dec_float_50> cpp_dec_float_50_dist_2xN(df);
+        cpp_dec_float_50 p_value = 1.0 - boost::math::cdf(cpp_dec_float_50_dist_2xN, chi2_stat_float_50);
+        return set_precision_float_50(p_value);
     }
 
-    size_t df = cols - 1;
-    boost::math::chi_squared dist(df);
-    double pvalue = 1.0 - boost::math::cdf(dist, chi2);
+    boost::math::chi_squared dist_2xN(df);
+    double pvalue = 1.0 - boost::math::cdf(dist_2xN, chi2);
     return set_precision(pvalue);
 }
 
