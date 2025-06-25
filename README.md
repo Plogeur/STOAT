@@ -30,9 +30,10 @@ Manual installation :
 - Catch2 v3
 - vg (optional)
 
-Or you can use the `Dockerfile` or the compiled unbuntu version provided (coming soon).
+Or you can use the `Dockerfile` : [Dockerfile](https://github.com/Plogeur/STOAT/blob/main/Dockerfile)
+Or you can use the `container` : docker://quay.io/matis_alias-bagarre/stoat
 
-## Building
+## Build
 
 ```bash
 git clone --branch stoat_cxx https://github.com/Plogeur/STOAT.git

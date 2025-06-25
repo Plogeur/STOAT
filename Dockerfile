@@ -48,7 +48,7 @@ RUN git clone https://github.com/Plogeur/STOAT --branch stoat_cxx \
     && mkdir build \
     && cd build \
     && cmake .. \
-    && make -j 4
+    && make -j$(nproc)
 
 # Définir le répertoire de travail
 WORKDIR /home

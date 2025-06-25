@@ -29,32 +29,47 @@
 
 using namespace std;
 
+// 
+// stoat vcf ...
+// stoat graph ... 
 void print_help() {
-    std::cout << "Usage: stoat_cxx [options]\n\n"
-              << "Options:\n"
-              << "  -v, --vcf <path>            Path to the VCF file (.vcf or .vcf.gz)\n"
-              << "  -s, --snarl <path>          Path to the snarl file (.txt or .tsv)\n"
-              << "  -p, --pg <path>             Path to the pg file (.pg)\n"
-              << "  -d, --dist <path>           Path to the dist file (.dist)\n"
-              << "  -r, --chr <path>            Path to the chromosome reference file (.txt)\n"
-              << "  --children <int>            Max number of children for a snarl in the snarl decomposition process (default = 50)\n"
-              << "  --path-length <int>         Max number of node in path in the snarl decomposition process (default = 10 000)\n"
-              << "  -b, --binary <path>         Path to the binary group file (.txt or .tsv)\n"
-              << "  -g, --gaf                   Make a GAF file from the GWAS analysis\n"
-              << "  -q, --quantitative <path>   Path to the quantitative phenotype file (.txt or .tsv)\n"
-              << "  --covariate <path>          Path to the covariate file (.txt or .tsv)\n"
-              << "  --covar-name <string>       Covariate column name used in the gwas analyse\n"
-              << "  -e, --eqtl <path>           Path to the Expression Quantitative Trait Loci file (.txt or .tsv)\n"
-              << "  --gene-position <path>      Path to the Gene position file (.txt or .tsv)\n"
-              << "  -k, --kinship <path>        Path to the kinship matrix file (.txt or .tsv)\n"
-              << "  --make-bed                  Create a plink format files (.bed, .bim, .fam)\n"
-              << "  --windows-gene <int>        Defines a window threshold length from the gene's start to end positions to test all snarls within. (defauld : 1 000 000)\n"
-              << "  --table-threshold <double>  The p-value threshold for regression table file (defauld : disable)\n"
-              << "  --cycle <int>               Max number of authorized cycle use in snarl parsing (defauld : 1)\n"
-              << "  --maf                       Add a maf (Minimum allele frequency) thresold (defauld : 0.01)\n"
-              << "  -o, --output <name>         Output dir name\n"
-              << "  -t, --thread <int>          Number of threads\n"
-              << "  -h, --help                  Print this help message\n";
+    std::cout << "Usage: stoat [options]\n\n"
+              << "  -p, --pg FILE                Path to the packed graph file (.pg)\n"
+              << "  -d, --dist FILE              Path to the packed distance index file (.dist)\n"
+              << "  -v, --vcf FILE               Path to the VCF file (.vcf or .vcf.gz)\n"
+
+              << "  -H, --graph-hash FILE        Path to the hash graph file (.hg)\n"
+              << "  -D, --dist-hash FILE         Path to the hash distance index (.dist)\n"
+              << "  -S, --sample NAME            Sample name with the trait of interest (may repeat)\n"
+              << "  -a, --assoc-file FILE        Write the records for the associated samples to FILE\n"
+              << "  -u, --unassoc-file FILE      Write the records for the unassociated samples to FILE\n"
+              << "  -A, --test-assoc NAME        Which test will be used to determine association (exact / fishers / chi2) (default: exact)\n"
+              << "  -P, --p-threshold FLOAT      Threshold p-value to be considered significant (default: 0.05)\n"
+              << "  -E, --method NAME            Method use to find associations (paths) (default: paths)\n"
+              << "  -L, --allele-size-limit INT  Report only variants with allele size smaller than this threshold (default: 0)\n"
+              << "  -R, --reference-sample NAME  Use this sample as the reference if no reference path exists in the graph\n"
+              << "  -o, --output-format NAME     Format of the output (STOAT GWAS on graph only) (tsv / fasta) (default: tsv)\n"
+
+              << "  -s, --snarl FILE             Path to the snarl file (.txt or .tsv)\n"
+              << "  -r, --chr FILE               Path to the chromosome reference file (.txt)\n"
+              << "  -b, --binary FILE            Path to the binary group file (.txt or .tsv)\n"
+              << "  -q, --quantitative FILE      Path to the quantitative phenotype file (.txt or .tsv)\n"
+              << "  -e, --eqtl FILE              Path to the Expression Quantitative Trait Loci file (.txt or .tsv)\n"
+              << "  -m, --make-bed               Create a plink format files (aka .bed, .bim, .fam)\n"
+              << "  -c, --covariate FILE         Path to the covariate file (.txt or .tsv)\n"
+              << "  -C, --covar-name NAME        Covariate column name used in the gwas analyse\n"
+              << "  -k, --kinship FILE           Path to the kinship matrix file (.txt or .tsv)\n"
+              << "  -g, --gaf                    Make a GAF file from the GWAS analysis\n"
+              << "  -I, --children INT           Max number of children for a snarl in the snarl decomposition process (default: 50)\n"
+              << "  -y, --cycle INT              Max number of authorized cycle use in snarl decomposition (defauld: 1)\n"
+              << "  -l, --path-length INT        Max number of node in path in the snarl decomposition process (default: 10 000)\n"
+              << "  -G, --gene-position FILE     Path to the Gene position file (.txt or .tsv)\n"
+              << "  -w, --windows-gene INT       Defines a window threshold length from the gene's start to end positions to test all snarls within in eqtl analysis. (defauld : 1 000 000)\n"
+              << "  -T, --table-threshold FLOAT  The p-value threshold for regression table file (only for regression assoc) (defauld : disable)\n"
+              << "  -M, --maf FLOAT              Add a maf (Minimum allele frequency) thresold (defauld: 0.01)\n"
+              << "  -t, --thread INT             Number of threads (default: 1)\n"
+              << "  -O, --output DIR             Output dir name (STOAT GWAS on VCF only)\n"
+              << "  -h, --help                   Print this help message\n";
 }
 
 int main(int argc, char* argv[]) {
@@ -71,7 +86,7 @@ int main(int argc, char* argv[]) {
     size_t path_length_threshold = 10000;
     size_t windows_gene_threshold = 1000000;
     double table_threshold = -1;
-    double maf = 0.99;
+    double maf = 0.99; // inversed MAF 
     bool gaf = false;
     bool only_snarl_parsing = false;
     bool show_help = false;
@@ -79,111 +94,111 @@ int main(int argc, char* argv[]) {
 
     std::vector<std::string> covar_names;
 
-    // Parse arguments manually
-    for (int i = 1; i < argc; ++i) {
-        std::string arg = argv[i];
-        if ((arg == "-v" || arg == "--vcf") && i + 1 < argc) {
-            vcf_path = argv[++i];
-            check_file(vcf_path);
-        } else if ((arg == "-s" || arg == "--snarl") && i + 1 < argc) {
-            snarl_path = argv[++i];
-            check_file(snarl_path);
-        } else if ((arg == "-p" || arg == "--pg") && i + 1 < argc) {
-            pg_path = argv[++i];
-            check_file(pg_path);
-        } else if ((arg == "-d" || arg == "--dist") && i + 1 < argc) {
-            dist_path = argv[++i];
-            check_file(dist_path);
-        } else if ((arg == "-r" || arg == "--chr") && i + 1 < argc) {
-            chromosome_path = argv[++i];
-            check_file(chromosome_path);
-        } else if ((arg == "--make-bed")) {
-            make_bed=true;
-        } else if ((arg == "--children") && i + 1 < argc) {
-            children_threshold = std::stoi(argv[++i]);
-            if (children_threshold < 2) {
-                std::cerr << "Error: Number of children must be a positive integer > 1\n";
+    // Parse arguments
+    int c;
+
+    static struct option long_options[] = {
+        {"vcf", required_argument, 0, 'v'},
+        {"snarl", required_argument, 0, 's'},
+        {"pg", required_argument, 0, 'p'},
+        {"dist", required_argument, 0, 'd'},
+        {"chr", required_argument, 0, 'r'},
+        {"binary", required_argument, 0, 'b'},
+        {"quantitative", required_argument, 0, 'q'},
+        {"eqtl", required_argument, 0, 'e'},
+        {"make-bed", no_argument, 0, 'm'},
+        {"covariate", required_argument, 0, 'c'},
+        {"covar-name", required_argument, 0, 'C'},
+        {"kinship", required_argument, 0, 'k'},
+        {"gaf", no_argument, 0, 'g'},
+        {"children", required_argument, 0, 'H'},
+        {"cycle", required_argument, 0, 'y'},
+        {"path-length", required_argument, 0, 'l'},
+        {"gene-position", required_argument, 0, 'G'},
+        {"windows-gene", required_argument, 0, 'w'},
+        {"table-threshold", required_argument, 0, 'T'},
+        {"maf", required_argument, 0, 'M'},
+        {"thread", required_argument, 0, 't'},
+        {"output", required_argument, 0, 'o'},
+        {"help", no_argument, 0, 'h'},
+        {0, 0, 0, 0}
+    };
+
+    while ((c = getopt_long(argc, argv, "v:s:p:d:r:b:q:e:mc:C:k:gH:y:l:G:w:T:M:t:o:h", long_options, nullptr)) != -1) {
+        switch (c) {
+            case 'v': vcf_path = optarg; check_file(vcf_path); break;
+            case 's': snarl_path = optarg; check_file(snarl_path); break;
+            case 'p': pg_path = optarg; check_file(pg_path); break;
+            case 'd': dist_path = optarg; check_file(dist_path); break;
+            case 'r': chromosome_path = optarg; check_file(chromosome_path); break;
+            case 'b': binary_path = optarg; phenotype++; check_file(binary_path); break;
+            case 'q': quantitative_path = optarg; phenotype++; check_file(quantitative_path); break;
+            case 'e': eqtl_path = optarg; phenotype++; check_file(eqtl_path); break;
+            case 'm': make_bed = true; break;
+            case 'c': covariate_path = optarg; check_file(covariate_path); break;
+            case 'C': {
+                std::stringstream ss(optarg);
+                std::string token;
+                while (std::getline(ss, token, ',')) covar_names.push_back(token);
+                break;
+            }
+            case 'k': kinship_path = optarg; check_file(kinship_path); break;
+            case 'g': gaf = true; break;
+            case 'H':
+                children_threshold = std::stoi(optarg);
+                if (children_threshold < 2) {
+                    std::cerr << "Error: Children threshold must be > 1\n";
+                    return EXIT_FAILURE;
+                }
+                break;
+            case 'y':
+                cycle_threshold = std::stoi(optarg);
+                if (cycle_threshold < 1) {
+                    std::cerr << "Error: Cycle threshold must be > 0\n";
+                    return EXIT_FAILURE;
+                }
+                break;
+            case 'l':
+                path_length_threshold = std::stoi(optarg);
+                if (path_length_threshold < 2) {
+                    std::cerr << "Error: Path length threshold must be > 1\n";
+                    return EXIT_FAILURE;
+                }
+                break;
+            case 'G': gene_position_path = optarg; check_file(gene_position_path); break;
+            case 'w':
+                windows_gene_threshold = std::stoi(optarg);
+                if (windows_gene_threshold < 1) {
+                    std::cerr << "Error: Windows gene threshold must be > 0\n";
+                    return EXIT_FAILURE;
+                }
+                break;
+            case 'T':
+                table_threshold = std::stod(optarg);
+                if (table_threshold <= 0 || table_threshold > 1) {
+                    std::cerr << "Error: Table threshold must be in (0,1]\n";
+                    return EXIT_FAILURE;
+                }
+                break;
+            case 'M':
+                maf = 1 - std::stod(optarg);
+                if (maf < 0 || maf > 1) {
+                    std::cerr << "Error: MAF must be in [0,1]\n";
+                    return EXIT_FAILURE;
+                }
+                break;
+            case 't':
+                num_threads = std::stoi(optarg);
+                if (num_threads < 1) {
+                    std::cerr << "Error: Number of threads must be > 0\n";
+                    return EXIT_FAILURE;
+                }
+                break;
+            case 'o': output_dir = optarg; break;
+            case 'h': print_help(); exit(EXIT_SUCCESS); break;
+            default:
+                std::cerr << "Unknown argument. Use -h or --help for usage.\n";
                 return EXIT_FAILURE;
-            }
-        } else if ((arg == "--path-length") && i + 1 < argc) {
-            path_length_threshold = std::stoi(argv[++i]);
-            if (path_length_threshold < 2) {
-                std::cerr << "Error: Number of path length must be a positive integer > 1\n";
-                return EXIT_FAILURE;
-            }
-        } else if ((arg == "-b" || arg == "--binary") && i + 1 < argc) {
-            binary_path = argv[++i];
-            phenotype ++;
-            check_file(binary_path);
-        } else if ((arg == "-g" || arg == "--gaf") && i + 1 < argc) {
-            gaf=true;
-        } else if ((arg == "--covariate") && i + 1 < argc) {
-            covariate_path = argv[++i];
-            check_file(covariate_path);
-        } else if ((arg == "--gene-position") && i + 1 < argc) {
-            gene_position_path = argv[++i];
-            check_file(gene_position_path);
-        } else if ((arg == "--covar-name") && i + 1 < argc) {
-            std::string covar_arg = argv[++i];
-            // Split by comma if multiple names provided
-            std::stringstream ss(covar_arg);
-            std::string token;
-            while (std::getline(ss, token, ',')) {
-                covar_names.push_back(token);
-            }
-        } else if ((arg == "-k" || arg == "--kinship") && i + 1 < argc) {
-            kinship_path = argv[++i];
-            check_file(kinship_path);
-        } else if ((arg == "-q" || arg == "--quantitative") && i + 1 < argc) {
-            quantitative_path = argv[++i];
-            phenotype ++;
-            check_file(quantitative_path);
-        } else if ((arg == "-e" || arg == "--eqtl") && i + 1 < argc) {
-            eqtl_path = argv[++i];
-            phenotype ++;
-            check_file(eqtl_path);
-        } else if ((arg == "-t" || arg == "--threads") && i + 1 < argc) {
-            // convert str to int and verify that it is a positive number
-            num_threads = std::stoi(argv[++i]);
-            if (num_threads < 1) {
-                std::cerr << "Error: Number of threads must be a positive integer\n";
-                return EXIT_FAILURE;
-            }
-        } else if ((arg == "--cycle") && i + 1 < argc) {
-            // convert str to int and verify that it is a positive number
-            cycle_threshold = std::stoi(argv[++i]);
-            if (cycle_threshold < 1) {
-                std::cerr << "Error: Max number of cycle must be a positive integer\n";
-                return EXIT_FAILURE;
-            }
-        } else if ((arg == "--table-threshold") && i + 1 < argc) {
-            // convert str to int and verify that it is a positive number
-            table_threshold = std::stod(argv[++i]);
-            if (table_threshold < 0 && table_threshold > 1) {
-                std::cerr << "Error: Pvalue threshold for table threshold must be ∈ ]0;1] \n";
-                return EXIT_FAILURE;
-            }
-        } else if ((arg == "--windows-gene") && i + 1 < argc) {
-            // convert str to int and verify that it is a positive number
-            windows_gene_threshold = std::stoi(argv[++i]);
-            if (windows_gene_threshold < 1) {
-                std::cerr << "Error: windows gene threshold for the eqtl analysis must be a positive integer\n";
-                return EXIT_FAILURE;
-            }
-        } else if ((arg == "--maf") && i + 1 < argc) {
-            // convert str to int and verify that it is a positive number
-            maf = 1-std::stod(argv[++i]);
-            if (maf < 0 || maf > 1) {
-                std::cerr << "Error: maf threshold must be a between 0 and 1\n";
-                return EXIT_FAILURE;
-            }
-        } else if ((arg == "-o" || arg == "--output") && i + 1 < argc) {
-            output_dir = argv[++i];
-        } else if (arg == "-h" || arg == "--help") {
-            show_help = true;
-        } else {
-            std::cerr << "Unknown argument: " << arg << "\n";
-            show_help = true;
         }
     }
 
@@ -210,7 +225,7 @@ int main(int argc, char* argv[]) {
 
     auto start_1 = std::chrono::high_resolution_clock::now();
     std::filesystem::create_directory(output_dir);
-
+    
     if (chromosome_path.empty() && snarl_path.empty()) {
         std::cout << "Warning : chromosome_path file not provided, 'ref' reference chromosome name will be used instead" << std::endl;
     }
@@ -289,14 +304,14 @@ int main(int argc, char* argv[]) {
     // chr : <snarl, paths, pos(start, end), type>
     // TODO : replace std::tuple<string, vector<string>, size_t, size_t, vector<string>> to 5 vector (to reduce space/time usage)
     std::unordered_map<std::string, std::vector<std::tuple<string, vector<string>, size_t, size_t, vector<string>>>> snarls_chr;
+    std::unique_ptr<bdsg::SnarlDistanceIndex> stree;
+    std::unique_ptr<bdsg::PackedGraph> pg;
+    handlegraph::net_handle_t root;
+    std::unique_ptr<bdsg::PackedPositionOverlay> pp_overlay;
 
     if (!snarl_path.empty()){
         snarls_chr = parse_snarl_path(snarl_path);
     } else {
-        std::unique_ptr<bdsg::SnarlDistanceIndex> stree;
-        std::unique_ptr<bdsg::PackedGraph> pg;
-        handlegraph::net_handle_t root;
-        std::unique_ptr<bdsg::PackedPositionOverlay> pp_overlay;
 
         std::cout << "Start snarl analysis... " << std::endl;
         auto start_0 = std::chrono::high_resolution_clock::now();
@@ -375,9 +390,11 @@ int main(int argc, char* argv[]) {
     auto end_1 = std::chrono::high_resolution_clock::now();
     std::cout << "Snarl analysis : " << std::chrono::duration<double>(end_1 - start_2).count() << " s" << std::endl;
     std::cout << "Time Gwas analysis : " << std::chrono::duration<double>(end_1 - start_1).count() << " s" << std::endl;
-
     return EXIT_SUCCESS;
 }
+
+// DROSO
+// ./stoat_cxx -p ../data_droso/fly.pg -d ../data_droso/fly.dist -v ../data_droso/merged.vcf -q ../data_droso/phenotype.tsv --output ../output_droso
    
 // DROSO
 // ./stoat_cxx -p ../data/droso/fly.pg -d ../data/droso/fly.dist -r ../data/droso/chromosome_ref.tsv --output ../output_droso

@@ -627,7 +627,7 @@ void SnarlParser::binary_table(const std::vector<std::tuple<std::string, std::ve
                         lmm_binary(df, phenotype_filtered, kinship, covar, p_value, beta, se, r2);
                     }
                     
-                    // Plot regression table  for boxplot visualization
+                    // Plot regression table
                     if (table_threshold != -1 && isPValueSignificant(table_threshold, p_value)) {
                         string variant_file_name = regression_dir + "/" + snarl + ".tsv";
                         writeSignificantTableToTSV(df, list_snarl, sampleNames, variant_file_name);
@@ -733,16 +733,10 @@ void SnarlParser::quantitative_table(const std::vector<std::tuple<string, vector
                 } else { // single test
                     linear_regression(df, phenotype_filtered, p_value, beta, se, r2);
                 }
-
+                
                 if (table_threshold != -1 && isPValueSignificant(table_threshold, p_value)) {
                     string variant_file_name = regression_dir + "/" + snarl + ".tsv";
                     writeSignificantTableToTSV(df, list_snarl, sampleNames, variant_file_name);
-                }
-
-                if (snarl == "7690843_7690846") {
-                    string variant_file_name = regression_dir + "/" + snarl + ".tsv";
-                    writeSignificantTableToTSV(df, list_snarl, sampleNames, variant_file_name);
-                    cout << "7690843_7690846 p_value : " << p_value << endl;
                 }
                 
                 // chr, pos, snarl, type, p_value, p_adjusted, r2, beta, se, allele_number

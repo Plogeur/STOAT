@@ -53,12 +53,13 @@ void linear_regression(
         Eigen::MatrixXd XtX = X.transpose() * X;
         Eigen::MatrixXd cov_matrix = XtX.ldlt().solve(Eigen::MatrixXd::Identity(X.cols(), X.cols()));
         se = (cov_matrix.diagonal() * mse).array().sqrt().matrix();
+        // std::cerr << "Warning: se is nan" << std::endl;
     }
 
     // t-statistics
     Eigen::VectorXd t_stats = beta.array() / se.array();
     boost::math::students_t t_dist(df_res);
-
+ 
     std::vector<double> p_values;
     for (int i = 1; i < num_features+1; ++i) { // i = 1 avoid const p-value
         if (std::isnan(t_stats[i]) || std::isinf(t_stats[i])) {
