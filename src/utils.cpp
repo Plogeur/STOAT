@@ -72,7 +72,6 @@ bool isPValueSignificant(const double& pvalue_threshold, const std::string& pval
             return false; // Treat "NA" as not significant
         } else {
             pvalue = std::stod(pvalue_str);
-            cout << "pvalue : " << pvalue << endl;
         }
     } catch (const std::exception& e) {
         std::cerr << "Error parsing pvalue string : " << pvalue_str << " " << e.what() << "\n";
