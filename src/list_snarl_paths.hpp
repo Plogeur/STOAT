@@ -30,6 +30,8 @@ using handlegraph::step_handle_t;
 using handlegraph::handle_t;
 using handlegraph::net_handle_t;
 
+// A class representing a path as a vector of strings representing nodes
+// TODO: This is only used in fill_pretty_paths()
 class Path {
 private:
     std::vector<std::string> nodes;
@@ -58,6 +60,7 @@ public:
     size_t nreversed() const;
 };
 
+// Load the distance index and graph and return unique_ptrs to them
 std::tuple<std::unique_ptr<bdsg::SnarlDistanceIndex>, 
            std::unique_ptr<bdsg::PackedGraph>, 
            handlegraph::net_handle_t, 
@@ -71,6 +74,8 @@ vector<string> calcul_pos_type_variant(const vector<tuple<string, size_t, size_t
 string find_snarl_id(SnarlDistanceIndex& stree, net_handle_t& snarl);
 
 // Function to follow edges
+// Following the netgraph edges from the last element of path, and make a new path for each different continuation of the path.
+// If the new path(s) reach the end of the snarl, add the new path to finished_paths. Otherwise, add it to paths.
 void follow_edges(SnarlDistanceIndex& stree,
     vector<vector<net_handle_t>>& finished_paths,
     const vector<net_handle_t>& path,
@@ -79,6 +84,9 @@ void follow_edges(SnarlDistanceIndex& stree,
     const bool& cycle);
 
 // Function to save snarls
+// Returns a vector of <snarl net handle, reference path name, start offset on reference, end offset on reference, does the reference pass through the snarl> 
+// for each snarl in the snarl tree 
+// If the reference doesn't pass through the snarl, then the snarl's reference path and offsets will be the same as its lowest ancestor that has reference coordinates. 
 vector<tuple<net_handle_t, string, size_t, size_t, bool>> save_snarls(
                             SnarlDistanceIndex& stree, 
                             net_handle_t& root,
@@ -87,12 +95,16 @@ vector<tuple<net_handle_t, string, size_t, size_t, bool>> save_snarls(
                             PackedPositionOverlay& ppo);
 
 // Function to fill pretty paths
+// Given a vector of paths finished_paths (as vectors of net_handle_ts of children of a snarl), return 
+// a vector of paths and their corresponding variant types  
 tuple<vector<string>, vector<string>> fill_pretty_paths(
                             SnarlDistanceIndex& stree, 
                             PackedGraph& pg, 
                             vector<vector<net_handle_t>>& finished_paths);
 
-// Function to loop over snarls and write output
+// Function to loop over snarls and write output to output_file
+// Output is a tsv of <chromosome, start pos, end pos, snarl, paths, variant type, reference>
+// Returns a map from chromosome name to a vector of <snarl name, paths, start position, end position, variant type>
 std::unordered_map<std::string, std::vector<std::tuple<string, vector<string>, size_t, size_t, vector<string>>>> loop_over_snarls_write(
                             SnarlDistanceIndex& stree, 
                             vector<tuple<net_handle_t, string, size_t, size_t, bool>>& snarls, 

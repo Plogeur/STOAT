@@ -539,6 +539,7 @@ std::vector<size_t> identify_correct_path(
     std::vector<size_t> rows_to_check;
     rows_to_check.reserve(decomposed_snarl.size());
 
+    // TODO: I think this is going through edges in the path through the snarl, not snarls
     // Map snarl names to row indices
     for (const auto& snarl : decomposed_snarl) {
         if (snarl.find("*") != std::string::npos) {

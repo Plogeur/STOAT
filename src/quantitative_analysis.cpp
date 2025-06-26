@@ -212,6 +212,8 @@ std::tuple<std::vector<std::vector<double>>, std::vector<T>, size_t, std::vector
     for (size_t col_idx = 0; col_idx < length_column; ++col_idx) {
         const std::string& path_snarl = column_headers[col_idx];
         std::vector<std::string> decomposed_snarl = decompose_string(path_snarl);
+
+        //Get the indices of all samples that take this path
         std::vector<size_t> idx_srr_save = identify_correct_path(decomposed_snarl, matrix, length_sample * 2);
 
         if (idx_srr_save.empty())
