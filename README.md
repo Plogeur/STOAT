@@ -98,6 +98,20 @@ samp_g0_0	1	1.2	562.25	42.25
 samp_g0_1	0	5.2	359.25	65.24
 ```
 
+EQTL file : 
+```
+IID	SEX	CP1	CP2	CP42
+samp_g0_0	1	1.2	562.25	42.25
+samp_g0_1	0	5.2	359.25	65.24
+```
+
+Gene position file :
+```
+IID	SEX	CP1	CP2	CP42
+samp_g0_0	1	1.2	562.25	42.25
+samp_g0_1	0	5.2	359.25	65.24
+```
+
 ## Usage
 
 Use `stoat tool` if you want to launch the full tool at once, starting from snarl path identification (identifying the multiple paths that can be taken by a sample based on the pangenome graph) and ending with the results plots (Manhattan plot and QQ plot).
@@ -119,28 +133,29 @@ stoat -p <pg.pg> -d <dist.dist> -v <vcf_file.vcf.gz> -q <phenotype.txt> --chr <r
 
 Explanation of all options:
 ```bash 
--v, --vcf <path>            Path to the VCF file (.vcf or .vcf.gz)
--s, --snarl <path>          Path to the snarl file (.txt or .tsv)
--p, --pg <path>             Path to the pg file (.pg)
--d, --dist <path>           Path to the dist file (.dist)
--r, --chr <path>            Path to the chromosome reference file (.txt)
---children <int>            Max number of children for a snarl in the snarl decomposition process (default = 50)
---path-length <int>         Max length for a path snarl in the snarl decomposition process (default = 10 000)
--b, --binary <path>         Path to the binary group file (.txt or .tsv)
--g, --gaf                   Make a GAF file from the GWAS analysis
--q, --quantitative <path>   Path to the quantitative phenotype file (.txt or .tsv)
---covariate <path>          Path to the covariate file (.txt or .tsv)
---covar-name <string>       Covariate column name used in the gwas analyse
--e, --eqtl <path>           Path to the Expression Quantitative Trait Loci file (.txt or .tsv)
---gene-position <path>      Path to the Gene position file (.txt or .tsv)
--k, --kinship <path>        Path to the kinship matrix file (.txt or .tsv)
---make-bed                  Create a plink format files (.bed, .bim, .fam)
---table-threshold <int>     The p-value threshold for regression data file (exemple : 5 <=> 10-5, defauld 0 : disable)
---cycle <int>               Max number of authorized cycle use in snarl parsing (defauld : 1)
---maf                       Add a maf (Minimum allele frequency) thresold (defauld : 0.01)
--o, --output <name>         Output dir name
--t, --thread <int>          Number of threads
--h, --help                  Print this help message
+-p, --pg FILE                Path to the packed graph file (.pg)
+-d, --dist FILE              Path to the packed distance index file (.dist)
+-v, --vcf FILE               Path to the VCF file (.vcf or .vcf.gz)
+-s, --snarl FILE             Path to the snarl file (.txt or .tsv)
+-r, --chr FILE               Path to the chromosome reference file (.txt)
+-b, --binary FILE            Path to the binary phenotype group file (.txt or .tsv)
+-q, --quantitative FILE      Path to the quantitative phenotype file (.txt or .tsv)
+-e, --eqtl FILE              Path to the Expression Quantitative Trait Loci file (.txt or .tsv)
+--make-bed                   Create plink format files (.bed, .bim, .fam)
+--covariate FILE             Path to the covariate file (.txt or .tsv)
+--covar-name NAME            Covariate column name(s) used for GWAS (comma-separated if multiple)
+-k, --kinship FILE           Path to the kinship matrix file (.txt or .tsv)
+-g, --gaf                    Generate a GAF file from GWAS results
+--children INT               Max number of children per snarl in decomposition (default: 50)
+--cycle INT                  Max number of authorized cycles in snarl decomposition (default: 1)
+--path-length INT            Max number of nodes in paths during snarl decomposition (default: 10,000)
+-G, --gene-position FILE     Path to the gene position file (.txt or .tsv)
+-w, --windows-gene INT       Window length from gene boundaries for snarl inclusion in eQTL (default: 1,000,000)
+-T, --table-threshold FLOAT  P-value threshold for regression table output (default: disabled)
+--maf FLOAT                  Minimum allele frequency threshold (default: 0.01)
+-t, --thread INT             Number of threads to use (default: 1)
+-o, --output DIR             Output directory name (VCF GWAS mode)
+-h, --help                   Print this help message
 ```
 
 ## Output

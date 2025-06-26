@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.10)
-project(stoat_cxx VERSION 0.1.1 LANGUAGES CXX)
+project(stoat VERSION 0.1.1 LANGUAGES CXX)
 
 # C++ Standard Settings
 set(CMAKE_CXX_STANDARD 17)

@@ -1,12 +1,4 @@
-LINEAR REGRESSION :
-    boost::math::students_t t_dist(df_res);
-    // terminate called after throwing an instance of 'boost::wrapexcept<std::domain_error>'
-    // what():  Error in function boost::math::students_t_distribution<double>::students_t_distribution: Degrees of freedom argument is 0, but must be > 0 !
-
-    // Standard errors
-    // change cov_matrix calcul if X.transpose() * X might be ill-conditioned or nearly singular
-    if (se.hasNaN() || se.hasInf())
-
-SNARL DECOMPOSE :
-4	7389651	7389656	5468605_5468611	>5468605>5468611,>5468605>5468606>*>5468609>5468611,>5468605>5468606>*>5468609>5468610>5468611	0,4/31272427,4/31272427	0
-
+Add more comment
+Correct the single paths snarl error 
+Test in the snarl decompose paths if in the .chr chr name are present in the graph if not stop the analysis and return a error ("chr not found")
+Correct the dockerfile by adding a stoat path

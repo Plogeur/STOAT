@@ -422,140 +422,140 @@ int main(int argc, char* argv[]) {
         std::string associated_filename;
         std::string unassociated_filename;
 
-        int c = 0;
-        optind = 1;
-        while (true) {
-            static struct option long_options[] =
-                {
-                    {"graph", required_argument, 0, 'g'},
-                    {"distance-index", required_argument, 0, 'd'},
-                    {"allele-size-limit", required_argument, 0, 'l'},
-                    {"threads", required_argument, 0, 't'},
-                    {"test", required_argument, 0, 'T'},
-                    {"p-value", required_argument, 0, 'p'},
-                    {"method", required_argument, 0, 'm'},
-                    {"reference-sample", required_argument, 0, 'r'},
-                    {"sample-of-interest", required_argument, 0, 's'},
-                    {"output-format", required_argument, 0, 'o'},
-                    {"associated-filename", required_argument, 0, 'a'},
-                    {"unassociated-filename", required_argument, 0, 'u'},
-                    {"help", no_argument, 0, 'h'},
-                    {0, 0, 0, 0}
-                };
+    //     int c = 0;
+    //     optind = 1;
+    //     while (true) {
+    //         static struct option long_options[] =
+    //             {
+    //                 {"graph", required_argument, 0, 'g'},
+    //                 {"distance-index", required_argument, 0, 'd'},
+    //                 {"allele-size-limit", required_argument, 0, 'l'},
+    //                 {"threads", required_argument, 0, 't'},
+    //                 {"test", required_argument, 0, 'T'},
+    //                 {"p-value", required_argument, 0, 'p'},
+    //                 {"method", required_argument, 0, 'm'},
+    //                 {"reference-sample", required_argument, 0, 'r'},
+    //                 {"sample-of-interest", required_argument, 0, 's'},
+    //                 {"output-format", required_argument, 0, 'o'},
+    //                 {"associated-filename", required_argument, 0, 'a'},
+    //                 {"unassociated-filename", required_argument, 0, 'u'},
+    //                 {"help", no_argument, 0, 'h'},
+    //                 {0, 0, 0, 0}
+    //             };
 
-            int option_index = 0;
-            c = getopt_long(argc, argv, "g:d:l:t:T:p:m:r:s:o:a:u:h",
-                            long_options, &option_index); 
-            if (c == -1) {
-                break;
-            }
-            switch (c) {
-                case 'g':
-                    graph_name = optarg;
-                    break;
-                case 'd':
-                    distance_name = optarg;
-                    break;
-                case 'l':
-                    allele_size_limit = std::stoi(optarg);
-                    break;
-                case 't':
-                    omp_set_num_threads(std::stoi(optarg));
-                    break;
-                case 'T':
-                    test_method = optarg;
-                    break;
-                case 'p':
-                    p_value = std::stof(optarg);
-                    break;
-                case 'm':
-                    method_name = optarg;
-                    break;
-                case 'r':
-                    reference_sample = optarg;
-                    break;
-                case 's':
-                    samples_of_interest.emplace(optarg);
-                    break;
-                case 'o':
-                    output_format = optarg;
-                    break;
-                case 'a':
-                    associated_filename = optarg;
-                    break;
-                case 'u':
-                    unassociated_filename = optarg;
-                    break;
-                case 'h': print_help_graph(); exit(EXIT_SUCCESS); break;
-                default:
-                    std::cerr << "Unknown argument. Use -h or --help for usage.\n";
-                    return EXIT_FAILURE;
-            }
-        }
+    //         int option_index = 0;
+    //         c = getopt_long(argc, argv, "g:d:l:t:T:p:m:r:s:o:a:u:h",
+    //                         long_options, &option_index); 
+    //         if (c == -1) {
+    //             break;
+    //         }
+    //         switch (c) {
+    //             case 'g':
+    //                 graph_name = optarg;
+    //                 break;
+    //             case 'd':
+    //                 distance_name = optarg;
+    //                 break;
+    //             case 'l':
+    //                 allele_size_limit = std::stoi(optarg);
+    //                 break;
+    //             case 't':
+    //                 omp_set_num_threads(std::stoi(optarg));
+    //                 break;
+    //             case 'T':
+    //                 test_method = optarg;
+    //                 break;
+    //             case 'p':
+    //                 p_value = std::stof(optarg);
+    //                 break;
+    //             case 'm':
+    //                 method_name = optarg;
+    //                 break;
+    //             case 'r':
+    //                 reference_sample = optarg;
+    //                 break;
+    //             case 's':
+    //                 samples_of_interest.emplace(optarg);
+    //                 break;
+    //             case 'o':
+    //                 output_format = optarg;
+    //                 break;
+    //             case 'a':
+    //                 associated_filename = optarg;
+    //                 break;
+    //             case 'u':
+    //                 unassociated_filename = optarg;
+    //                 break;
+    //             case 'h': print_help_graph(); exit(EXIT_SUCCESS); break;
+    //             default:
+    //                 std::cerr << "Unknown argument. Use -h or --help for usage.\n";
+    //                 return EXIT_FAILURE;
+    //         }
+    //     }
 
-        // Check that the inputs are ok
-        if (graph_name.empty()) {
-            std::cerr << "error [pangwas]: pangwas requires a graph file" << endl;
-            EXIT_FAILURE; 
-        }
-        if (distance_name.empty()) {
-            std::cerr << "error [pangwas]: pangwas requires a distance index file" << endl;
-            EXIT_FAILURE; 
-        }
-        if (samples_of_interest.empty()) {
-            std::cerr << "error [pangwas]: pangwas requires samples of interest" << endl;
-            EXIT_FAILURE; 
-        }
+    //     // Check that the inputs are ok
+    //     if (graph_name.empty()) {
+    //         std::cerr << "error [pangwas]: pangwas requires a graph file" << endl;
+    //         EXIT_FAILURE; 
+    //     }
+    //     if (distance_name.empty()) {
+    //         std::cerr << "error [pangwas]: pangwas requires a distance index file" << endl;
+    //         EXIT_FAILURE; 
+    //     }
+    //     if (samples_of_interest.empty()) {
+    //         std::cerr << "error [pangwas]: pangwas requires samples of interest" << endl;
+    //         EXIT_FAILURE; 
+    //     }
 
-        // Tell the IO library about libvg types.
-        if (!pangwas::io::register_libvg_io()) {
-            cerr << "error[vg]: Could not register libvg types with libvgio" << endl;
-            EXIT_FAILURE;
-        }
+    //     // Tell the IO library about libvg types.
+    //     if (!pangwas::io::register_libvg_io()) {
+    //         cerr << "error[vg]: Could not register libvg types with libvgio" << endl;
+    //         EXIT_FAILURE;
+    //     }
 
-        // Load the graph and make it a PathPositionHandleGraph
-        unique_ptr<handlegraph::PathHandleGraph> path_graph = vg::io::VPKG::load_one<handlegraph::PathHandleGraph>(graph_name);
-        bdsg::PathPositionOverlayHelper overlay_helper;
-        bdsg::PathPositionHandleGraph* graph = overlay_helper.apply(path_graph.get());
+    //     // Load the graph and make it a PathPositionHandleGraph
+    //     unique_ptr<handlegraph::PathHandleGraph> path_graph = vg::io::VPKG::load_one<handlegraph::PathHandleGraph>(graph_name);
+    //     bdsg::PathPositionOverlayHelper overlay_helper;
+    //     bdsg::PathPositionHandleGraph* graph = overlay_helper.apply(path_graph.get());
 
-        // Load the distance index
-        bdsg::SnarlDistanceIndex distance_index;
-        distance_index.deserialize(distance_name);
+    //     // Load the distance index
+    //     bdsg::SnarlDistanceIndex distance_index;
+    //     distance_index.deserialize(distance_name);
 
-        // Get the out streams
-        std::ofstream out_associated;
-        if (!associated_filename.empty()) {
-            out_associated.open(associated_filename);
-        }
-        std::ofstream out_unassociated;
-        if (!unassociated_filename.empty()) {
-            out_unassociated.open(unassociated_filename);
-        }
+    //     // Get the out streams
+    //     std::ofstream out_associated;
+    //     if (!associated_filename.empty()) {
+    //         out_associated.open(associated_filename);
+    //     }
+    //     std::ofstream out_unassociated;
+    //     if (!unassociated_filename.empty()) {
+    //         out_unassociated.open(unassociated_filename);
+    //     }
 
-        if (method_name == "paths") {
-            pangwas::PathAssociationFinder af (*graph, 
-                                            distance_index, 
-                                            test_method,
-                                            samples_of_interest, 
-                                            reference_sample, 
-                                            output_format,
-                                            associated_filename.empty() ? std::cout : out_associated,
-                                            unassociated_filename.empty() ? std::cout : out_unassociated,
-                                            allele_size_limit,
-                                            p_value);
-            af.write_associated_snarls();
-        } else {
-            std::cerr << "error [pangwas]: unknown method " << method_name << endl;
-            EXIT_FAILURE; 
-        }
+    //     if (method_name == "paths") {
+    //         pangwas::PathAssociationFinder af (*graph, 
+    //                                         distance_index, 
+    //                                         test_method,
+    //                                         samples_of_interest, 
+    //                                         reference_sample, 
+    //                                         output_format,
+    //                                         associated_filename.empty() ? std::cout : out_associated,
+    //                                         unassociated_filename.empty() ? std::cout : out_unassociated,
+    //                                         allele_size_limit,
+    //                                         p_value);
+    //         af.write_associated_snarls();
+    //     } else {
+    //         std::cerr << "error [pangwas]: unknown method " << method_name << endl;
+    //         EXIT_FAILURE; 
+    //     }
 
-        //Close streams
-        if (!associated_filename.empty()) {
-            out_associated.close();
-        }
-        if (!unassociated_filename.empty()) {
-            out_unassociated.close();
-        }
+    //     //Close streams
+    //     if (!associated_filename.empty()) {
+    //         out_associated.close();
+    //     }
+    //     if (!unassociated_filename.empty()) {
+    //         out_unassociated.close();
+    //     }
 
     } else {
         std::cerr << "Unknown subcommand: " << subcommand << "\n";
@@ -567,10 +567,10 @@ int main(int argc, char* argv[]) {
 }
 
 // DROSO
-// ./stoat_cxx -p ../data_droso/fly.pg -d ../data_droso/fly.dist -v ../data_droso/merged.vcf -q ../data_droso/phenotype.tsv --output ../output_droso
+// ./stoat -p ../data_droso/fly.pg -d ../data_droso/fly.dist -v ../data_droso/merged.vcf -q ../data_droso/phenotype.tsv --output ../output_droso
    
 // DROSO
-// ./stoat_cxx -p ../data/droso/fly.pg -d ../data/droso/fly.dist -r ../data/droso/chromosome_ref.tsv --output ../output_droso
+// ./stoat -p ../data/droso/fly.pg -d ../data/droso/fly.dist -r ../data/droso/chromosome_ref.tsv --output ../output_droso
 // sed -i 's/dm6#0#chr2L/1/g' ../output_droso/snarl_analyse.tsv
 // sed -i 's/dm6#0#chr2R/2/g' ../output_droso/snarl_analyse.tsv
 // sed -i 's/dm6#0#chr3L/3/g' ../output_droso/snarl_analyse.tsv
@@ -579,36 +579,36 @@ int main(int argc, char* argv[]) {
 // sed -i 's/dm6#0#chrX/6/g' ../output_droso/snarl_analyse.tsv
 // sed -i 's/dm6#0#chrY/7/g' ../output_droso/snarl_analyse.tsv
 // sed -i 's/dm6#0#chrM/8/g' ../output_droso/snarl_analyse.tsv
-// ./stoat_cxx -s ../output_droso/snarl_analyse.tsv -v ../data/droso/merging_stoat.vcf -q ../data/droso/pangenome_pheno.tsv --output ../output_droso
+// ./stoat -s ../output_droso/snarl_analyse.tsv -v ../data/droso/merging_stoat.vcf -q ../data/droso/pangenome_pheno.tsv --output ../output_droso
 
 // BINARY
-// ./stoat_cxx -p ../data/binary/pg.pg -d ../data/binary/pg.dist -v ../data/binary/merged_output.vcf.gz -b ../data/binary/phenotype.tsv --output ../output
+// ./stoat -p ../data/binary/pg.pg -d ../data/binary/pg.dist -v ../data/binary/merged_output.vcf.gz -b ../data/binary/phenotype.tsv --output ../output
 
 // BINARY + COVARIATE
-// ./stoat_cxx -p ../data/binary/pg.pg -d ../data/binary/pg.dist -v ../data/binary/merged_output.vcf.gz -b ../data/binary/phenotype.tsv --covariate ../data/binary/covariate.tsv --covar-name CP1,SEX,CP3 --output ../output
+// ./stoat -p ../data/binary/pg.pg -d ../data/binary/pg.dist -v ../data/binary/merged_output.vcf.gz -b ../data/binary/phenotype.tsv --covariate ../data/binary/covariate.tsv --covar-name CP1,SEX,CP3 --output ../output
 
 // QUANTITATIVE
-// ./stoat_cxx -p ../data/quantitative/pg.pg -d ../data/quantitative/pg.dist -v ../data/quantitative/merged_output.vcf.gz -q ../data/quantitative/phenotype.tsv --output ../output
+// ./stoat -p ../data/quantitative/pg.pg -d ../data/quantitative/pg.dist -v ../data/quantitative/merged_output.vcf.gz -q ../data/quantitative/phenotype.tsv --output ../output
 
 // QUANTITATIVE + COVARIATE
-// ./stoat_cxx -p ../data/quantitative/pg.pg -d ../data/quantitative/pg.dist -v ../data/quantitative/merged_output.vcf.gz -q ../data/quantitative/phenotype.tsv  --covariate ../data/quantitative/covariate.tsv --covar-name CP1,SEX,CP3 --output ../output
+// ./stoat -p ../data/quantitative/pg.pg -d ../data/quantitative/pg.dist -v ../data/quantitative/merged_output.vcf.gz -q ../data/quantitative/phenotype.tsv  --covariate ../data/quantitative/covariate.tsv --covar-name CP1,SEX,CP3 --output ../output
 
 // EQTL
-// ./stoat_cxx -s ../test_data/quantitative/paths_snarl.tsv -v ../test_data/quantitative/variants.vcf -e ../test_data/quantitative/qtl.tsv --gene-position ../test_data/quantitative/gene_position.tsv --output ../output
+// ./stoat -s ../test_data/quantitative/paths_snarl.tsv -v ../test_data/quantitative/variants.vcf -e ../test_data/quantitative/qtl.tsv --gene-position ../test_data/quantitative/gene_position.tsv --output ../output
 
 // TEST
-// ./stoat_cxx -p ../tests/graph_test/3th_snp.pg -d ../tests/graph_test/3th_snp.dist --output ../output
+// ./stoat -p ../tests/graph_test/3th_snp.pg -d ../tests/graph_test/3th_snp.dist --output ../output
 
 // BINARY-PLINK
-// ./stoat_cxx -p ../data/binary/pg.pg -d ../data/binary/pg.dist -v ../data/binary/merged_output.vcf.gz --make-bed --output ../output
+// ./stoat -p ../data/binary/pg.pg -d ../data/binary/pg.dist -v ../data/binary/merged_output.vcf.gz --make-bed --output ../output
 
 // QUANTITATIVE-PLINK
-// ./stoat_cxx -p ../data/quantitative/pg.pg -d ../data/quantitative/pg.dist -v ../data/quantitative/merged_output.vcf.gz --make-bed --output ../output
+// ./stoat -p ../data/quantitative/pg.pg -d ../data/quantitative/pg.dist -v ../data/quantitative/merged_output.vcf.gz --make-bed --output ../output
 
 // SIMULATION NEW
-// ./stoat_cxx -v ../data/simu/variants.vcf -s ../data/simu/paths_snarl.tsv -b ../data/simu/phenotypes.txt --covariate ../data/simu/covar.tsv --covar-name AGE,SEX,PC1,PC2 --output ../output
+// ./stoat -v ../data/simu/variants.vcf -s ../data/simu/paths_snarl.tsv -b ../data/simu/phenotypes.txt --covariate ../data/simu/covar.tsv --covar-name AGE,SEX,PC1,PC2 --output ../output
 
-// ./stoat_cxx -v ../data/simu/variants.vcf -s ../data/simu/paths_snarl.tsv -b ../data/simu/phenotypes.txt --make-bed --output ../output
+// ./stoat -v ../data/simu/variants.vcf -s ../data/simu/paths_snarl.tsv -b ../data/simu/phenotypes.txt --make-bed --output ../output
 // plink --bfile ../output/output --pheno ../data/simu/phenotypes.txt --pheno-name PHENO --assoc --allow-no-sex --allow-extra-chr --out ../output/stoat_plink
 
 // PLINK
@@ -616,5 +616,5 @@ int main(int argc, char* argv[]) {
 // plink --bfile ../output/genotype --pheno ../data/simu/phenotypes.txt --pheno-name PHENO --assoc --allow-no-sex --allow-extra-chr --out ../output/plink
 
 // VALGRIND
-// valgrind --tool=callgrind ./stoat_cxx -s ../data/binary/snarl_paths.tsv -v ../data/binary/merged_output.vcf.gz -b ../data/binary/phenotype.tsv --output ../output
+// valgrind --tool=callgrind ./stoat -s ../data/binary/snarl_paths.tsv -v ../data/binary/merged_output.vcf.gz -b ../data/binary/phenotype.tsv --output ../output
 // kcachegrind callgrind.out.<id>
