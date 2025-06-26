@@ -243,6 +243,7 @@ SnarlParser::SnarlParser(const vector<string>& sample_names, size_t num_paths_ch
 {}
 
 std::pair<std::vector<size_t>, std::vector<size_t>> SnarlParser::create_table_short_path(const vector<std::string>& list_path_snarl) {
+    // TODO: Could just make the transposed version to start with?
 
     size_t length_column = list_path_snarl.size();
     std::vector<size_t> allele_number_list(length_column, 0);
