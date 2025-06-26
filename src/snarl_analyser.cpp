@@ -10,7 +10,7 @@ using namespace std;
 
 void chromosome_chuck_make_bed(htsFile* &ptr_vcf, bcf_hdr_t* &hdr, bcf1_t* &rec, 
     const std::vector<std::string> &list_samples,
-    const std::unordered_map<std::string, Snarl_data_t>& snarl_chr,
+    const std::unordered_map<std::string, std::vector<Snarl_data_t>>& snarl_chr,
     const string& output_dir) {
 
     const std::string output_bed = output_dir + ".bed";
@@ -72,7 +72,7 @@ void chromosome_chuck_make_bed(htsFile* &ptr_vcf, bcf_hdr_t* &hdr, bcf1_t* &rec,
 
 void chromosome_chuck_quantitative(htsFile* &ptr_vcf, bcf_hdr_t* &hdr, bcf1_t* &rec, 
     const std::vector<std::string> &list_samples,
-    const unordered_map<string, Snarl_data_t> &snarl_chr,
+    const unordered_map<string, std::vector<Snarl_data_t>> &snarl_chr,
     const std::vector<double>& quantitative_phenotype, std::vector<std::vector<double>> covar,
     const double& maf, const KinshipMatrix& kinship, const size_t& num_threads, 
     const double& table_threshold, const std::string& regression_dir,
@@ -128,7 +128,7 @@ void chromosome_chuck_quantitative(htsFile* &ptr_vcf, bcf_hdr_t* &hdr, bcf1_t* &
 
 void chromosome_chuck_eqtl(htsFile* &ptr_vcf, bcf_hdr_t* &hdr, bcf1_t* &rec, 
     const std::vector<std::string> &list_samples,
-    const std::unordered_map<std::string, Snarl_data_t> &snarl_chr,
+    const std::unordered_map<std::string, std::vector<Snarl_data_t>> &snarl_chr,
     const std::unordered_map<std::string, std::vector<std::tuple<std::string, std::vector<double>, size_t, size_t>>>& eqtl_map,
     const std::vector<std::vector<double>>& covar,
     const double& maf, const KinshipMatrix& kinship, const size_t& num_threads, 
@@ -184,7 +184,7 @@ void chromosome_chuck_eqtl(htsFile* &ptr_vcf, bcf_hdr_t* &hdr, bcf1_t* &rec,
 
 void chromosome_chuck_binary(htsFile* &ptr_vcf, bcf_hdr_t* &hdr, bcf1_t* &rec, 
     const std::vector<std::string> &list_samples, 
-    const unordered_map<string, Snarl_data_t> &snarl_chr,
+    const unordered_map<string, std::vector<Snarl_data_t>> &snarl_chr,
     const std::vector<bool>& binary_pheno, std::vector<std::vector<double>> covar, 
     const double& maf, const KinshipMatrix& kinship, const size_t& num_threads, 
     const double& table_threshold, const std::string& regression_dir,
@@ -274,7 +274,7 @@ std::pair<std::vector<size_t>, std::vector<size_t>> SnarlAnalyser::create_table_
         find_two_largest_indices(allele_number_list, major_index_1, major_index_2);
     }
 
-    return {genotypes_transposed[major_index_1], genotypes_transposed[major_index_1]};
+    return {genotypes_transposed[major_index_1], genotypes_transposed[major_index_2]};
 }
 
 std::vector<std::vector<size_t>> transpose_matrix(const std::vector<std::vector<size_t>>& matrix) {
@@ -311,7 +311,7 @@ void find_two_largest_indices(const std::vector<size_t>& vec, size_t& major_inde
     }
 }
 
-void SnarlAnalyser::create_bim_bed(const Snarl_data_t& snarls, 
+void SnarlAnalyser::create_bim_bed(const std::vector<Snarl_data_t>& snarls, 
                                 string chromosome, std::ofstream& outbim, std::ofstream& outbed) {
 
     // Iterate over each snarl
@@ -571,7 +571,7 @@ std::vector<size_t> identify_correct_path(
     return idx_srr_save;
 }
 
-void SnarlAnalyser::binary_table(const Snarl_data_t& snarls,
+void SnarlAnalyser::binary_table(const std::vector<Snarl_data_t>& snarls,
                                const std::vector<bool>& binary_phenotype, const std::string& chr,
                                const std::vector<std::vector<double>>& covar,
                                const double& maf, const KinshipMatrix& kinship, const size_t& num_threads, 
@@ -678,7 +678,7 @@ void SnarlAnalyser::binary_table(const Snarl_data_t& snarls,
 }
 
 // Quantitative Table Generation
-void SnarlAnalyser::quantitative_table(const Snarl_data_t& snarls,
+void SnarlAnalyser::quantitative_table(const std::vector<Snarl_data_t>& snarls,
                                         const std::vector<double>& quantitative_phenotype, const string &chr,
                                         const std::vector<std::vector<double>>& covar,
                                         const double& maf, const KinshipMatrix& kinship, const size_t& num_threads, 
@@ -814,7 +814,7 @@ std::vector<size_t> found_gene_snarl(
 }
 
 void SnarlAnalyser::eqtl_table(
-    const Snarl_data_t& snarls,
+    const std::vector<Snarl_data_t>& snarls,
     const std::vector<std::tuple<std::string, std::vector<double>, size_t, size_t>>& eqtl,
     const std::string& chr, const std::vector<std::vector<double>>& covar,
     const double& maf, const KinshipMatrix& kinship, const size_t& num_threads, 

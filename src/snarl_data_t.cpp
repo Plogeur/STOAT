@@ -29,23 +29,14 @@ std::string Path_traversal_t::to_string() const {
     return result;
 }
 
-// Maximum number of snarls to reserve space for
-void Snarl_data_t::reserve(size_t snarl_count = MAX_SNARLS) {
-    snarls.reserve(snarl_count);
-    paths.reserve(snarl_count);
-    start_positions.reserve(snarl_count);
-    end_positions.reserve(snarl_count);
-    types.reserve(snarl_count);
-}
-
 // Add a snarl
-void Snarl_data_t::add_snarl(const std::pair<size_t, size_t>& name, const Path_traversal_t& paths,
+Snarl_data_t::Snarl_data_t(const std::pair<size_t, size_t>& name, const std::vector<Path_traversal_t>& paths,
                     size_t start, size_t end, const std::vector<std::string>& path_nodes) {
-    snarl_names.push_back(name);
-    paths_per_snarl.push_back(paths);
-    start_positions.push_back(start);
-    end_positions.push_back(end);
-    path_nodes_per_snarl.push_back(path_nodes);
+    snarl_id = name;
+    paths_per_snarl = paths;
+    start_positions = start;
+    end_positions = end;
+    path_nodes_per_snarl = path_nodes;
 }
 
 Path::Path() {}
@@ -489,7 +480,7 @@ tuple<vector<Path_traversal_t>, vector<string>> fill_pretty_paths(
 }
 
 // {chr : matrix(snarl, paths, start_pos, end_pos, type)}
-std::unordered_map<std::string, Snarl_data_t> loop_over_snarls_write(
+std::unordered_map<std::string, std::vector<Snarl_data_t>> loop_over_snarls_write(
         SnarlDistanceIndex& stree,
         vector<tuple<net_handle_t, string, size_t, size_t, bool>>& snarls,
         PackedGraph& pg, 
@@ -508,8 +499,8 @@ std::unordered_map<std::string, Snarl_data_t> loop_over_snarls_write(
     ofstream out_fail(output_snarl_not_analyse);
     out_fail << "SNARL\tREASON\n";
         
-    Snarl_data_t snarl_paths;
-    unordered_map<string, Snarl_data_t> chr_snarl_matrix;
+    std::vector<Snarl_data_t> snarl_paths;
+    unordered_map<string, std::vector<Snarl_data_t>> chr_snarl_matrix;
     size_t paths_number_analysis = 0;
     string save_chr = "";
 
@@ -585,7 +576,8 @@ std::unordered_map<std::string, Snarl_data_t> loop_over_snarls_write(
                     snarl_paths.clear();
                 }
                 save_chr = chr;
-                snarl_paths.add_snarl(snarl_id, pretty_paths, strat_pos, end_pos, type_variants);
+                Snarl_data_t snarl_path(snarl_id, pretty_paths, strat_pos, end_pos, type_variants);
+                snarl_paths.push_back(snarl_path);
             }
         }
     }

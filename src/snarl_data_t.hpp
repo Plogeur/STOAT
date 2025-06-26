@@ -33,20 +33,30 @@ using handlegraph::net_handle_t;
 struct Snarl_data_t {
 
     public:
-        // Maximum number of snarls to reserve space for
-        void reserve(size_t snarl_count = MAX_SNARLS);
+        // Constructor definition
+        Snarl_data_t(const std::pair<size_t, size_t>& name,
+                    const std::vector<Path_traversal_t>& paths,
+                    size_t start, size_t end,
+                    const std::vector<std::string>& path_nodes)
+            : snarl_id(name),
+            snarl_paths(paths),
+            start_positions(start),
+            end_positions(end),
+            type_variants(path_nodes) {}  // Assuming path_nodes correspond to type_variants
 
-        // Add a snarl
-        void add_snarl(const std::pair<size_t, size_t>& name, const Path_traversal_t& paths,
-                    size_t start, size_t end, const std::vector<std::string>& path_nodes);
+        // Getters
+        const std::pair<size_t, size_t>& get_snarl_names() const { return snarl_id; }
+        const std::vector<Path_traversal_t>& get_paths_per_snarl() const { return snarl_paths; }
+        const size_t& get_start_positions() const { return start_positions; }
+        const size_t& get_end_positions() const { return end_positions; }
+        const std::vector<std::string>& get_path_nodes_per_snarl() const { return type_variants; }
 
     private:
-
-        std::vector<std::pair<size_t, size_t>> snarl_id;
+        std::pair<size_t, size_t> snarl_id;
+        std::vector<std::string> type_variants;
         std::vector<Path_traversal_t> snarl_paths;
-        std::vector<size_t> start_positions;
-        std::vector<size_t> end_positions;
-        std::vector<std::vector<std::string>> type_variants; // because of complexe X/Y we can't use size_t here
+        size_t start_positions;
+        size_t end_positions;
 };
 
 struct Node_traversal_t {
@@ -137,7 +147,7 @@ tuple<vector<Path_traversal_t>, vector<string>> fill_pretty_paths(
                             vector<vector<net_handle_t>>& finished_paths);
 
 // Function to loop over snarls and write output
-std::unordered_map<std::string, Snarl_data_t> loop_over_snarls_write(
+std::unordered_map<std::string, std::vector<Snarl_data_t>> loop_over_snarls_write(
                             SnarlDistanceIndex& stree, 
                             vector<tuple<net_handle_t, string, size_t, size_t, bool>>& snarls, 
                             PackedGraph& pg, 

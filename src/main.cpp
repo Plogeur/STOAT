@@ -24,7 +24,7 @@
 #include "arg_parser.hpp"
 #include "snarl_analyser.hpp"     
 #include "matrix.hpp"
-#include "Snarl_data_t.hpp"
+#include "std::vector<Snarl_data_t>.hpp"
 #include "gaf_creator.hpp"
 #include "post_processing.hpp"
 
@@ -327,7 +327,7 @@ int main(int argc, char* argv[]) {
 
         // scope declaration
         // chr : <snarl, paths, pos(start, end), type>
-        std::unordered_map<std::string, Snarl_data_t> snarls_chr;
+        std::unordered_map<std::string, std::vector<Snarl_data_t>> snarls_chr;
         std::unique_ptr<bdsg::SnarlDistanceIndex> stree;
         std::unique_ptr<bdsg::PackedGraph> pg;
         handlegraph::net_handle_t root;
