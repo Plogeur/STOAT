@@ -18,6 +18,7 @@
 
 #include <boost/math/distributions/chi_squared.hpp>
 #include <boost/multiprecision/cpp_dec_float.hpp>
+#include "snarl_data_t.hpp"
 
 using namespace std;
 
@@ -44,8 +45,10 @@ std::string vector_to_string(const std::vector<T>& vec);
 
 std::string pairToString(const std::pair<size_t, size_t>& name);
 
+std::pair<size_t, size_t> stringToPair(const std::string& str);
+
 std::string vector_path_to_string(const std::vector<Path_traversal_t>& vec_paths);
 
-std::pair<size_t, size_t> stringToPair(const std::string& str);
+std::vector<Path_traversal_t> string_to_vector_path(const std::string& input);
 
 #endif

@@ -318,7 +318,7 @@ std::unordered_map<std::string, std::vector<Snarl_data_t>> parse_snarl_path(cons
 
         std::istringstream path_stream(path_list);
         std::istringstream type_stream(type_var);
-        std::vector<std::string> paths;
+        std::vector<std::string> paths_vector_str;
         std::vector<std::string> type;
         size_t start_pos = std::stoi(start_pos_str);
         size_t end_pos = std::stoi(end_pos_str);
@@ -345,7 +345,7 @@ std::unordered_map<std::string, std::vector<Snarl_data_t>> parse_snarl_path(cons
         // size_t start, size_t end, const std::vector<std::string>& path_nodes
 
         std::pair<size_t, size_t> snarl_pair = stringToPair(snarl);
-        std::vector<Path_traversal_t>& paths = snarl_paths.get_snarl_names(snarl_pair);
+        std::vector<Path_traversal_t>& paths = string_to_vector_path(paths_vector_str);
         Snarl_data_t snarl_path(snarl_pair, paths, start_pos, end_pos, type);
         snarl_paths.push_back(snarl_path);
     }

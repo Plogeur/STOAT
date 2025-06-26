@@ -168,15 +168,6 @@ std::string pairToString(const std::pair<size_t, size_t>& name) {
     return oss.str();
 }
 
-std::string vector_path_to_string(const std::vector<Path_traversal_t>& vec_paths) {
-    std::ostringstream oss;
-    for (size_t i = 0; i < vec_paths.size(); ++i) {
-        if (i > 0) oss << ",";
-        oss << vec_paths[i].to_string();
-    }
-    return oss.str();
-}
-
 std::pair<size_t, size_t> stringToPair(const std::string& str) {
     size_t underscorePos = str.find('_');
     if (underscorePos == std::string::npos) {
@@ -190,4 +181,44 @@ std::pair<size_t, size_t> stringToPair(const std::string& str) {
     size_t second = std::stoul(secondPart);
 
     return {first, second};
+}
+
+std::string vector_path_to_string(const std::vector<Path_traversal_t>& vec_paths) {
+    std::ostringstream oss;
+    for (size_t i = 0; i < vec_paths.size(); ++i) {
+        if (i > 0) oss << ",";
+        oss << vec_paths[i].to_string();
+    }
+    return oss.str();
+}
+
+std::vector<Path_traversal_t> string_to_vector_path(const std::string& input) {
+    std::vector<Path_traversal_t> vec_paths;
+    std::istringstream iss(input);
+    std::string path_str;
+
+    // Split by commas to get individual Path_traversal_t strings
+    while (std::getline(iss, path_str, ',')) {
+        Path_traversal_t path;
+        size_t i = 0;
+
+        while (i < path_str.size()) {
+            // Parse node_id
+            size_t node_id = 0;
+            while (i < path_str.size() && std::isdigit(path_str[i])) {
+                node_id = node_id * 10 + (path_str[i] - '0');
+                ++i;
+            }
+
+            bool is_reverse = (path_str[i] == '<');
+            ++i;
+
+            Node_traversal_t node(node_id, is_reverse);
+            path.add_node_traversal_t(node);
+        }
+
+        vec_paths.push_back(path);
+    }
+
+    return vec_paths;
 }
