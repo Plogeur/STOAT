@@ -74,11 +74,19 @@ void print_help_graph() {
                 << "  -h, --help                         print this help message" << endl;
 }
 
+void print_help() {
+    std::cerr   << "stoat: gwas analysis tool, version v0.0.1\n";
+                << "usage: stoat <command> [options]\n\n"    
+                << "main usage:\n";
+                << "  -- vcf       gwas analysis base on vcf pangenome calling\n";
+                << "  -- graph     gwas analysis base on pangenome graph\n";
+                << "  -- version   version information\n";                      
+}
+
 int main(int argc, char* argv[]) {
 
     if (argc < 2) {
-        std::cerr << "Error: Missing subcommand (vcf, graph)\n";
-        std::cerr << "Usage: stoat <subcommand> [options]\n";
+        print_help();
         return EXIT_FAILURE;
     }
 
@@ -557,9 +565,16 @@ int main(int argc, char* argv[]) {
     //         out_unassociated.close();
     //     }
 
+    } else if (subcommand == "version") {
+        // TODO : change for a variable
+        std::cout << "stoat: gwas analysis tool, version v0.0.1\n";
+        // std::cout << "Compiled with g++ (Ubuntu 11.4.0-1ubuntu1~22.04) 11.4.0 on Linux\n";
+        // std::cout << "Linked against libstd++ 20230528\n";
+
+        return EXIT_SUCCESS;
+
     } else {
-        std::cerr << "Unknown subcommand: " << subcommand << "\n";
-        std::cerr << "Available subcommands: vcf, graph\n";
+        print_help();
         return EXIT_FAILURE;
     }
 

@@ -50,4 +50,3 @@ RUN git clone https://github.com/Plogeur/STOAT --branch stoat_cxx \
     && cd build \
     && cmake .. \
     && make -j$(nproc)
-

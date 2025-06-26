@@ -61,7 +61,7 @@ Required files :
 - dist : Distance file generated with vg dist, format: .dist.
 - vcf pangenomique : Merged VCF file, created using `vg pipeline` and bcftools merge, formats: .vcf or .vcf.gz. (ex : `bcftools merge -m none -Oz -o test`)
 - phenotype : phenotype file organise in three-column with FID (family/sample name), IID (sample name), and PHENO (integer/float). Format: .txt or .tsv (tab-separated).
-- chromosome : Txt file that containt the reference chromosome haplotype name in the pangenome graph. Format: .txt or .tsv. (use : `vg paths -x <pg.pg> --list` to identify all haplotype name then select haplotype that you want to use as reference (idealy the ones use in the pangenome graph creation))
+- chromosome : Txt file that containt the reference chromosome haplotype name in the pangenome graph. Format: .txt or .tsv. (use : `vg paths -x <pg.pg> -R` to identify all haplotype name then select haplotype that you want to use as reference (idealy the ones use in the pangenome graph creation))
 
 Optional file : 
 - paths : Snarl decoposition stoat output, Two-column file containing snarl names and the list of paths through the snarl's netgraph, separated by tabs. Format: .txt or .tsv.
@@ -100,16 +100,18 @@ samp_g0_1	0	5.2	359.25	65.24
 
 EQTL file : 
 ```
-IID	SEX	CP1	CP2	CP42
-samp_g0_0	1	1.2	562.25	42.25
-samp_g0_1	0	5.2	359.25	65.24
+gene_name	samp_0	samp_1	samp_2
+gene_0	12.708787454384092	7.945852683899044	9.883989099424033
+gene_1	11.130996245885658	6.959378045490106	8.656895550024407
+gene_2	6.369384603977239	3.982299014123415	4.953653385243532
 ```
 
 Gene position file :
 ```
-IID	SEX	CP1	CP2	CP42
-samp_g0_0	1	1.2	562.25	42.25
-samp_g0_1	0	5.2	359.25	65.24
+gene_name	chr	start	end
+gene_0	ref	0	10000
+gene_1	ref	100	10100
+gene_2	ref	200	10200
 ```
 
 ## Usage
@@ -198,6 +200,15 @@ CHR	POS	SNARL	        TYPE	      RSQUARED	  BETA	      SE	        P
 1	15	5262719_5262717	CPX:1/457,3	0.4424	    0.1324	    0.6534	    0.4657
 1	18	5262717_5262714	2,G	        0.6324	    0.1646	    0.6424	    0.4748
 1	19	5262717_5262714	G,15	      0.4234	    0.2324	    0.5215	    0.1324
+```
+
+Below is an example of the output for a eqtl phenotype analysis (-e option) :
+
+```bash
+CHR	POS	SNARL	TYPE	GENE	P	P_ADJUSTED	RSQUARE	BETA	SE	ALLELE_NUM	ALLELE_PATHS
+1	100000	rs1_1	A,T	gene_80	0.1592	1.0000	0.0100	4.6556	0.3697	400	192,208
+1	100000	rs1_1	A,T	gene_50	0.1147	1.0000	0.0125	4.3201	0.3456	400	192,208
+1	100000	rs1_1	A,T	gene_90	0.3419	1.0000	0.0046	5.1966	0.3671	400	192,208
 ```
 
 ## Visualization

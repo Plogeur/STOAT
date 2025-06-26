@@ -2,3 +2,4 @@ Add more comment
 Correct the single paths snarl error 
 Test in the snarl decompose paths if in the .chr chr name are present in the graph if not stop the analysis and return a error ("chr not found")
 Correct the dockerfile by adding a stoat path
+Some position in snarl paths decomposed aren't good 
