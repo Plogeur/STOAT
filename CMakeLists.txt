@@ -29,10 +29,10 @@ add_executable(${PROJECT_NAME}
     src/binary_analysis.cpp
     src/post_processing.cpp
     src/gaf_creator.cpp
-    src/list_snarl_paths.cpp
+    src/snarl_data_t.cpp
     src/matrix.cpp
     src/quantitative_analysis.cpp
-    src/snarl_parser.cpp
+    src/snarl_analyser.cpp
     src/lmm.cpp
     ${ALGLIB_SOURCES}
 )
@@ -69,7 +69,7 @@ include(Catch)
 add_executable(unit_tests
     tests/unittest/binary_analysis_unit.cpp
     tests/unittest/gaf_creator_unit.cpp
-    tests/unittest/list_snarl_paths_unit.cpp
+    tests/unittest/snarl_data_t_unit.cpp
     tests/unittest/matrix_unit.cpp
     tests/unittest/quantitative_analysis_unit.cpp
 
@@ -77,10 +77,10 @@ add_executable(unit_tests
     src/arg_parser.cpp
     src/binary_analysis.cpp
     src/gaf_creator.cpp
-    src/list_snarl_paths.cpp
+    src/snarl_data_t.cpp
     src/matrix.cpp
     src/quantitative_analysis.cpp
-    src/snarl_parser.cpp
+    src/snarl_analyser.cpp
     src/lmm.cpp
 )
 

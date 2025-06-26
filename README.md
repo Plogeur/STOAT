@@ -134,30 +134,30 @@ stoat -p <pg.pg> -d <dist.dist> -v <vcf_file.vcf.gz> -q <phenotype.txt> --chr <r
 ```
 
 Explanation of all options:
-```bash 
--p, --pg FILE                Path to the packed graph file (.pg)
--d, --dist FILE              Path to the packed distance index file (.dist)
--v, --vcf FILE               Path to the VCF file (.vcf or .vcf.gz)
--s, --snarl FILE             Path to the snarl file (.txt or .tsv)
--r, --chr FILE               Path to the chromosome reference file (.txt)
--b, --binary FILE            Path to the binary phenotype group file (.txt or .tsv)
--q, --quantitative FILE      Path to the quantitative phenotype file (.txt or .tsv)
--e, --eqtl FILE              Path to the Expression Quantitative Trait Loci file (.txt or .tsv)
---make-bed                   Create plink format files (.bed, .bim, .fam)
---covariate FILE             Path to the covariate file (.txt or .tsv)
---covar-name NAME            Covariate column name(s) used for GWAS (comma-separated if multiple)
--k, --kinship FILE           Path to the kinship matrix file (.txt or .tsv)
--g, --gaf                    Generate a GAF file from GWAS results
---children INT               Max number of children per snarl in decomposition (default: 50)
---cycle INT                  Max number of authorized cycles in snarl decomposition (default: 1)
---path-length INT            Max number of nodes in paths during snarl decomposition (default: 10,000)
--G, --gene-position FILE     Path to the gene position file (.txt or .tsv)
--w, --windows-gene INT       Window length from gene boundaries for snarl inclusion in eQTL (default: 1,000,000)
--T, --table-threshold FLOAT  P-value threshold for regression table output (default: disabled)
---maf FLOAT                  Minimum allele frequency threshold (default: 0.01)
--t, --thread INT             Number of threads to use (default: 1)
--o, --output DIR             Output directory name (VCF GWAS mode)
--h, --help                   Print this help message
+```bash
+    -p, --pg FILE                Path to the packed graph file (.pg)
+    -d, --dist FILE              Path to the packed distance index file (.dist)
+    -v, --vcf FILE               Path to the VCF file (.vcf or .vcf.gz)
+    -s, --snarl FILE             Path to the snarl file (.txt or .tsv)
+    -r, --chr FILE               Path to the chromosome reference file (.txt)
+    -b, --binary FILE            Path to the binary phenotype group file (.txt or .tsv)
+    -q, --quantitative FILE      Path to the quantitative phenotype file (.txt or .tsv)
+    -e, --eqtl FILE              Path to the Expression Quantitative Trait Loci file (.txt or .tsv)
+    --make-bed                   Create plink format files (.bed, .bim, .fam)
+    --covariate FILE             Path to the covariate file (.txt or .tsv)
+    --covar-name NAME            Covariate column name(s) used for GWAS (comma-separated if multiple)
+    -k, --kinship FILE           Path to the kinship matrix file (.txt or .tsv)
+    -g, --gaf                    Generate a GAF file from GWAS results
+    --children INT               Max number of children per snarl in decomposition (default: 50)
+    --cycle INT                  Max number of authorized cycles in snarl decomposition (default: 1)
+    --path-length INT            Max number of nodes in paths during snarl decomposition (default: 10,000)
+    -G, --gene-position FILE     Path to the gene position file (.txt or .tsv)
+    -w, --windows-gene INT       Window length from gene boundaries for snarl inclusion in eQTL (default: 1,000,000)
+    -T, --table-threshold FLOAT  P-value threshold for regression table output (default: disabled)
+    --maf FLOAT                  Minimum allele frequency threshold (default: 0.01)
+    -t, --thread INT             Number of threads to use (default: 1)
+    -o, --output DIR             Output directory name (VCF GWAS mode)
+    -h, --help                   Print this help message
 ```
 
 ## Output
@@ -167,14 +167,15 @@ Explanation of all options:
 | **CHR**           | Chromosome name where the variation occurs.                                                   |
 | **POS**           | Position of the snarl within the chromosome.                                                  |
 | **SNARL**         | Identifier for the variant, snarl name/id                                                     |
-| **TYPE**          | Type of genetic variation, SNP == (A,G,T,C), INS & DEL will be referenced by a number >2 or 0, and CPX aka complex (ex : snarl nested) will be add minimum and maximum path size like CPX:Min/Max                                               |
+| **TYPE**          | List of type of genetic variation, SNP == 1, INS & DEL will be referenced by a number >2 or 0, and CPX aka complex (ex : snarl nested) will be add minimum and maximum path size like Min/Max                                               |
+| **REF**           | Show if at least one paths in this snarl is on the reference (0 : out reference, 1 : on reference) |
 | **P_FISHER**      | P-value calculated using Fisher's exact test (binary analysis).                               |
 | **P_CHI2**        | P-value calculated using the Chi-squared test (binary analysis).                              |
 | **ALLELE_NUM**    | Total number of alleles that pass in this snarl.                                              |
 | **MIN_ROW_INDEX** | Minimum group of samples that pass through one path of the snarl. (binary analysis).          |
 | **NUM_COLUM**     | Number of paths in the snarl. (binary analysis).                                              |
 | **INTER_GROUP**   | Sum of the minimum samples that pass through each path. (binary analysis).                    |
-| **AVERAGE**       | Average number of total samples passing through this snarl, divided by the number of paths. (binary analysis).  |
+| **AVERAGE**       | Average number of total samples passing through this snarl, divided by the number of paths. (binary analysis). |
 | **P**             | P-value calculated using linear regression (quantitative analysis).                           |
 | **RSQUARED**      | R-squared value, proportion of variance explained by the model (quantitative analysis).       |
 | **SE**            | Mean Standard error, estimatation coefficients of all paths in a snarl (quantitative analysis). |

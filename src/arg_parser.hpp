@@ -75,7 +75,7 @@ template <typename T>
 void check_match_samples(const std::unordered_map<std::string, T>& map, const std::vector<std::string>& keys);
 
 // Parses the snarl path file and returns a map with snarl as keys and paths as a list of strings.
-std::unordered_map<std::string, std::vector<std::tuple<string, vector<string>, size_t, size_t, vector<string>>>> parse_snarl_path(const std::string& path_file);
+std::unordered_map<std::string, Snarl_data_t> parse_snarl_path(const std::string& path_file);
 
 void check_file(const std::string& file_path);
 

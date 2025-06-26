@@ -7,10 +7,10 @@
 #include <unordered_map>
 #include <cstdint>
 
-class Matrix {
+class EdgeBySampleMatrix {
 public:
-    Matrix(size_t rows, size_t cols);
-    ~Matrix()=default;
+    EdgeBySampleMatrix(size_t rows, size_t cols);
+    ~EdgeBySampleMatrix()=default;
     bool operator()(size_t row, size_t col) const;
     void set(size_t row, size_t col);
     const std::vector<uint8_t>& get_matrix() const;

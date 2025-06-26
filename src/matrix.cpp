@@ -1,7 +1,7 @@
 #include "matrix.hpp"
 
 // Constructor implementation
-Matrix::Matrix(size_t rows, size_t cols) : cols_(cols) {
+EdgeBySampleMatrix::EdgeBySampleMatrix(size_t rows, size_t cols) : cols_(cols) {
 
     size_t length_matrix = (rows * cols + 7) / 8;
     MaxElement = (length_matrix * 8) / cols_; // get the number of element in the matrix
@@ -11,41 +11,41 @@ Matrix::Matrix(size_t rows, size_t cols) : cols_(cols) {
 }
 
 // Getter for matrix
-const std::vector<uint8_t>& Matrix::get_matrix() const {
+const std::vector<uint8_t>& EdgeBySampleMatrix::get_matrix() const {
     return matrix_1D;
 }
 
 // Getter for row header
-std::unordered_map<std::string, size_t>::const_iterator Matrix::find_snarl(const std::string& snarl) const {
+std::unordered_map<std::string, size_t>::const_iterator EdgeBySampleMatrix::find_snarl(const std::string& snarl) const {
     return row_header.find(snarl);
 }
 
 // Getter for row header
-std::unordered_map<std::string, size_t>::const_iterator Matrix::get_end_dict() const {
+std::unordered_map<std::string, size_t>::const_iterator EdgeBySampleMatrix::get_end_dict() const {
     return row_header_end;
 }
 
 // Getter for row header
-void Matrix::set_end_dict() {
+void EdgeBySampleMatrix::set_end_dict() {
     row_header_end = row_header.end();
 }
 
 // Getter for row header
-const std::unordered_map<std::string, size_t>& Matrix::get_row_header() const {
+const std::unordered_map<std::string, size_t>& EdgeBySampleMatrix::get_row_header() const {
     return row_header;
 }
 
 // Getter row number
-size_t Matrix::getMaxElement() const {
+size_t EdgeBySampleMatrix::getMaxElement() const {
     return MaxElement;  // Convert bits back to rows
 }
 
 // Setter for row header
-void Matrix::set_row_header(const std::unordered_map<std::string, size_t>& new_row_header) {
+void EdgeBySampleMatrix::set_row_header(const std::unordered_map<std::string, size_t>& new_row_header) {
     row_header = std::move(new_row_header);
 }
 
-void Matrix::expandMatrix() {
+void EdgeBySampleMatrix::expandMatrix() {
     MaxElement *= 2;  // Double the number of elements in the matrix
     size_t new_length = matrix_1D.size() * 2;
     matrix_1D.reserve(new_length);
@@ -53,7 +53,7 @@ void Matrix::expandMatrix() {
 }
 
 // Overloaded operator() to access elements as matrix(row, col)
-bool Matrix::operator()(size_t row, size_t col) const {
+bool EdgeBySampleMatrix::operator()(size_t row, size_t col) const {
     size_t bitIndex = row * cols_ + col;
     size_t byteIndex = bitIndex / 8;
     size_t bitPosition = bitIndex % 8;
@@ -63,7 +63,7 @@ bool Matrix::operator()(size_t row, size_t col) const {
 }
 
 // Function to set a specific element (row, col) to true
-void Matrix::set(size_t row, size_t col) {
+void EdgeBySampleMatrix::set(size_t row, size_t col) {
     size_t bitIndex = row * cols_ + col;
     size_t byteIndex = bitIndex / 8;
     size_t bitPosition = bitIndex % 8;
@@ -72,7 +72,7 @@ void Matrix::set(size_t row, size_t col) {
     matrix_1D[byteIndex] |= (1U << bitPosition);
 }
 
-void Matrix::shrink(size_t current_rows) {
+void EdgeBySampleMatrix::shrink(size_t current_rows) {
     size_t new_bits = current_rows * cols_;
     size_t new_bytes = (new_bits + 7) / 8; // Compute required bytes (round up)
     matrix_1D.resize(new_bytes); // Resize

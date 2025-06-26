@@ -19,7 +19,7 @@
 #include <boost/multiprecision/cpp_dec_float.hpp>
 
 #include "matrix.hpp"
-#include "snarl_parser.hpp"
+#include "snarl_analyser.hpp"
 #include "utils.hpp"
 
 // ------------------------ Logistic regression ------------------------
@@ -80,7 +80,7 @@ size_t create_binary_table(
     const std::vector<std::string>& list_path_snarl, 
     const size_t& number_paths,
     const size_t& number_samples,
-    const Matrix& matrix);
+    const EdgeBySampleMatrix& matrix);
 
 bool check_MAF_threshold(
     const std::vector<size_t>& g0, const std::vector<size_t>& g1,

@@ -1,5 +1,5 @@
 #include "binary_analysis.hpp"
-#include "snarl_parser.hpp"
+#include "snarl_analyser.hpp"
 #include "utils.hpp"
 
 #include <vector>
@@ -531,7 +531,7 @@ size_t create_binary_table(
     const std::vector<std::string>& list_path_snarl, 
     const size_t& number_paths,
     const size_t& number_samples,
-    const Matrix& matrix) {
+    const EdgeBySampleMatrix& matrix) {
 
     size_t total_sum = 0;
     for (size_t idx_g = 0; idx_g < number_paths; ++idx_g) {

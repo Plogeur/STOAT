@@ -1,5 +1,5 @@
 #include <catch2/catch_test_macros.hpp>
-#include "../../src/list_snarl_paths.hpp"
+#include "../../src/Snarl_data_t.hpp"
 
 using namespace std;
 using namespace bdsg;

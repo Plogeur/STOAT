@@ -1,10 +1,52 @@
-#include "list_snarl_paths.hpp"
+#include "snarl_data_t.hpp"
 
 using namespace std;
 using namespace bdsg;
 using handlegraph::step_handle_t;
 using handlegraph::handle_t;
 using handlegraph::net_handle_t;
+
+// Node_traversal_t
+Node_traversal_t::Node_traversal_t(const size_t &id, const bool &rev)
+        : node_id(id), is_reverse(rev) {}
+
+// Convert Node_traversal_t to node + path representation
+std::string Node_traversal_t::to_string() const {
+    return std::to_string(node_id) + (is_reverse ? ">" : "<");
+}
+
+// add a node traversal to the path
+Path_traversal_t::add_node_traversal_t(const Node_traversal_t &node) {
+    this->paths.push_back(node);
+}
+
+// convert Path_traversal_t to path representation
+std::string Path_traversal_t::to_string() const {
+    std::string result;
+    for (const auto& node : paths) {
+        result += node.to_string();
+    }
+    return result;
+}
+
+// Maximum number of snarls to reserve space for
+void Snarl_data_t::reserve(size_t snarl_count = MAX_SNARLS) {
+    snarls.reserve(snarl_count);
+    paths.reserve(snarl_count);
+    start_positions.reserve(snarl_count);
+    end_positions.reserve(snarl_count);
+    types.reserve(snarl_count);
+}
+
+// Add a snarl
+void Snarl_data_t::add_snarl(const std::pair<size_t, size_t>& name, const Path_traversal_t& paths,
+                    size_t start, size_t end, const std::vector<std::string>& path_nodes) {
+    snarl_names.push_back(name);
+    paths_per_snarl.push_back(paths);
+    start_positions.push_back(start);
+    end_positions.push_back(end);
+    path_nodes_per_snarl.push_back(path_nodes);
+}
 
 Path::Path() {}
 
@@ -58,10 +100,14 @@ bool Path::addNodeHandle(const net_handle_t& node_h, const SnarlDistanceIndex& s
 }
 
 // Get the string representation of the path
-std::string Path::print() const {
-    std::string out_path;
+Path_traversal_t Path::print() const {
+    Path_traversal_t out_path;
     for (size_t i = 0; i < nodes.size(); ++i) {
-        out_path += orients[i] + nodes[i];
+        Node_traversal_t node_traversal(
+            std::stoi(nodes[i]),
+            orients[i] == '>' ? false : true // because is reverse is false for '>' and true for '<'
+        );
+        out_path.add_node_traversal_t(node_traversal);
     }
     return out_path;
 }
@@ -120,7 +166,7 @@ vector<string> calcul_pos_type_variant(const vector<tuple<string, size_t, size_t
     return list_type_variant;
 }
 
-string find_snarl_id(SnarlDistanceIndex& stree, net_handle_t& snarl) {
+std::pair<size_t, size_t> find_snarl_id(SnarlDistanceIndex& stree, net_handle_t& snarl) {
     // Get start and end boundary nodes for the snarl
     auto sstart = stree.get_bound(snarl, false, true);  // False for the left boundary
     auto send = stree.get_bound(snarl, true, true);     // True for the right boundary
@@ -134,9 +180,10 @@ string find_snarl_id(SnarlDistanceIndex& stree, net_handle_t& snarl) {
     auto end_node_id = stree.node_id(end_node);
 
     // Construct the snarl ID as "end_node_id_start_node_id"
-    std::stringstream snarl_id;
-    snarl_id << end_node_id << "_" << start_node_id;
-    return snarl_id.str();  // Return the generated snarl ID as a string
+    std::pair<size_t, size_t> snarl_id;
+    snarl_id.make_pair(end_node_id, start_node_id);
+
+    return snarl_id;  // Return the generated snarl ID as a string
 }
 
 std::tuple<std::unique_ptr<bdsg::SnarlDistanceIndex>, 
@@ -305,13 +352,13 @@ vector<tuple<net_handle_t, string, size_t, size_t, bool>> save_snarls(
     return snarls;
 }
 
-tuple<vector<string>, vector<string>> fill_pretty_paths(
+tuple<vector<Path_traversal_t>, vector<string>> fill_pretty_paths(
     SnarlDistanceIndex& stree, 
     PackedGraph& pg, 
     vector<vector<net_handle_t>>& finished_paths) {
     
     // list of paths
-    vector<string> pretty_paths;
+    vector<Path_traversal_t> pretty_paths;
 
     // seq_net, minimum_distance, maximun_distance, size_path, sum_path
     vector<tuple<string, size_t, size_t, size_t, size_t, bool>> seq_net_paths;
@@ -442,7 +489,7 @@ tuple<vector<string>, vector<string>> fill_pretty_paths(
 }
 
 // {chr : matrix(snarl, paths, start_pos, end_pos, type)}
-std::unordered_map<std::string, std::vector<std::tuple<string, vector<string>, size_t, size_t, vector<string>>>> loop_over_snarls_write(
+std::unordered_map<std::string, Snarl_data_t> loop_over_snarls_write(
         SnarlDistanceIndex& stree,
         vector<tuple<net_handle_t, string, size_t, size_t, bool>>& snarls,
         PackedGraph& pg, 
@@ -461,8 +508,8 @@ std::unordered_map<std::string, std::vector<std::tuple<string, vector<string>, s
     ofstream out_fail(output_snarl_not_analyse);
     out_fail << "SNARL\tREASON\n";
         
-    std::vector<std::tuple<string, vector<string>, size_t, size_t, vector<string>>> snarl_paths;
-    unordered_map<string, std::vector<std::tuple<string, vector<string>, size_t, size_t, vector<string>>>> chr_snarl_matrix;
+    Snarl_data_t snarl_paths;
+    unordered_map<string, Snarl_data_t> chr_snarl_matrix;
     size_t paths_number_analysis = 0;
     string save_chr = "";
 
@@ -475,13 +522,14 @@ std::unordered_map<std::string, std::vector<std::tuple<string, vector<string>, s
     for (const auto& snarl_path_pos : snarls) {
         net_handle_t snarl = std::get<0>(snarl_path_pos);
         size_t itr = 0;
-        string snarl_id = find_snarl_id(stree, snarl);
+        std::pair<size_t, size_t> snarl_id = find_snarl_id(stree, snarl);
+        string snarl_id_str = pairToString(snarl_id);
         bool not_break = true;
         children = {0}; // re-initialise the children vec
         
         stree.for_each_child(snarl, count_children);
         if (children[0] > children_threshold) {
-            out_fail << snarl_id << "\ttoo_many_children = " << children[0] << " children" << "\n";
+            out_fail << snarl_id_str << "\ttoo_many_children = " << children[0] << " children" << "\n";
             continue;
         }
         
@@ -504,7 +552,7 @@ std::unordered_map<std::string, std::vector<std::tuple<string, vector<string>, s
             paths.pop_back();
 
             if (itr > path_length_threshold) {
-                out_fail << snarl_id << "\titeration_calculation_out = " << children[0] << " children" << "\n";
+                out_fail << snarl_id_str << "\titeration_calculation_out = " << children[0] << " children" << "\n";
                 not_break = false;
                 break;
             }
@@ -524,11 +572,11 @@ std::unordered_map<std::string, std::vector<std::tuple<string, vector<string>, s
             size_t strat_pos = std::get<2>(snarl_path_pos);
             size_t end_pos = std::get<3>(snarl_path_pos);
             paths_number_analysis += pretty_paths.size();
-            string str_reference = std::get<4>(snarl_path_pos) == true ? "0" : "1"; // 0 : on, 1 : out
+            string str_reference = std::get<4>(snarl_path_pos) == true ? "1" : "0"; // 0 : out reference, 1 : on reference
 
             if (bool_return) {
                 out_snarl << chr << "\t" << strat_pos << "\t" << end_pos
-                    << "\t" << snarl_id << "\t" << vector_to_string(pretty_paths)
+                    << "\t" << snarl_id_str << "\t" << vector_path_to_string(pretty_paths)
                     << "\t" << vector_to_string(type_variants) << "\t" << str_reference << "\n";
             } else {
                 // case new chr
@@ -537,7 +585,7 @@ std::unordered_map<std::string, std::vector<std::tuple<string, vector<string>, s
                     snarl_paths.clear();
                 }
                 save_chr = chr;
-                snarl_paths.push_back(std::make_tuple(snarl_id, pretty_paths, strat_pos, end_pos, type_variants));
+                snarl_paths.add_snarl(snarl_id, pretty_paths, strat_pos, end_pos, type_variants);
             }
         }
     }

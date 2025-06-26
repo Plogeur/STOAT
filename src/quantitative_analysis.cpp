@@ -1,5 +1,5 @@
 #include "quantitative_analysis.hpp"
-#include "snarl_parser.hpp"
+#include "snarl_analyser.hpp"
 #include "utils.hpp"
 #include "arg_parser.hpp"
 
@@ -178,14 +178,14 @@ create_quantitative_table<double>(
     const size_t&,
     const std::vector<std::string>&,
     const std::vector<double>&,
-    Matrix&);
+    EdgeBySampleMatrix&);
 
 template std::tuple<std::vector<std::vector<double>>, std::vector<bool>, size_t, std::vector<size_t>>
 create_quantitative_table<bool>(
     const size_t&,
     const std::vector<std::string>&,
     const std::vector<bool>&,
-    Matrix&);
+    EdgeBySampleMatrix&);
 
 // Function template definition
 template<typename T>
@@ -193,7 +193,7 @@ std::tuple<std::vector<std::vector<double>>, std::vector<T>, size_t, std::vector
     const size_t& length_sample,
     const std::vector<std::string>& column_headers,
     const std::vector<T>& phenotype,
-    Matrix& matrix) {
+    EdgeBySampleMatrix& matrix) {
 
     size_t allele_number = 0;
     size_t length_column = column_headers.size();
@@ -268,7 +268,7 @@ std::tuple<std::vector<std::vector<double>>, std::vector<T>, size_t, std::vector
 std::tuple<std::vector<std::vector<double>>, std::unordered_set<size_t>, size_t, std::vector<size_t>> create_eqtl_table(
     const size_t& length_sample,
     const std::vector<std::string>& column_headers,
-    Matrix& matrix) {
+    EdgeBySampleMatrix& matrix) {
 
     size_t allele_number = 0;
     size_t length_column = column_headers.size();

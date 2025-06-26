@@ -11,7 +11,7 @@
 //         std::vector<double> phenotype = {-2.4234, -1.3242, 0.3214, 2.3248};
 
 //         // Create a simple matrix (4 samples / 2 haplotypes)
-//         Matrix matrix(4, 2);
+//         EdgeBySampleMatrix matrix(4, 2);
 
 //         // Simulate that paths match at certain indices
 //         matrix.set(0, 1);
@@ -41,7 +41,7 @@
 //         std::vector<double> phenotype = {-2.4234, -1.3242, 0.3214, 2.3248};
 
 //         // Create a simple matrix (4 samples / 2 haplotypes)
-//         Matrix matrix(4, 2);
+//         EdgeBySampleMatrix matrix(4, 2);
 
 //         // Simulate that paths match at certain indices
 //         matrix.set(0, 0);
@@ -71,7 +71,7 @@
 //         std::vector<double> phenotype = {-2.4234, -1.3242, 0.3214, 2.3248};
 
 //         // Create a simple matrix (4 samples / 3 haplotypes)
-//         Matrix matrix(2, 8);
+//         EdgeBySampleMatrix matrix(2, 8);
 
 //         // Simulate that paths match at certain indices
 //         matrix.set(0, 1);
@@ -168,7 +168,7 @@
 //         std::vector<std::string> list_samples = {"Sample1", "Sample2", "Sample3"};
 //         std::vector<std::string> column_headers = {"Path1", "Path2"};
 
-//         Matrix matrix(3, 2);  // 3 échantillons, 2 chemins
+//         EdgeBySampleMatrix matrix(3, 2);  // 3 échantillons, 2 chemins
 //         matrix.set(0, 0);  // Sample1, Path1
 //         matrix.set(1, 1);  // Sample2, Path2
 

@@ -29,7 +29,7 @@ void write_gaf_lines(const string& sequence_name, const string& path, int length
 vector<int> decompose_snarl(const string& snarl);
 int calcul_path_length(PackedGraph& pg, const string& snarl);
 void write_gaf_lines(const string& sequence_name, const string& path, int length, double prop, ofstream& outfile);
-void gaf_creation(const string& input_file, std::unordered_map<std::string, std::vector<std::tuple<string, vector<string>, size_t, size_t, vector<string>>>>& snarl_chr,
+void gaf_creation(const string& input_file, std::unordered_map<std::string, Snarl_data_t>& snarl_chr,
     PackedGraph& pg, const string& output_file);
 
 #endif // GAF_CREATOR_HPP

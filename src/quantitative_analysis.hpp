@@ -19,7 +19,7 @@
 #include <boost/math/distributions/chi_squared.hpp>
 
 #include "matrix.hpp"
-#include "snarl_parser.hpp"
+#include "snarl_analyser.hpp"
 #include "utils.hpp"
 
 // Linear regression function that returns a tuple of p_value, standard error (se), and beta
@@ -41,11 +41,11 @@ std::tuple<std::vector<std::vector<double>>, std::vector<T>, size_t, std::vector
     const size_t& sampleCount,
     const std::vector<std::string>& columnHeaders,
     const std::vector<T>& phenotype,
-    Matrix& matrix);
+    EdgeBySampleMatrix& matrix);
 
 std::tuple<std::vector<std::vector<double>>, std::unordered_set<size_t>, size_t, std::vector<size_t>> create_eqtl_table(
     const size_t& length_sample,
     const std::vector<std::string>& column_headers,
-    Matrix& matrix);
+    EdgeBySampleMatrix& matrix);
 
 #endif

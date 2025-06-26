@@ -1,5 +1,5 @@
 #include "arg_parser.hpp"
-#include "snarl_parser.hpp"
+#include "snarl_analyser.hpp"
 
 namespace fs = std::filesystem;
 using namespace std;
@@ -264,13 +264,11 @@ std::unordered_map<std::string, std::vector<std::tuple<std::string, std::vector<
 }
 
 // Function to parse the snarl path file
-std::unordered_map<std::string, std::vector<
-std::tuple<string, vector<string>, size_t, size_t, vector<string>>>> 
-parse_snarl_path(const std::string& file_path) {
+std::unordered_map<std::string, Snarl_data_t> parse_snarl_path(const std::string& file_path) {
 
     std::string line, chr, snarl, start_pos_str, end_pos_str, path_list, type_var;
-    unordered_map<string, std::vector<std::tuple<string, vector<string>, size_t, size_t, vector<string>>>> chr_snarl_matrix;
-    std::vector<std::tuple<string, vector<string>, size_t, size_t, vector<string>>> snarl_paths;
+    unordered_map<string, Snarl_data_t> chr_snarl_matrix;
+    Snarl_data_t snarl_paths;
     std::ifstream file(file_path);
     std::string save_chr = "";
 
@@ -343,8 +341,11 @@ parse_snarl_path(const std::string& file_path) {
         }
         save_chr = chr;
 
-        // {snarl, paths, chr, pos, type} 
-        snarl_paths.push_back(make_tuple(snarl, paths, start_pos, end_pos, type));
+        // const std::pair<size_t, size_t>& name, const Path_traversal_t& paths,
+        // size_t start, size_t end, const std::vector<std::string>& path_nodes
+
+        std::pair<size_t, size_t> snarl_pair = stringToPair(snarl);
+        snarl_paths.add_snarl(snarl_pair, paths, start_pos, end_pos, type);
     }
     // last chr adding
     chr_snarl_matrix[save_chr] = std::move(snarl_paths);

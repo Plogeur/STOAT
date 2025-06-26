@@ -161,3 +161,33 @@ std::string vector_to_string(const std::vector<T>& vec) {
     }
     return oss.str();
 }
+
+std::string pairToString(const std::pair<size_t, size_t>& name) {
+    std::ostringstream oss;
+    oss << name.first << "_" << name.second;
+    return oss.str();
+}
+
+std::string vector_path_to_string(const std::vector<Path_traversal_t>& vec_paths) {
+    std::ostringstream oss;
+    for (size_t i = 0; i < vec_paths.size(); ++i) {
+        if (i > 0) oss << ",";
+        oss << vec_paths[i].to_string();
+    }
+    return oss.str();
+}
+
+std::pair<size_t, size_t> stringToPair(const std::string& str) {
+    size_t underscorePos = str.find('_');
+    if (underscorePos == std::string::npos) {
+        throw std::invalid_argument("Input string does not contain an underscore separator");
+    }
+
+    std::string firstPart = str.substr(0, underscorePos);
+    std::string secondPart = str.substr(underscorePos + 1);
+
+    size_t first = std::stoul(firstPart);
+    size_t second = std::stoul(secondPart);
+
+    return {first, second};
+}

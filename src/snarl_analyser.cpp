@@ -1,4 +1,4 @@
-#include "snarl_parser.hpp"
+#include "snarl_analyser.hpp"
 #include "matrix.hpp"
 #include "binary_analysis.hpp"
 #include "quantitative_analysis.hpp"
@@ -10,7 +10,7 @@ using namespace std;
 
 void chromosome_chuck_make_bed(htsFile* &ptr_vcf, bcf_hdr_t* &hdr, bcf1_t* &rec, 
     const std::vector<std::string> &list_samples,
-    const std::unordered_map<std::string, std::vector<std::tuple<std::string, std::vector<std::string>, size_t, size_t, std::vector<std::string>>>>& snarl_chr,
+    const std::unordered_map<std::string, Snarl_data_t>& snarl_chr,
     const string& output_dir) {
 
     const std::string output_bed = output_dir + ".bed";
@@ -72,7 +72,7 @@ void chromosome_chuck_make_bed(htsFile* &ptr_vcf, bcf_hdr_t* &hdr, bcf1_t* &rec,
 
 void chromosome_chuck_quantitative(htsFile* &ptr_vcf, bcf_hdr_t* &hdr, bcf1_t* &rec, 
     const std::vector<std::string> &list_samples,
-    const unordered_map<string, std::vector<std::tuple<string, vector<string>, size_t, size_t, vector<string>>>> &snarl_chr,
+    const unordered_map<string, Snarl_data_t> &snarl_chr,
     const std::vector<double>& quantitative_phenotype, std::vector<std::vector<double>> covar,
     const double& maf, const KinshipMatrix& kinship, const size_t& num_threads, 
     const double& table_threshold, const std::string& regression_dir,
@@ -128,7 +128,7 @@ void chromosome_chuck_quantitative(htsFile* &ptr_vcf, bcf_hdr_t* &hdr, bcf1_t* &
 
 void chromosome_chuck_eqtl(htsFile* &ptr_vcf, bcf_hdr_t* &hdr, bcf1_t* &rec, 
     const std::vector<std::string> &list_samples,
-    const std::unordered_map<std::string, std::vector<std::tuple<std::string, std::vector<std::string>, size_t, size_t, std::vector<std::string>>>> &snarl_chr,
+    const std::unordered_map<std::string, Snarl_data_t> &snarl_chr,
     const std::unordered_map<std::string, std::vector<std::tuple<std::string, std::vector<double>, size_t, size_t>>>& eqtl_map,
     const std::vector<std::vector<double>>& covar,
     const double& maf, const KinshipMatrix& kinship, const size_t& num_threads, 
@@ -184,7 +184,7 @@ void chromosome_chuck_eqtl(htsFile* &ptr_vcf, bcf_hdr_t* &hdr, bcf1_t* &rec,
 
 void chromosome_chuck_binary(htsFile* &ptr_vcf, bcf_hdr_t* &hdr, bcf1_t* &rec, 
     const std::vector<std::string> &list_samples, 
-    const unordered_map<string, std::vector<std::tuple<string, vector<string>, size_t, size_t, vector<string>>>> &snarl_chr,
+    const unordered_map<string, Snarl_data_t> &snarl_chr,
     const std::vector<bool>& binary_pheno, std::vector<std::vector<double>> covar, 
     const double& maf, const KinshipMatrix& kinship, const size_t& num_threads, 
     const double& table_threshold, const std::string& regression_dir,
@@ -238,15 +238,15 @@ void chromosome_chuck_binary(htsFile* &ptr_vcf, bcf_hdr_t* &hdr, bcf1_t* &rec,
     bcf_close(ptr_vcf);
 }
 
-SnarlParser::SnarlParser(const vector<string>& sample_names, size_t num_paths_chr) : 
+SnarlAnalyser::SnarlAnalyser(const vector<string>& sample_names, size_t num_paths_chr) : 
     sampleNames(sample_names), matrix(num_paths_chr*4, sample_names.size() * 2)
 {}
 
-std::pair<std::vector<size_t>, std::vector<size_t>> SnarlParser::create_table_short_path(const vector<std::string>& list_path_snarl) {
+std::pair<std::vector<size_t>, std::vector<size_t>> SnarlAnalyser::create_table_short_path(const vector<std::string>& list_path_snarl) {
 
     size_t length_column = list_path_snarl.size();
     std::vector<size_t> allele_number_list(length_column, 0);
-    size_t length_sample = sampleNames.size(); // get from the SnarlParser object
+    size_t length_sample = sampleNames.size(); // get from the SnarlAnalyser object
 
     // Initialize a zero matrix for genotypes
     std::vector<std::vector<size_t>> genotypes(length_sample, std::vector<size_t>(length_column, 0));
@@ -311,7 +311,7 @@ void find_two_largest_indices(const std::vector<size_t>& vec, size_t& major_inde
     }
 }
 
-void SnarlParser::create_bim_bed(const std::vector<std::tuple<string, vector<string>, size_t, size_t, vector<string>>>& snarls, 
+void SnarlAnalyser::create_bim_bed(const Snarl_data_t& snarls, 
                                 string chromosome, std::ofstream& outbim, std::ofstream& outbed) {
 
     // Iterate over each snarl
@@ -443,7 +443,7 @@ size_t getOrAddIndex(std::unordered_map<std::string, size_t>& orderedMap, const 
 }
 
 // Add True to the matrix if snarl is found
-void SnarlParser::push_matrix(const std::string& decomposedSnarl, std::unordered_map<std::string, size_t>& rowHeaderDict, size_t indexColumn) {
+void SnarlAnalyser::push_matrix(const std::string& decomposedSnarl, std::unordered_map<std::string, size_t>& rowHeaderDict, size_t indexColumn) {
     
     size_t lengthOrderedMap = rowHeaderDict.size();
     size_t idxSnarl = getOrAddIndex(rowHeaderDict, decomposedSnarl, lengthOrderedMap);
@@ -457,9 +457,9 @@ void SnarlParser::push_matrix(const std::string& decomposedSnarl, std::unordered
 }
 
 // Function to parse VCF and fill matrix genotypes
-std::tuple<SnarlParser, htsFile*, bcf_hdr_t*, bcf1_t*> make_matrix(htsFile *ptr_vcf, bcf_hdr_t *hdr, bcf1_t *rec, const std::vector<std::string> &sampleNames, string &chr, size_t &num_paths_chr) {
+std::tuple<SnarlAnalyser, htsFile*, bcf_hdr_t*, bcf1_t*> make_matrix(htsFile *ptr_vcf, bcf_hdr_t *hdr, bcf1_t *rec, const std::vector<std::string> &sampleNames, string &chr, size_t &num_paths_chr) {
 
-    SnarlParser snarl_parser(sampleNames, num_paths_chr);
+    SnarlAnalyser snarl_analyser(sampleNames, num_paths_chr);
     std::unordered_map<std::string, size_t> row_header_dict;
 
     // loop over the VCF file for each line and stop where chr is different
@@ -510,13 +510,13 @@ std::tuple<SnarlParser, htsFile*, bcf_hdr_t*, bcf1_t*> make_matrix(htsFile *ptr_
             
             if (allele_1 != -1) { // Handle non-missing genotypes
                 for (const auto &decompose_allele_1 : list_list_decomposed_snarl[allele_1]) {
-                    snarl_parser.push_matrix(decompose_allele_1, row_header_dict, col_idx);
+                    snarl_analyser.push_matrix(decompose_allele_1, row_header_dict, col_idx);
                 }
             }
 
             if (allele_2 != -1) { // Handle non-missing genotypes
                 for (const auto &decompose_allele_2 : list_list_decomposed_snarl[allele_2]) {
-                    snarl_parser.push_matrix(decompose_allele_2, row_header_dict, col_idx + 1);
+                    snarl_analyser.push_matrix(decompose_allele_2, row_header_dict, col_idx + 1);
                 }
             }
         }
@@ -525,15 +525,15 @@ std::tuple<SnarlParser, htsFile*, bcf_hdr_t*, bcf1_t*> make_matrix(htsFile *ptr_
 
     } while ((bcf_read(ptr_vcf, hdr, rec) >= 0) && (chr == bcf_hdr_id2name(hdr, rec->rid)));
 
-    snarl_parser.matrix.set_row_header(row_header_dict);
-    snarl_parser.matrix.shrink(row_header_dict.size());
-    snarl_parser.matrix.set_end_dict();
-    return std::make_tuple(snarl_parser, ptr_vcf, hdr, rec);
+    snarl_analyser.matrix.set_row_header(row_header_dict);
+    snarl_analyser.matrix.shrink(row_header_dict.size());
+    snarl_analyser.matrix.set_end_dict();
+    return std::make_tuple(snarl_analyser, ptr_vcf, hdr, rec);
 }
 
 std::vector<size_t> identify_correct_path(
     const std::vector<std::string>& decomposed_snarl,
-    const Matrix& matrix,
+    const EdgeBySampleMatrix& matrix,
     const size_t num_cols) {
 
     std::vector<size_t> rows_to_check;
@@ -571,7 +571,7 @@ std::vector<size_t> identify_correct_path(
     return idx_srr_save;
 }
 
-void SnarlParser::binary_table(const std::vector<std::tuple<std::string, std::vector<std::string>, size_t, size_t, std::vector<std::string>>>& snarls,
+void SnarlAnalyser::binary_table(const Snarl_data_t& snarls,
                                const std::vector<bool>& binary_phenotype, const std::string& chr,
                                const std::vector<std::vector<double>>& covar,
                                const double& maf, const KinshipMatrix& kinship, const size_t& num_threads, 
@@ -614,12 +614,11 @@ void SnarlParser::binary_table(const std::vector<std::tuple<std::string, std::ve
                         df_filtration = check_MAF_threshold_quantitative(df, maf);
                     }
 
-                    std::string p_value = "NA", beta = "NA", se = "NA", r2 = "NA";
+                    std::string p_value = "", beta = "", se = "", r2 = "";
 
-                    // chr, pos, snarl, type, p_value, p_adjusted, r2, beta, se, allele_number
-                    if (df_empty || df_filtration) {
-                        // do nothing
-                        // cout << "snarl filtered : " << snarl << endl;
+                    if (df_empty || df_filtration) { // filtred variant
+                        // do not analyse this snarl
+                        continue;
                     } else if (kinship.empty()) { // logistic regression + covar
                         logistic_regression(df, phenotype_filtered, p_value, beta, se, r2);
                         // glm_logistic_covar(df, phenotype_filtered, covar, p_value, beta, se, r2);
@@ -679,7 +678,7 @@ void SnarlParser::binary_table(const std::vector<std::tuple<std::string, std::ve
 }
 
 // Quantitative Table Generation
-void SnarlParser::quantitative_table(const std::vector<std::tuple<string, vector<string>, size_t, size_t, vector<string>>>& snarls,
+void SnarlAnalyser::quantitative_table(const Snarl_data_t& snarls,
                                         const std::vector<double>& quantitative_phenotype, const string &chr,
                                         const std::vector<std::vector<double>>& covar,
                                         const double& maf, const KinshipMatrix& kinship, const size_t& num_threads, 
@@ -720,10 +719,11 @@ void SnarlParser::quantitative_table(const std::vector<std::tuple<string, vector
                 }
                 std::string type_var_str = oss.str();
                 std::stringstream data;
-                std::string p_value = "NA", beta = "NA", se = "NA", r2 = "NA";
+                std::string p_value = "", beta = "", se = "", r2 = "";
                 
                 if (df_empty || df_filtration) { // filtred variant
-                    // do nothing
+                    // do not analyse this snarl
+                    continue;
                 } else if (covar.size() > 0 && !kinship.empty()) { // lmm
                     lmm_quantitative(df, phenotype_filtered, kinship, covar, p_value, beta, se, r2);
 
@@ -813,8 +813,8 @@ std::vector<size_t> found_gene_snarl(
     return gene_index;
 }
 
-void SnarlParser::eqtl_table(
-    const std::vector<std::tuple<string, vector<string>, size_t, size_t, vector<string>>>& snarls,
+void SnarlAnalyser::eqtl_table(
+    const Snarl_data_t& snarls,
     const std::vector<std::tuple<std::string, std::vector<double>, size_t, size_t>>& eqtl,
     const std::string& chr, const std::vector<std::vector<double>>& covar,
     const double& maf, const KinshipMatrix& kinship, const size_t& num_threads, 
@@ -866,10 +866,11 @@ void SnarlParser::eqtl_table(
 
                     std::string type_var_str = oss.str();
                     std::stringstream data;
-                    std::string p_value = "NA", beta = "NA", se = "NA", r2 = "NA";
+                    std::string p_value = "", beta = "", se = "", r2 = "";
     
                     if (df_empty || df_filtration) { // filtred variant
-                        // do nothing
+                        // do not analyse this snarl
+                        continue;
                     } else if (covar.size() > 0 && !kinship.empty()) { // lmm
                         lmm_quantitative(df, gene_expression, kinship, covar, p_value, beta, se, r2);
 

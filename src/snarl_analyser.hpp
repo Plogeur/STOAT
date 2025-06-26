@@ -1,5 +1,5 @@
-#ifndef SNARL_PARSER_HPP
-#define SNARL_PARSER_HPP
+#ifndef snarl_analyser_HPP
+#define snarl_analyser_HPP
 
 #include <string>
 #include <vector>
@@ -22,34 +22,34 @@
 
 using namespace std;
 
-// SnarlParser class declaration
-class SnarlParser {
+// SnarlAnalyser class declaration
+class SnarlAnalyser {
 public:
     // caca change to private
     std::vector<std::string> sampleNames;
-    Matrix matrix;
+    EdgeBySampleMatrix matrix;
 
-    SnarlParser(const vector<string>& sample_names, size_t num_paths_chr);
-    ~SnarlParser()=default;
+    SnarlAnalyser(const vector<string>& sample_names, size_t num_paths_chr);
+    ~SnarlAnalyser()=default;
     void push_matrix(const std::string& decomposedSnarl, std::unordered_map<std::string, size_t>& rowHeaderDict, size_t indexColumn);
     
-    void binary_table(const std::vector<std::tuple<std::string, std::vector<std::string>, size_t, size_t, std::vector<std::string>>>& snarls,
+    void binary_table(const Snarl_data_t& snarls,
         const std::vector<bool>& binary_phenotype, const std::string& chr,
         const std::vector<std::vector<double>>& covar,
         const double& maf, const KinshipMatrix& kinship, const size_t& num_threads, 
         const double& table_threshold, const std::string& output_dir, std::ofstream& outf);
 
-    void quantitative_table(const std::vector<std::tuple<string, vector<string>, size_t, size_t, vector<string>>>& snarls,
+    void quantitative_table(const Snarl_data_t& snarls,
                             const std::vector<double>& quantitative_phenotype, const string &chr,
                             const std::vector<std::vector<double>>& covar,
                             const double& maf, const KinshipMatrix& kinship, const size_t& num_threads, 
                             const double& table_threshold, const std::string& output_dir, std::ofstream& outf);
 
-    void create_bim_bed(const std::vector<std::tuple<string, vector<string>, size_t, size_t, vector<string>>>& snarls, 
+    void create_bim_bed(const Snarl_data_t& snarls, 
         string chromosome, std::ofstream& outbim, std::ofstream& outbed);
 
     void eqtl_table(
-        const std::vector<std::tuple<std::string, std::vector<std::string>, size_t, size_t, std::vector<std::string>>>& snarls,
+        const Snarl_data_t& snarls,
         const std::vector<std::tuple<std::string, std::vector<double>, size_t, size_t>>& eqtl,
         const std::string& chr, const std::vector<std::vector<double>>& covar,
         const double& maf, const KinshipMatrix& kinship, const size_t& num_threads, 
@@ -63,7 +63,7 @@ bool check_MAF_threshold_quantitative(const std::vector<std::vector<double>>& df
 
 void chromosome_chuck_binary(htsFile* &ptr_vcf, bcf_hdr_t* &hdr, bcf1_t* &rec, 
     const std::vector<std::string> &list_samples, 
-    const std::unordered_map<std::string, std::vector<std::tuple<std::string, std::vector<std::string>, size_t, size_t, std::vector<std::string>>>> &snarl_chr,
+    const std::unordered_map<std::string, Snarl_data_t> &snarl_chr,
     const std::vector<bool>& pheno, std::vector<std::vector<double>> covar, 
     const double& maf, const KinshipMatrix& kinship, 
     const size_t& num_threads, const double& table_threshold, 
@@ -71,7 +71,7 @@ void chromosome_chuck_binary(htsFile* &ptr_vcf, bcf_hdr_t* &hdr, bcf1_t* &rec,
 
 void chromosome_chuck_quantitative(htsFile* &ptr_vcf, bcf_hdr_t* &hdr, bcf1_t* &rec, 
     const std::vector<std::string> &list_samples,
-    const std::unordered_map<std::string, std::vector<std::tuple<std::string, std::vector<std::string>, size_t, size_t, std::vector<std::string>>>> &snarl_chr,
+    const std::unordered_map<std::string, Snarl_data_t> &snarl_chr,
     const vector<double>& pheno, std::vector<std::vector<double>> covar,
     const double& maf, const KinshipMatrix& kinship, 
     const size_t& num_threads, const double& table_threshold, 
@@ -79,7 +79,7 @@ void chromosome_chuck_quantitative(htsFile* &ptr_vcf, bcf_hdr_t* &hdr, bcf1_t* &
 
 void chromosome_chuck_eqtl(htsFile* &ptr_vcf, bcf_hdr_t* &hdr, bcf1_t* &rec, 
     const std::vector<std::string> &list_samples,
-    const std::unordered_map<std::string, std::vector<std::tuple<std::string, std::vector<std::string>, size_t, size_t, std::vector<std::string>>>>& snarl_chr,
+    const std::unordered_map<std::string, Snarl_data_t>& snarl_chr,
     const std::unordered_map<std::string, std::vector<std::tuple<std::string, std::vector<double>, size_t, size_t>>>& eqtl_map,
     const std::vector<std::vector<double>>& covar,
     const double& maf, const KinshipMatrix& kinship, 
@@ -89,7 +89,7 @@ void chromosome_chuck_eqtl(htsFile* &ptr_vcf, bcf_hdr_t* &hdr, bcf1_t* &rec,
 
 void chromosome_chuck_make_bed(htsFile* &ptr_vcf, bcf_hdr_t* &hdr, bcf1_t* &rec, 
     const std::vector<std::string> &list_samples,
-    const std::unordered_map<std::string, std::vector<std::tuple<std::string, std::vector<std::string>, size_t, size_t, std::vector<std::string>>>>& snarl_chr,
+    const std::unordered_map<std::string, Snarl_data_t>& snarl_chr,
     const string& output_dir);
 
 std::tuple<htsFile*, bcf_hdr_t*, bcf1_t*> parse_vcf(const std::string& vcf_path);
@@ -103,7 +103,7 @@ std::vector<size_t> found_gene_snarl(
 void create_fam(const std::vector<std::pair<std::string, int>> &pheno, 
     const std::string& output_path);
 
-std::tuple<SnarlParser, htsFile*, bcf_hdr_t*, bcf1_t*> make_matrix(htsFile *ptr_vcf, bcf_hdr_t *hdr, bcf1_t *rec, const vector<string>& sample_names, string &chr, size_t &num_paths_ch);
+std::tuple<SnarlAnalyser, htsFile*, bcf_hdr_t*, bcf1_t*> make_matrix(htsFile *ptr_vcf, bcf_hdr_t *hdr, bcf1_t *rec, const vector<string>& sample_names, string &chr, size_t &num_paths_ch);
 
 // Retrieve the index of `key` if it exists in `ordered_map`. Otherwise, add it and return the new index.
 size_t getOrAddIndex(std::unordered_map<std::string, size_t>& orderedMap, const std::string& key, size_t lengthOrderedMap);
@@ -118,7 +118,7 @@ std::pair<int, std::string> determine_str(const std::string& s, size_t length_s,
 const std::vector<std::vector<std::string>> decompose_snarl(const std::vector<std::string>& lst);
 
 std::vector<size_t> identify_correct_path(const std::vector<std::string>& decomposed_snarl,
-                                        const Matrix& matrix,
+                                        const EdgeBySampleMatrix& matrix,
                                         const size_t num_cols);
 
 std::vector<std::vector<size_t>> transpose_matrix(const std::vector<std::vector<size_t>>& matrix);
