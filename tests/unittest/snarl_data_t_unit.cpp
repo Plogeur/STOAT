@@ -1,5 +1,5 @@
 #include <catch2/catch_test_macros.hpp>
-#include "../../src/std::vector<Snarl_data_t>.hpp"
+#include "../../src/snarl_data_t.hpp"
 
 using namespace std;
 using namespace bdsg;

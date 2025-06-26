@@ -12,7 +12,7 @@ Node_traversal_t::Node_traversal_t(const size_t &id, const bool &rev)
 
 // Convert Node_traversal_t to node + path representation
 std::string Node_traversal_t::to_string() const {
-    return std::to_string(node_id) + (is_reverse ? ">" : "<");
+    return std::to_string(node_id) + (is_reverse ? "<" : ">");
 }
 
 // add a node traversal to the path
@@ -30,13 +30,16 @@ std::string Path_traversal_t::to_string() const {
 }
 
 // Add a snarl
-Snarl_data_t::Snarl_data_t(const std::pair<size_t, size_t>& name, const std::vector<Path_traversal_t>& paths,
-                    size_t start, size_t end, const std::vector<std::string>& path_nodes) {
-    snarl_id = name;
-    paths_per_snarl = paths;
-    start_positions = start;
-    end_positions = end;
-    path_nodes_per_snarl = path_nodes;
+Snarl_data_t::Snarl_data_t(const std::pair<size_t, size_t>& snarl_id_,
+    const std::vector<Path_traversal_t>& snarl_paths_,
+    size_t start_positions_, size_t end_positions_,
+    const std::vector<std::string>& type_variants_) {
+
+    type_variants = type_variants_;
+    snarl_paths = snarl_paths_;
+    snarl_id = snarl_id_;
+    start_positions = start_positions_;
+    end_positions = end_positions_;
 }
 
 Path::Path() {}
@@ -500,6 +503,8 @@ std::unordered_map<std::string, std::vector<Snarl_data_t>> loop_over_snarls_writ
     out_fail << "SNARL\tREASON\n";
         
     std::vector<Snarl_data_t> snarl_paths;
+    snarl_paths.reserve(snarls.size()); // Reserve snarls size to avoid reallocations
+
     unordered_map<string, std::vector<Snarl_data_t>> chr_snarl_matrix;
     size_t paths_number_analysis = 0;
     string save_chr = "";

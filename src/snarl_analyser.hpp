@@ -19,6 +19,7 @@
 
 #include "matrix.hpp"
 #include "arg_parser.hpp"
+#include "snarl_data_t.hpp"
 
 using namespace std;
 

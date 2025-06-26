@@ -24,7 +24,7 @@
 #include "arg_parser.hpp"
 #include "snarl_analyser.hpp"     
 #include "matrix.hpp"
-#include "std::vector<Snarl_data_t>.hpp"
+#include "snarl_data_t.hpp"
 #include "gaf_creator.hpp"
 #include "post_processing.hpp"
 

@@ -34,27 +34,22 @@ struct Snarl_data_t {
 
     public:
         // Constructor definition
-        Snarl_data_t(const std::pair<size_t, size_t>& name,
-                    const std::vector<Path_traversal_t>& paths,
-                    size_t start, size_t end,
-                    const std::vector<std::string>& path_nodes)
-            : snarl_id(name),
-            snarl_paths(paths),
-            start_positions(start),
-            end_positions(end),
-            type_variants(path_nodes) {}  // Assuming path_nodes correspond to type_variants
+        Snarl_data_t(const std::pair<size_t, size_t>& snarl_id_,
+                    const std::vector<Path_traversal_t>& snarl_paths_,
+                    size_t start_positions_, size_t end_positions_,
+                    const std::vector<std::string>& type_variants_);  // Assuming path_nodes correspond to type_variants
 
         // Getters
-        const std::pair<size_t, size_t>& get_snarl_names() const { return snarl_id; }
+        const std::pair<size_t, size_t>& _names() const { return snarl_id; }
         const std::vector<Path_traversal_t>& get_paths_per_snarl() const { return snarl_paths; }
         const size_t& get_start_positions() const { return start_positions; }
         const size_t& get_end_positions() const { return end_positions; }
         const std::vector<std::string>& get_path_nodes_per_snarl() const { return type_variants; }
 
     private:
-        std::pair<size_t, size_t> snarl_id;
         std::vector<std::string> type_variants;
         std::vector<Path_traversal_t> snarl_paths;
+        std::pair<size_t, size_t> snarl_id;
         size_t start_positions;
         size_t end_positions;
 };
