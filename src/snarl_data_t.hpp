@@ -40,11 +40,11 @@ struct Snarl_data_t {
                     const std::vector<std::string>& type_variants_);  // Assuming path_nodes correspond to type_variants
 
         // Getters
-        const std::pair<size_t, size_t>& _names() const { return snarl_id; }
-        const std::vector<Path_traversal_t>& get_paths_per_snarl() const { return snarl_paths; }
-        const size_t& get_start_positions() const { return start_positions; }
-        const size_t& get_end_positions() const { return end_positions; }
-        const std::vector<std::string>& get_path_nodes_per_snarl() const { return type_variants; }
+        const std::pair<size_t, size_t>& get_snarl_id() const;
+        const std::vector<Path_traversal_t>& get_snarl_paths() const;
+        const size_t& get_start_positions() const;
+        const size_t& get_end_positions() const;
+        const std::vector<std::string>& get_type_variants() const;
 
     private:
         std::vector<std::string> type_variants;

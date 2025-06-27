@@ -42,6 +42,12 @@ Snarl_data_t::Snarl_data_t(const std::pair<size_t, size_t>& snarl_id_,
     end_positions = end_positions_;
 }
 
+const std::pair<size_t, size_t>& Snarl_data_t::get_snarl_id() const { return snarl_id; }
+const std::vector<Path_traversal_t>& Snarl_data_t::get_snarl_paths() const { return snarl_paths; }
+const size_t& Snarl_data_t::get_start_positions() const { return start_positions; }
+const size_t& Snarl_data_t::get_end_positions() const { return end_positions; }
+const std::vector<std::string>& Snarl_data_t::get_type_variants() const { return type_variants; }
+
 Path::Path() {}
 
 // Add a node with known orientation
