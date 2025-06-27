@@ -37,13 +37,13 @@ public:
     SnarlParser(const vector<string>& sample_names, size_t num_paths_chr);
     ~SnarlParser()=default;
 
-    /// Given a string representing a path (edge?), the row dictionary from the Matrix, and the index of the column (sample), set the
+    /// Given a string representing an edge, the row dictionary from the Matrix, and the index of the column (sample), set the
     /// matrix bit 
     void push_matrix(const std::string& decomposedSnarl, std::unordered_map<std::string, size_t>& rowHeaderDict, size_t indexColumn);
     
     /// Given a vector of snarls (snarl, vector of paths, start index, end index, variant type),
     /// the binary phenotype of each sample, the covariate matrix, MAF threshold, kinship matrix, number of threads,
-    /// a p-value threshold?, output directory, and output file,
+    /// table_threshold (a p-value threshold?), output directory, and output file,
     /// Get the genotype/phenotype counts, write the tsv output 
     void binary_table(const std::vector<std::tuple<std::string, std::vector<std::string>, size_t, size_t, std::vector<std::string>>>& snarls,
         const std::vector<bool>& binary_phenotype, const std::string& chr,

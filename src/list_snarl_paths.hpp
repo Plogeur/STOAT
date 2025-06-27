@@ -68,6 +68,7 @@ std::tuple<std::unique_ptr<bdsg::SnarlDistanceIndex>,
 parse_graph_tree(const std::string& pg_file, const std::string& dist_file);
 
 // Function to calculate the type of variant
+// Given a vector of <sequence of the second node in the path?, min length of the snarl, max length of the snarl, path length, sum_path (also the length of the path not including the boundary nodes?), is_complex)
 vector<string> calcul_pos_type_variant(const vector<tuple<string, size_t, size_t, size_t, size_t, bool>>& list_length_paths);
 
 // Function to find snarl ID
