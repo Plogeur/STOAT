@@ -257,7 +257,7 @@ std::pair<std::vector<size_t>, std::vector<size_t>> SnarlAnalyser::create_table_
         std::vector<std::string> decomposed_snarl = decompose_string(path_snarl);
 
         // Identify correct paths
-        std::vector<size_t> idx_srr_save = identify_correct_path(decomposed_snarl, matrix, length_sample*2);
+        std::vector<size_t> idx_srr_save = identify_path(decomposed_snarl, matrix, length_sample*2);
 
         for (size_t idx : idx_srr_save) {
             size_t srr_idx = idx / 2;  // Adjust index to correspond to the sample index
@@ -394,13 +394,9 @@ void create_fam(const std::vector<std::pair<std::string, int>> &pheno,
 }
 
 // Optimized function to extract node ID and update index
-// Optimized function to extract node ID and update index
 inline size_t extract_node_id(const std::string& s, size_t length_s, size_t& i) {
     size_t node_id = 0;
     while (i < length_s && s[i] != '<' && s[i] != '>') {
-        if (s[i] < '0' || s[i] > '9') {
-            throw std::invalid_argument("Invalid character in node ID: " + std::string(1, s[i]));
-        }
         node_id = node_id * 10 + (s[i] - '0');
         i++;
     }
@@ -408,34 +404,40 @@ inline size_t extract_node_id(const std::string& s, size_t length_s, size_t& i) 
 }
 
 // Optimized decomposePathToEdge function returning Edge_t
-Edge_t decomposePathToEdge(const std::string& s) {
-    size_t i = 0;
+vector<Edge_t> decomposePathToEdge(const std::string& s) {
+    vector<Edge_t> edges;
     size_t length_s = s.length();
+    size_t i = 0;
 
-    // First node
-    char orientation_1 = s[i];
+    while (i < length_s) {
+        // Skip any whitespace
+        while (i < length_s && isspace(s[i])) {
+            i++;
+        }
 
-    bool is_reverse_1 = (orientation_1 == '<');
-    i++;
+        if (i >= length_s) break; // End of string
 
-    size_t node_id_1 = extract_node_id(s, length_s, i);
-    Node_traversal_t node1(node_id_1, is_reverse_1);
+        // Extract first node ID
+        size_t node_id_1 = extract_node_id(s, length_s, i);
+        bool is_reverse_1 = (i < length_s && s[i] == '<');
+        if (is_reverse_1) i++; // Skip '<'
 
-    // Second node
-    char orientation_2 = s[i];
+        // Extract second node ID
+        size_t node_id_2 = extract_node_id(s, length_s, i);
+        bool is_reverse_2 = (i < length_s && s[i] == '<');
+        if (is_reverse_2) i++; // Skip '<'
 
-    bool is_reverse_2 = (orientation_2 == '<');
-    i++;
-
-    size_t node_id_2 = extract_node_id(s, length_s, i);
-    Node_traversal_t node2(node_id_2, is_reverse_2);
-
-    return Edge_t(node1, node2);
+        // Create Edge_t and add to the list
+        Node_traversal_t nt1(node_id_1, is_reverse_1);
+        Node_traversal_t nt2(node_id_2, is_reverse_2);
+        edges.emplace_back(nt1, nt2);
+    }
+    return edges;
 }
 
 // Function to decompose a list of snarl strings
-const std::vector<Edge_t> decompose_snarl(const std::vector<std::string>& list_paths) {
-    Edge_t paths_snarl;
+const std::vector<std::vector<Edge_t>> decompose_snarl(const std::vector<std::string>& list_paths) {
+    std::vector<std::vector<Edge_t>> paths_snarl;
     for (const auto& path : list_paths) {
         paths_snarl.push_back(decomposePathToEdge(path));
     }
@@ -455,10 +457,10 @@ size_t getOrAddIndex(std::unordered_map<Edge_t, size_t>& orderedMap, const Edge_
 }
 
 // Add True to the matrix if snarl is found
-void SnarlAnalyser::push_matrix(const Edge_t& decomposedSnarl, std::unordered_map<Edge_t, size_t>& rowHeaderDict, size_t indexColumn) {
+void SnarlAnalyser::push_matrix(const Edge_t& EdgePath, std::unordered_map<Edge_t, size_t>& edge_dict, size_t indexColumn) {
     
-    size_t lengthOrderedMap = rowHeaderDict.size();
-    size_t idxSnarl = getOrAddIndex(rowHeaderDict, decomposedSnarl, lengthOrderedMap);
+    size_t lengthOrderedMap = edge_dict.size();
+    size_t idxSnarl = getOrAddIndex(edge_dict, EdgePath, lengthOrderedMap);
     size_t currentRowsNumber = matrix.getMaxElement();
 
     if (lengthOrderedMap > currentRowsNumber - 1) {
@@ -512,8 +514,10 @@ std::tuple<SnarlAnalyser, htsFile*, bcf_hdr_t*, bcf1_t*> make_matrix(htsFile *pt
             path_list.push_back(item);
         }
 
-        // Decompose snarl paths to Edge_t
-        const std::vector<std::vector<Edge_t>> list_edge_paths = decompose_snarl(path_list);
+        // Decompose snarl paths into vector vector Edge_t
+        // paths : >123>213<234, >123<234, >123<234<345
+        // list_paths_edge : [[Edge_t(123, 213), Edge_t(213, 234)], [...]]
+        const std::vector<std::vector<Edge_t>> list_paths_edge = decompose_snarl(path_list);
 
         for (int i = 0; i < rec->n_sample; ++i) {
             int idex_path_allele_1 = bcf_gt_allele(gt[i * 2]);
@@ -521,18 +525,17 @@ std::tuple<SnarlAnalyser, htsFile*, bcf_hdr_t*, bcf1_t*> make_matrix(htsFile *pt
             size_t col_idx = i * 2;
 
             if (idex_path_allele_1 != -1) { // Handle missing genotypes
-                for (const auto &edge_paths_1 : list_edge_paths[idex_path_allele_1]) {
-                    snarl_data.push_matrix(edge_paths_1, edge_dict, col_idx);
+                for (const auto &edge_path_1 : list_paths_edge[idex_path_allele_1]) {
+                    snarl_data.push_matrix(edge_path_1, edge_dict, col_idx);
                 }
             }
 
             if (idex_path_allele_2 != -1) { // Handle missing genotypes
-                for (const auto &edge_paths_2 : list_edge_paths[idex_path_allele_2]) {
-                    snarl_data.push_matrix(edge_paths_2, edge_dict, col_idx + 1);
+                for (const auto &edge_path_2 : list_paths_edge[idex_path_allele_2]) {
+                    snarl_data.push_matrix(edge_path_2, edge_dict, col_idx + 1);
                 }
             }
         }
-
         free(gt);
 
     } while ((bcf_read(ptr_vcf, hdr, rec) >= 0) && (chr == bcf_hdr_id2name(hdr, rec->rid)));
@@ -543,20 +546,24 @@ std::tuple<SnarlAnalyser, htsFile*, bcf_hdr_t*, bcf1_t*> make_matrix(htsFile *pt
     return std::make_tuple(snarl_data, ptr_vcf, hdr, rec);
 }
 
-std::vector<size_t> identify_correct_path(
-    const std::vector<std::string>& decomposed_snarl,
+// Function to identify the path in the edge matrix
+std::vector<size_t> identify_path(
+    const std::vector<Edge_t>& list_edge_path,
     const EdgeBySampleMatrix& matrix,
     const size_t num_cols) {
 
     std::vector<size_t> rows_to_check;
-    rows_to_check.reserve(decomposed_snarl.size());
+    rows_to_check.reserve(list_edge_path.size());
 
     // Map snarl names to row indices
-    for (const auto& snarl : decomposed_snarl) {
-        if (snarl.find("*") != std::string::npos) {
+    for (const Edge_t& edge : list_edge_path) {
+        auto& [node_id_1, node_id_2] = edge.print_pair_node(); // Convert Edge_t to std::pair<size_t, size_t>
+        
+        // Skip if snarl contains '*' (here * == 0) aka complex path
+        if (node_id_1 == 0 || node_id_2 == 0) {
             continue;
         }
-        auto it = matrix.find_snarl(snarl);
+        auto it = matrix.find_snarl(edge);
         if (it != matrix.get_end_dict()) {
             rows_to_check.push_back(it->second);
         } else {

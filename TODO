@@ -6,5 +6,5 @@ Some position in snarl paths decomposed aren't good
 In snarl decompose paths script make a struct of the output
 check the P-ajusted
 Rename snarl parser change and rename stuff
-Add namespace
-
+Add namespace stoat_vcf
+remove the duplication create_quantitative_table create_eqtl_table

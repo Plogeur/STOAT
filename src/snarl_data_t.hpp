@@ -44,6 +44,10 @@ struct Node_traversal_t { // 64 bits per node
     public:
         Node_traversal_t(const size_t &id, const bool &rev);
         
+        // Getters
+        size_t get_node_id() const;
+        bool get_is_reverse() const;
+
         // Convert to string representation
         std::string to_string() const;
 };
@@ -55,8 +59,9 @@ struct Edge_t { // 128 bits per edge
     public:
         Edge_t(const Node_traversal_t &node_traversal_1, const Node_traversal_t &node_traversal_2);
         
-        // Convert to string representation
+        // Converter
         std::string to_string() const;
+        std::pair<size_t, size_t> print_pair_node() const;
 };
 
 struct Path_traversal_t {

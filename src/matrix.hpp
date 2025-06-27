@@ -7,6 +7,8 @@
 #include <unordered_map>
 #include <cstdint>
 
+#include "snarl_data_t.hpp"
+
 class EdgeBySampleMatrix {
 public:
     EdgeBySampleMatrix(size_t rows, size_t cols);

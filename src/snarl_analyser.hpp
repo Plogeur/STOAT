@@ -32,7 +32,7 @@ public:
 
     SnarlAnalyser(const vector<string>& sample_names, size_t num_paths_chr);
     ~SnarlAnalyser()=default;
-    void push_matrix(const std::string& decomposedSnarl, std::unordered_map<std::string, size_t>& rowHeaderDict, size_t indexColumn);
+    void push_matrix(const Edge_t& EdgePath, std::unordered_map<Edge_t, size_t>& edge_dict, size_t indexColumn);
     
     void binary_table(const std::vector<Snarl_data_t>& snarls,
         const std::vector<bool>& binary_phenotype, const std::string& chr,
@@ -107,18 +107,18 @@ void create_fam(const std::vector<std::pair<std::string, int>> &pheno,
 std::tuple<SnarlAnalyser, htsFile*, bcf_hdr_t*, bcf1_t*> make_matrix(htsFile *ptr_vcf, bcf_hdr_t *hdr, bcf1_t *rec, const vector<string>& sample_names, string &chr, size_t &num_paths_ch);
 
 // Retrieve the index of `key` if it exists in `ordered_map`. Otherwise, add it and return the new index.
-size_t getOrAddIndex(std::unordered_map<std::string, size_t>& orderedMap, const std::string& key, size_t lengthOrderedMap);
+size_t getOrAddIndex(std::unordered_map<Edge_t, size_t>& orderedMap, const Edge_t& key, size_t lengthOrderedMap);
 
-// Function to decompose a string with snarl information
-std::vector<std::string> decompose_string(const std::string& s);
+// Function to decompose a path string into an vector of Edge_t
+vector<Edge_t> decomposePathToEdge(const std::string& s);
 
 // Function to determine and extract an integer from the string
-std::pair<int, std::string> determine_str(const std::string& s, size_t length_s, size_t i);
+inline size_t extract_node_id(const std::string& s, size_t length_s, size_t& i);
 
 // Function to decompose a list of snarl strings
-const std::vector<std::vector<std::string>> decompose_snarl(const std::vector<std::string>& lst);
+const std::vector<std::vector<Edge_t>> decompose_snarl(const std::vector<std::string>& lst);
 
-std::vector<size_t> identify_correct_path(const std::vector<std::string>& decomposed_snarl,
+std::vector<size_t> identify_path(const std::vector<std::string>& decomposed_snarl,
                                         const EdgeBySampleMatrix& matrix,
                                         const size_t num_cols);
 

@@ -15,6 +15,10 @@ std::string Node_traversal_t::to_string() const {
     return std::to_string(node_id) + (is_reverse ? "<" : ">");
 }
 
+// Getters for Node_traversal_t
+size_t Node_traversal_t::get_node_id() const { return node_id; }
+bool Node_traversal_t::get_is_reverse() const { return is_reverse; }
+
 // Edge_t
 Edge_t::Edge_t(const Node_traversal_t &node_traversal_1, const Node_traversal_t &node_traversal_2) {
     edge = std::make_pair(node_traversal_1, node_traversal_2);
@@ -22,7 +26,12 @@ Edge_t::Edge_t(const Node_traversal_t &node_traversal_1, const Node_traversal_t 
 
 // Convert Edge_t to string
 std::string Edge_t::to_string() const {
-    return std::to_string(node_traversal_1) + std::to_string(node_traversal_2);
+    return std::to_string(edge.first) + std::to_string(edge.second);
+}
+
+// Convert Edge_t to string
+std::pair<size_t, size_t> Edge_t::print_pair_node() const {
+    return std::make_pair(edge.first.get_node_id(), edge.second.get_node_id());
 }
 
 // add a node traversal to the path
@@ -174,8 +183,14 @@ bool Path::addNodeHandle(const net_handle_t& node_h, const SnarlDistanceIndex& s
 Path_traversal_t Path::print() const {
     Path_traversal_t out_path;
     for (size_t i = 0; i < nodes.size(); ++i) {
+        size_t node_size_t;
+        if (nodes[i] == '*') {
+            node_size_t = 0; // Special case for '*'
+        } else {
+            node_size_t = std::stoi(nodes[i])
+        }
         Node_traversal_t node_traversal(
-            std::stoi(nodes[i]),
+            node_size_t,
             orients[i] == '>' ? false : true // because is reverse is false for '>' and true for '<'
         );
         out_path.add_node_traversal_t(node_traversal);

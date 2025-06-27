@@ -538,7 +538,7 @@ size_t create_binary_table(
         const std::string& path_snarl = list_path_snarl[idx_g];
 
         std::vector<std::string> decomposed_snarl = decompose_string(path_snarl);
-        std::vector<size_t> idx_srr_save = identify_correct_path(decomposed_snarl, matrix, number_samples * 2);
+        std::vector<size_t> idx_srr_save = identify_path(decomposed_snarl, matrix, number_samples * 2);
 
         for (size_t idx : idx_srr_save) {
             bool group = binary_phenotype[idx / 2];
