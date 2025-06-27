@@ -73,7 +73,7 @@ void linear_regression(
     double beta_adjusted = 0;
     double se_adjusted = 0;
     if (p_values.size() > 1) {
-        std::vector<double> p_values_adjusted = adjusted_holm(p_values);
+        std::vector<double> p_values_adjusted = stoat_vcf::adjusted_holm(p_values);
         size_t min_index = std::distance(p_values_adjusted.begin(), std::min_element(p_values_adjusted.begin(), p_values_adjusted.end()));
         p_value_adjusted = p_values_adjusted[min_index];
         beta_adjusted = beta[min_index+1];
@@ -85,10 +85,10 @@ void linear_regression(
     }
 
     // set precision : 4 digit
-    r2_str = set_precision(r2);
-    beta_str = set_precision(beta_adjusted);
-    se_str = set_precision(se_adjusted);
-    p_value_str = set_precision(p_value_adjusted);
+    r2_str = stoat_vcf::set_precision(r2);
+    beta_str = stoat_vcf::set_precision(beta_adjusted);
+    se_str = stoat_vcf::set_precision(se_adjusted);
+    p_value_str = stoat_vcf::set_precision(p_value_adjusted);
 }
 
 // Linear regression function OLS with intercept + covariate
@@ -152,7 +152,7 @@ void glm_quantitative(
     double beta_adjusted = 0;
     double se_adjusted = 0;
     if (p_values.size() > 1) {
-        std::vector<double> p_values_adjusted = adjusted_holm(p_values);
+        std::vector<double> p_values_adjusted = stoat_vcf::adjusted_holm(p_values);
         size_t min_index = std::distance(p_values_adjusted.begin(), std::min_element(p_values_adjusted.begin(), p_values_adjusted.end()));
         p_value_adjusted = p_values_adjusted[min_index];
         beta_adjusted = beta[min_index+1];
@@ -164,10 +164,10 @@ void glm_quantitative(
     }
 
     // set precision : 4 digit
-    r2_str = set_precision(r2);
-    beta_str = set_precision(beta_adjusted);
-    se_str = set_precision(se_adjusted);
-    p_value_str = set_precision(p_value_adjusted);
+    r2_str = stoat_vcf::set_precision(r2);
+    beta_str = stoat_vcf::set_precision(beta_adjusted);
+    se_str = stoat_vcf::set_precision(se_adjusted);
+    p_value_str = stoat_vcf::set_precision(p_value_adjusted);
 }
 
 // libc++abi: terminating with uncaught exception of type boost::wrapexcept<std::domain_error>: Error in function boost::math::cdf(const students_t_distribution<double>&, double): Random variate x is nan, but must be finite or + or - infinity!

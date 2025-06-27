@@ -26,7 +26,6 @@ namespace stoat_vcf {
     std::string set_precision(const double& value);
     std::string set_precision_float_50(const boost::multiprecision::cpp_dec_float_50& value);
 
-    double combine_pvalue_from_strings(const std::string& p1, const std::string& p2);
     bool is_na(const std::string& s);
     double string_to_pvalue(const std::string& p1);
 
@@ -38,7 +37,6 @@ namespace stoat_vcf {
 
     bool isPValueSignificant(const double& pvalue_threshold, const std::string& pvalue_str);
     void retain_indices(std::vector<double>& vec, const std::unordered_set<size_t>& indices_to_keep);
-
     std::vector<double> adjusted_holm(const std::vector<double>& p_values);
 
     template <typename T>

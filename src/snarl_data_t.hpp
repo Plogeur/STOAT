@@ -36,13 +36,24 @@ using handlegraph::net_handle_t;
 // size_t start_positions_, size_t end_positions_,
 // const std::vector<std::string>& type_variants_
 
-struct Node_traversal_t { // 64 bits for node 
+struct Node_traversal_t { // 64 bits per node 
     private:
         size_t node_id : 63; // 63 bits for node ID
         bool is_reverse : 1; // 1 bit for orientation (true for reverse, false for forward)
 
     public:
         Node_traversal_t(const size_t &id, const bool &rev);
+        
+        // Convert to string representation
+        std::string to_string() const;
+};
+
+struct Edge_t { // 128 bits per edge 
+    private:
+        std::pair<Node_traversal_t, Node_traversal_t> edge; // 1 bit for orientation (true for reverse, false for forward)
+
+    public:
+        Edge_t(const Node_traversal_t &node_traversal_1, const Node_traversal_t &node_traversal_2);
         
         // Convert to string representation
         std::string to_string() const;
@@ -62,7 +73,6 @@ struct Path_traversal_t {
 };
 
 struct Snarl_data_t {
-
     public:
         // Constructor definition
         Snarl_data_t(const std::pair<size_t, size_t>& snarl_id_,
@@ -89,7 +99,7 @@ struct Snarl_data_t {
 std::string pairToString(const std::pair<size_t, size_t>& name);
 std::pair<size_t, size_t> stringToPair(const std::string& str);
 std::string vectorPathToString(const std::vector<Path_traversal_t>& vec_paths);
-std::vector<Path_traversal_t> stringToVectorPath(std::string& input);
+std::vector<Path_traversal_t> stringToVectorPath(std::string& str);
 
 class Path {
 private:

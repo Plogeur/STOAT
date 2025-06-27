@@ -183,13 +183,13 @@
 
 // TEST_CASE("Test de set_precision", "[set_precision]") {
 //     SECTION("Valeurs normales") {
-//         REQUIRE(set_precision(3.14159) == "3.1416");
-//         REQUIRE(set_precision(0.0) == "0.0000e+00");
-//         REQUIRE(set_precision(100.0) == "100.0000");
+//         REQUIRE(stoat_vcf::set_precision(3.14159) == "3.1416");
+//         REQUIRE(stoat_vcf::set_precision(0.0) == "0.0000e+00");
+//         REQUIRE(stoat_vcf::set_precision(100.0) == "100.0000");
 //     }
 
 //     SECTION("Valeurs extrêmes") {
-//         REQUIRE(set_precision(1e-10) == "1.0000e-10");
-//         REQUIRE(set_precision(1e10) == "10000000000.0000");
+//         REQUIRE(stoat_vcf::set_precision(1e-10) == "1.0000e-10");
+//         REQUIRE(stoat_vcf::set_precision(1e10) == "10000000000.0000");
 //     }
 // }

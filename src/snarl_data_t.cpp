@@ -10,9 +10,19 @@ using handlegraph::net_handle_t;
 Node_traversal_t::Node_traversal_t(const size_t &id, const bool &rev)
         : node_id(id), is_reverse(rev) {}
 
-// Convert Node_traversal_t to node + path representation
+// Convert Node_traversal_t to node + path representation [string]
 std::string Node_traversal_t::to_string() const {
     return std::to_string(node_id) + (is_reverse ? "<" : ">");
+}
+
+// Edge_t
+Edge_t::Edge_t(const Node_traversal_t &node_traversal_1, const Node_traversal_t &node_traversal_2) {
+    edge = std::make_pair(node_traversal_1, node_traversal_2);
+}
+
+// Convert Edge_t to string
+std::string Edge_t::to_string() const {
+    return std::to_string(node_traversal_1) + std::to_string(node_traversal_2);
 }
 
 // add a node traversal to the path
@@ -644,7 +654,7 @@ std::unordered_map<std::string, std::vector<Snarl_data_t>> loop_over_snarls_writ
             if (bool_return) {
                 out_snarl << chr << "\t" << strat_pos << "\t" << end_pos
                     << "\t" << snarl_id_str << "\t" << vectorPathToString(pretty_paths)
-                    << "\t" << vectorToString(type_variants) << "\t" << str_reference << "\n";
+                    << "\t" << stoat_vcf::vectorToString(type_variants) << "\t" << str_reference << "\n";
             } else {
                 // case new chr
                 if (chr != save_chr && !save_chr.empty()) {

@@ -156,15 +156,15 @@ void logistic_regression(
     double ll_null = calculate_log_likelihood(y, p_null);
     double r2 = clamp(1.0 - (ll_full / ll_null), 0.0, 1.0);
 
-    std::vector<double> p_values_adjusted = adjusted_holm(p_values);
+    std::vector<double> p_values_adjusted = stoat_vcf::adjusted_holm(p_values);
     size_t min_index = std::distance(p_values_adjusted.begin(), std::min_element(p_values_adjusted.begin(), p_values_adjusted.end()));
     double min_p_value_adjusted = p_values_adjusted[min_index];
 
     // set precision : 4 digit
-    r2_str = set_precision(r2);
-    beta_str = set_precision(beta[min_index]);
-    se_str = set_precision(se[min_index]);
-    p_value_str = set_precision(min_p_value_adjusted);
+    r2_str = stoat_vcf::set_precision(r2);
+    beta_str = stoat_vcf::set_precision(beta[min_index]);
+    se_str = stoat_vcf::set_precision(se[min_index]);
+    p_value_str = stoat_vcf::set_precision(min_p_value_adjusted);
 }
 
 // GLM Implementation with Iteratively Reweighted Least Squares (IRLS)
@@ -267,15 +267,15 @@ void glm_logistic_covar(
     double ll_null = calculate_log_likelihood(y, p_null);
     double r2 = clamp(1.0 - (ll_full / ll_null), 0.0, 1.0);
 
-    std::vector<double> p_values_adjusted = adjusted_holm(p_values);
+    std::vector<double> p_values_adjusted = stoat_vcf::adjusted_holm(p_values);
     size_t min_index = std::distance(p_values_adjusted.begin(), std::min_element(p_values_adjusted.begin(), p_values_adjusted.end()));
     double min_p_value_adjusted = p_values_adjusted[min_index];
 
     // set precision : 4 digit
-    r2_str = set_precision(r2);
-    beta_str = set_precision(beta[min_index]);
-    se_str = set_precision(se[min_index]);
-    p_value_str = set_precision(min_p_value_adjusted);
+    r2_str = stoat_vcf::set_precision(r2);
+    beta_str = stoat_vcf::set_precision(beta[min_index]);
+    se_str = stoat_vcf::set_precision(se[min_index]);
+    p_value_str = stoat_vcf::set_precision(min_p_value_adjusted);
 }
 
 // ------------------------ Chi2 test ------------------------
@@ -301,7 +301,7 @@ std::string chi2_2x2(const std::vector<size_t>& g0, const std::vector<size_t>& g
     double expected_d = (double)(col2) * (row2) / total;
 
     if (expected_a == 0 || expected_b == 0 || expected_c == 0 || expected_d == 0)
-        return set_precision(std::numeric_limits<double>::max());
+        return stoat_vcf::set_precision(std::numeric_limits<double>::max());
 
     double chi2_stat = 0;
     chi2_stat += std::pow((double)a - expected_a, 2) / expected_a;
@@ -312,9 +312,9 @@ std::string chi2_2x2(const std::vector<size_t>& g0, const std::vector<size_t>& g
     if (chi2_stat > 85.0) {
         cpp_dec_float_50 chi2_stat_float_50 = chi2_stat;
         cpp_dec_float_50 pval = 1.0 - boost::math::cdf(cpp_dec_float_50_dist, chi2_stat_float_50);
-        return set_precision_float_50(pval.convert_to<double>());
+        return stoat_vcf::set_precision_float_50(pval.convert_to<double>());
     }
-    return set_precision(1.0 - boost::math::cdf(chi_squared_dist, chi2_stat));
+    return stoat_vcf::set_precision(1.0 - boost::math::cdf(chi_squared_dist, chi2_stat));
 }
 
 // Check if the observed matrix is valid (no zero rows/columns)
@@ -355,12 +355,12 @@ std::string chi2_2xN(const std::vector<size_t>& g0, const std::vector<size_t>& g
         cpp_dec_float_50 chi2_stat_float_50 = chi2;
         boost::math::chi_squared_distribution<cpp_dec_float_50> cpp_dec_float_50_dist_2xN(df);
         cpp_dec_float_50 p_value = 1.0 - boost::math::cdf(cpp_dec_float_50_dist_2xN, chi2_stat_float_50);
-        return set_precision_float_50(p_value);
+        return stoat_vcf::set_precision_float_50(p_value);
     }
 
     boost::math::chi_squared dist_2xN(df);
     double pvalue = 1.0 - boost::math::cdf(dist_2xN, chi2);
-    return set_precision(pvalue);
+    return stoat_vcf::set_precision(pvalue);
 }
 
 // ------------------------ Fisher exact test ------------------------
@@ -461,12 +461,12 @@ std::string fastFishersExactTest(const std::vector<size_t>& g0, const std::vecto
         preaddp = tprob;
         tprob += cur_prob;
         if (tprob <= preaddp) {
-            return set_precision(preaddp / (cprob + preaddp));
+            return stoat_vcf::set_precision(preaddp / (cprob + preaddp));
         }
         } while (cur11 > 0.5);
     }
 
-    return set_precision(tprob / (cprob + tprob));
+    return stoat_vcf::set_precision(tprob / (cprob + tprob));
 }
 
 // ------------------------ Binary table & stats ------------------------

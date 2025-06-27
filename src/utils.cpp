@@ -29,33 +29,6 @@ namespace stoat_vcf {
         return s.empty() || s == "NA";
     }
 
-    // Zaykin et al. generic p-value combination
-    double combine_pvalue_from_strings(const std::string& p1, const std::string& p2) {
-        bool na1 = is_na(p1);
-        bool na2 = is_na(p2);
-
-        if (!na1 && !na2) {
-            double d1 = std::stod(p1);
-            double d2 = std::stod(p2);
-
-            // Apply Fisher's transformation
-            double T1 = -2.0 * std::log(d1);
-            double T2 = -2.0 * std::log(d2);
-            double Y = T1 + T2;
-
-            // Degrees of freedom = 4 (2 tests)
-            boost::math::chi_squared dist(4);
-            return 1.0 - boost::math::cdf(dist, Y);
-
-        } else if (!na1) {
-            return std::stod(p1);
-        } else if (!na2) {
-            return std::stod(p2);
-        } else {
-            return 1.0;  // both are NA
-        }
-    }
-
     double string_to_pvalue(const std::string& p1) {
         bool na1 = is_na(p1);
 

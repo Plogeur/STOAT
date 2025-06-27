@@ -136,12 +136,12 @@ void gaf_creation(const string& input_file, std::unordered_map<std::string, std:
 
         const string& chr = columns[0];
         string snarl_list = columns[2];
-        double pfisher = string_to_pvalue(columns[6]);
-        double pchi = string_to_pvalue(columns[7]);
+        double pfisher = stoat_vcf::string_to_pvalue(columns[6]);
+        double pchi = stoat_vcf::string_to_pvalue(columns[7]);
         string group_paths = columns[11];
         auto it = snarl_chr.find(chr);
         auto& data = it->second;  
-        const std::vector<std::string>& list_path = stringToVector<std::string>(vectorPathToString(data[count_line].get_snarl_paths()));
+        const std::vector<std::string>& list_path = stoat_vcf::stringToVector<std::string>(vectorPathToString(data[count_line].get_snarl_paths()));
 
         // Split group paths by comma
         vector<string> decomposed_group_paths;

@@ -14,21 +14,21 @@ public:
     bool operator()(size_t row, size_t col) const;
     void set(size_t row, size_t col);
     const std::vector<uint8_t>& get_matrix() const;
-    const std::unordered_map<std::string, size_t>& get_row_header() const;
+    const std::unordered_map<Edge_t, size_t>& get_row_header() const;
     size_t getMaxElement() const;
     void expandMatrix();
-    void set_row_header(const std::unordered_map<std::string, size_t>& row_header);
+    void set_row_header(const std::unordered_map<Edge_t, size_t>& row_header);
     void shrink(size_t current_rows);
-    std::unordered_map<std::string, size_t>::const_iterator find_snarl(const std::string& snarl) const;
-    std::unordered_map<std::string, size_t>::const_iterator get_end_dict() const;
+    std::unordered_map<Edge_t, size_t>::const_iterator find_snarl(const std::string& snarl) const;
+    std::unordered_map<Edge_t, size_t>::const_iterator get_end_dict() const;
     void set_end_dict();
 
 private:
     size_t cols_;
     size_t MaxElement;
     std::vector<uint8_t> matrix_1D;
-    std::unordered_map<std::string, size_t> row_header;
-    std::unordered_map<std::string, size_t>::iterator row_header_end;
+    std::unordered_map<Edge_t, size_t> row_header;
+    std::unordered_map<Edge_t, size_t>::iterator row_header_end;
 };
 
 #endif

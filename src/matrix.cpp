@@ -16,12 +16,12 @@ const std::vector<uint8_t>& EdgeBySampleMatrix::get_matrix() const {
 }
 
 // Getter for row header
-std::unordered_map<std::string, size_t>::const_iterator EdgeBySampleMatrix::find_snarl(const std::string& snarl) const {
+std::unordered_map<Edge_t, size_t>::const_iterator EdgeBySampleMatrix::find_snarl(const std::string& snarl) const {
     return row_header.find(snarl);
 }
 
 // Getter for row header
-std::unordered_map<std::string, size_t>::const_iterator EdgeBySampleMatrix::get_end_dict() const {
+std::unordered_map<Edge_t, size_t>::const_iterator EdgeBySampleMatrix::get_end_dict() const {
     return row_header_end;
 }
 
@@ -31,7 +31,7 @@ void EdgeBySampleMatrix::set_end_dict() {
 }
 
 // Getter for row header
-const std::unordered_map<std::string, size_t>& EdgeBySampleMatrix::get_row_header() const {
+const std::unordered_map<Edge_t, size_t>& EdgeBySampleMatrix::get_row_header() const {
     return row_header;
 }
 
@@ -41,7 +41,7 @@ size_t EdgeBySampleMatrix::getMaxElement() const {
 }
 
 // Setter for row header
-void EdgeBySampleMatrix::set_row_header(const std::unordered_map<std::string, size_t>& new_row_header) {
+void EdgeBySampleMatrix::set_row_header(const std::unordered_map<Edge_t, size_t>& new_row_header) {
     row_header = std::move(new_row_header);
 }
 

@@ -4,7 +4,7 @@
 #include <iomanip>
 
 // Holm-Bonferroni correction in C++
-std::vector<double> adjusted_holm(const std::vector<double>& p_values) {
+std::vector<double> stoat_vcf::adjusted_holm(const std::vector<double>& p_values) {
     int m = p_values.size();
     std::vector<std::pair<double, int>> indexed;
     for (int i = 0; i < m; ++i) {

@@ -72,12 +72,12 @@ void add_BH_adjusted_column(
         double pval = 1.0;
         if (phenotype_type == "binary") {
             // combine both p-value
-            //pval = combine_pvalue_from_strings(columns[4], columns[5]);
+            //pval = stoat_vcf::set_precision_float_50(columns[4], columns[5]);
             
             // use only chi2
-            pval = string_to_pvalue(columns[adjusted_col_index-1]); // use only chi2
+            pval = stoat_vcf::string_to_pvalue(columns[adjusted_col_index-1]); // use only chi2
         } else if (phenotype_type == "quantitative") {
-            pval = string_to_pvalue(columns[adjusted_col_index-1]);
+            pval = stoat_vcf::string_to_pvalue(columns[adjusted_col_index-1]);
         }
 
         pvalues.emplace_back(pval, 1.0, line_index++);
@@ -109,7 +109,7 @@ void add_BH_adjusted_column(
         }
 
         double adjusted_p = std::get<1>(pvalues[line_index]);
-        std::string adj_str = set_precision(adjusted_p);
+        std::string adj_str = stoat_vcf::set_precision(adjusted_p);
         columns[adjusted_col_index] = adj_str;
 
         // Write updated line
