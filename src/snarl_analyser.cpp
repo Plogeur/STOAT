@@ -316,7 +316,11 @@ void SnarlAnalyser::create_bim_bed(const std::vector<Snarl_data_t>& snarls,
 
     // Iterate over each snarl
     // <snarl, paths, pos, type>
-    for (const auto& [snarl, list_snarl, start_pos, end_pos, type] : snarls) {
+    for (const Snarl_data_t& snarl_data_s : snarls) {
+
+        std::string snarl = pairToString(snarl_data_s.get_snarl_id());
+        std::vector<std::string> list_snarl = stringToVector<std::string>(vectorPathToString(snarl_data_s.get_snarl_paths()));
+        size_t start_pos = snarl_data_s.get_start_positions();
 
         // if (list_snarl.size() > 2) {continue;} // avoid multiallelic var
         const size_t sample_number = sampleNames.size();  // Number of individuals
@@ -591,7 +595,13 @@ void SnarlAnalyser::binary_table(const std::vector<Snarl_data_t>& snarls,
             std::stringstream local_buffer;
 
             for (size_t itr = start; itr < end; ++itr) {
-                const auto& [snarl, list_snarl, start_pos, end_pos, type_var] = snarls[itr];
+                const Snarl_data_t& snarl_data_s = snarls[itr];
+                
+                std::string snarl = pairToString(snarl_data_s.get_snarl_id());
+                std::vector<std::string> list_snarl = stringToVector<std::string>(vectorPathToString(snarl_data_s.get_snarl_paths()));
+                size_t start_pos = snarl_data_s.get_start_positions();
+                size_t end_pos = snarl_data_s.get_end_positions();
+                std::vector<std::string> type_var = snarl_data_s.get_type_variants();
 
                 std::ostringstream oss;
                 for (size_t i = 0; i < type_var.size(); ++i) {
@@ -604,7 +614,7 @@ void SnarlAnalyser::binary_table(const std::vector<Snarl_data_t>& snarls,
 
                 if (!covar.empty()) {
                     // Logistic regression
-                    auto [df, phenotype_filtered, allele_number, allele_paths] = create_quantitative_table(length_sample, list_snarl, binary_phenotype, matrix);
+                    const auto& [df, phenotype_filtered, allele_number, allele_paths] = create_quantitative_table(length_sample, list_snarl, binary_phenotype, matrix);
                     bool df_filtration = false;
                     bool df_empty = false;
 
@@ -635,7 +645,7 @@ void SnarlAnalyser::binary_table(const std::vector<Snarl_data_t>& snarls,
                     // chr, pos, snarl, type, p_value, p_adjusted, t-dist, beta, se, allele_number
                     data << chr << "\t" << start_pos << "\t" << snarl << "\t" << type_var_str
                     << "\t" << p_value << "\t" << "" << "\t" << r2 << "\t" << beta << "\t" << se 
-                    << "\t" << allele_number << "\t" << vector_to_string(allele_paths) << "\n";
+                    << "\t" << allele_number << "\t" << vectorToString(allele_paths) << "\n";
                                 
                 } else {
                     size_t length_column_headers = list_snarl.size();
@@ -699,9 +709,15 @@ void SnarlAnalyser::quantitative_table(const std::vector<Snarl_data_t>& snarls,
 
             // Iterate over each snarl
             for (size_t itr = 0; itr < snarls.size(); ++itr) {
-                const auto& [snarl, list_snarl, start_pos, end_pos, type_var] = snarls[itr];
-
-                auto [df, phenotype_filtered, allele_number, allele_paths] = create_quantitative_table(length_sample, list_snarl, quantitative_phenotype, matrix);
+                const Snarl_data_t& snarl_data_s = snarls[itr];
+                
+                std::string snarl = pairToString(snarl_data_s.get_snarl_id());
+                std::vector<std::string> list_snarl = stringToVector<std::string>(vectorPathToString(snarl_data_s.get_snarl_paths()));
+                size_t start_pos = snarl_data_s.get_start_positions();
+                size_t end_pos = snarl_data_s.get_end_positions();
+                std::vector<std::string> type_var = snarl_data_s.get_type_variants();
+                
+                const auto& [df, phenotype_filtered, allele_number, allele_paths] = create_quantitative_table(length_sample, list_snarl, quantitative_phenotype, matrix);
                 bool df_filtration = false;
                 bool df_empty = false;
 
@@ -742,7 +758,7 @@ void SnarlAnalyser::quantitative_table(const std::vector<Snarl_data_t>& snarls,
                 // chr, pos, snarl, type, p_value, p_adjusted, r2, beta, se, allele_number
                 data << chr << "\t" << start_pos << "\t" << snarl << "\t" << type_var_str
                 << "\t" << p_value  << "\t" << "" << "\t" << r2 << "\t" << beta << "\t" << se 
-                << "\t" << allele_number << "\t" << vector_to_string(allele_paths) << "\n";
+                << "\t" << allele_number << "\t" << vectorToString(allele_paths) << "\n";
                 local_buffer << data.str();
             }
 
@@ -836,10 +852,17 @@ void SnarlAnalyser::eqtl_table(
 
             // Iterate over each snarl
             for (size_t itr = 0; itr < snarls.size(); ++itr) {
-                const auto& [snarl, list_snarl, start_pos, end_pos, type_var] = snarls[itr];
+                const Snarl_data_t& snarl_data_s = snarls[itr];
+                
+                std::string snarl = pairToString(snarl_data_s.get_snarl_id());
+                std::vector<std::string> list_snarl = stringToVector<std::string>(vectorPathToString(snarl_data_s.get_snarl_paths()));
+                size_t start_pos = snarl_data_s.get_start_positions();
+                size_t end_pos = snarl_data_s.get_end_positions();
+                std::vector<std::string> type_var = snarl_data_s.get_type_variants();
+
                 std::vector<size_t> list_gene_index = found_gene_snarl(eqtl, start_pos, end_pos, windows_gene_threshold);
 
-                auto [df, index_filtered, allele_number, allele_paths] = create_eqtl_table(length_sample, list_snarl, matrix);
+                const auto& [df, index_filtered, allele_number, allele_paths] = create_eqtl_table(length_sample, list_snarl, matrix);
                 bool df_filtration = false;
                 bool df_empty = false;
 
@@ -889,7 +912,7 @@ void SnarlAnalyser::eqtl_table(
                    // "CHR\tPOS\tSNARL\tTYPE\tGENE\tP\tP_ADJUSTED\tRSQUARE\tBETA\tSE\tALLELE_NUM\n";
                     data << chr << "\t" << start_pos << "\t" << snarl << "\t" << type_var_str
                     << "\t" << gene_name << "\t" << p_value  << "\t" << "" << "\t" << r2
-                    << "\t" << beta << "\t" << se << "\t" << allele_number << "\t" << vector_to_string(allele_paths) << "\n";
+                    << "\t" << beta << "\t" << se << "\t" << allele_number << "\t" << vectorToString(allele_paths) << "\n";
 
                     local_buffer << data.str();
                 }

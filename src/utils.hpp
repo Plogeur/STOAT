@@ -21,34 +21,32 @@
 #include "snarl_data_t.hpp"
 
 using namespace std;
+namespace stoat_vcf {
 
-std::string set_precision(const double& value);
-std::string set_precision_float_50(const boost::multiprecision::cpp_dec_float_50& value);
+    std::string set_precision(const double& value);
+    std::string set_precision_float_50(const boost::multiprecision::cpp_dec_float_50& value);
 
-double combine_pvalue_from_strings(const std::string& p1, const std::string& p2);
-bool is_na(const std::string& s);
-double string_to_pvalue(const std::string& p1);
+    double combine_pvalue_from_strings(const std::string& p1, const std::string& p2);
+    bool is_na(const std::string& s);
+    double string_to_pvalue(const std::string& p1);
 
-void writeSignificantTableToTSV(
-    const std::vector<std::vector<double>>& table,
-    const std::vector<std::string>& list_snarl,
-    const std::vector<std::string>& list_samples,
-    const std::string& filename);
+    void writeSignificantTableToTSV(
+        const std::vector<std::vector<double>>& table,
+        const std::vector<std::string>& list_snarl,
+        const std::vector<std::string>& list_samples,
+        const std::string& filename);
 
-bool isPValueSignificant(const double& pvalue_threshold, const std::string& pvalue_str);
-void retain_indices(std::vector<double>& vec, const std::unordered_set<size_t>& indices_to_keep);
+    bool isPValueSignificant(const double& pvalue_threshold, const std::string& pvalue_str);
+    void retain_indices(std::vector<double>& vec, const std::unordered_set<size_t>& indices_to_keep);
 
-std::vector<double> adjusted_holm(const std::vector<double>& p_values);
+    std::vector<double> adjusted_holm(const std::vector<double>& p_values);
 
-template <typename T>
-std::string vector_to_string(const std::vector<T>& vec);
+    template <typename T>
+    std::string vectorToString(const std::vector<T>& vec);
 
-std::string pairToString(const std::pair<size_t, size_t>& name);
+    template <typename T>
+    std::vector<T> stringToVector(const std::string& str);
 
-std::pair<size_t, size_t> stringToPair(const std::string& str);
-
-std::string vector_path_to_string(const std::vector<Path_traversal_t>& vec_paths);
-
-std::vector<Path_traversal_t> string_to_vector_path(const std::string& input);
+} // end namespace stoat_vcf
 
 #endif

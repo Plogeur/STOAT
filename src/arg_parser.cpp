@@ -318,16 +318,20 @@ std::unordered_map<std::string, std::vector<Snarl_data_t>> parse_snarl_path(cons
 
         std::istringstream path_stream(path_list);
         std::istringstream type_stream(type_var);
-        std::vector<std::string> paths_vector_str;
         std::vector<std::string> type;
         size_t start_pos = std::stoi(start_pos_str);
         size_t end_pos = std::stoi(end_pos_str);
         int size_paths = 0;
+        std::string paths_str;
+        bool first = true;
 
-        // create a vector of paths
         while (std::getline(path_stream, path_list, ',')) {
             size_paths++;
-            paths.push_back(path_list);
+            if (!first) {
+                paths_str += ",";
+            }
+            paths_str += path_list;
+            first = false;
         }
 
         // create a vector of types
@@ -341,11 +345,8 @@ std::unordered_map<std::string, std::vector<Snarl_data_t>> parse_snarl_path(cons
         }
         save_chr = chr;
 
-        // const std::pair<size_t, size_t>& name, const Path_traversal_t& paths,
-        // size_t start, size_t end, const std::vector<std::string>& path_nodes
-
         std::pair<size_t, size_t> snarl_pair = stringToPair(snarl);
-        std::vector<Path_traversal_t>& paths = string_to_vector_path(paths_vector_str);
+        std::vector<Path_traversal_t> paths = stringToVectorPath(paths_str);
         Snarl_data_t snarl_path(snarl_pair, paths, start_pos, end_pos, type);
         snarl_paths.push_back(snarl_path);
     }

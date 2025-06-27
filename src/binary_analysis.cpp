@@ -28,7 +28,7 @@ using boost::math::chi_squared_distribution;
 static const double kExactTestEpsilon2 = 0.0000000000009094947017729282379150390625;
 static const double kExactTestBias = 0.00000000000000000000000010339757656912845935892608650874535669572651386260986328125;
 static const boost::math::chi_squared chi_squared_dist(1);
-chi_squared_distribution<cpp_dec_float_50> cpp_dec_float_50_dist(1);
+boost::math::chi_squared_distribution<cpp_dec_float_50> cpp_dec_float_50_dist(1);
 
 // ------------------------ Logistic regression ------------------------
 
@@ -353,7 +353,7 @@ std::string chi2_2xN(const std::vector<size_t>& g0, const std::vector<size_t>& g
     size_t df = cols - 1;
     if (chi2 > 85.0) { // avoiding case 0.000+00 precision
         cpp_dec_float_50 chi2_stat_float_50 = chi2;
-        chi_squared_distribution<cpp_dec_float_50> cpp_dec_float_50_dist_2xN(df);
+        boost::math::chi_squared_distribution<cpp_dec_float_50> cpp_dec_float_50_dist_2xN(df);
         cpp_dec_float_50 p_value = 1.0 - boost::math::cdf(cpp_dec_float_50_dist_2xN, chi2_stat_float_50);
         return set_precision_float_50(p_value);
     }

@@ -30,13 +30,44 @@ using handlegraph::step_handle_t;
 using handlegraph::handle_t;
 using handlegraph::net_handle_t;
 
+// Container for snarl data : 
+// const std::pair<size_t, size_t>& snarl_id_,
+// const std::vector<Path_traversal_t>& snarl_paths_,
+// size_t start_positions_, size_t end_positions_,
+// const std::vector<std::string>& type_variants_
+
+struct Node_traversal_t { // 64 bits for node 
+    private:
+        size_t node_id : 63; // 63 bits for node ID
+        bool is_reverse : 1; // 1 bit for orientation (true for reverse, false for forward)
+
+    public:
+        Node_traversal_t(const size_t &id, const bool &rev);
+        
+        // Convert to string representation
+        std::string to_string() const;
+};
+
+struct Path_traversal_t {
+    private:
+        std::vector<Node_traversal_t> paths; // Nodes in the path
+
+    public:
+        // add a node traversal to the path
+        Path_traversal_t() = default;
+        void add_node_traversal_t(const Node_traversal_t &paths);
+
+        // convert to string representation
+        std::string to_string() const;
+};
+
 struct Snarl_data_t {
 
     public:
         // Constructor definition
         Snarl_data_t(const std::pair<size_t, size_t>& snarl_id_,
                     const std::vector<Path_traversal_t>& snarl_paths_,
-                    size_t start_positions_, size_t end_positions_,
+                    const size_t start_positions_, const size_t end_positions_,
                     const std::vector<std::string>& type_variants_);  // Assuming path_nodes correspond to type_variants
 
         // Getters
@@ -54,30 +85,11 @@ struct Snarl_data_t {
         size_t end_positions;
 };
 
-struct Node_traversal_t {
-    private:
-        size_t node_id : 63;
-        bool is_reverse : 1;
-
-    public:
-        Node_traversal_t(const size_t &id, const bool &rev);
-        
-        // Convert to string representation
-        std::string to_string() const;
-};
-
-struct Path_traversal_t {
-    private:
-        std::vector<Node_traversal_t> paths; // Nodes in the path
-
-    public:
-        // add a node traversal to the path
-        Path_traversal_t() = default;
-        add_node_traversal_t(const Node_traversal_t &paths);
-
-        // convert to string representation
-        std::string to_string() const;
-};
+// Converter
+std::string pairToString(const std::pair<size_t, size_t>& name);
+std::pair<size_t, size_t> stringToPair(const std::string& str);
+std::string vectorPathToString(const std::vector<Path_traversal_t>& vec_paths);
+std::vector<Path_traversal_t> stringToVectorPath(std::string& input);
 
 class Path {
 private:

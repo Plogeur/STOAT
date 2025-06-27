@@ -75,11 +75,11 @@ void print_help_graph() {
 }
 
 void print_help() {
-    std::cerr   << "stoat: gwas analysis tool, version v0.0.1\n";
+    std::cerr   << "stoat: gwas analysis tool, version v0.0.1\n"
                 << "usage: stoat <command> [options]\n\n"    
-                << "main usage:\n";
-                << "  -- vcf       gwas analysis base on vcf pangenome calling\n";
-                << "  -- graph     gwas analysis base on pangenome graph\n";
+                << "main usage:\n"
+                << "  -- vcf       gwas analysis base on vcf pangenome calling\n"
+                << "  -- graph     gwas analysis base on pangenome graph\n"
                 << "  -- version   version information\n";                      
 }
 

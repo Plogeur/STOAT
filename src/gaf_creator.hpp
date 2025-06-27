@@ -17,6 +17,8 @@
 #include <bdsg/packed_graph.hpp>
 #include <handlegraph/handle_graph.hpp>
 #include <handlegraph/path_handle_graph.hpp>
+#include "snarl_data_t.hpp"
+#include "utils.hpp"
 
 using namespace std;
 using namespace bdsg;

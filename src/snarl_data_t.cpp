@@ -16,7 +16,7 @@ std::string Node_traversal_t::to_string() const {
 }
 
 // add a node traversal to the path
-Path_traversal_t::add_node_traversal_t(const Node_traversal_t &node) {
+void Path_traversal_t::add_node_traversal_t(const Node_traversal_t &node) {
     this->paths.push_back(node);
 }
 
@@ -29,10 +29,71 @@ std::string Path_traversal_t::to_string() const {
     return result;
 }
 
+std::string pairToString(const std::pair<size_t, size_t>& name) {
+    std::ostringstream oss;
+    oss << name.first << "_" << name.second;
+    return oss.str();
+}
+
+std::pair<size_t, size_t> stringToPair(const std::string& str) {
+    size_t underscorePos = str.find('_');
+    if (underscorePos == std::string::npos) {
+        throw std::invalid_argument("Input string does not contain an underscore separator");
+    }
+
+    std::string firstPart = str.substr(0, underscorePos);
+    std::string secondPart = str.substr(underscorePos + 1);
+
+    size_t first = std::stoul(firstPart);
+    size_t second = std::stoul(secondPart);
+
+    return {first, second};
+}
+
+std::string vectorPathToString(const std::vector<Path_traversal_t>& vec_paths) {
+    std::ostringstream oss;
+    for (size_t i = 0; i < vec_paths.size(); ++i) {
+        if (i > 0) oss << ",";
+        oss << vec_paths[i].to_string();
+    }
+    return oss.str();
+}
+
+std::vector<Path_traversal_t> stringToVectorPath(std::string& input) {
+    std::vector<Path_traversal_t> vec_paths;
+    std::istringstream iss(input);
+    std::string path_str;
+
+    // Split by commas to get individual Path_traversal_t strings
+    while (std::getline(iss, path_str, ',')) {
+        Path_traversal_t path;
+        size_t i = 0;
+
+        while (i < path_str.size()) {
+            // Parse node_id
+            size_t node_id = 0;
+            while (i < path_str.size() && std::isdigit(path_str[i])) {
+                node_id = node_id * 10 + (path_str[i] - '0');
+                ++i;
+            }
+
+            bool is_reverse = (path_str[i] == '<');
+            ++i;
+
+            Node_traversal_t node(node_id, is_reverse);
+            path.add_node_traversal_t(node);
+        }
+
+        vec_paths.push_back(path);
+    }
+
+    return vec_paths;
+}
+
 // Add a snarl
 Snarl_data_t::Snarl_data_t(const std::pair<size_t, size_t>& snarl_id_,
     const std::vector<Path_traversal_t>& snarl_paths_,
-    size_t start_positions_, size_t end_positions_,
+    const size_t start_positions_, const size_t end_positions_,
     const std::vector<std::string>& type_variants_) {
 
     type_variants = type_variants_;
@@ -176,12 +237,16 @@ std::pair<size_t, size_t> find_snarl_id(SnarlDistanceIndex& stree, net_handle_t&
     auto end_node = stree.get_node_from_sentinel(send);
 
     // Get the node IDs from SnarlDistanceIndex
+    // handlegraph::nid_t
     auto start_node_id = stree.node_id(start_node);
     auto end_node_id = stree.node_id(end_node);
 
-    // Construct the snarl ID as "end_node_id_start_node_id"
-    std::pair<size_t, size_t> snarl_id;
-    snarl_id.make_pair(end_node_id, start_node_id);
+    // Convert to size_t
+    size_t start_node_id_size_t = static_cast<size_t>(start_node_id);
+    size_t end_node_id_size_t = static_cast<size_t>(end_node_id);
+
+    // Construct the snarl ID
+    std::pair<size_t, size_t> snarl_id(end_node_id_size_t, start_node_id_size_t);
 
     return snarl_id;  // Return the generated snarl ID as a string
 }
@@ -566,7 +631,7 @@ std::unordered_map<std::string, std::vector<Snarl_data_t>> loop_over_snarls_writ
             // pair<vector<string>, vector<string>>
             auto [pretty_paths, type_variants] = fill_pretty_paths(stree, pg, finished_paths);
 
-            // snarl_id chromosome   start_position  end_position    paths    type
+            // snarl_id chromosome start_position end_position paths type
             string chr = std::get<1>(snarl_path_pos);
             if (chr.empty()) {
                 continue; // skip this snarl with no chr ref in it
@@ -574,12 +639,12 @@ std::unordered_map<std::string, std::vector<Snarl_data_t>> loop_over_snarls_writ
             size_t strat_pos = std::get<2>(snarl_path_pos);
             size_t end_pos = std::get<3>(snarl_path_pos);
             paths_number_analysis += pretty_paths.size();
-            string str_reference = std::get<4>(snarl_path_pos) == true ? "1" : "0"; // 0 : out reference, 1 : on reference
+            string str_reference = std::get<4>(snarl_path_pos) == true ? "1" : "0"; // 1 : on reference, 0 : out reference
 
             if (bool_return) {
                 out_snarl << chr << "\t" << strat_pos << "\t" << end_pos
-                    << "\t" << snarl_id_str << "\t" << vector_path_to_string(pretty_paths)
-                    << "\t" << vector_to_string(type_variants) << "\t" << str_reference << "\n";
+                    << "\t" << snarl_id_str << "\t" << vectorPathToString(pretty_paths)
+                    << "\t" << vectorToString(type_variants) << "\t" << str_reference << "\n";
             } else {
                 // case new chr
                 if (chr != save_chr && !save_chr.empty()) {

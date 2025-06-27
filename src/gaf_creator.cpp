@@ -3,6 +3,7 @@
 #include "binary_analysis.hpp"
 #include "gaf_creator.hpp"
 #include "utils.hpp"
+#include "snarl_data_t.hpp"
 
 using namespace std;
 
@@ -140,7 +141,7 @@ void gaf_creation(const string& input_file, std::unordered_map<std::string, std:
         string group_paths = columns[11];
         auto it = snarl_chr.find(chr);
         auto& data = it->second;  
-        vector<string>& list_path = std::get<1>(data[count_line]);
+        const std::vector<std::string>& list_path = stringToVector<std::string>(vectorPathToString(data[count_line].get_snarl_paths()));
 
         // Split group paths by comma
         vector<string> decomposed_group_paths;
