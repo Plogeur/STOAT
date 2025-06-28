@@ -216,7 +216,7 @@ auto process_genotype_table(
 
         kept_columns.push_back(col_idx);
 
-        for (size_t i = 0; i < length_sample; ++i) {
+        for (size_t i = 0; i < number_samples; ++i) {
             if (genotypes[i].size() < kept_columns.size())
                 genotypes[i].resize(kept_columns.size(), 0.0);
         }
@@ -276,7 +276,7 @@ create_quantitative_table(
     const std::vector<T>& phenotype,
     EdgeBySampleMatrix& matrix) {
 
-    return process_genotype_table<Path_traversal_t, T>(length_sample, column_headers, matrix, &phenotype);
+    return process_genotype_table<T>(length_sample, column_headers, matrix, &phenotype);
 }
 
 std::tuple<std::vector<std::vector<double>>, std::unordered_set<size_t>, size_t, std::vector<size_t>>

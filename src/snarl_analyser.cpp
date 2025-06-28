@@ -254,7 +254,7 @@ std::pair<std::vector<size_t>, std::vector<size_t>> SnarlAnalyser::create_table_
     // Genotype paths
     for (size_t col_idx = 0; col_idx < length_column; ++col_idx) {
         const Path_traversal_t& path_snarl = list_path_snarl[col_idx];
-        std::vector<Edge_t> decomposed_snarl = decomposePathToEdge(path_snarl);
+        std::vector<Edge_t> decomposed_snarl = decompose_path_to_edges(path_snarl);
 
         // Identify correct paths
         std::vector<size_t> idx_srr_save = identify_path(decomposed_snarl, matrix, length_sample*2);
@@ -318,7 +318,7 @@ void SnarlAnalyser::create_bim_bed(const std::vector<Snarl_data_t>& snarls,
     // <snarl, paths, pos, type>
     for (const Snarl_data_t& snarl_data_s : snarls) {
 
-        std::string snarl = pairToString(snarl_data_s.get_snarl_id());
+        std::string snarl_id = pairToString(snarl_data_s.get_snarl_id());
         std::vector<Path_traversal_t> list_path_snarl = snarl_data_s.get_snarl_paths();
         size_t start_pos = snarl_data_s.get_start_positions();
 
@@ -332,7 +332,7 @@ void SnarlAnalyser::create_bim_bed(const std::vector<Snarl_data_t>& snarls,
         std::string allele2 = "T";  // Placeholder for allele 2
 
         // chr id genetic_distance pos allele1 allele2
-        outbim << chromosome << "\t" << snarl << "\t0\t" << start_pos
+        outbim << chromosome << "\t" << snarl_id << "\t0\t" << start_pos
                 << "\t" << allele1 << "\t" << allele2 << "\n";
         
         // Write the genotypes for this SNP to the BED file
@@ -404,15 +404,14 @@ inline size_t extract_node_id(const std::string& s, size_t length_s, size_t& i) 
 }
 
 // Decompose path Path_traversal_t to vector Edge_t
-std::vector<Edge_t> decompose_path_to_edges(const Path_traversal_t& s) {
+std::vector<Edge_t> decompose_path_to_edges(const Path_traversal_t& list_paths) {
     std::vector<Edge_t> edges;
-    const auto& nodes = s.paths;
-    size_t length_s = nodes.size();
-
+    const std::vector<Node_traversal_t>& list_nodes = list_paths.get_paths();
+    size_t length_s = list_nodes.size();
     edges.reserve(length_s - 1); // Reserve memory
 
     for (size_t i = 0; i < length_s - 1; ++i) {
-        edges.emplace_back(nodes[i], nodes[i + 1]);
+        edges.emplace_back(list_nodes[i], list_nodes[i + 1]);
     }
 
     return edges;
@@ -422,7 +421,7 @@ std::vector<Edge_t> decompose_path_to_edges(const Path_traversal_t& s) {
 const std::vector<std::vector<Edge_t>> decompose_path_list_str(const std::vector<Path_traversal_t>& list_paths) {
     std::vector<std::vector<Edge_t>> paths_snarl;
     for (const auto& path : list_paths) {
-        paths_snarl.push_back(decompose_path_to_edge(path));
+        paths_snarl.push_back(decompose_path_to_edges(path));
     }
     return paths_snarl;
 }
@@ -463,7 +462,7 @@ vector<Edge_t> decompose_path_str_to_edge(const std::string& s) {
 const std::vector<std::vector<Edge_t>> decompose_path_list_str(const std::vector<std::string>& list_paths) {
     std::vector<std::vector<Edge_t>> paths_snarl;
     for (const auto& path : list_paths) {
-        paths_snarl.push_back(decompose_path_str_to_Edge(path));
+        paths_snarl.push_back(decompose_path_str_to_edge(path));
     }
     return paths_snarl;
 }
@@ -538,10 +537,10 @@ std::tuple<SnarlAnalyser, htsFile*, bcf_hdr_t*, bcf1_t*> make_matrix(htsFile *pt
             path_list.push_back(item);
         }
 
-        // Decompose snarl paths into vector vector Edge_t
+        // Decompose snarl paths [vector string] into [vector vector Edge_t]
         // paths : >123>213<234, >123<234, >123<234<345
         // list_paths_edge : [[Edge_t(123, 213), Edge_t(213, 234)], [...]]
-        const std::vector<std::vector<Edge_t>> list_paths_edge = decompose_snarl(path_list);
+        const std::vector<std::vector<Edge_t>> list_paths_edge = decompose_path_list_str(path_list);
 
         for (int i = 0; i < rec->n_sample; ++i) {
             int idex_path_allele_1 = bcf_gt_allele(gt[i * 2]);
@@ -581,13 +580,13 @@ std::vector<size_t> identify_path(
 
     // Map snarl names to row indices
     for (const Edge_t& edge : list_edge_path) {
-        auto& [node_id_1, node_id_2] = edge.print_pair_node(); // Convert Edge_t to std::pair<size_t, size_t>
+        const auto& [node_id_1, node_id_2] = edge.print_pair_node(); // Convert Edge_t to std::pair<size_t, size_t>
         
         // Skip if snarl contains '*' (here * == 0) aka complex path
         if (node_id_1 == 0 || node_id_2 == 0) {
             continue;
         }
-        auto it = matrix.find_snarl(edge);
+        auto it = matrix.find_edge(edge);
         if (it != matrix.get_end_dict()) {
             rows_to_check.push_back(it->second);
         } else {
@@ -635,7 +634,7 @@ void SnarlAnalyser::binary_table(const std::vector<Snarl_data_t>& snarls,
 
             for (size_t itr = start; itr < end; ++itr) {
                 const Snarl_data_t& snarl_data_s = snarls[itr];
-                auto& [snarl_id, list_path_snarl, start_pos, end_pos, type_var] = snarl_data_s.get_snarl();
+                const auto& [snarl_id, list_path_snarl, start_pos, end_pos, type_var] = snarl_data_s.get_snarl();
 
                 std::ostringstream oss;
                 for (size_t i = 0; i < type_var.size(); ++i) {
@@ -671,9 +670,9 @@ void SnarlAnalyser::binary_table(const std::vector<Snarl_data_t>& snarls,
                     }
                     
                     // Plot regression table
-                    if (table_threshold != -1 && isPValueSignificant(table_threshold, p_value)) {
+                    if (table_threshold != -1 && stoat_vcf::isPValueSignificant(table_threshold, p_value)) {
                         string variant_file_name = regression_dir + "/" + snarl_id + ".tsv";
-                        stoat_vcf::writeSignificantTableToTSV(df, vectorPathToString(list_path_snarl), sampleNames, variant_file_name);
+                        stoat_vcf::writeSignificantTableToTSV(df,stoat_vcf::stringToVector<string>(vectorPathToString(list_path_snarl)), sampleNames, variant_file_name);
                     }
     
                     // chr, pos, snarl, type, p_value, p_adjusted, t-dist, beta, se, allele_number
@@ -744,7 +743,7 @@ void SnarlAnalyser::quantitative_table(const std::vector<Snarl_data_t>& snarls,
             // Iterate over each snarl
             for (size_t itr = 0; itr < snarls.size(); ++itr) {
                 const Snarl_data_t& snarl_data_s = snarls[itr];
-                auto& [snarl_id, list_path_snarl, start_pos, end_pos, type_var] = snarl_data_s.get_snarl();
+                const auto& [snarl_id, list_path_snarl, start_pos, end_pos, type_var] = snarl_data_s.get_snarl();
 
                 const auto& [df, phenotype_filtered, allele_number, allele_paths] = create_quantitative_table(length_sample, list_path_snarl, quantitative_phenotype, matrix);
                 bool df_filtration = false;
@@ -779,13 +778,13 @@ void SnarlAnalyser::quantitative_table(const std::vector<Snarl_data_t>& snarls,
                     linear_regression(df, phenotype_filtered, p_value, beta, se, r2);
                 }
                 
-                if (table_threshold != -1 && isPValueSignificant(table_threshold, p_value)) {
-                    string variant_file_name = regression_dir + "/" + snarl + ".tsv";
-                    stoat_vcf::writeSignificantTableToTSV(df, vectorPathToString(list_path_snarl), sampleNames, variant_file_name);
+                if (table_threshold != -1 && stoat_vcf::isPValueSignificant(table_threshold, p_value)) {
+                    string variant_file_name = regression_dir + "/" + snarl_id + ".tsv";
+                    stoat_vcf::writeSignificantTableToTSV(df,stoat_vcf::stringToVector<string>(vectorPathToString(list_path_snarl)), sampleNames, variant_file_name);
                 }
                 
                 // chr, pos, snarl, type, p_value, p_adjusted, r2, beta, se, allele_number
-                data << chr << "\t" << start_pos << "\t" << snarl << "\t" << type_var_str
+                data << chr << "\t" << start_pos << "\t" << snarl_id << "\t" << type_var_str
                 << "\t" << p_value  << "\t" << "" << "\t" << r2 << "\t" << beta << "\t" << se 
                 << "\t" << allele_number << "\t" << stoat_vcf::vectorToString(allele_paths) << "\n";
                 local_buffer << data.str();
@@ -882,7 +881,7 @@ void SnarlAnalyser::eqtl_table(
             // Iterate over each snarl
             for (size_t itr = 0; itr < snarls.size(); ++itr) {
                 const Snarl_data_t& snarl_data_s = snarls[itr];
-                auto& [snarl_id, list_path_snarl, start_pos, end_pos, type_var] = snarl_data_s.get_snarl();
+                const auto& [snarl_id, list_path_snarl, start_pos, end_pos, type_var] = snarl_data_s.get_snarl();
 
                 std::vector<size_t> list_gene_index = found_gene_snarl(eqtl, start_pos, end_pos, windows_gene_threshold);
                 const auto& [df, index_filtered, allele_number, allele_paths] = create_eqtl_table(length_sample, list_path_snarl, matrix);
@@ -927,13 +926,13 @@ void SnarlAnalyser::eqtl_table(
                         linear_regression(df, gene_expression, p_value, beta, se, r2);
                     }
 
-                    if (table_threshold != -1 && isPValueSignificant(table_threshold, p_value)) {
-                        string variant_file_name = regression_dir + "/" + snarl + ".tsv";
-                        stoat_vcf::writeSignificantTableToTSV(df, vectorPathToString(list_path_snarl), sampleNames, variant_file_name);
+                    if (table_threshold != -1 && stoat_vcf::isPValueSignificant(table_threshold, p_value)) {
+                        string variant_file_name = regression_dir + "/" + snarl_id + ".tsv";
+                        stoat_vcf::writeSignificantTableToTSV(df,stoat_vcf::stringToVector<string>(vectorPathToString(list_path_snarl)), sampleNames, variant_file_name);
                     }
 
                    // "CHR\tPOS\tSNARL\tTYPE\tGENE\tP\tP_ADJUSTED\tRSQUARE\tBETA\tSE\tALLELE_NUM\n";
-                    data << chr << "\t" << start_pos << "\t" << snarl << "\t" << type_var_str
+                    data << chr << "\t" << start_pos << "\t" << snarl_id << "\t" << type_var_str
                     << "\t" << gene_name << "\t" << p_value  << "\t" << "" << "\t" << r2
                     << "\t" << beta << "\t" << se << "\t" << allele_number << "\t" << stoat_vcf::vectorToString(allele_paths) << "\n";
 

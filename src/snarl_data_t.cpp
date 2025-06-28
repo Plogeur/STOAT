@@ -56,6 +56,10 @@ std::string Path_traversal_t::to_string() const {
     return result;
 }
 
+const std::vector<Node_traversal_t>& Path_traversal_t::get_paths() const { 
+    return paths; 
+};
+
 std::string pairToString(const std::pair<size_t, size_t>& name) {
     std::ostringstream oss;
     oss << name.first << "_" << name.second;
@@ -135,7 +139,7 @@ const std::vector<Path_traversal_t>& Snarl_data_t::get_snarl_paths() const { ret
 const size_t& Snarl_data_t::get_start_positions() const { return start_positions; }
 const size_t& Snarl_data_t::get_end_positions() const { return end_positions; }
 const std::vector<std::string>& Snarl_data_t::get_type_variants() const { return type_variants; }
-const std::tuple<std::string, std::vector<Path_traversal_t>, size_t, size_t, std::vector<std::string>> Snarl_data_t::get_snarl() const {
+const std::tuple<std::string, std::vector<Path_traversal_t>, size_t, size_t, std::vector<std::string>>& Snarl_data_t::get_snarl() const {
     return std::make_tuple(pairToString(snarl_id), snarl_paths, start_positions, end_positions, type_variants);
 }
 

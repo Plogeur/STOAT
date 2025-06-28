@@ -16,8 +16,8 @@ const std::vector<uint8_t>& EdgeBySampleMatrix::get_matrix() const {
 }
 
 // Getter for row header
-std::unordered_map<Edge_t, size_t>::const_iterator EdgeBySampleMatrix::find_edge(const &Edge_t edge) const {
-    return row_header.find(edge);
+std::unordered_map<Edge_t, size_t>::const_iterator EdgeBySampleMatrix::find_edge(const Edge_t& edge_s) const {
+    return row_header.find(edge_s);
 }
 
 // Getter for row header

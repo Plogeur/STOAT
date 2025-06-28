@@ -105,6 +105,9 @@ struct Path_traversal_t {
         Path_traversal_t() = default;
         void add_node_traversal_t(const Node_traversal_t &paths);
 
+        // Getters
+        const std::vector<Node_traversal_t>& get_paths() const;
+        
         // convert to string representation
         std::string to_string() const;
 };

@@ -36,8 +36,8 @@ void glm_quantitative(
     std::string& p_value_str, std::string& beta_str, 
     std::string& se_str, std::string& r2_str);
 
-template <typename PhenotypeType>
-auto process_genotype_table(
+template <typename PhenotypeType = void>
+    auto process_genotype_table(
     const size_t& number_samples,
     const std::vector<Path_traversal_t>& column_headers,
     EdgeBySampleMatrix& matrix,
