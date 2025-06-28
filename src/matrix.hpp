@@ -21,7 +21,7 @@ public:
     void expandMatrix();
     void set_row_header(const std::unordered_map<Edge_t, size_t>& row_header);
     void shrink(size_t current_rows);
-    std::unordered_map<Edge_t, size_t>::const_iterator find_snarl(const std::string& snarl) const;
+    std::unordered_map<Edge_t, size_t>::const_iterator find_edge(const Edge_t& edge) const;
     std::unordered_map<Edge_t, size_t>::const_iterator get_end_dict() const;
     void set_end_dict();
 

@@ -19,19 +19,27 @@ std::string Node_traversal_t::to_string() const {
 size_t Node_traversal_t::get_node_id() const { return node_id; }
 bool Node_traversal_t::get_is_reverse() const { return is_reverse; }
 
-// Edge_t
-Edge_t::Edge_t(const Node_traversal_t &node_traversal_1, const Node_traversal_t &node_traversal_2) {
-    edge = std::make_pair(node_traversal_1, node_traversal_2);
+bool Node_traversal_t::operator==(const Node_traversal_t& other) const {
+    return node_id == other.node_id && is_reverse == other.is_reverse;
 }
 
-// Convert Edge_t to string
-std::string Edge_t::to_string() const {
-    return std::to_string(edge.first) + std::to_string(edge.second);
-}
+// Edge_t
+Edge_t::Edge_t(const Node_traversal_t &node_traversal_1, 
+               const Node_traversal_t &node_traversal_2) :
+    edge(std::make_pair(node_traversal_1, node_traversal_2)) {}
 
 // Convert Edge_t to string
 std::pair<size_t, size_t> Edge_t::print_pair_node() const {
     return std::make_pair(edge.first.get_node_id(), edge.second.get_node_id());
+}
+
+// Accessor to edge, useful for hashing and comparison
+const std::pair<Node_traversal_t, Node_traversal_t>& Edge_t::get_edge() const {
+    return edge;
+}
+
+bool Edge_t::operator==(const Edge_t &other) const {
+    return edge == other.edge;
 }
 
 // add a node traversal to the path
@@ -127,6 +135,9 @@ const std::vector<Path_traversal_t>& Snarl_data_t::get_snarl_paths() const { ret
 const size_t& Snarl_data_t::get_start_positions() const { return start_positions; }
 const size_t& Snarl_data_t::get_end_positions() const { return end_positions; }
 const std::vector<std::string>& Snarl_data_t::get_type_variants() const { return type_variants; }
+const std::tuple<std::string, std::vector<Path_traversal_t>, size_t, size_t, std::vector<std::string>> Snarl_data_t::get_snarl() const {
+    return std::make_tuple(pairToString(snarl_id), snarl_paths, start_positions, end_positions, type_variants);
+}
 
 Path::Path() {}
 
@@ -184,10 +195,10 @@ Path_traversal_t Path::print() const {
     Path_traversal_t out_path;
     for (size_t i = 0; i < nodes.size(); ++i) {
         size_t node_size_t;
-        if (nodes[i] == '*') {
-            node_size_t = 0; // Special case for '*'
+        if (nodes[i] == "*") {
+            node_size_t = 0; // Special case for "*""
         } else {
-            node_size_t = std::stoi(nodes[i])
+            node_size_t = std::stoi(nodes[i]);
         }
         Node_traversal_t node_traversal(
             node_size_t,
@@ -658,12 +669,16 @@ std::unordered_map<std::string, std::vector<Snarl_data_t>> loop_over_snarls_writ
 
             // snarl_id chromosome start_position end_position paths type
             string chr = std::get<1>(snarl_path_pos);
-            if (chr.empty()) {
-                continue; // skip this snarl with no chr ref in it
+            size_t pretty_paths_size = pretty_paths.size();
+
+            // skip this snarl with no chr ref in it OR with snarl less than 2 paths
+            if (chr.empty() || pretty_paths_size < 2) {
+                continue;
             }
+
             size_t strat_pos = std::get<2>(snarl_path_pos);
             size_t end_pos = std::get<3>(snarl_path_pos);
-            paths_number_analysis += pretty_paths.size();
+            paths_number_analysis += pretty_paths_size;
             string str_reference = std::get<4>(snarl_path_pos) == true ? "1" : "0"; // 1 : on reference, 0 : out reference
 
             if (bool_return) {

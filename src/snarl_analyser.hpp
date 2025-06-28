@@ -57,7 +57,7 @@ public:
         const double& table_threshold, const std::string& regression_dir,
         const size_t& windows_gene_threshold, std::ofstream& outf);
 
-    std::pair<std::vector<size_t>, std::vector<size_t>> create_table_short_path(const vector<std::string>& list_path_snarl);
+    std::pair<std::vector<size_t>, std::vector<size_t>> create_table_short_path(const vector<Path_traversal_t>& list_path_snarl);
 };
 
 bool check_MAF_threshold_quantitative(const std::vector<std::vector<double>>& df, const double& maf);
@@ -109,18 +109,25 @@ std::tuple<SnarlAnalyser, htsFile*, bcf_hdr_t*, bcf1_t*> make_matrix(htsFile *pt
 // Retrieve the index of `key` if it exists in `ordered_map`. Otherwise, add it and return the new index.
 size_t getOrAddIndex(std::unordered_map<Edge_t, size_t>& orderedMap, const Edge_t& key, size_t lengthOrderedMap);
 
-// Function to decompose a path string into an vector of Edge_t
-vector<Edge_t> decomposePathToEdge(const std::string& s);
-
 // Function to determine and extract an integer from the string
 inline size_t extract_node_id(const std::string& s, size_t length_s, size_t& i);
 
-// Function to decompose a list of snarl strings
-const std::vector<std::vector<Edge_t>> decompose_snarl(const std::vector<std::string>& lst);
+// Decompose path Path_traversal_t to vector Edge_t
+std::vector<Edge_t> decompose_path_to_edges(const Path_traversal_t& s);
 
-std::vector<size_t> identify_path(const std::vector<std::string>& decomposed_snarl,
-                                        const EdgeBySampleMatrix& matrix,
-                                        const size_t num_cols);
+// Decompose a list of paths Path_traversal_t into a vector of Edge_t
+const std::vector<std::vector<Edge_t>> decompose_path_list_str(const std::vector<Path_traversal_t>& list_paths);
+
+// Decompose path string to vector Edge_t
+vector<Edge_t> decompose_path_str_to_edge(const std::string& s);
+
+// Decompose a list of paths str into a vector of Edge_t
+const std::vector<std::vector<Edge_t>> decompose_path_list_str(const std::vector<std::string>& list_paths);
+
+std::vector<size_t> identify_path(
+    const std::vector<Edge_t>& list_edge_path,
+    const EdgeBySampleMatrix& matrix,
+    const size_t num_cols);
 
 std::vector<std::vector<size_t>> transpose_matrix(const std::vector<std::vector<size_t>>& matrix);
 

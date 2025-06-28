@@ -36,16 +36,23 @@ void glm_quantitative(
     std::string& p_value_str, std::string& beta_str, 
     std::string& se_str, std::string& r2_str);
 
+template <typename PhenotypeType>
+auto process_genotype_table(
+    const size_t& number_samples,
+    const std::vector<Path_traversal_t>& column_headers,
+    EdgeBySampleMatrix& matrix,
+    const std::vector<PhenotypeType>* phenotype = nullptr);
+
 template <typename T>
 std::tuple<std::vector<std::vector<double>>, std::vector<T>, size_t, std::vector<size_t>> create_quantitative_table(
     const size_t& sampleCount,
-    const std::vector<std::string>& columnHeaders,
+    const std::vector<Path_traversal_t>& columnHeaders,
     const std::vector<T>& phenotype,
     EdgeBySampleMatrix& matrix);
 
 std::tuple<std::vector<std::vector<double>>, std::unordered_set<size_t>, size_t, std::vector<size_t>> create_eqtl_table(
     const size_t& length_sample,
-    const std::vector<std::string>& column_headers,
+    const std::vector<Path_traversal_t>& column_headers,
     EdgeBySampleMatrix& matrix);
 
 #endif

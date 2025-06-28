@@ -528,17 +528,16 @@ std::string format_group_paths(const std::vector<size_t>& g0, const std::vector<
 size_t create_binary_table(
     std::vector<size_t>& g0, std::vector<size_t>& g1,
     const vector<bool>& binary_phenotype, 
-    const std::vector<std::string>& list_path_snarl, 
+    const std::vector<Path_traversal_t>& list_path_snarl, 
     const size_t& number_paths,
     const size_t& number_samples,
     const EdgeBySampleMatrix& matrix) {
 
     size_t total_sum = 0;
     for (size_t idx_g = 0; idx_g < number_paths; ++idx_g) {
-        const std::string& path_snarl = list_path_snarl[idx_g];
-
-        std::vector<std::string> decomposed_snarl = decompose_string(path_snarl);
-        std::vector<size_t> idx_srr_save = identify_path(decomposed_snarl, matrix, number_samples * 2);
+        const Path_traversal_t& path_snarl = list_path_snarl[idx_g];
+        std::vector<Edge_t> list_edge_path = decompose_path_to_edges(path_snarl);
+        std::vector<size_t> idx_srr_save = identify_path(list_edge_path, matrix, number_samples * 2);
 
         for (size_t idx : idx_srr_save) {
             bool group = binary_phenotype[idx / 2];

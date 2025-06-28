@@ -13,6 +13,7 @@
 #include <chrono>
 #include <cassert>
 #include <regex>
+#include <cstddef>
 #include <stdexcept>
 #include <utility>
 
@@ -50,19 +51,50 @@ struct Node_traversal_t { // 64 bits per node
 
         // Convert to string representation
         std::string to_string() const;
+
+        bool operator==(const Node_traversal_t& other) const;
 };
 
 struct Edge_t { // 128 bits per edge 
     private:
-        std::pair<Node_traversal_t, Node_traversal_t> edge; // 1 bit for orientation (true for reverse, false for forward)
+        std::pair<Node_traversal_t, Node_traversal_t> edge;
 
     public:
         Edge_t(const Node_traversal_t &node_traversal_1, const Node_traversal_t &node_traversal_2);
         
         // Converter
-        std::string to_string() const;
         std::pair<size_t, size_t> print_pair_node() const;
+
+        // Accessor to edge, useful for hashing and comparison
+        const std::pair<Node_traversal_t, Node_traversal_t>& get_edge() const;
+
+        // Comparison operator
+        bool operator==(const Edge_t &other) const;
 };
+
+namespace std {
+    template <>
+    struct hash<Node_traversal_t> {
+        size_t operator()(const Node_traversal_t& node) const {
+            // Simple way: Shift node_id and pack is_reverse into the lower bit
+            return (node.get_node_id() << 1) | static_cast<size_t>(node.get_is_reverse());
+        }
+    };
+}
+
+namespace std {
+    template <>
+    struct hash<Edge_t> {
+        size_t operator()(const Edge_t& edge) const {
+            const auto& pair = edge.get_edge();
+            size_t h1 = hash<Node_traversal_t>()(pair.first);
+            size_t h2 = hash<Node_traversal_t>()(pair.second);
+            
+            // Standard hash combination
+            return h1 ^ (h2 + 0x9e3779b9 + (h1 << 6) + (h1 >> 2));
+        }
+    };
+}
 
 struct Path_traversal_t {
     private:
@@ -91,6 +123,7 @@ struct Snarl_data_t {
         const size_t& get_start_positions() const;
         const size_t& get_end_positions() const;
         const std::vector<std::string>& get_type_variants() const;
+        const std::tuple<std::string, std::vector<Path_traversal_t>, size_t, size_t, std::vector<std::string>>& get_snarl() const;
 
     private:
         std::vector<std::string> type_variants;
