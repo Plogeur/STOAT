@@ -157,7 +157,7 @@ std::vector<T> stringToVector(const std::string& str) {
     return result;
 }
 
-std::string vectorPathToString(const std::vector<Path_traversal_t>& vec) {
+std::string vectorPathToString(const std::vector<stoat_vcf::Path_traversal_t>& vec) {
     std::ostringstream oss;
     for (size_t i = 0; i < vec.size(); ++i) {
         if (i > 0) oss << ",";

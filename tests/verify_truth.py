@@ -171,7 +171,7 @@ def conf_mat_maker(p_val, predicted_labels, true_labels, output):
 
     # Inverse because I want the X axis to be the truth labels and Y axis to be the predicted labels
     cm = confusion_matrix(predicted_labels, true_labels)
-    print(f"Confusion EdgeBySampleMatrix for p-value < {p_val}:\n{cm}")
+    print(f"Confusion stoat_vcf::EdgeBySampleMatrix for p-value < {p_val}:\n{cm}")
     prec = precision_score(predicted_labels, true_labels)
     recall = recall_score(predicted_labels, true_labels)
     f1 = f1_score(predicted_labels, true_labels)
@@ -187,7 +187,7 @@ def conf_mat_maker(p_val, predicted_labels, true_labels, output):
                 annot_kws={"size": 30})
     plt.xticks(fontsize=16)  
     plt.yticks(fontsize=16)  
-    plt.title(f'Confusion EdgeBySampleMatrix for p-value < {p_val}', fontsize=18)  # Increase title font size
+    plt.title(f'Confusion stoat_vcf::EdgeBySampleMatrix for p-value < {p_val}', fontsize=18)  # Increase title font size
     plt.xlabel('Truth Labels', fontsize=20)  # Increase x-label font size
     plt.ylabel('Predicted Labels', fontsize=20)  # Increase y-label font size
     plt.savefig(output + f'_{p_val}.png', format='png', dpi=300)
@@ -392,7 +392,7 @@ if __name__ == "__main__":
 
     """
     python3 tests/verify_truth.py --freq data/quantitative/pg.snarls.freq.tsv \
-    --p_value output/quatitative_test.tsv --paths data/quantitative/snarl_analyse.tsv -q
+    --p_value output/quantitative_test.tsv --paths data/quantitative/snarl_analyse.tsv -q
 
     python3 tests/verify_truth.py --freq data/binary/pg.snarls.freq.tsv \
     --p_value output/binary_test.tsv --paths data/binary/snarl_analyse.tsv -b

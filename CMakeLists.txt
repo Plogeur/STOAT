@@ -31,7 +31,7 @@ add_executable(${PROJECT_NAME}
     src/gaf_creator.cpp
     src/snarl_data_t.cpp
     src/matrix.cpp
-    src/quatitative_test.cpp
+    src/quantitative_test.cpp
     src/snarl_analyser.cpp
     src/lmm.cpp
     ${ALGLIB_SOURCES}
@@ -71,7 +71,7 @@ add_executable(unit_tests
     tests/unittest/gaf_creator_unit.cpp
     tests/unittest/snarl_data_t_unit.cpp
     tests/unittest/matrix_unit.cpp
-    tests/unittest/quatitative_test_unit.cpp
+    tests/unittest/quantitative_test_unit.cpp
 
     src/utils.cpp
     src/arg_parser.cpp
@@ -79,7 +79,7 @@ add_executable(unit_tests
     src/gaf_creator.cpp
     src/snarl_data_t.cpp
     src/matrix.cpp
-    src/quatitative_test.cpp
+    src/quantitative_test.cpp
     src/snarl_analyser.cpp
     src/lmm.cpp
 )

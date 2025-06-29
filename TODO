@@ -1,7 +1,6 @@
-Found the major optimize time problem
-Add more comment / merge xian comment pr
+Debug all
+Found the major snarl data t problem
 Identify ref paths if .chr file not present
 Test in the snarl decompose paths if in the .chr chr name are present in the graph if not stop the analysis and return a error ("chr not found")
-Correct the P-ajusted
-Add more namespace stoat_vcf
+Correct the P-ajusted (done but must be tested)
 Boost multi-threading instead of 1 thread = 1 test, create a thread chunck test (defauld 1 chunk = 1000 test, if thread > 1 : 1 chunk analyse by n thread)

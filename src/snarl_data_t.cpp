@@ -1,8 +1,8 @@
 #include "snarl_data_t.hpp"
 
-// using bdsg::handlegraph::step_handle_t;
-// using bdsg::handlegraph::handle_t;
-// using bdsg::handlegraph::net_handle_t;
+// using handlegraph::step_handle_t;
+// using handlegraph::handle_t;
+// using handlegraph::net_handle_t;
 
 namespace stoat_vcf {
 
@@ -310,7 +310,7 @@ std::tuple<std::unique_ptr<bdsg::SnarlDistanceIndex>,
     auto stree = std::make_unique<bdsg::SnarlDistanceIndex>();
     stree->deserialize(dist_file);
 
-    // PackedPositionOverlay takes a pointer to pg
+    //bdsg::PackedPositionOverlay takes a pointer to pg
     auto pp_overlay = std::make_unique<bdsg::PackedPositionOverlay>(pg.get());
 
     // Get root of snarl tree
@@ -360,7 +360,7 @@ std::vector<std::tuple<handlegraph::net_handle_t, std::string, size_t, size_t, b
                                 handlegraph::net_handle_t& root,
                                 bdsg::PackedGraph& pg, 
                                 unordered_set<std::string>& ref_chr,
-                                PackedPositionOverlay& ppo) {
+                               bdsg::PackedPositionOverlay& ppo) {
 
     std::vector<std::tuple<handlegraph::net_handle_t, std::string, size_t, size_t, bool>> snarls;
     unordered_map<string, tuple<string, size_t, size_t>> snarls_pos;
@@ -699,7 +699,7 @@ std::unordered_map<std::string, std::vector<Snarl_data_t>> loop_over_snarls_writ
             if (bool_return) {
                 out_snarl << chr << "\t" << strat_pos << "\t" << end_pos
                     << "\t" << snarl_id_str << "\t" << vectorPathToString(pretty_paths)
-                    << "\t" << stoat_vcf::vectorToString(type_variants) << "\t" << str_reference << "\n";
+                    << "\t" << vectorToString(type_variants) << "\t" << str_reference << "\n";
             } else {
                 // case new chr
                 if (chr != save_chr && !save_chr.empty()) {

@@ -47,24 +47,24 @@ TEST_CASE("Calcul des proportions significatives", "[calcul_proportion_signi]") 
     }
 }
 
-TEST_CASE("Ajout de suffixe au nom de fichier", "[addSuffixToFilename]") {
+TEST_CASE("Ajout de suffixe au nom de fichier", "[stoat_vcf::addSuffixToFilename]") {
     SECTION("Ajout de suffixe à un nom simple") {
-        REQUIRE(addSuffixToFilename("test.txt", "_suffix") == "test_suffix.txt");
+        REQUIRE(stoat_vcf::addSuffixToFilename("test.txt", "_suffix") == "test_suffix.txt");
     }
 
     SECTION("Ajout de suffixe à un nom avec chemin") {
-        REQUIRE(addSuffixToFilename("/path/to/test.txt", "_suffix") == "/path/to/test_suffix.txt");
+        REQUIRE(stoat_vcf::addSuffixToFilename("/path/to/test.txt", "_suffix") == "/path/to/test_suffix.txt");
     }
 
     SECTION("Ajout de suffixe à un nom sans extension") {
-        REQUIRE(addSuffixToFilename("test", "_suffix") == "test_suffix");
+        REQUIRE(stoat_vcf::addSuffixToFilename("test", "_suffix") == "test_suffix");
     }
 }
 
-TEST_CASE("Décomposition de snarl", "[decompose_snarl]") {
+TEST_CASE("Décomposition de snarl", "[stoat_vcf::decompose_snarl]") {
     SECTION("Snarl simple") {
         std::string snarl = "1>2>3";
-        auto result = decompose_snarl(snarl);
+        auto result = stoat_vcf::decompose_snarl(snarl);
         REQUIRE(result.size() == 3);
         REQUIRE(result[0] == 1);
         REQUIRE(result[1] == 2);
@@ -73,13 +73,13 @@ TEST_CASE("Décomposition de snarl", "[decompose_snarl]") {
 
     SECTION("Snarl vide") {
         std::string snarl = "";
-        auto result = decompose_snarl(snarl);
+        auto result = stoat_vcf::decompose_snarl(snarl);
         REQUIRE(result.empty());
     }
 
     SECTION("Snarl avec un seul nœud") {
         std::string snarl = "42";
-        auto result = decompose_snarl(snarl);
+        auto result = stoat_vcf::decompose_snarl(snarl);
         REQUIRE(result.size() == 1);
         REQUIRE(result[0] == 42);
     }

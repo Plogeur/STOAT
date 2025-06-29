@@ -80,6 +80,7 @@ string add_suffix_to_filename(const std::string& filename, const std::string& su
     return filename.substr(0, dotPos) + suffix + filename.substr(dotPos);
 }
 
+// TODO : change this to use already implmented function in utils.hpp
 std::vector<int> decompose_snarl(const std::string& snarl) {
     std::vector<int> snarl_node;
     regex re("\\d+");
@@ -136,12 +137,12 @@ void gaf_creation(const std::string& input_file, std::unordered_map<std::string,
 
         const std::string& chr = columns[0];
         std::string snarl_list = columns[2];
-        double pfisher = stoat_vcf::string_to_pvalue(columns[6]);
-        double pchi = stoat_vcf::string_to_pvalue(columns[7]);
+        double pfisher = string_to_pvalue(columns[6]);
+        double pchi = string_to_pvalue(columns[7]);
         std::string group_paths = columns[11];
         auto it = snarl_chr.find(chr);
         auto& data = it->second;  
-        const std::vector<std::string>& list_path = stoat_vcf::stringToVector<std::string>(vectorPathToString(data[count_line].get_snarl_paths()));
+        const std::vector<std::string>& list_path = stringToVector<std::string>(vectorPathToString(data[count_line].get_snarl_paths()));
 
         // Split group paths by comma
         std::vector<std::string> decomposed_group_paths;

@@ -1,5 +1,5 @@
-#ifndef quatitative_test_HPP
-#define quatitative_test_HPP
+#ifndef quantitative_test_HPP
+#define quantitative_test_HPP
 
 #include <sstream>
 #include <vector>

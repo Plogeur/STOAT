@@ -1,6 +1,6 @@
 #include <catch2/catch_test_macros.hpp>
 
-#include "../../src/quatitative_test.hpp"
+#include "../../src/quantitative_test.hpp"
 #include "../../src/matrix.hpp"
 
 // TEST_CASE("create_quantitative_table basic behavior", "[quantitative]") {
@@ -11,7 +11,7 @@
 //         std::vector<double> phenotype = {-2.4234, -1.3242, 0.3214, 2.3248};
 
 //         // Create a simple matrix (4 samples / 2 haplotypes)
-//         EdgeBySampleMatrix matrix(4, 2);
+//         stoat_vcf::EdgeBySampleMatrix matrix(4, 2);
 
 //         // Simulate that paths match at certain indices
 //         matrix.set(0, 1);
@@ -41,7 +41,7 @@
 //         std::vector<double> phenotype = {-2.4234, -1.3242, 0.3214, 2.3248};
 
 //         // Create a simple matrix (4 samples / 2 haplotypes)
-//         EdgeBySampleMatrix matrix(4, 2);
+//         stoat_vcf::EdgeBySampleMatrix matrix(4, 2);
 
 //         // Simulate that paths match at certain indices
 //         matrix.set(0, 0);
@@ -71,7 +71,7 @@
 //         std::vector<double> phenotype = {-2.4234, -1.3242, 0.3214, 2.3248};
 
 //         // Create a simple matrix (4 samples / 3 haplotypes)
-//         EdgeBySampleMatrix matrix(2, 8);
+//         stoat_vcf::EdgeBySampleMatrix matrix(2, 8);
 
 //         // Simulate that paths match at certain indices
 //         matrix.set(0, 1);
@@ -168,7 +168,7 @@
 //         std::vector<std::string> list_samples = {"Sample1", "Sample2", "Sample3"};
 //         std::vector<std::string> column_headers = {"Path1", "Path2"};
 
-//         EdgeBySampleMatrix matrix(3, 2);  // 3 échantillons, 2 chemins
+//         stoat_vcf::EdgeBySampleMatrix matrix(3, 2);  // 3 échantillons, 2 chemins
 //         matrix.set(0, 0);  // Sample1, Path1
 //         matrix.set(1, 1);  // Sample2, Path2
 

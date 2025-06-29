@@ -1,4 +1,4 @@
-#include "quatitative_test.hpp"
+#include "quantitative_test.hpp"
 #include "snarl_analyser.hpp"
 #include "utils.hpp"
 #include "arg_parser.hpp"
@@ -73,7 +73,7 @@ void linear_regression(
     double beta_adjusted = 0;
     double se_adjusted = 0;
     if (p_values.size() > 1) {
-        std::vector<double> p_values_adjusted = stoat_vcf::adjusted_holm(p_values);
+        std::vector<double> p_values_adjusted = adjusted_holm(p_values);
         size_t min_index = std::distance(p_values_adjusted.begin(), std::min_element(p_values_adjusted.begin(), p_values_adjusted.end()));
         p_value_adjusted = p_values_adjusted[min_index];
         beta_adjusted = beta[min_index+1];
@@ -85,10 +85,10 @@ void linear_regression(
     }
 
     // set precision : 4 digit
-    r2_str = stoat_vcf::set_precision(r2);
-    beta_str = stoat_vcf::set_precision(beta_adjusted);
-    se_str = stoat_vcf::set_precision(se_adjusted);
-    p_value_str = stoat_vcf::set_precision(p_value_adjusted);
+    r2_str = set_precision(r2);
+    beta_str = set_precision(beta_adjusted);
+    se_str = set_precision(se_adjusted);
+    p_value_str = set_precision(p_value_adjusted);
 }
 
 // Linear regression function OLS with intercept + covariate
@@ -152,7 +152,7 @@ void glm_quantitative(
     double beta_adjusted = 0;
     double se_adjusted = 0;
     if (p_values.size() > 1) {
-        std::vector<double> p_values_adjusted = stoat_vcf::adjusted_holm(p_values);
+        std::vector<double> p_values_adjusted = adjusted_holm(p_values);
         size_t min_index = std::distance(p_values_adjusted.begin(), std::min_element(p_values_adjusted.begin(), p_values_adjusted.end()));
         p_value_adjusted = p_values_adjusted[min_index];
         beta_adjusted = beta[min_index+1];
@@ -164,32 +164,32 @@ void glm_quantitative(
     }
 
     // set precision : 4 digit
-    r2_str = stoat_vcf::set_precision(r2);
-    beta_str = stoat_vcf::set_precision(beta_adjusted);
-    se_str = stoat_vcf::set_precision(se_adjusted);
-    p_value_str = stoat_vcf::set_precision(p_value_adjusted);
+    r2_str = set_precision(r2);
+    beta_str = set_precision(beta_adjusted);
+    se_str = set_precision(se_adjusted);
+    p_value_str = set_precision(p_value_adjusted);
 }
 
 // Explicit template instantiations
 template std::tuple<std::vector<std::vector<double>>, std::vector<double>, size_t, std::vector<size_t>>
 create_quantitative_table<double>(
     const size_t&,
-    const std::vector<Path_traversal_t>&,
+    const std::vector<stoat_vcf::Path_traversal_t>&,
     const std::vector<double>&,
-    const EdgeBySampleMatrix&);
+    const stoat_vcf::EdgeBySampleMatrix&);
 
 template std::tuple<std::vector<std::vector<double>>, std::vector<bool>, size_t, std::vector<size_t>>
 create_quantitative_table<bool>(
     const size_t&,
-    const std::vector<Path_traversal_t>&,
+    const std::vector<stoat_vcf::Path_traversal_t>&,
     const std::vector<bool>&,
-    const EdgeBySampleMatrix&);
+    const stoat_vcf::EdgeBySampleMatrix&);
 
 std::tuple<std::vector<std::vector<double>>, size_t, std::unordered_set<size_t>, bool, std::vector<size_t>>
     process_table_quantitative(
         const size_t& number_samples,
-        const std::vector<Path_traversal_t>& column_headers,
-        const EdgeBySampleMatrix& matrix) {
+        const std::vector<stoat_vcf::Path_traversal_t>& column_headers,
+        const stoat_vcf::EdgeBySampleMatrix& matrix) {
 
     size_t allele_number = 0;
     size_t length_column = column_headers.size();
@@ -205,7 +205,7 @@ std::tuple<std::vector<std::vector<double>>, size_t, std::unordered_set<size_t>,
 
     // Loop over all columns
     for (size_t col_idx = 0; col_idx < length_column; ++col_idx) {
-        const Path_traversal_t& path_snarl = column_headers[col_idx];
+        const stoat_vcf::Path_traversal_t& path_snarl = column_headers[col_idx];
         std::vector<Edge_t> list_edge_path = decompose_path_to_edges(path_snarl);
 
         //Get the indices of all samples that take this path
@@ -244,9 +244,9 @@ std::tuple<std::vector<std::vector<double>>, size_t, std::unordered_set<size_t>,
 template<typename T>
 std::tuple<std::vector<std::vector<double>>, std::vector<T>, size_t, std::vector<size_t>> create_quantitative_table(
     const size_t& number_samples,
-    const std::vector<Path_traversal_t>& column_headers,
+    const std::vector<stoat_vcf::Path_traversal_t>& column_headers,
     const std::vector<T>& phenotype,
-    const EdgeBySampleMatrix& matrix) {
+    const stoat_vcf::EdgeBySampleMatrix& matrix) {
 
     const auto& [genotypes, allele_number, index_used, drop_last_col, allele_paths] = 
     process_table_quantitative(number_samples, column_headers, matrix);
@@ -278,8 +278,8 @@ std::tuple<std::vector<std::vector<double>>, std::vector<T>, size_t, std::vector
 
 std::tuple<std::vector<std::vector<double>>, std::unordered_set<size_t>, size_t, std::vector<size_t>> create_eqtl_table(
     const size_t& number_samples,
-    const std::vector<Path_traversal_t>& column_headers,
-    const EdgeBySampleMatrix& matrix) {
+    const std::vector<stoat_vcf::Path_traversal_t>& column_headers,
+    const stoat_vcf::EdgeBySampleMatrix& matrix) {
 
     const auto& [genotypes, allele_number, index_used, drop_last_col, allele_paths] = 
     process_table_quantitative(number_samples, column_headers, matrix);

@@ -347,7 +347,7 @@ std::unordered_map<std::string, std::vector<Snarl_data_t>> parse_snarl_path(cons
         save_chr = chr;
 
         std::pair<size_t, size_t> snarl_pair = stringToPair(snarl);
-        std::vector<Path_traversal_t> paths = stringToVectorPath(paths_str);
+        std::vector<stoat_vcf::Path_traversal_t> paths = stringToVectorPath(paths_str);
         Snarl_data_t snarl_path(snarl_pair, paths, start_pos, end_pos, type);
         snarl_paths.push_back(snarl_path);
     }

@@ -133,7 +133,7 @@ int main(int argc, char* argv[]) {
         // Parse arguments
         int c;
 
-        static struct std::option long_options[] = {
+        static struct option long_options[] = {
             {"vcf", required_argument, 0, 'v'},
             {"snarl", required_argument, 0, 's'},
             {"pg", required_argument, 0, 'p'},
@@ -308,7 +308,7 @@ int main(int argc, char* argv[]) {
         bcf1_t* rec;
 
         if (!only_snarl_parsing) {
-            std::tie(list_samples, ptr_vcf, hdr, rec) = stoat_vcf::parseHeader(vcf_path); 
+            std::tie(list_samples, ptr_vcf, hdr, rec) = parseHeader(vcf_path); 
         }
 
         std::vector<bool> binary;
@@ -317,23 +317,23 @@ int main(int argc, char* argv[]) {
         std::vector<std::vector<double>> covariate;
 
         if (!covariate_path.empty()) {
-            covariate = stoat_vcf::parse_covariates(covariate_path, covar_names, list_samples);
+            covariate = parse_covariates(covariate_path, covar_names, list_samples);
         }
 
         if (!binary_path.empty()) {
-            binary = stoat_vcf::parse_binary_pheno(binary_path, list_samples);
+            binary = parse_binary_pheno(binary_path, list_samples);
 
         } else if (!quantitative_path.empty()) {
-            quantitative = stoat_vcf::parse_quantitative_pheno(quantitative_path, list_samples);
+            quantitative = parse_quantitative_pheno(quantitative_path, list_samples);
 
         } else if (!eqtl_path.empty() && !gene_position_path.empty()) {
-            eqtl = stoat_vcf::parse_qtl_gene_file(eqtl_path, gene_position_path, list_samples);
+            eqtl = parse_qtl_gene_file(eqtl_path, gene_position_path, list_samples);
         }
 
         KinshipMatrix kinship;
         if (!kinship_path.empty()) {
             // check_format_kinship(kinship_path);
-            kinship = stoat_vcf::parseKinshipMatrix(kinship_path);
+            kinship = parseKinshipMatrix(kinship_path);
         }
 
         // scope declaration
@@ -345,7 +345,7 @@ int main(int argc, char* argv[]) {
         std::unique_ptr<bdsg::PackedPositionOverlay> pp_overlay;
 
         if (!snarl_path.empty()){ // If we have already saved the paths in snarls, load them
-            snarls_chr = stoat_vcf::parse_snarl_path(snarl_path);
+            snarls_chr = parse_snarl_path(snarl_path);
         } else { // Otherwise, find them from the graph and snarl tree
             std::cout << "Start snarl analysis... " << std::endl;
             auto start_0 = std::chrono::high_resolution_clock::now();
@@ -405,7 +405,7 @@ int main(int argc, char* argv[]) {
 
         } else if (!quantitative_path.empty()) {
 
-            std::string output_quantitive = output_dir + "/quatitative_test.tsv";
+            std::string output_quantitive = output_dir + "/quantitative_test.tsv";
             stoat_vcf::chromosome_chuck_quantitative(ptr_vcf, hdr, rec, list_samples, snarls_chr, quantitative, covariate, maf, kinship, num_threads, table_threshold, regression_dir, output_quantitive);
 
             std::string output_significative = output_dir + "/top_variant_quantitative.tsv";
