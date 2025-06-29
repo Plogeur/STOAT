@@ -12,7 +12,7 @@ Node_traversal_t::Node_traversal_t(const size_t &id, const bool &rev)
 
 // Convert Node_traversal_t to node + path representation [string]
 std::string Node_traversal_t::to_string() const {
-    return std::to_string(node_id) + (is_reverse ? "<" : ">");
+    return (is_reverse ? "<" : ">") + std::to_string(node_id);
 }
 
 // Getters for Node_traversal_t

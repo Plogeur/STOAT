@@ -141,5 +141,4 @@ void add_BH_adjusted_column(
     // Replace original file
     std::remove(input_file.c_str());
     std::rename("temp_output.tsv", input_file.c_str());
-
 }

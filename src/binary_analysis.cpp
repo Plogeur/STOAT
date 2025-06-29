@@ -279,13 +279,7 @@ void glm_logistic_covar(
 }
 
 // ------------------------ Chi2 test ------------------------
-std::string chi2_2x2(const std::vector<size_t>& g0, const std::vector<size_t>& g1) {
-
-    // Extract values from the table
-    size_t a = g0[0];
-    size_t b = g0[1];
-    size_t c = g1[0];
-    size_t d = g1[1];
+std::string chi2_2x2(const size_t& a, const size_t& b, const size_t& c, const size_t& d) {
 
     int64_t row1 = a + b;
     int64_t row2 = c + d;
@@ -293,7 +287,7 @@ std::string chi2_2x2(const std::vector<size_t>& g0, const std::vector<size_t>& g
     int64_t col2 = b + d;
     int64_t total = row1 + row2;
 
-    if (row1 == 0 || row2 == 0 || col1 == 0 || col2 == 0) return "0.0";
+    if (row1 == 0 || row2 == 0 || col1 == 0 || col2 == 0) return "NA";
 
     double expected_a = (double)(row1) * (col1) / total;
     double expected_b = (double)(row1) * (col2) / total;
@@ -365,15 +359,12 @@ std::string chi2_2xN(const std::vector<size_t>& g0, const std::vector<size_t>& g
 
 // ------------------------ Fisher exact test ------------------------
 
-std::string fastFishersExactTest(const std::vector<size_t>& g0, const std::vector<size_t>& g1) {
-// plink 1.9 fisher22 implementation
-
-    // Extract values from the table
-    size_t m11 = g0[0];
-    size_t m12 = g0[1];
-    size_t m21 = g1[0];
-    size_t m22 = g1[1];
-
+// Fisher's exact test for a 2x2 contingency table
+// m11, m12, m21, m22 are the counts in the table
+// Returns the p-value as a string with 4 decimal places
+std::string fastFishersExactTest(size_t m11, size_t m12,
+                                 size_t m21, size_t m22) {
+    
     // Check for any full-zero row or column
     if ((m11 | m12) == 0 || (m21 | m22) == 0 || (m11 | m21) == 0 || (m12 | m22) == 0) {
         return "NA";
@@ -499,8 +490,12 @@ void binary_stat_test(const std::vector<size_t>& g0, const std::vector<size_t>& 
 
     // Compute  Fisher's exact & Chi-squared test p-value
     if (g0.size() == 2) {
-        chi2_p_value = chi2_2x2(g0, g1);
-        fastfisher_p_value = fastFishersExactTest(g0, g1);
+        size_t a = g0[0];
+        size_t b = g0[1];
+        size_t c = g1[0];
+        size_t d = g1[1];
+        chi2_p_value = chi2_2x2(a, b, c, d);
+        fastfisher_p_value = fastFishersExactTest(a, b, c, d);
     } else {
         chi2_p_value = chi2_2xN(g0, g1);
     }

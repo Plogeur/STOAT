@@ -58,12 +58,14 @@ void glm_logistic_covar(
 std::string chi2_2xN(const std::vector<size_t>& g0, const std::vector<size_t>& g1);
 
 // Function to perform the Chi-square test on row size == 2 
-std::string chi2_2x2(const std::vector<size_t>& g0, const std::vector<size_t>& g1);
+std::string chi2_2x2(const size_t& m11, const size_t& m12,
+    const size_t& m21, const size_t& m22);
 
 // ------------------------ Fisher exact test ------------------------
 
 // Function to perform Fisher's exact test
-std::string fastFishersExactTest(const std::vector<size_t>& g0, const std::vector<size_t>& g1);
+std::string fastFishersExactTest(size_t m11, size_t m12,
+    size_t m21, size_t m22);
 
 // ------------------------ Binary table ------------------------
 

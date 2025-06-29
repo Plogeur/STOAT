@@ -137,7 +137,7 @@ TEST_CASE("Test simulated case", "[Path]") {
         REQUIRE(snarls_chr["ref"].size() == 2);
         REQUIRE(pairToString(snarls_chr["ref"][0].get_snarl_id()) == "2_6");
         std::vector<std::string> paths = stoat_vcf::stringToVector<std::string>(vectorPathToString(snarls_chr["ref"][0].get_snarl_paths()));
-        REQUIRE(paths == std::vector<std::string>{">2>6", ">2>3>*>5>6"});
+        REQUIRE(paths == std::vector<std::string>{">2>6", ">2>3>0>5>6"});
         REQUIRE(snarls_chr["ref"][0].get_start_positions() == 8);
         REQUIRE(snarls_chr["ref"][0].get_end_positions() == 15);
         REQUIRE(snarls_chr["ref"][0].get_type_variants() == std::vector<std::string>{"0", "6/6"});
@@ -159,7 +159,7 @@ TEST_CASE("Test simulated case", "[Path]") {
         REQUIRE(snarls_chr.size() == 1);
         REQUIRE(snarls_chr["ref"].size() == 3);
         REQUIRE(pairToString(snarls_chr["ref"][0].get_snarl_id()) == "2_9");
-        REQUIRE(stoat_vcf::stringToVector<std::string>(vectorPathToString(snarls_chr["ref"][0].get_snarl_paths())) == std::vector<std::string>{">2>9",">2>3>*>8>9"});
+        REQUIRE(stoat_vcf::stringToVector<std::string>(vectorPathToString(snarls_chr["ref"][0].get_snarl_paths())) == std::vector<std::string>{">2>9",">2>3>0>8>9"});
         REQUIRE(snarls_chr["ref"][0].get_start_positions() == 8);
         REQUIRE(snarls_chr["ref"][0].get_end_positions() == 9);
         REQUIRE(snarls_chr["ref"][0].get_type_variants() == std::vector<std::string>{"0", "9/10"}); // correct CPX by boundary the first and end complexe chain node not the snarl boundary
@@ -249,7 +249,7 @@ TEST_CASE("Test simulated case", "[Path]") {
         REQUIRE(snarls_chr.size() == 1);
         REQUIRE(snarls_chr["ref"].size() == 2);
         REQUIRE(pairToString(snarls_chr["ref"][0].get_snarl_id()) == "8_2");
-        REQUIRE(stoat_vcf::stringToVector<std::string>(vectorPathToString(snarls_chr["ref"][0].get_snarl_paths())) == std::vector<std::string>{">2>3>*>6>8",">2>3>*>6>3>*>6>8",">2>7>8"});
+        REQUIRE(stoat_vcf::stringToVector<std::string>(vectorPathToString(snarls_chr["ref"][0].get_snarl_paths())) == std::vector<std::string>{">2>3>0>6>8",">2>3>0>6>3>0>6>8",">2>7>8"});
         REQUIRE(snarls_chr["ref"][0].get_start_positions() == 8);
         REQUIRE(snarls_chr["ref"][0].get_end_positions() == 10);
         REQUIRE(snarls_chr["ref"][0].get_type_variants() == std::vector<std::string>{"3/8","6/16","1"});
@@ -306,7 +306,7 @@ TEST_CASE("Test simulated case", "[Path]") {
         REQUIRE(snarls_chr.size() == 1);
         REQUIRE(snarls_chr["ref"].size() == 2);
         REQUIRE(pairToString(snarls_chr["ref"][0].get_snarl_id()) == "8_2");
-        REQUIRE(stoat_vcf::stringToVector<std::string>(vectorPathToString(snarls_chr["ref"][0].get_snarl_paths())) == std::vector<std::string>{">2>3>*>6>8",">2>7>8"});
+        REQUIRE(stoat_vcf::stringToVector<std::string>(vectorPathToString(snarls_chr["ref"][0].get_snarl_paths())) == std::vector<std::string>{">2>3>0>6>8",">2>7>8"});
         REQUIRE(snarls_chr["ref"][0].get_start_positions() == 8);
         REQUIRE(snarls_chr["ref"][0].get_end_positions() == 10);
         REQUIRE(snarls_chr["ref"][0].get_type_variants() == std::vector<std::string>{"3/4","1"});
@@ -329,7 +329,7 @@ TEST_CASE("Test simulated case", "[Path]") {
         REQUIRE(snarls_chr.size() == 1);
         REQUIRE(snarls_chr["ref"].size() == 2);
         REQUIRE(pairToString(snarls_chr["ref"][0].get_snarl_id()) == "2_8");
-        REQUIRE(stoat_vcf::stringToVector<std::string>(vectorPathToString(snarls_chr["ref"][0].get_snarl_paths())) == std::vector<std::string>{">2>8", ">2>3>*>6>7>8", ">2>3>*>6>8"});
+        REQUIRE(stoat_vcf::stringToVector<std::string>(vectorPathToString(snarls_chr["ref"][0].get_snarl_paths())) == std::vector<std::string>{">2>8", ">2>3>0>6>7>8", ">2>3>0>6>8"});
         REQUIRE(snarls_chr["ref"][0].get_start_positions() == 8);
         REQUIRE(snarls_chr["ref"][0].get_end_positions() == 13);
         REQUIRE(snarls_chr["ref"][0].get_type_variants() == std::vector<std::string>{"0","5/5", "4/4"});
