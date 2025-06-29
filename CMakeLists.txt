@@ -26,12 +26,12 @@ add_executable(${PROJECT_NAME}
     src/main.cpp
     src/utils.cpp
     src/arg_parser.cpp
-    src/binary_analysis.cpp
+    src/binary_test.cpp
     src/post_processing.cpp
     src/gaf_creator.cpp
     src/snarl_data_t.cpp
     src/matrix.cpp
-    src/quantitative_analysis.cpp
+    src/quatitative_test.cpp
     src/snarl_analyser.cpp
     src/lmm.cpp
     ${ALGLIB_SOURCES}
@@ -67,19 +67,19 @@ include(Catch)
 
 # Add test executable
 add_executable(unit_tests
-    tests/unittest/binary_analysis_unit.cpp
+    tests/unittest/binary_test_unit.cpp
     tests/unittest/gaf_creator_unit.cpp
     tests/unittest/snarl_data_t_unit.cpp
     tests/unittest/matrix_unit.cpp
-    tests/unittest/quantitative_analysis_unit.cpp
+    tests/unittest/quatitative_test_unit.cpp
 
     src/utils.cpp
     src/arg_parser.cpp
-    src/binary_analysis.cpp
+    src/binary_test.cpp
     src/gaf_creator.cpp
     src/snarl_data_t.cpp
     src/matrix.cpp
-    src/quantitative_analysis.cpp
+    src/quatitative_test.cpp
     src/snarl_analyser.cpp
     src/lmm.cpp
 )

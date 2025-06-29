@@ -392,8 +392,8 @@ if __name__ == "__main__":
 
     """
     python3 tests/verify_truth.py --freq data/quantitative/pg.snarls.freq.tsv \
-    --p_value output/quantitative_analysis.tsv --paths data/quantitative/snarl_analyse.tsv -q
+    --p_value output/quatitative_test.tsv --paths data/quantitative/snarl_analyse.tsv -q
 
     python3 tests/verify_truth.py --freq data/binary/pg.snarls.freq.tsv \
-    --p_value output/binary_analysis.tsv --paths data/binary/snarl_analyse.tsv -b
+    --p_value output/binary_test.tsv --paths data/binary/snarl_analyse.tsv -b
     """

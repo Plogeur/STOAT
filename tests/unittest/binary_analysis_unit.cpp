@@ -1,5 +1,5 @@
 #include <catch2/catch_test_macros.hpp>
-#include "../../src/binary_analysis.hpp"
+#include "../../src/binary_test.hpp"
 
 TEST_CASE("Chi-square & Fisher test function", "[chi2_2xN]") {
     SECTION("Valid chi-square test & valid Fisher test calculation") {

@@ -1,4 +1,4 @@
-#include "quantitative_analysis.hpp"
+#include "quatitative_test.hpp"
 #include "snarl_analyser.hpp"
 #include "utils.hpp"
 #include "arg_parser.hpp"

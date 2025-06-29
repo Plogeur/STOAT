@@ -1,5 +1,5 @@
-#ifndef BINARY_ANALYSIS_HPP
-#define BINARY_ANALYSIS_HPP
+#ifndef binary_test_HPP
+#define binary_test_HPP
 
 #include <vector>
 #include <string>

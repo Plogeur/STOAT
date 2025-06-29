@@ -391,7 +391,7 @@ int main(int argc, char* argv[]) {
 
         } else if (!binary_path.empty()) {
 
-            std::string output_binary = output_dir + "/binary_analysis.tsv";
+            std::string output_binary = output_dir + "/binary_test.tsv";
             stoat_vcf::chromosome_chuck_binary(ptr_vcf, hdr, rec, list_samples, snarls_chr, binary, covariate, maf, kinship, num_threads, table_threshold, regression_dir, output_binary);
 
             std::string output_significative = output_dir + "/top_variant_binary.tsv";
@@ -399,13 +399,13 @@ int main(int argc, char* argv[]) {
             stoat_vcf::add_BH_adjusted_column(output_binary, output_significative, phenotype_type);
 
             if (gaf) {
-                std::string output_gaf = output_dir + "/binary_analysis.gaf";
+                std::string output_gaf = output_dir + "/binary_test.gaf";
                 stoat_vcf::gaf_creation(output_binary, snarls_chr, *pg, output_gaf);
             }
 
         } else if (!quantitative_path.empty()) {
 
-            std::string output_quantitive = output_dir + "/quantitative_analysis.tsv";
+            std::string output_quantitive = output_dir + "/quatitative_test.tsv";
             stoat_vcf::chromosome_chuck_quantitative(ptr_vcf, hdr, rec, list_samples, snarls_chr, quantitative, covariate, maf, kinship, num_threads, table_threshold, regression_dir, output_quantitive);
 
             std::string output_significative = output_dir + "/top_variant_quantitative.tsv";
