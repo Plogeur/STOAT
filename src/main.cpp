@@ -334,11 +334,14 @@ int main(int argc, char* argv[]) {
         std::unique_ptr<bdsg::PackedPositionOverlay> pp_overlay;
 
         if (!snarl_path.empty()){
+        // If we have already saved the paths in snarls, load them
             snarls_chr = parse_snarl_path(snarl_path);
         } else {
+        // Otherwise, find them from the graph and snarl tree
 
             std::cout << "Start snarl analysis... " << std::endl;
             auto start_0 = std::chrono::high_resolution_clock::now();
+            // Load the snarl tree and graph
             std::tie(stree, pg, root, pp_overlay) = parse_graph_tree(pg_path, dist_path);
 
             // vector<tuple<net_handle_t, string, size_t, size_t, bool>>
@@ -348,6 +351,7 @@ int main(int argc, char* argv[]) {
             string output_snarl_not_analyse = output_dir + "/snarl_not_analyse.tsv";
             string output_file = output_dir + "/snarl_analyse.tsv";
 
+            // Go through snarls and fill in snarls_chr 
             snarls_chr = loop_over_snarls_write(*stree, snarls, *pg, output_file, output_snarl_not_analyse, children_threshold, path_length_threshold, cycle_threshold, only_snarl_parsing);
             auto end_0 = std::chrono::high_resolution_clock::now();
             std::cout << "Snarl decomposition : " << std::chrono::duration<double>(end_0 - start_0).count() << " s" << std::endl;

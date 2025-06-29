@@ -67,13 +67,17 @@ std::string fastFishersExactTest(const std::vector<size_t>& g0, const std::vecto
 
 // ------------------------ Binary table ------------------------
 
+// Write a string of: g0[0]:g1[1],g0[1]:g1[1],g0[2]:g1[2]...
 std::string format_group_paths(const std::vector<size_t>& g0, const std::vector<size_t>& g1);
 
+// Given two vectors of genotypes representing two groups, fill in the p-values, etc by running the relevant tests
 void binary_stat_test(const std::vector<size_t>& g0, const std::vector<size_t>& g1, 
     string& fastfisher_p_value, string& chi2_p_value, string& group_paths,
     string& allele_number_str, string& min_row_index_str, string& numb_colum_str, 
     string& inter_group_str, string& average_str);
 
+//Given two vectors of genotypes representing two groups (with length number_paths), fill them in with counts of the number of times each path is seen  
+// g0 and g1 can be used in binary_stat_test()
 size_t create_binary_table(
     std::vector<size_t>& g0, std::vector<size_t>& g1,
     const vector<bool>& binary_phenotype, 
@@ -82,6 +86,7 @@ size_t create_binary_table(
     const size_t& number_samples,
     const EdgeBySampleMatrix& matrix);
 
+// Does at least one column meet the MAF threshold?
 bool check_MAF_threshold(
     const std::vector<size_t>& g0, const std::vector<size_t>& g1,
     const size_t& totalSum, const size_t& length_column_headers, 

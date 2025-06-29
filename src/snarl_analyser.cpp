@@ -243,6 +243,7 @@ SnarlAnalyser::SnarlAnalyser(const vector<string>& sample_names, size_t num_path
 {}
 
 std::pair<std::vector<size_t>, std::vector<size_t>> SnarlAnalyser::create_table_short_path(const vector<Path_traversal_t>& list_path_snarl) {
+    // TODO: Could just make the transposed version to start with?
 
     size_t length_column = list_path_snarl.size();
     std::vector<size_t> allele_number_list(length_column, 0);
@@ -578,6 +579,7 @@ std::vector<size_t> identify_path(
     std::vector<size_t> rows_to_check;
     rows_to_check.reserve(list_edge_path.size());
 
+    // TODO: I think this is going through edges in the path through the snarl, not snarls
     // Map snarl names to row indices
     for (const Edge_t& edge : list_edge_path) {
         const auto& [node_id_1, node_id_2] = edge.print_pair_edge(); // Convert Edge_t to std::pair<size_t, size_t>

@@ -207,6 +207,8 @@ std::tuple<std::vector<std::vector<double>>, size_t, std::unordered_set<size_t>,
     for (size_t col_idx = 0; col_idx < length_column; ++col_idx) {
         const Path_traversal_t& path_snarl = column_headers[col_idx];
         std::vector<Edge_t> list_edge_path = decompose_path_to_edges(path_snarl);
+
+        //Get the indices of all samples that take this path
         std::vector<size_t> idx_srr_save = identify_path(list_edge_path, matrix, number_samples * 2);
 
         if (idx_srr_save.empty())

@@ -471,6 +471,7 @@ tuple<vector<Path_traversal_t>, vector<string>> fill_pretty_paths(
     vector<Path_traversal_t> pretty_paths;
 
     // seq_net, minimum_distance, maximun_distance, size_path, sum_path
+    // Used to calculate the type of variant
     vector<tuple<string, size_t, size_t, size_t, size_t, bool>> seq_net_paths;
 
     for (const auto& path : finished_paths) {
@@ -496,6 +497,7 @@ tuple<vector<Path_traversal_t>, vector<string>> fill_pretty_paths(
                 nid_t node_start_id = stree.node_id(net);
                 handle_t node_handle = pg.get_handle(node_start_id);
                 size_node[i] = pg.get_length(node_handle);
+                //TODO: Why do we only care about the sequence of the second node?
                 if (ppath.size() == 2) { // add only the node seq in position 2 on the snarl (ex : X>P>Q, P is in position 2)
                     seq_net = pg.get_sequence(node_handle);
                 }
@@ -562,6 +564,7 @@ tuple<vector<Path_traversal_t>, vector<string>> fill_pretty_paths(
                 bool revr = stree.ends_at_start(nodr);
 
                 size_t size_chain = size_start_node + size_end_node;
+                //TODO: I think this can use minimum_length() and maximum_length(), just to be simpler
                 size_t min_dist = stree.minimum_distance(complex_start_id, revl, size_start_node, complex_end_id, revr, 0);
                 size_t max_dist = stree.maximum_distance(complex_start_id, revl, size_start_node, complex_end_id, revr, 0);
 
@@ -625,6 +628,7 @@ std::unordered_map<std::string, std::vector<Snarl_data_t>> loop_over_snarls_writ
     size_t paths_number_analysis = 0;
     string save_chr = "";
 
+    // TODO: I think this should just be a size_t child_count, it doesn't look like it ever uses anything except the first value
     std::vector<size_t> children = {0};
     auto count_children = [&](net_handle_t net) {
         children[0] += 1;
@@ -645,10 +649,12 @@ std::unordered_map<std::string, std::vector<Snarl_data_t>> loop_over_snarls_writ
             continue;
         }
         
+        // Find all paths going through the netgraph of the snarl
         vector<vector<net_handle_t>> paths = {{stree.get_bound(snarl, false, true)}};
         vector<vector<net_handle_t>> finished_paths;
 
         while (!paths.empty()) {
+            //TODO: I think path should be a reference so it doesn't get copied
             std::vector<net_handle_t> path = paths.back();
             std::unordered_map<net_handle_t, size_t> dict_path_occ;
             bool cycle = false;
