@@ -1,3 +1,4 @@
+Found the major optimize time problem
 Add more comment / merge xian comment pr
 Identify ref paths if .chr file not present
 Test in the snarl decompose paths if in the .chr chr name are present in the graph if not stop the analysis and return a error ("chr not found")

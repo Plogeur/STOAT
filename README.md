@@ -60,14 +60,14 @@ Required files :
 - pg : Pangenome graph file, formats accepted: .pg or .xg.
 - dist : Distance file generated with vg dist, format: .dist.
 - vcf pangenomique : Merged VCF file, created using `vg pipeline` and bcftools merge, formats: .vcf or .vcf.gz. (ex : `bcftools merge -m none -Oz -o test`)
-- phenotype : phenotype file organise in three-column with FID (family/sample name), IID (sample name), and PHENO (integer/float). Format: .txt or .tsv (tab-separated).
+- phenotype : phenotype file organise in three-column with FID (family/sample name), IID (sample name), and PHENO (integer/float). Binary phenotype [1 or 2]. Quantitative [-double max; +double max] Format: .txt or .tsv (tab-separated).
 - chromosome : Txt file that containt the reference chromosome haplotype name in the pangenome graph. Format: .txt or .tsv. (use : `vg paths -x <pg.pg> -R` to identify all haplotype name then select haplotype that you want to use as reference (idealy the ones use in the pangenome graph creation))
 
 Optional file : 
 - paths : Snarl decoposition stoat output, Two-column file containing snarl names and the list of paths through the snarl's netgraph, separated by tabs. Format: .txt or .tsv.
 - kinship : Kinship matrix file use in LMM analysis
 - covariate : Covariate file. Format: .txt or .tsv.
-- position gene : Gene position. Format: .txt or .tsv.
+- position gene : File containing the gene name, start and end gene position. Format: .txt or .tsv.
 
 The VCF pangenomique is a VCF merged from a pangenomique mapping+calling, we recommand to use the [vg pipeline](https://github.com/vgteam/vg_snakemake)
 
@@ -77,7 +77,7 @@ VCF file :
 Chr1	411	>1>9	CGATTATGGA	C,CGATTA,CGATT,CGA	396.121	PASS	LV=0;DP=1241;AT=>1>2>4>5>6>8>9,>1>9,>1>2>3>5>6>8>9,>1>2>3>5>7>8>9,>1>2>4>5>7>8>9	GT	./1	0/2	1/3
 ```
 
-Phenotype file :
+Phenotype file (exemple binary):
 ```
 FID	IID	PHENO
 samp_g0_0	samp_g0_0	1

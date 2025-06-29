@@ -28,9 +28,14 @@ Edge_t::Edge_t(const Node_traversal_t &node_traversal_1,
                const Node_traversal_t &node_traversal_2) :
     edge(std::make_pair(node_traversal_1, node_traversal_2)) {}
 
-// Convert Edge_t to string
-std::pair<size_t, size_t> Edge_t::print_pair_node() const {
+// Convert Edge_t to std::pair<size_t, size_t>
+std::pair<size_t, size_t> Edge_t::print_pair_edge() const {
     return std::make_pair(edge.first.get_node_id(), edge.second.get_node_id());
+}
+
+// Convert Edge_t to string
+std::string Edge_t::print_string_edge() const {
+    return edge.first.to_string() + edge.second.to_string();
 }
 
 // Accessor to edge, useful for hashing and comparison

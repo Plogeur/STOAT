@@ -467,23 +467,23 @@ const std::vector<std::vector<Edge_t>> decompose_path_list_str(const std::vector
     return paths_snarl;
 }
 
-// Retrieve the index of `key` if it exists in `ordered_map`. Otherwise, add it and return the new index.
-size_t getOrAddIndex(std::unordered_map<Edge_t, size_t>& orderedMap, const Edge_t& key, size_t lengthOrderedMap) {
-    auto it = orderedMap.find(key);
-    if (it != orderedMap.end()) {
+// Retrieve the index of `key` if it exists in the dict. Otherwise, add it and return the new index.
+size_t getOrAddIndex(std::unordered_map<Edge_t, size_t>& edge_index_dict, const Edge_t& key, const size_t& size_edge_index_dict) {
+    auto it = edge_index_dict.find(key);
+    if (it != edge_index_dict.end()) {
         return it->second;
     } else {
-        size_t newIndex = lengthOrderedMap;
-        orderedMap[key] = newIndex;
+        size_t newIndex = size_edge_index_dict;
+        edge_index_dict[key] = newIndex;
         return newIndex;
     }
 }
 
 // Add True to the matrix if snarl is found
-void SnarlAnalyser::push_matrix(const Edge_t& EdgePath, std::unordered_map<Edge_t, size_t>& edge_dict, size_t indexColumn) {
+void SnarlAnalyser::push_matrix(const Edge_t& EdgePath, std::unordered_map<Edge_t, size_t>& edge_index_dict, size_t indexColumn) {
     
-    size_t lengthOrderedMap = edge_dict.size();
-    size_t idxSnarl = getOrAddIndex(edge_dict, EdgePath, lengthOrderedMap);
+    size_t lengthOrderedMap = edge_index_dict.size();
+    size_t idxSnarl = getOrAddIndex(edge_index_dict, EdgePath, lengthOrderedMap);
     size_t currentRowsNumber = matrix.getMaxElement();
 
     if (lengthOrderedMap > currentRowsNumber - 1) {
@@ -580,7 +580,7 @@ std::vector<size_t> identify_path(
 
     // Map snarl names to row indices
     for (const Edge_t& edge : list_edge_path) {
-        const auto& [node_id_1, node_id_2] = edge.print_pair_node(); // Convert Edge_t to std::pair<size_t, size_t>
+        const auto& [node_id_1, node_id_2] = edge.print_pair_edge(); // Convert Edge_t to std::pair<size_t, size_t>
         
         // Skip if snarl contains '*' (here * == 0) aka complex path
         if (node_id_1 == 0 || node_id_2 == 0) {
@@ -722,10 +722,11 @@ void SnarlAnalyser::binary_table(const std::vector<Snarl_data_t>& snarls,
 
 // Quantitative Table Generation
 void SnarlAnalyser::quantitative_table(const std::vector<Snarl_data_t>& snarls,
-                                        const std::vector<double>& quantitative_phenotype, const string &chr,
-                                        const std::vector<std::vector<double>>& covar,
-                                        const double& maf, const KinshipMatrix& kinship, const size_t& num_threads, 
-                                        const double& table_threshold, const std::string& regression_dir, std::ofstream& outf) {
+                                       const std::vector<double>& quantitative_phenotype, 
+                                       const string &chr,
+                                       const std::vector<std::vector<double>>& covar,
+                                       const double& maf, const KinshipMatrix& kinship, const size_t& num_threads, 
+                                       const double& table_threshold, const std::string& regression_dir, std::ofstream& outf) {
 
     size_t length_sample = sampleNames.size();
     const size_t total = snarls.size();
