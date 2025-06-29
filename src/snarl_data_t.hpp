@@ -26,10 +26,10 @@
 #include "utils.hpp"
 
 using namespace std;
-using namespace bdsg;
-using handlegraph::step_handle_t;
-using handlegraph::handle_t;
-using handlegraph::net_handle_t;
+
+using bdsg::handlegraph::step_handle_t;
+using bdsg::handlegraph::handle_t;
+using bdsg::handlegraph::net_handle_t;
 
 namespace stoat_vcf {
 
@@ -46,7 +46,7 @@ struct Node_traversal_t { // 64 bits per node
         size_t get_node_id() const;
         bool get_is_reverse() const;
 
-        // Convert to string representation
+        // Convert to std::string representation
         std::string to_string() const;
 
         bool operator==(const Node_traversal_t& other) const;
@@ -110,7 +110,7 @@ struct Path_traversal_t {
         // Getters
         const std::vector<Node_traversal_t>& get_paths() const;
         
-        // convert to string representation
+        // convert to std::string representation
         std::string to_string() const;
 };
 
@@ -158,10 +158,10 @@ public:
     // Add a node with known orientation
     void addNode(const std::string& node, char orient);
 
-    // Add a node handle and extract information using the string representation
-    bool addNodeHandle(const net_handle_t& node_h, const SnarlDistanceIndex& stree);
+    // Add a node handle and extract information using the std::string representation
+    bool addNodeHandle(const handlegraph::net_handle_t& node_h, const bdsg::SnarlDistanceIndex& stree);
 
-    // Get the string representation of the path
+    // Get the std::string representation of the path
     Path_traversal_t print() const;
 
     // Flip the path orientation
@@ -184,42 +184,42 @@ parse_graph_tree(const std::string& pg_file, const std::string& dist_file);
 // Function to calculate the type of variant
 // Given a vector of <size node 2, min length of the snarl, max length of the snarl, path length, sum_path, is_complex)
 // TODO : change sum_path to definition using the length of the path including in the boundary nodes
-vector<string> calcul_pos_type_variant(const vector<tuple<size_t, size_t, size_t, size_t, size_t, bool>>& list_length_paths);
+std::vector<std::string> calcul_pos_type_variant(const std::vector<std::tuple<size_t, size_t, size_t, size_t, size_t, bool>>& list_length_paths);
 
 // Function to find snarl ID
-std::pair<size_t, size_t> find_snarl_id(SnarlDistanceIndex& stree, net_handle_t& snarl);
+std::pair<size_t, size_t> find_snarl_id(bdsg::SnarlDistanceIndex& stree, handlegraph::net_handle_t& snarl);
 
 // Function to follow edges
-void follow_edges(SnarlDistanceIndex& stree,
-    vector<vector<net_handle_t>>& finished_paths,
-    const vector<net_handle_t>& path,
-    vector<vector<net_handle_t>>& paths,
-    PackedGraph& pg,
+void follow_edges(bdsg::SnarlDistanceIndex& stree,
+    std::vector<std::vector<handlegraph::net_handle_t>>& finished_paths,
+    const std::vector<handlegraph::net_handle_t>& path,
+    std::vector<std::vector<handlegraph::net_handle_t>>& paths,
+    bdsg::PackedGraph& pg,
     const bool& cycle);
 
 // Function to save snarls
-vector<tuple<net_handle_t, string, size_t, size_t, bool>> save_snarls(
-                            SnarlDistanceIndex& stree, 
-                            net_handle_t& root,
-                            PackedGraph& pg, 
-                            unordered_set<string>& ref_paths,
+std::vector<std::tuple<handlegraph::net_handle_t, std::string, size_t, size_t, bool>> save_snarls(
+                            bdsg::SnarlDistanceIndex& stree, 
+                            handlegraph::net_handle_t& root,
+                            bdsg::PackedGraph& pg, 
+                            unordered_set<std::string>& ref_paths,
                             PackedPositionOverlay& ppo);
 
 // Function to fill pretty paths
-tuple<vector<Path_traversal_t>, vector<string>> fill_pretty_paths(
-                            SnarlDistanceIndex& stree, 
-                            PackedGraph& pg, 
-                            vector<vector<net_handle_t>>& finished_paths);
+tuple<std::vector<Path_traversal_t>, std::vector<std::string>> fill_pretty_paths(
+                            bdsg::SnarlDistanceIndex& stree, 
+                            bdsg::PackedGraph& pg, 
+                            std::vector<std::vector<handlegraph::net_handle_t>>& finished_paths);
 
 // Function to loop over snarls and write output to output_file
 // Output is a tsv of <chromosome, start pos, end pos, snarl, paths, variant type, reference>
 // Returns a map from chromosome name to a vector of <snarl name, paths, start position, end position, variant type>
 std::unordered_map<std::string, std::vector<Snarl_data_t>> loop_over_snarls_write(
-                            SnarlDistanceIndex& stree, 
-                            vector<tuple<net_handle_t, string, size_t, size_t, bool>>& snarls, 
-                            PackedGraph& pg, 
-                            const string& output_file, 
-                            const string& output_snarl_not_analyse, 
+                            bdsg::SnarlDistanceIndex& stree, 
+                            std::vector<std::tuple<handlegraph::net_handle_t, std::string, size_t, size_t, bool>>& snarls, 
+                            bdsg::PackedGraph& pg, 
+                            const std::string& output_file, 
+                            const std::string& output_snarl_not_analyse, 
                             const size_t& children_treshold,
                             const size_t& path_length_threshold,
                             const size_t& cycle_threshold,

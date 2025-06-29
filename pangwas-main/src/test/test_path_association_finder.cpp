@@ -10,7 +10,7 @@ class TestPathAssociationFinder : PathAssociationFinder {
     public: 
     TestPathAssociationFinder(const handlegraph::PathPositionHandleGraph& graph, const bdsg::SnarlDistanceIndex& distance_index,
                            std::string test, const std::set<std::string>& samples_of_interest, std::string reference_name,
-                           string output_format, std::ostream& out_associated, std::ostream& out_unassociated,
+                           std::string output_format, std::ostream& out_associated, std::ostream& out_unassociated,
                            size_t allele_size_limit, double p_value) :
         PathAssociationFinder(graph, distance_index, test, samples_of_interest, reference_name, output_format, out_associated, 
                           out_unassociated, allele_size_limit, p_value) {} 

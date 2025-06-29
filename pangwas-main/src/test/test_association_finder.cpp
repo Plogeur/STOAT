@@ -11,7 +11,7 @@ class TestAssociationFinder : AssociationFinder {
     public: 
     TestAssociationFinder(const handlegraph::PathPositionHandleGraph& graph, const bdsg::SnarlDistanceIndex& distance_index,
                             std::string test, const std::set<std::string>& samples_of_interest,std::string reference_name,
-                           string output_format, std::ostream& out_associated, std::ostream& out_unassociated,
+                           std::string output_format, std::ostream& out_associated, std::ostream& out_unassociated,
                            size_t allele_size_limit, double p_value) :
         AssociationFinder(graph, distance_index, test,samples_of_interest,  reference_name, output_format, out_associated, 
                           out_unassociated, allele_size_limit, p_value) {} 
@@ -163,7 +163,7 @@ TEST_CASE( "Association finder nested bubbles",
         std::string test;
         std::regex match(">snarl:1-4\\|path0:1-2\\|path[0-3]:1-2");
         while (std::getline(out, test)) {
-            cerr << test << endl;
+           std::cerr << test << std::endl;
             if (test.substr(0,1) == ">") {
                 REQUIRE(std::regex_match(test, match));
             } else {

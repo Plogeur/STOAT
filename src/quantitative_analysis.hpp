@@ -22,6 +22,8 @@
 #include "snarl_analyser.hpp"
 #include "utils.hpp"
 
+using namespace std;
+
 // Linear regression function that returns a tuple of p_value, standard error (se), and beta
 void linear_regression(
     const std::vector<std::vector<double>>& df,

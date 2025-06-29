@@ -361,7 +361,7 @@ std::string chi2_2xN(const std::vector<size_t>& g0, const std::vector<size_t>& g
 
 // Fisher's exact test for a 2x2 contingency table
 // m11, m12, m21, m22 are the counts in the table
-// Returns the p-value as a string with 4 decimal places
+// Returns the p-value as a std::string with 4 decimal places
 std::string fastFishersExactTest(size_t m11, size_t m12,
                                  size_t m21, size_t m22) {
     
@@ -463,9 +463,9 @@ std::string fastFishersExactTest(size_t m11, size_t m12,
 // ------------------------ Binary table & stats ------------------------
 
 void binary_stat_test(const std::vector<size_t>& g0, const std::vector<size_t>& g1,
-    string& fastfisher_p_value, string& chi2_p_value, string& group_paths,
-    string& allele_number_str, string& min_row_index_str, string& numb_colum_str, 
-    string& inter_group_str, string& average_str) {
+    std::string& fastfisher_p_value, std::string& chi2_p_value, std::string& group_paths,
+    std::string& allele_number_str, std::string& min_row_index_str, std::string& numb_colum_str, 
+    std::string& inter_group_str, std::string& average_str) {
 
     // Compute derived statistics
     int allele_number = 0;
@@ -522,7 +522,7 @@ std::string format_group_paths(const std::vector<size_t>& g0, const std::vector<
 
 size_t create_binary_table(
     std::vector<size_t>& g0, std::vector<size_t>& g1,
-    const vector<bool>& binary_phenotype, 
+    const std::vector<bool>& binary_phenotype, 
     const std::vector<Path_traversal_t>& list_path_snarl, 
     const size_t& number_paths,
     const size_t& number_samples,

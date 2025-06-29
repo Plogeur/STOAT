@@ -11,6 +11,8 @@
 #include <string>
 #include <cstdio>
 
+using namespace std;
+
 // Given a vector of <p-value, 1.0, line index from the input file>, fill in the vector with the adjusted p-value
 // and sort the vector by adjusted p-value
 // TODO : correct this function

@@ -44,7 +44,7 @@ struct KinshipMatrix {
 KinshipMatrix parseKinshipMatrix(const std::string& filename);
 
 std::unordered_map<std::string, std::vector<double>> parse_qtl_file(
-    const std::string& filename, const vector<std::string>& list_samples);
+    const std::string& filename, const std::vector<std::string>& list_samples);
 
 std::unordered_map<std::string, std::tuple<std::string, size_t, size_t>> parse_gene_positions(
     const std::string& filename);
@@ -72,7 +72,7 @@ std::vector<double> parse_quantitative_pheno(
 
 std::tuple<std::vector<std::string>, htsFile*, bcf_hdr_t*, bcf1_t*> parseHeader(const std::string& file_path);
 
-std::unordered_set<std::string> parse_chromosome_reference(const string& file_path);
+std::unordered_set<std::string> parse_chromosome_reference(const std::string& file_path);
 
 template <typename T>
 void check_match_samples(const std::unordered_map<std::string, T>& map, const std::vector<std::string>& keys);

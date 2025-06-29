@@ -51,16 +51,16 @@ PathAssociationFinder::PathAssociationFinder(const handlegraph::PathPositionHand
         throw std::runtime_error( "error [pangwas]: Unknown test: " + test_method);
     }
     #ifdef DEBUG_PATH_ASSOCIATION_FINDER
-    cerr << "TRUTH" << endl;
+   std::cerr << "TRUTH" << std::endl;
     for ( const auto& x : samples_of_interest) {
-        cerr << "\t" << x << endl;
+       std::cerr << "\t" << x << std::endl;
     }
     #endif
 }
 
 std::vector<std::set<std::string>> PathAssociationFinder::partition_samples_in_snarl(const handlegraph::net_handle_t& snarl) const {
     #ifdef DEBUG_PATH_ASSOCIATION_FINDER
-    cerr << "Check if " << distance_index.net_handle_as_string(snarl) << " is associated by its paths" << endl;
+   std::cerr << "Check if " << distance_index.net_handle_as_string(snarl) << " is associated by its paths" << std::endl;
     #endif
 
     //Get the partition of paths, depending on if the snarl is simple or not
@@ -69,16 +69,16 @@ std::vector<std::set<std::string>> PathAssociationFinder::partition_samples_in_s
                                                                 : get_walk_sets(snarl);
 
     #ifdef DEBUG_PATH_ASSOCIATION_FINDER
-    cerr << "Found sets of paths using " << ( distance_index.is_regular_snarl(snarl) ? "edges from the start node" : "walk sets") << endl;
+   std::cerr << "Found sets of paths using " << ( distance_index.is_regular_snarl(snarl) ? "edges from the start node" : "walk sets") << std::endl;
     for (const std::set<sample_hap_t>& sample_set : sample_sets) {
-        cerr << "SET "<< endl;
+       std::cerr << "SET "<< std::endl;
         for (const sample_hap_t& sample : sample_set) {
-            cerr << "\t" << sample.sample << endl;
+           std::cerr << "\t" << sample.sample << std::endl;
         }
     }
-    cerr << "TRUTH" << endl;
+   std::cerr << "TRUTH" << std::endl;
     for ( const std::string& x : samples_of_interest) {
-        cerr << "\t" << x << endl;
+       std::cerr << "\t" << x << std::endl;
     }
     #endif
 
@@ -97,7 +97,7 @@ std::vector<std::set<std::string>> PathAssociationFinder::partition_samples_in_s
 // I think this is equivalent to partitioning by the actual sets of unique walks.
 std::vector<std::set<sample_hap_t>> PathAssociationFinder::get_walk_sets(const handlegraph::net_handle_t& snarl) const {
     #ifdef DEBUG_PATH_ASSOCIATION_FINDER
-    cerr << "Get walk sets of " << distance_index.net_handle_as_string(snarl) << endl;
+   std::cerr << "Get walk sets of " << distance_index.net_handle_as_string(snarl) << std::endl;
     #endif
 
     // Make a vector of the paths 
@@ -148,7 +148,7 @@ std::vector<std::set<sample_hap_t>> PathAssociationFinder::get_walk_sets(const h
     // TODO: This is doubling the work because each edges is looked at twice
     distance_index.for_each_child(snarl, [&] (const handlegraph::net_handle_t& child) {
         #ifdef DEBUG_PATH_ASSOCIATION_FINDER
-        cerr << "At snarl child " << distance_index.net_handle_as_string(child) << endl;
+       std::cerr << "At snarl child " << distance_index.net_handle_as_string(child) << std::endl;
         #endif
         for (bool go_left : {true, false}) {
 
@@ -168,7 +168,7 @@ std::vector<std::set<sample_hap_t>> PathAssociationFinder::get_walk_sets(const h
                 graph.for_each_step_of_sense(handle, sense, [&](const handlegraph::step_handle_t& step) {
                     // For each step on the node handle, keep track of which paths take different steps
                     #ifdef DEBUG_PATH_ASSOCIATION_FINDER
-                    cerr << "\ton path " << graph.get_path_name(graph.get_path_handle_of_step(step)) << endl;
+                   std::cerr << "\ton path " << graph.get_path_name(graph.get_path_handle_of_step(step)) << std::endl;
                     #endif
 
                     //Do we go forwards in the path? We need to check the direction of the handle in the path
@@ -226,7 +226,7 @@ std::vector<std::set<sample_hap_t>> PathAssociationFinder::get_walk_sets(const h
             //This maps each edge list for this node/direction to the intermediate set index
             std::map<std::vector<std::pair<handlegraph::nid_t, bool>>, size_t> edge_to_intermediate_set;
             //Everything starts in the same set, representing not going through this node
-            vector<size_t> intermediate_sets (old_sets.size(), 0);
+            std::vector<size_t> intermediate_sets (old_sets.size(), 0);
             size_t intermediate_set_count = 1;
             for (size_t path_i = 0 ; path_i < next_steps.size() ; path_i++) {
                 const path_edge_t& edge = next_steps[path_i];
@@ -250,7 +250,7 @@ std::vector<std::set<sample_hap_t>> PathAssociationFinder::get_walk_sets(const h
 
             // We now have an old set and an intermediate set for each path
             // Assign the path to a new set. Everything gets a new set
-            vector<size_t> new_sets (intermediate_sets.size(), std::numeric_limits<size_t>::max());
+            std::vector<size_t> new_sets (intermediate_sets.size(), std::numeric_limits<size_t>::max());
             size_t new_set_count = 0;
             // Map pairs of <old_set, intermediate_set> to new set number
             std::map<std::pair<size_t, size_t>, size_t>  old_to_new_set;
@@ -279,11 +279,11 @@ std::vector<std::set<sample_hap_t>> PathAssociationFinder::get_walk_sets(const h
         sample_sets[old_sets[i]].emplace(all_samples[i]);
     }
     #ifdef DEBUG_PATH_ASSOCIATION_FINDER
-    cerr << "Found walk sets " << endl;
+   std::cerr << "Found walk sets " << std::endl;
     for (const auto& s : sample_sets) {
-        cerr << "Set" << endl;
+       std::cerr << "Set" << std::endl;
         for (const auto& x : s) {
-            cerr << "\t" << x << endl;;
+           std::cerr << "\t" << x << std::endl;;
         }
     }
     #endif
@@ -293,7 +293,7 @@ std::vector<std::set<sample_hap_t>> PathAssociationFinder::get_walk_sets(const h
 std::vector<std::set<sample_hap_t>> PathAssociationFinder::get_start_edge_sets(const bdsg::net_handle_t& snarl) const {
 
     #ifdef DEBUG_PATH_ASSOCIATION_FINDER
-    cerr << "Get start edge sets of " << distance_index.net_handle_as_string(snarl) << endl;
+   std::cerr << "Get start edge sets of " << distance_index.net_handle_as_string(snarl) << std::endl;
     #endif
 
     // Map an edge (as the handle reached from the start of the snarl) to a set of paths that took that edge

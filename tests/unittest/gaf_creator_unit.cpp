@@ -63,7 +63,7 @@ TEST_CASE("Ajout de suffixe au nom de fichier", "[addSuffixToFilename]") {
 
 TEST_CASE("Décomposition de snarl", "[decompose_snarl]") {
     SECTION("Snarl simple") {
-        string snarl = "1>2>3";
+        std::string snarl = "1>2>3";
         auto result = decompose_snarl(snarl);
         REQUIRE(result.size() == 3);
         REQUIRE(result[0] == 1);
@@ -72,13 +72,13 @@ TEST_CASE("Décomposition de snarl", "[decompose_snarl]") {
     }
 
     SECTION("Snarl vide") {
-        string snarl = "";
+        std::string snarl = "";
         auto result = decompose_snarl(snarl);
         REQUIRE(result.empty());
     }
 
     SECTION("Snarl avec un seul nœud") {
-        string snarl = "42";
+        std::string snarl = "42";
         auto result = decompose_snarl(snarl);
         REQUIRE(result.size() == 1);
         REQUIRE(result[0] == 42);

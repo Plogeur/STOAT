@@ -20,8 +20,8 @@ TEST_CASE("Test simulated case", "[Path]") {
     std::unordered_set<std::string> ref_chr = {"ref"};
     bool only_snarl_parsing = false;
     std::string output_dir = "../tests/graph_test";
-    string output_snarl_not_analyse = output_dir + "/snarl_not_analyse.tsv";
-    string output_file = output_dir + "/snarl_analyse.tsv";
+    std::string output_snarl_not_analyse = output_dir + "/snarl_not_analyse.tsv";
+    std::string output_file = output_dir + "/snarl_analyse.tsv";
 
     SECTION("simple_snp") {
         std::string pg_path = "../tests/graph_test/simple_snp.pg";

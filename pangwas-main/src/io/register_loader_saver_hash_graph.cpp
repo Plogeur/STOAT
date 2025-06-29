@@ -21,12 +21,12 @@ using namespace handlegraph;
 
 void register_loader_saver_hash_graph() {
 
-    // Convert the HashGraph SerializableHandleGraph magic number to a string
+    // Convert the HashGraph SerializableHandleGraph magic number to a std::string
     bdsg::HashGraph empty;
     // Make sure it is in network byte order
     uint32_t new_magic_number = htonl(empty.get_magic_number());
-    // Load all 4 characters of it into a string
-    string new_magic((char*)&new_magic_number, 4);
+    // Load all 4 characters of it into a std::string
+    std::string new_magic((char*)&new_magic_number, 4);
 
     Registry::register_bare_loader_saver_with_magic<bdsg::HashGraph, MutablePathDeletableHandleGraph, MutablePathMutableHandleGraph, MutableHandleGraph, PathHandleGraph, HandleGraph>("HashGraph", new_magic, [](istream& input) -> void* {
         // Allocate a HashGraph
@@ -50,7 +50,7 @@ void register_loader_saver_hash_graph() {
     // Also register to be able to load Protobuf, by converting to a hash graph on input, if vg::VG is not required.
     // The default implementation for a VG loaded from a file as a handle graph will now be a HashGraph.
     //Registry::register_loader<bdsg::HashGraph, MutablePathDeletableHandleGraph, MutablePathMutableHandleGraph, MutableHandleGraph, PathHandleGraph, HandleGraph>(
-    //    vector<string>{"VG", ""},
+    //    std::vector<std::string>{"VG", ""},
     //    [](const message_sender_function_t& for_each_message) -> void* {
     //
     //    // Allocate a HashGraph that's really a ConvertedHashGraph, to mark

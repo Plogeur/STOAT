@@ -41,7 +41,7 @@ bool FishersTester::is_associated(const std::set<std::string>& samples) {
 
 double FishersTester::fishers_p_value(size_t a, size_t b, size_t c, size_t d) {
     #ifdef DEBUG_TESTER
-    cerr << "Get fishers p value for values " << a << " " << b << " " << c << " " << d << endl;
+   std::cerr << "Get fishers p value for values " << a << " " << b << " " << c << " " << d << std::endl;
     #endif
  
     double prob = log_fishers_probability(a, b, c, d);   
@@ -57,7 +57,7 @@ double FishersTester::fishers_p_value(size_t a, size_t b, size_t c, size_t d) {
     size_t max_a = std::min(a+b, a+c);
     size_t min_a = a >= d ? a-d : 0;
     #ifdef DEBUG_TESTER
-    cerr << "\ttest values between " << min_a << " " << max_a << endl;
+   std::cerr << "\ttest values between " << min_a << " " << max_a << std::endl;
     #endif
 
     for (size_t test_a = min_a ; test_a <= max_a ; test_a++) {
@@ -99,19 +99,19 @@ double FishersTester::fishers_p_value(size_t a, size_t b, size_t c, size_t d) {
     }
 
     #ifdef DEBUG_TESTER
-    cerr << "fishers p value: " << p << endl;
+   std::cerr << "fishers p value: " << p << std::endl;
     #endif
     return p;
 }
 
 double FishersTester::log_fishers_probability(size_t a, size_t b, size_t c, size_t d) {
     #ifdef DEBUG_TESTER
-    cerr << "\tfishers probability: " << a << " " << b << " " << c << " " << d << endl;
+   std::cerr << "\tfishers probability: " << a << " " << b << " " << c << " " << d << std::endl;
     #endif
 
     if (cached_probability.count(std::make_pair(std::make_pair(a, b), std::make_pair(c, d))) != 0) {
         #ifdef DEBUG_TESTER
-        cerr << "\t\t" <<  cached_probability[std::make_pair(std::make_pair(a, b), std::make_pair(c, d))] << endl;
+       std::cerr << "\t\t" <<  cached_probability[std::make_pair(std::make_pair(a, b), std::make_pair(c, d))] << std::endl;
         #endif
         return cached_probability[std::make_pair(std::make_pair(a, b), std::make_pair(c, d))];
     }
@@ -121,7 +121,7 @@ double FishersTester::log_fishers_probability(size_t a, size_t b, size_t c, size
 
     cached_probability[std::make_pair(std::make_pair(a, b), std::make_pair(c, d))] = p;
     #ifdef DEBUG_TESTER
-    cerr << "\t\t" <<  p << endl;
+   std::cerr << "\t\t" <<  p << std::endl;
     #endif
 
     return p;
@@ -174,9 +174,9 @@ bool Chi2Tester::is_associated(const std::set<std::string>& samples) {
     #ifdef DEBUG_TESTER
     if (a != 0) {
         double p = p_value(a, b, c, d);
-        cerr << "For counts: " << a << "\t" << b << endl
-             << "            " << c << "\t" << d << endl;
-        cerr << "\tChi2 p-value: " << p << endl; 
+       std::cerr << "For counts: " << a << "\t" << b << endl
+             << "            " << c << "\t" << d << std::endl;
+       std::cerr << "\tChi2 p-value: " << p << std::endl; 
     }
     #endif
          

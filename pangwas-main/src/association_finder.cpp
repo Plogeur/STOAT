@@ -92,7 +92,7 @@ bool AssociationFinder::snarl_is_eligible(const handlegraph::net_handle_t& snarl
 
 void AssociationFinder::write_header() const {
     if (output_format == "tsv") {
-        out_associated << "path_name\tstart_offset\tend_offset\tvariant_size" << endl;
+        out_associated << "path_name\tstart_offset\tend_offset\tvariant_size" << std::endl;
     }
     //TODO: When adding stuff, check if out_associated/unassociated are the same and write to both if necessary
 }
@@ -104,7 +104,7 @@ void AssociationFinder::write_snarl(const handlegraph::net_handle_t& snarl, cons
         //Write one fasta record for each path set
         write_fasta_of_snarl(snarl, samples);
     } else {
-        cerr << "error[pangwas]: unknown output format " << output_format << endl;
+       std::cerr << "error[pangwas]: unknown output format " << output_format << std::endl;
     }
 }
 
@@ -125,7 +125,7 @@ void AssociationFinder::write_tsv_of_snarl(const handlegraph::net_handle_t& snar
                 distance_index.minimum_length(distance_index.get_net(graph.get_handle_of_step(range.start), &graph))) << "\t"
             << graph.get_position_of_step(range.end) << "\t"
             << distance_index.maximum_length(snarl) 
-            << endl;
+            << std::endl;
     }
 }
 
@@ -187,7 +187,7 @@ void AssociationFinder::write_fasta_of_snarl(const handlegraph::net_handle_t& sn
                 << ref_coordinates << "|" 
                 << graph.get_path_name(path) << ":" 
                 << (graph.get_position_of_step(path_range.start) + distance_index.minimum_length(distance_index.get_net(graph.get_handle_of_step(path_range.start), &graph))) << "-" 
-                << graph.get_position_of_step(path_range.end) << endl; 
+                << graph.get_position_of_step(path_range.end) << std::endl; 
 
             // Now print the sequence in 80bp chunks.
             // Keep a buffer to print 80 bp at a time
@@ -204,7 +204,7 @@ void AssociationFinder::write_fasta_of_snarl(const handlegraph::net_handle_t& sn
 
                     // If the buffer is full, write it and clear it
                     if (sequence_buffer.size() == 80) {
-                        out << sequence_buffer << endl;
+                        out << sequence_buffer << std::endl;
                         sequence_buffer.clear();
                     }
                 }
@@ -215,7 +215,7 @@ void AssociationFinder::write_fasta_of_snarl(const handlegraph::net_handle_t& sn
                 next_step = graph.get_next_step(step);
             }
             if (!sequence_buffer.empty()) {
-                out << sequence_buffer << endl;
+                out << sequence_buffer << std::endl;
             }
         }
     }
@@ -279,7 +279,7 @@ std::vector<AssociationFinder::path_range_t> AssociationFinder::get_coordinates_
 }
 std::vector<AssociationFinder::path_range_t> AssociationFinder::get_coordinates_of_snarl_helper(const handlegraph::net_handle_t& snarl, bool get_reference, std::string sample_name, bool get_all_paths) const {
     #ifdef DEBUG_ASSOCIATION_FINDER
-    cerr << "Get coordinates of " << distance_index.net_handle_as_string(snarl) << endl;
+   std::cerr << "Get coordinates of " << distance_index.net_handle_as_string(snarl) << std::endl;
     if (get_reference) {
         assert(sample_name.empty());
         assert(!get_all_paths);
@@ -323,9 +323,9 @@ std::vector<AssociationFinder::path_range_t> AssociationFinder::get_coordinates_
         return true;
     });
     #ifdef DEBUG_ASSOCIATION_FINDER
-    cerr << "After start node, found" << endl;
+   std::cerr << "After start node, found" << std::endl;
     for (const auto& x : path_to_steps) {
-        cerr << graph.get_path_name(x.first) << ": " << x.second.size() << endl;
+       std::cerr << graph.get_path_name(x.first) << ": " << x.second.size() << std::endl;
     }
     #endif
     graph.for_each_step_on_handle(distance_index.get_handle(end_net, &graph), [&] (const handlegraph::step_handle_t& step) {
@@ -346,13 +346,13 @@ std::vector<AssociationFinder::path_range_t> AssociationFinder::get_coordinates_
     });
 
     #ifdef DEBUG_ASSOCIATION_FINDER
-    cerr << "After end node, found" << endl;
+   std::cerr << "After end node, found" << std::endl;
     for (const auto& x : path_to_steps) {
-        cerr << graph.get_path_name(x.first) << ": " << x.second.size() << endl;
+       std::cerr << graph.get_path_name(x.first) << ": " << x.second.size() << std::endl;
     }
     #endif
 
-    vector<path_range_t> ranges;
+    std::vector<path_range_t> ranges;
 
     if (found_pair) {
         //If we found a path going through the snarl, return the pairs

@@ -21,6 +21,7 @@
 #include "snarl_data_t.hpp"
 
 using namespace std;
+
 namespace stoat_vcf {
 
 std::string set_precision(const double& value);

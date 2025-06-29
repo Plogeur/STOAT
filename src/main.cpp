@@ -38,7 +38,8 @@
 #include "gaf_creator.hpp"
 #include "post_processing.hpp"
 
-using namespace std;
+// Global variable
+const std::string VERSION = "v0.0.1";
 
 void print_help_vcf() {
     std::cerr << "Usage: stoat vcf [options]\n\n"
@@ -81,7 +82,7 @@ void print_help_graph() {
                 << "  -m, --method NAME                  what method is used to find associations? (paths) [paths]" << endl
                 << "  -l, --allele-size-limit INT        don't report variants smaller than this [0]" << endl
                 << "  -r, --reference-sample NAME        if there is no reference in the graph, use this sample as the reference" << endl
-                << "  -h, --help                         print this help message" << endl;
+                << "  -h, --help                         print this help message" << std::endl;
 }
 
 void print_help() {
@@ -132,7 +133,7 @@ int main(int argc, char* argv[]) {
         // Parse arguments
         int c;
 
-        static struct option long_options[] = {
+        static struct std::option long_options[] = {
             {"vcf", required_argument, 0, 'v'},
             {"snarl", required_argument, 0, 's'},
             {"pg", required_argument, 0, 'p'},
@@ -284,12 +285,12 @@ int main(int argc, char* argv[]) {
             // Case 5: snarl_path + vcf_path + --make-bed
         } else {
             std::cerr << "Invalid argument combination provided.\n";
-            std::cerr << "There are 5 ways to lauch stoat : " << endl;
-            std::cerr << "Case 1: snarl_path + vcf_path + phenotype (+ optional file)" << endl;
-            std::cerr << "Case 2: pg_path + dist_path + vcf_path + phenotype (+ optional file)" << endl;
-            std::cerr << "Case 3: pg_path + dist_path" << endl;
-            std::cerr << "Case 4: pg_path + dist_path + vcf_path + --make-bed" << endl;
-            std::cerr << "Case 5: snarl_path + vcf_path + --make-bed" << endl;
+            std::cerr << "There are 5 ways to lauch stoat : " << std::endl;
+            std::cerr << "Case 1: snarl_path + vcf_path + phenotype (+ optional file)" << std::endl;
+            std::cerr << "Case 2: pg_path + dist_path + vcf_path + phenotype (+ optional file)" << std::endl;
+            std::cerr << "Case 3: pg_path + dist_path" << std::endl;
+            std::cerr << "Case 4: pg_path + dist_path + vcf_path + --make-bed" << std::endl;
+            std::cerr << "Case 5: snarl_path + vcf_path + --make-bed" << std::endl;
 
             print_help_vcf();
             return EXIT_FAILURE;
@@ -307,7 +308,7 @@ int main(int argc, char* argv[]) {
         bcf1_t* rec;
 
         if (!only_snarl_parsing) {
-            std::tie(list_samples, ptr_vcf, hdr, rec) = parseHeader(vcf_path); 
+            std::tie(list_samples, ptr_vcf, hdr, rec) = stoat_vcf::parseHeader(vcf_path); 
         }
 
         std::vector<bool> binary;
@@ -316,23 +317,23 @@ int main(int argc, char* argv[]) {
         std::vector<std::vector<double>> covariate;
 
         if (!covariate_path.empty()) {
-            covariate = parse_covariates(covariate_path, covar_names, list_samples);
+            covariate = stoat_vcf::parse_covariates(covariate_path, covar_names, list_samples);
         }
 
         if (!binary_path.empty()) {
-            binary = parse_binary_pheno(binary_path, list_samples);
+            binary = stoat_vcf::parse_binary_pheno(binary_path, list_samples);
 
         } else if (!quantitative_path.empty()) {
-            quantitative = parse_quantitative_pheno(quantitative_path, list_samples);
+            quantitative = stoat_vcf::parse_quantitative_pheno(quantitative_path, list_samples);
 
         } else if (!eqtl_path.empty() && !gene_position_path.empty()) {
-            eqtl = parse_qtl_gene_file(eqtl_path, gene_position_path, list_samples);
+            eqtl = stoat_vcf::parse_qtl_gene_file(eqtl_path, gene_position_path, list_samples);
         }
 
         KinshipMatrix kinship;
         if (!kinship_path.empty()) {
             // check_format_kinship(kinship_path);
-            kinship = parseKinshipMatrix(kinship_path);
+            kinship = stoat_vcf::parseKinshipMatrix(kinship_path);
         }
 
         // scope declaration
@@ -344,22 +345,22 @@ int main(int argc, char* argv[]) {
         std::unique_ptr<bdsg::PackedPositionOverlay> pp_overlay;
 
         if (!snarl_path.empty()){ // If we have already saved the paths in snarls, load them
-            snarls_chr = parse_snarl_path(snarl_path);
+            snarls_chr = stoat_vcf::parse_snarl_path(snarl_path);
         } else { // Otherwise, find them from the graph and snarl tree
             std::cout << "Start snarl analysis... " << std::endl;
             auto start_0 = std::chrono::high_resolution_clock::now();
             // Load the snarl tree and graph
-            std::tie(stree, pg, root, pp_overlay) = parse_graph_tree(pg_path, dist_path);
+            std::tie(stree, pg, root, pp_overlay) = stoat_vcf::parse_graph_tree(pg_path, dist_path);
 
-            // vector<tuple<net_handle_t, string, size_t, size_t, bool>>
+            // std::vector<std::tuple<handlegraph::net_handle_t, std::string, size_t, size_t, bool>>
             // snarl_net_grah, chr_ref, start_pos, end_pos, is_on_ref
-            auto snarls = save_snarls(*stree, root, *pg, ref_chr, *pp_overlay);
+            auto snarls = stoat_vcf::save_snarls(*stree, root, *pg, ref_chr, *pp_overlay);
 
-            string output_snarl_not_analyse = output_dir + "/snarl_not_analyse.tsv";
-            string output_file = output_dir + "/snarl_analyse.tsv";
+            std::string output_snarl_not_analyse = output_dir + "/snarl_not_analyse.tsv";
+            std::string output_file = output_dir + "/snarl_analyse.tsv";
 
             // Go through snarls and fill in snarls_chr 
-            snarls_chr = loop_over_snarls_write(*stree, snarls, *pg, output_file, output_snarl_not_analyse, children_threshold, path_length_threshold, cycle_threshold, only_snarl_parsing);
+            snarls_chr = stoat_vcf::loop_over_snarls_write(*stree, snarls, *pg, output_file, output_snarl_not_analyse, children_threshold, path_length_threshold, cycle_threshold, only_snarl_parsing);
             auto end_0 = std::chrono::high_resolution_clock::now();
             std::cout << "Snarl decomposition : " << std::chrono::duration<double>(end_0 - start_0).count() << " s" << std::endl;
             if (only_snarl_parsing) {
@@ -381,8 +382,8 @@ int main(int argc, char* argv[]) {
             }
 
             const std::string output_fam = output_dir + ".fam";
-            create_fam(pheno, output_fam);
-            chromosome_chuck_make_bed(ptr_vcf, hdr, rec, list_samples, snarls_chr, output_dir);
+            stoat_vcf::create_fam(pheno, output_fam);
+            stoat_vcf::chromosome_chuck_make_bed(ptr_vcf, hdr, rec, list_samples, snarls_chr, output_dir);
 
             auto end_1 = std::chrono::high_resolution_clock::now();
             std::cout << "Time genotype plink files creations : " << std::chrono::duration<double>(end_1 - start_1).count() << " s" << std::endl;
@@ -390,36 +391,36 @@ int main(int argc, char* argv[]) {
 
         } else if (!binary_path.empty()) {
 
-            string output_binary = output_dir + "/binary_analysis.tsv";
-            chromosome_chuck_binary(ptr_vcf, hdr, rec, list_samples, snarls_chr, binary, covariate, maf, kinship, num_threads, table_threshold, regression_dir, output_binary);
+            std::string output_binary = output_dir + "/binary_analysis.tsv";
+            stoat_vcf::chromosome_chuck_binary(ptr_vcf, hdr, rec, list_samples, snarls_chr, binary, covariate, maf, kinship, num_threads, table_threshold, regression_dir, output_binary);
 
-            string output_significative = output_dir + "/top_variant_binary.tsv";
-            string phenotype_type = covariate.empty() ? "binary" : "quantitative";
-            add_BH_adjusted_column(output_binary, output_significative, phenotype_type);
+            std::string output_significative = output_dir + "/top_variant_binary.tsv";
+            std::string phenotype_type = covariate.empty() ? "binary" : "quantitative";
+            stoat_vcf::add_BH_adjusted_column(output_binary, output_significative, phenotype_type);
 
             if (gaf) {
-                string output_gaf = output_dir + "/binary_analysis.gaf";
-                gaf_creation(output_binary, snarls_chr, *pg, output_gaf);
+                std::string output_gaf = output_dir + "/binary_analysis.gaf";
+                stoat_vcf::gaf_creation(output_binary, snarls_chr, *pg, output_gaf);
             }
 
         } else if (!quantitative_path.empty()) {
 
-            string output_quantitive = output_dir + "/quantitative_analysis.tsv";
-            chromosome_chuck_quantitative(ptr_vcf, hdr, rec, list_samples, snarls_chr, quantitative, covariate, maf, kinship, num_threads, table_threshold, regression_dir, output_quantitive);
+            std::string output_quantitive = output_dir + "/quantitative_analysis.tsv";
+            stoat_vcf::chromosome_chuck_quantitative(ptr_vcf, hdr, rec, list_samples, snarls_chr, quantitative, covariate, maf, kinship, num_threads, table_threshold, regression_dir, output_quantitive);
 
-            string output_significative = output_dir + "/top_variant_quantitative.tsv";
-            string phenotype_type = "quantitative";
-            add_BH_adjusted_column(output_quantitive, output_significative, phenotype_type);
+            std::string output_significative = output_dir + "/top_variant_quantitative.tsv";
+            std::string phenotype_type = "quantitative";
+            stoat_vcf::add_BH_adjusted_column(output_quantitive, output_significative, phenotype_type);
 
         } else if (!eqtl_path.empty()) {
 
-            string eqtl_output = output_dir + "/eqtl_gwas.tsv";
-            chromosome_chuck_eqtl(ptr_vcf, hdr, rec, list_samples, snarls_chr, eqtl, covariate, maf, 
+            std::string eqtl_output = output_dir + "/eqtl_gwas.tsv";
+            stoat_vcf::chromosome_chuck_eqtl(ptr_vcf, hdr, rec, list_samples, snarls_chr, eqtl, covariate, maf, 
                 kinship, num_threads, table_threshold, regression_dir, windows_gene_threshold, eqtl_output);
             
-            string output_significative = output_dir + "/top_variant_eqtl.tsv";
-            string phenotype_type = "eqtl";
-            add_BH_adjusted_column(eqtl_output, output_significative, phenotype_type);
+            std::string output_significative = output_dir + "/top_variant_eqtl.tsv";
+            std::string phenotype_type = "eqtl";
+            stoat_vcf::add_BH_adjusted_column(eqtl_output, output_significative, phenotype_type);
         }
 
         auto end_1 = std::chrono::high_resolution_clock::now();
@@ -513,21 +514,21 @@ int main(int argc, char* argv[]) {
 
     //     // Check that the inputs are ok
     //     if (graph_name.empty()) {
-    //         std::cerr << "error [pangwas]: pangwas requires a graph file" << endl;
+    //         std::cerr << "error [pangwas]: pangwas requires a graph file" << std::endl;
     //         EXIT_FAILURE; 
     //     }
     //     if (distance_name.empty()) {
-    //         std::cerr << "error [pangwas]: pangwas requires a distance index file" << endl;
+    //         std::cerr << "error [pangwas]: pangwas requires a distance index file" << std::endl;
     //         EXIT_FAILURE; 
     //     }
     //     if (samples_of_interest.empty()) {
-    //         std::cerr << "error [pangwas]: pangwas requires samples of interest" << endl;
+    //         std::cerr << "error [pangwas]: pangwas requires samples of interest" << std::endl;
     //         EXIT_FAILURE; 
     //     }
 
     //     // Tell the IO library about libvg types.
     //     if (!pangwas::io::register_libvg_io()) {
-    //         cerr << "error[vg]: Could not register libvg types with libvgio" << endl;
+    //        std::cerr << "error[vg]: Could not register libvg types with libvgio" << std::endl;
     //         EXIT_FAILURE;
     //     }
 
@@ -563,7 +564,7 @@ int main(int argc, char* argv[]) {
     //                                         p_value);
     //         af.write_associated_snarls();
     //     } else {
-    //         std::cerr << "error [pangwas]: unknown method " << method_name << endl;
+    //         std::cerr << "error [pangwas]: unknown method " << method_name << std::endl;
     //         EXIT_FAILURE; 
     //     }
 
@@ -576,8 +577,7 @@ int main(int argc, char* argv[]) {
     //     }
 
     } else if (subcommand == "version") {
-        // TODO : change for a variable
-        std::cout << "stoat: gwas analysis tool, version v0.0.1\n";
+        std::cout << "stoat: gwas analysis tool, version " << VERSION << "\n";
         // std::cout << "Compiled with g++ (Ubuntu 11.4.0-1ubuntu1~22.04) 11.4.0 on Linux\n";
         // std::cout << "Linked against libstd++ 20230528\n";
 

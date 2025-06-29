@@ -39,7 +39,7 @@ double string_to_pvalue(const std::string& p1) {
     }
 }
 
-// Function to check significance from a string
+// Function to check significance from a std::string
 bool isPValueSignificant(const double& pvalue_threshold, const std::string& pvalue_str) {
     double pvalue;
     try {
@@ -49,7 +49,7 @@ bool isPValueSignificant(const double& pvalue_threshold, const std::string& pval
             pvalue = std::stod(pvalue_str);
         }
     } catch (const std::exception& e) {
-        std::cerr << "Error parsing pvalue string : " << pvalue_str << " " << e.what() << "\n";
+        std::cerr << "Error parsing pvalue std::string : " << pvalue_str << " " << e.what() << "\n";
         return false;
     }
     return pvalue < pvalue_threshold;

@@ -8,7 +8,7 @@ import re
 from cyvcf2 import VCF # type: ignore
 
 def split_snarl(input_str):
-    # Split the string and filter empty elements, then convert to integers
+    # Split the std::string and filter empty elements, then convert to integers
     return [str(num) for num in re.split(r'[><]', input_str) if num]
 
 def parse_sv_rows(file_path):

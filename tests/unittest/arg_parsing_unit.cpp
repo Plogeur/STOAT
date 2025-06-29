@@ -29,7 +29,7 @@ TEST_CASE("Binary phenotype parsing", "[parse_binary_pheno]") {
             "F4 I4 2\n";
 
         std::string file_path = create_test_pheno_file(file_content);
-        vector<bool> result = parse_binary_pheno(file_path, list_samples);
+        std::vector<bool> result = parse_binary_pheno(file_path, list_samples);
 
         REQUIRE(result.size() == 4);
         REQUIRE(result[0] == false);

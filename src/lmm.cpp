@@ -293,7 +293,7 @@
 //     const int num_paths = df[0].size();
 //     const int num_cov = covariates[0].size();
 
-//     // Convert phenotype vector<bool> to Eigen::VectorXd (0/1)
+//     // Convert phenotype std::vector<bool> to Eigen::VectorXd (0/1)
 //     Eigen::VectorXd y(N);
 //     for (int i = 0; i < N; ++i) y[i] = phenotype_binary[i] ? 1.0 : 0.0;
 

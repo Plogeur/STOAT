@@ -2,7 +2,6 @@
 #include "snarl_analyser.hpp"
 
 namespace fs = std::filesystem;
-using namespace std;
 
 namespace stoat_vcf {
 
@@ -43,10 +42,10 @@ const bool KinshipMatrix::empty() const {
     return ids.empty() || matrix.empty();
 }
 
-std::unordered_set<std::string> parse_chromosome_reference(const string& file_path) {
+std::unordered_set<std::string> parse_chromosome_reference(const std::string& file_path) {
     std::unordered_set<std::string> reference;
     ifstream file(file_path);
-    string line;
+    std::string line;
 
     while (getline(file, line)) {
         reference.insert(line);
@@ -103,7 +102,7 @@ std::vector<bool> parse_binary_pheno(
     }
     cout << "Binary phenotypes founds : " << count_controls+count_cases
     << " (Control : " << count_controls
-    << ", Case : " << count_cases << ")" << endl;
+    << ", Case : " << count_cases << ")" << std::endl;
     file.close();
 
     check_match_samples(binary_pheno, list_samples);
@@ -161,7 +160,7 @@ std::vector<double> parse_quantitative_pheno(
         count_pheno++;
     }
 
-    cout << "Quantitative phenotypes founds : " << count_pheno << endl;
+    cout << "Quantitative phenotypes founds : " << count_pheno << std::endl;
     file.close();
 
     check_match_samples(quantitative_pheno, list_samples);
@@ -228,7 +227,7 @@ void check_match_samples(const std::unordered_map<std::string, T>& map, const st
         }
     }
     if (map.size() != keys.size()) {
-        cerr << "Warning: Number of samples found in VCF does not match the number of samples in the phenotype file" << endl;
+       std::cerr << "Warning: Number of samples found in VCF does not match the number of samples in the phenotype file" << std::endl;
     }
 }
 
@@ -239,7 +238,7 @@ std::unordered_map<std::string, std::vector<std::tuple<std::string, std::vector<
     const std::string& gene_position_path, 
     const std::vector<std::string>& list_samples) {
 
-    // dict sampleName:string : vector<double> sample_expression
+    // dict sampleName:string : std::vector<double> sample_expression
     auto qtl = parse_qtl_file(eqtl_path, list_samples); // and check in the same time
 
     // dict geneName:string : tuple{chrom:string, start_pos:size_t, end_pos:size_t}
@@ -280,15 +279,15 @@ std::unordered_map<std::string, std::vector<Snarl_data_t>> parse_snarl_path(cons
     }
     
     // Parse actual header fields
-    vector<string> header_fields;
+    std::vector<std::string> header_fields;
     istringstream header_stream(line);
-    string field;
+    std::string field;
     while (getline(header_stream, field, '\t')) {
         header_fields.push_back(field);
     }
 
     // Expected header
-    vector<string> expected_header = {"CHR", "START_POS", "END_POS", "SNARL", "PATHS", "TYPE", "REF"};
+    std::vector<std::string> expected_header = {"CHR", "START_POS", "END_POS", "SNARL", "PATHS", "TYPE", "REF"};
 
     if (header_fields != expected_header) {
         // Build detailed error message
@@ -408,9 +407,9 @@ std::unordered_map<std::string, std::tuple<std::string, size_t, size_t>> parse_g
 }
 
 // Function to parse the qtl file
-// dict sampleName:string : vector<double> sample_expression
+// dict sampleName:string : std::vector<double> sample_expression
 std::unordered_map<std::string, std::vector<double>> parse_qtl_file(
-    const std::string& filename, const vector<std::string>& list_samples) {
+    const std::string& filename, const std::vector<std::string>& list_samples) {
 
     std::ifstream file(filename);
     std::unordered_map<std::string, std::vector<double>> geneExpressions;

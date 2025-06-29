@@ -5,8 +5,6 @@
 #include "utils.hpp"
 #include "snarl_data_t.hpp"
 
-using namespace std;
-
 namespace stoat_vcf {
 
 std::pair<double, double> calcul_proportion_signi(int number_ind_group0, int number_ind_group1, double p_value) {
@@ -74,16 +72,16 @@ void writeGafLines(const std::string& sequenceName, const std::string& path,
 }
 
 // Adds a suffix to a filename before the file extension
-string add_suffix_to_filename(const string& filename, const string& suffix) {
+string add_suffix_to_filename(const std::string& filename, const std::string& suffix) {
     size_t dotPos = filename.find_last_of(".");
-    if (dotPos == string::npos) {
+    if (dotPos == std::string::npos) {
         return filename + suffix;
     }
     return filename.substr(0, dotPos) + suffix + filename.substr(dotPos);
 }
 
-vector<int> decompose_snarl(const string& snarl) {
-    vector<int> snarl_node;
+std::vector<int> decompose_snarl(const std::string& snarl) {
+    std::vector<int> snarl_node;
     regex re("\\d+");
     sregex_iterator begin(snarl.begin(), snarl.end(), re), end;
     
@@ -93,8 +91,8 @@ vector<int> decompose_snarl(const string& snarl) {
     return snarl_node;
 }
 
-int calcul_path_length(PackedGraph& pg, const string& snarl) {
-    vector<int> snarl_nodes = decompose_snarl(snarl);
+int calcul_path_length(PackedGraph& pg, const std::string& snarl) {
+    std::vector<int> snarl_nodes = decompose_snarl(snarl);
     int length_node = 0;
     
     for (int node : snarl_nodes) {
@@ -105,16 +103,16 @@ int calcul_path_length(PackedGraph& pg, const string& snarl) {
 }
 
 // Writes a formatted line to the output file
-void write_gaf_lines(const string& sequence_name, const string& path, int length, double prop, ofstream& outfile) {
+void write_gaf_lines(const std::string& sequence_name, const std::string& path, int length, double prop, ofstream& outfile) {
     outfile << sequence_name << "\t" << path << "\t" << length << "\t" << prop << "\n";
 }
 
 // Parses the input file and processes data into two output files
-void gaf_creation(const string& input_file, std::unordered_map<std::string, std::vector<Snarl_data_t>>& snarl_chr,
-                      PackedGraph& pg, const string& output_file) {
+void gaf_creation(const std::string& input_file, std::unordered_map<std::string, std::vector<Snarl_data_t>>& snarl_chr,
+                      bdsg::PackedGraph& pg, const std::string& output_file) {
 
-    string output_file_1 = add_suffix_to_filename(output_file, "_0");
-    string output_file_2 = add_suffix_to_filename(output_file, "_1");
+    std::string output_file_1 = add_suffix_to_filename(output_file, "_0");
+    std::string output_file_2 = add_suffix_to_filename(output_file, "_1");
 
     ifstream infile(input_file);
     ofstream outfile1(output_file_1), outfile2(output_file_2);
@@ -122,40 +120,40 @@ void gaf_creation(const string& input_file, std::unordered_map<std::string, std:
         throw runtime_error("Error opening files");
     }
 
-    string line;
+    std::string line;
     size_t count_line = 0;
     getline(infile, line); // Skip header
 
     while (getline(infile, line)) {
         stringstream ss(line);
-        vector<string> columns;
-        string token;
+        std::vector<std::string> columns;
+        std::string token;
         while (ss >> token) {
             columns.push_back(token);
         }
 
         if (columns.size() < 14) continue;
 
-        const string& chr = columns[0];
-        string snarl_list = columns[2];
+        const std::string& chr = columns[0];
+        std::string snarl_list = columns[2];
         double pfisher = stoat_vcf::string_to_pvalue(columns[6]);
         double pchi = stoat_vcf::string_to_pvalue(columns[7]);
-        string group_paths = columns[11];
+        std::string group_paths = columns[11];
         auto it = snarl_chr.find(chr);
         auto& data = it->second;  
         const std::vector<std::string>& list_path = stoat_vcf::stringToVector<std::string>(vectorPathToString(data[count_line].get_snarl_paths()));
 
         // Split group paths by comma
-        vector<string> decomposed_group_paths;
+        std::vector<std::string> decomposed_group_paths;
         stringstream gp_ss(group_paths);
         while (getline(gp_ss, token, ',')) {
             decomposed_group_paths.push_back(token);
         }
 
-        vector<string> group_0, group_1, sequence_name_g0, sequence_name_g1;
+        std::vector<std::string> group_0, group_1, sequence_name_g0, sequence_name_g1;
         for (const auto& path_group : decomposed_group_paths) {
             size_t pos = path_group.find(':');
-            if (pos == string::npos) continue;
+            if (pos == std::string::npos) continue;
             group_0.push_back(path_group.substr(0, pos));
             group_1.push_back(path_group.substr(pos + 1));
             sequence_name_g0.push_back(snarl_list + "_G0_" + group_0.back() + "_F" + to_string(pfisher) + "_C" + to_string(pchi));
@@ -163,14 +161,14 @@ void gaf_creation(const string& input_file, std::unordered_map<std::string, std:
         }
 
         for (size_t idx = 0; idx < list_path.size(); ++idx) {
-            const string& path = list_path[idx];
+            const std::string& path = list_path[idx];
 
             // Case where "*" is in path
-            if (path.find('*') != string::npos) {
+            if (path.find('*') != std::string::npos) {
                 // If the path contains '*', split it into two sub-paths
                 size_t star_pos = path.find('*');
-                string star_path_1 = path.substr(0, star_pos - 1);
-                string star_path_2 = path.substr(star_pos + 1);
+                std::string star_path_1 = path.substr(0, star_pos - 1);
+                std::string star_path_2 = path.substr(star_pos + 1);
 
                 int len1 = calcul_path_length(pg, star_path_1);
                 int len2 = calcul_path_length(pg, star_path_2);

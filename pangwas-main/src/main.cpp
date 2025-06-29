@@ -31,7 +31,7 @@ void print_help() {
          << "  -m, --method NAME                  what method is used to find associations? (paths) [paths]" << endl
          << "  -l, --allele-size-limit INT        don't report variants smaller than this [0]" << endl
          << "  -r, --reference-sample NAME        if there is no reference in the graph, use this sample as the reference" << endl
-         << "  -h, --help                         print this help message" << endl;
+         << "  -h, --help                         print this help message" << std::endl;
 
 }
 
@@ -129,21 +129,21 @@ int main(int argc, char *argv[]) {
 
     // Check that the inputs are ok
     if (graph_name.empty()) {
-        std::cerr << "error [pangwas]: pangwas requires a graph file" << endl;
+        std::cerr << "error [pangwas]: pangwas requires a graph file" << std::endl;
         return 1; 
     }
     if (distance_name.empty()) {
-        std::cerr << "error [pangwas]: pangwas requires a distance index file" << endl;
+        std::cerr << "error [pangwas]: pangwas requires a distance index file" << std::endl;
         return 1; 
     }
     if (samples_of_interest.empty()) {
-        std::cerr << "error [pangwas]: pangwas requires samples of interest" << endl;
+        std::cerr << "error [pangwas]: pangwas requires samples of interest" << std::endl;
         return 1; 
     }
 
     // Tell the IO library about libvg types.
     if (!pangwas::io::register_libvg_io()) {
-        cerr << "error[vg]: Could not register libvg types with libvgio" << endl;
+       std::cerr << "error[vg]: Could not register libvg types with libvgio" << std::endl;
         return 1;
     }
 
@@ -179,7 +179,7 @@ int main(int argc, char *argv[]) {
                                            p_value);
         af.write_associated_snarls();
     } else {
-        std::cerr << "error [pangwas]: unknown method " << method_name << endl;
+        std::cerr << "error [pangwas]: unknown method " << method_name << std::endl;
         return 1; 
     }
 

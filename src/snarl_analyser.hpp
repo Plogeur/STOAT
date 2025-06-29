@@ -33,7 +33,7 @@ public:
     std::vector<std::string> sampleNames;
     EdgeBySampleMatrix matrix;
 
-    SnarlAnalyser(const vector<string>& sample_names, size_t num_paths_chr);
+    SnarlAnalyser(const std::vector<std::string>& sample_names, size_t num_paths_chr);
     ~SnarlAnalyser()=default;
     void push_matrix(const Edge_t& EdgePath, std::unordered_map<Edge_t, size_t>& edge_dict, size_t indexColumn);
     
@@ -45,14 +45,14 @@ public:
 
     /// Similar to binary_table, get the genotypes and write the tsv output
     void quantitative_table(const std::vector<Snarl_data_t>& snarls,
-                            const std::vector<double>& quantitative_phenotype, const string &chr,
+                            const std::vector<double>& quantitative_phenotype, const std::string &chr,
                             const std::vector<std::vector<double>>& covar,
                             const double& maf, const KinshipMatrix& kinship, const size_t& num_threads, 
                             const double& table_threshold, const std::string& output_dir, std::ofstream& outf);
 
     /// For each snarl, write a bim file and a bed file (PLINK formats)
     void create_bim_bed(const std::vector<Snarl_data_t>& snarls, 
-        string chromosome, std::ofstream& outbim, std::ofstream& outbed);
+        std::string chromosome, std::ofstream& outbim, std::ofstream& outbed);
 
     /// Similar to binary_table and quantitative_table, get the genotype and write the tsv output
     void eqtl_table(
@@ -65,7 +65,7 @@ public:
 
     /// Given a list of paths in a snarl, return vectors of counts of each sample taking an allele for the two alleles with the highest counts over all samples
     /// Each vector returned corresponds to one allele, each entry in the vector is a sample, the value is a count of the number of times a sample takes the path/allele (probably binary?)
-    std::pair<std::vector<size_t>, std::vector<size_t>> create_table_short_path(const vector<Path_traversal_t>& list_path_snarl);
+    std::pair<std::vector<size_t>, std::vector<size_t>> create_table_short_path(const std::vector<Path_traversal_t>& list_path_snarl);
 };
 
 /// Return true if any column exceeds the MAF threshold 
@@ -83,7 +83,7 @@ void chromosome_chuck_binary(htsFile* &ptr_vcf, bcf_hdr_t* &hdr, bcf1_t* &rec,
 void chromosome_chuck_quantitative(htsFile* &ptr_vcf, bcf_hdr_t* &hdr, bcf1_t* &rec, 
     const std::vector<std::string> &list_samples,
     const std::unordered_map<std::string, std::vector<Snarl_data_t>> &snarl_chr,
-    const vector<double>& pheno, std::vector<std::vector<double>> covar,
+    const std::vector<double>& pheno, std::vector<std::vector<double>> covar,
     const double& maf, const KinshipMatrix& kinship, 
     const size_t& num_threads, const double& table_threshold, 
     const std::string& regression_dir, const std::string& output_quantitative);
@@ -101,7 +101,7 @@ void chromosome_chuck_eqtl(htsFile* &ptr_vcf, bcf_hdr_t* &hdr, bcf1_t* &rec,
 void chromosome_chuck_make_bed(htsFile* &ptr_vcf, bcf_hdr_t* &hdr, bcf1_t* &rec, 
     const std::vector<std::string> &list_samples,
     const std::unordered_map<std::string, std::vector<Snarl_data_t>>& snarl_chr,
-    const string& output_dir);
+    const std::string& output_dir);
 
 std::tuple<htsFile*, bcf_hdr_t*, bcf1_t*> parse_vcf(const std::string& vcf_path);
 
@@ -115,12 +115,12 @@ void create_fam(const std::vector<std::pair<std::string, int>> &pheno,
     const std::string& output_path);
 
 /// Make a SnarlParser representing the genotypes in a vcf and the pointers to the vcf but advanced to the end of the chromosome?
-std::tuple<SnarlAnalyser, htsFile*, bcf_hdr_t*, bcf1_t*> make_matrix(htsFile *ptr_vcf, bcf_hdr_t *hdr, bcf1_t *rec, const vector<string>& sample_names, string &chr, size_t &num_paths_ch);
+std::tuple<SnarlAnalyser, htsFile*, bcf_hdr_t*, bcf1_t*> make_matrix(htsFile *ptr_vcf, bcf_hdr_t *hdr, bcf1_t *rec, const std::vector<std::string>& sample_names, std::string &chr, size_t &num_paths_ch);
 
 // Retrieve the index of `edge` if it exists in edge_index_dict. Otherwise, add it and return the new index.
 size_t getOrAddIndex(std::unordered_map<Edge_t, size_t>& edge_index_dict, const Edge_t& key, const size_t& size_edge_index_dict);
 
-// Function to determine and extract an node id from the string
+// Function to determine and extract an node id from the std::string
 inline size_t extract_node_id(const std::string& s, size_t length_s, size_t& i);
 
 // Decompose path Path_traversal_t to vector Edge_t
@@ -129,11 +129,11 @@ std::vector<Edge_t> decompose_path_to_edges(const Path_traversal_t& s);
 // Decompose a list of paths Path_traversal_t into a vector of Edge_t
 const std::vector<std::vector<Edge_t>> decompose_path_list_path(const std::vector<Path_traversal_t>& list_paths);
 
-// Decompose a list of paths string into a vector of Edge_t
+// Decompose a list of paths std::string into a vector of Edge_t
 const std::vector<std::vector<Edge_t>> decompose_path_list_str(const std::vector<std::string>& list_paths);
 
-// Decompose path string to vector Edge_t
-vector<Edge_t> decompose_path_str_to_edge(const std::string& s);
+// Decompose path std::string to vector Edge_t
+std::vector<Edge_t> decompose_path_str_to_edge(const std::string& s);
 
 /// Given a path through the snarl, a matrix of edges for each sample/haplotype, and the number of columns (samples/haplotypes),
 /// return the columns for which all edges (rows) in the path are set, i.e. the haplotypes with the given path.

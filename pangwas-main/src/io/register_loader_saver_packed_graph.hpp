@@ -3,7 +3,7 @@
 
 /**
  * \file register_loader_saver_packed_graph.hpp
- * Defines IO for a PackedGraph from stream files.
+ * Defines IO for a bdsg::PackedGraph from stream files.
  * copied from vg
  */
 

@@ -75,10 +75,10 @@ void linear_regression(
             continue;
         }
         p_values.push_back(2 * boost::math::cdf(boost::math::complement(t_dist, std::abs(t_stats[i])))); // two-tailed
-        cout << "p_values[" << i << "] : " << p_values[i] << endl;
+        cout << "p_values[" << i << "] : " << p_values[i] << std::endl;
     }
 
-    cout << endl;
+    cout << std::endl;
     std::vector<double> p_values_2;
     for (int i = 1; i < num_features+1; ++i) { // i = 1 avoid const p-value
         if (std::isnan(t_stats[i]) || std::isinf(t_stats[i])) {
@@ -86,7 +86,7 @@ void linear_regression(
             continue;
         }
         p_values_2.push_back(2 * boost::math::cdf(boost::math::complement(t_dist, std::abs(t_stats[i])))); // two-tailed
-        cout << "p_values_2[" << i << "] : " << p_values_2[i-1] << endl;
+        cout << "p_values_2[" << i << "] : " << p_values_2[i-1] << std::endl;
     }
 
     // p_values[1] : 0.841009

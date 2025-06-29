@@ -9,6 +9,8 @@
 
 #include "snarl_data_t.hpp"
 
+using namespace std;
+
 namespace stoat_vcf {
 
 // A class to store a 2d bit-matrix

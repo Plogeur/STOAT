@@ -36,7 +36,7 @@ class AssociationFinder {
     public:
 
         /// Create an association finder with the graph and distance index, a set of samples of interest for which we want associated
-        /// variants, a string of the reference sample name (may be empty), the output format (tsv or fasta), 
+        /// variants, a std::string of the reference sample name (may be empty), the output format (tsv or fasta), 
         /// filenames for writing associated alleles and unassociated alleles, and a size limit for the minimum length of snarl reported,
         /// measured as the "maximum" length of a snarl
         /// 
@@ -46,7 +46,7 @@ class AssociationFinder {
                           std::string test_method, 
                           const std::set<std::string>& samples_of_interest,  
                           std::string reference_name,
-                          string output_format, std::ostream& out_associated, 
+                          std::string output_format, std::ostream& out_associated, 
                           std::ostream& out_unassociated,
                           size_t allele_size_limit, double p_value);
 

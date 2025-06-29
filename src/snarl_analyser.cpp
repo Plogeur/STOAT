@@ -6,8 +6,6 @@
 #include "lmm.hpp"
 #include "arg_parser.hpp"
 
-using namespace std;
-
 namespace stoat_vcf {
 
 void chromosome_chuck_binary(htsFile* &ptr_vcf, bcf_hdr_t* &hdr, bcf1_t* &rec, 
@@ -30,14 +28,14 @@ void chromosome_chuck_binary(htsFile* &ptr_vcf, bcf_hdr_t* &hdr, bcf1_t* &rec,
     std::cout << "GWAS analysis for chromosome : " << std::endl;
     while (bcf_read(ptr_vcf, hdr, rec) >= 0) {
 
-        string chr = bcf_hdr_id2name(hdr, rec->rid);
+        std::string chr = bcf_hdr_id2name(hdr, rec->rid);
         // Skip chromosomes not in snarl_chr
         while (snarl_chr.find(chr) == snarl_chr.end()) {
             std::cerr << "Warning: Chromosome " << chr << " not found in snarl paths file. Skipping." << std::endl;
 
             bool found_new_chr = false;
             while (bcf_read(ptr_vcf, hdr, rec) >= 0) {
-                string chr_next = bcf_hdr_id2name(hdr, rec->rid);
+                std::string chr_next = bcf_hdr_id2name(hdr, rec->rid);
                 if (chr_next != chr) {
                     chr = chr_next;  // Update to the new chromosome
                     found_new_chr = true;
@@ -85,14 +83,14 @@ void chromosome_chuck_quantitative(htsFile* &ptr_vcf, bcf_hdr_t* &hdr, bcf1_t* &
     std::cout << "GWAS analysis for chromosome : " << std::endl;
     while (bcf_read(ptr_vcf, hdr, rec) >= 0) {
 
-        string chr = bcf_hdr_id2name(hdr, rec->rid);
+        std::string chr = bcf_hdr_id2name(hdr, rec->rid);
         // Skip chromosomes not in snarl_chr
         while (snarl_chr.find(chr) == snarl_chr.end()) {
             std::cerr << "Warning: Chromosome " << chr << " not found in snarl paths file. Skipping." << std::endl;
 
             bool found_new_chr = false;
             while (bcf_read(ptr_vcf, hdr, rec) >= 0) {
-                string chr_next = bcf_hdr_id2name(hdr, rec->rid);
+                std::string chr_next = bcf_hdr_id2name(hdr, rec->rid);
                 if (chr_next != chr) {
                     chr = chr_next;  // Update to the new chromosome
                     found_new_chr = true;
@@ -142,14 +140,14 @@ void chromosome_chuck_eqtl(htsFile* &ptr_vcf, bcf_hdr_t* &hdr, bcf1_t* &rec,
     std::cout << "GWAS analysis for chromosome : " << std::endl;
     while (bcf_read(ptr_vcf, hdr, rec) >= 0) {
 
-        string chr = bcf_hdr_id2name(hdr, rec->rid);
+        std::string chr = bcf_hdr_id2name(hdr, rec->rid);
         // Skip chromosomes not in snarl_chr
         while (snarl_chr.find(chr) == snarl_chr.end()) {
             std::cerr << "Warning: Chromosome " << chr << " not found in snarl paths file. Skipping." << std::endl;
 
             bool found_new_chr = false;
             while (bcf_read(ptr_vcf, hdr, rec) >= 0) {
-                string chr_next = bcf_hdr_id2name(hdr, rec->rid);
+                std::string chr_next = bcf_hdr_id2name(hdr, rec->rid);
                 if (chr_next != chr) {
                     chr = chr_next;  // Update to the new chromosome
                     found_new_chr = true;
@@ -185,7 +183,7 @@ void chromosome_chuck_eqtl(htsFile* &ptr_vcf, bcf_hdr_t* &hdr, bcf1_t* &rec,
 void chromosome_chuck_make_bed(htsFile* &ptr_vcf, bcf_hdr_t* &hdr, bcf1_t* &rec, 
     const std::vector<std::string> &list_samples,
     const std::unordered_map<std::string, std::vector<Snarl_data_t>>& snarl_chr,
-    const string& output_dir) {
+    const std::string& output_dir) {
 
     const std::string output_bed = output_dir + ".bed";
     const std::string output_bim = output_dir + ".bim";
@@ -200,14 +198,14 @@ void chromosome_chuck_make_bed(htsFile* &ptr_vcf, bcf_hdr_t* &hdr, bcf1_t* &rec,
     std::cout << "GWAS analysis for chromosome : " << std::endl;
     while (bcf_read(ptr_vcf, hdr, rec) >= 0) {
 
-        string chr = bcf_hdr_id2name(hdr, rec->rid);
+        std::string chr = bcf_hdr_id2name(hdr, rec->rid);
         // Skip chromosomes not in snarl_chr
         while (snarl_chr.find(chr) == snarl_chr.end()) {
             std::cerr << "Warning: Chromosome " << chr << " not found in snarl paths file. Skipping." << std::endl;
 
             bool found_new_chr = false;
             while (bcf_read(ptr_vcf, hdr, rec) >= 0) {
-                string chr_next = bcf_hdr_id2name(hdr, rec->rid);
+                std::string chr_next = bcf_hdr_id2name(hdr, rec->rid);
                 if (chr_next != chr) {
                     chr = chr_next;  // Update to the new chromosome
                     found_new_chr = true;
@@ -244,11 +242,11 @@ void chromosome_chuck_make_bed(htsFile* &ptr_vcf, bcf_hdr_t* &hdr, bcf1_t* &rec,
     bcf_close(ptr_vcf);
 }
 
-SnarlAnalyser::SnarlAnalyser(const vector<string>& sample_names, size_t num_paths_chr) : 
+SnarlAnalyser::SnarlAnalyser(const std::vector<std::string>& sample_names, size_t num_paths_chr) : 
     sampleNames(sample_names), matrix(num_paths_chr*4, sample_names.size() * 2)
 {}
 
-std::pair<std::vector<size_t>, std::vector<size_t>> SnarlAnalyser::create_table_short_path(const vector<Path_traversal_t>& list_path_snarl) {
+std::pair<std::vector<size_t>, std::vector<size_t>> SnarlAnalyser::create_table_short_path(const std::vector<Path_traversal_t>& list_path_snarl) {
     // TODO: Could just make the transposed version to start with?
 
     size_t length_column = list_path_snarl.size();
@@ -319,7 +317,7 @@ void find_two_largest_indices(const std::vector<size_t>& vec, size_t& major_inde
 }
 
 void SnarlAnalyser::create_bim_bed(const std::vector<Snarl_data_t>& snarls, 
-                                string chromosome, std::ofstream& outbim, std::ofstream& outbed) {
+                                std::string chromosome, std::ofstream& outbim, std::ofstream& outbed) {
 
     // Iterate over each snarl
     // <snarl, paths, pos, type>
@@ -434,8 +432,8 @@ const std::vector<std::vector<Edge_t>> decompose_path_list_path(const std::vecto
     return paths_snarl;
 }
 
-// Decompose path string to vector Edge_t
-vector<Edge_t> decompose_path_str_to_edge(const std::string& s) {
+// Decompose path std::string to vector Edge_t
+std::vector<Edge_t> decompose_path_str_to_edge(const std::string& s) {
     std::vector<Edge_t> edges;
     std::vector<Node_traversal_t> nodes;
 
@@ -499,7 +497,7 @@ void SnarlAnalyser::push_matrix(const Edge_t& EdgePath, std::unordered_map<Edge_
 }
 
 // Function to parse VCF and fill matrix genotypes
-std::tuple<SnarlAnalyser, htsFile*, bcf_hdr_t*, bcf1_t*> make_matrix(htsFile *ptr_vcf, bcf_hdr_t *hdr, bcf1_t *rec, const std::vector<std::string> &sampleNames, string &chr, size_t &num_paths_chr) {
+std::tuple<SnarlAnalyser, htsFile*, bcf_hdr_t*, bcf1_t*> make_matrix(htsFile *ptr_vcf, bcf_hdr_t *hdr, bcf1_t *rec, const std::vector<std::string> &sampleNames, std::string &chr, size_t &num_paths_chr) {
 
     SnarlAnalyser snarl_data(sampleNames, num_paths_chr);
     std::unordered_map<Edge_t, size_t> edge_dict;
@@ -532,7 +530,7 @@ std::tuple<SnarlAnalyser, htsFile*, bcf_hdr_t*, bcf1_t*> make_matrix(htsFile *pt
         nat = bcf_get_info_string(hdr, rec, "AT", &at_str, &nat);
         std::vector<std::string> path_list;
 
-        std::string at_value(at_str);  // Convert C-string to C++ string
+        std::string at_value(at_str);  // Convert C-string to C++ std::string
         free(at_str);  // Free HTSlib-allocated memory
 
         // Split by comma
@@ -542,7 +540,7 @@ std::tuple<SnarlAnalyser, htsFile*, bcf_hdr_t*, bcf1_t*> make_matrix(htsFile *pt
             path_list.push_back(item);
         }
 
-        // Decompose snarl paths [vector string] into [vector vector Edge_t]
+        // Decompose snarl paths [vector std::string] into [vector vector Edge_t]
         // paths : >123>213<234,>123<234,>123<234<345
         // list_paths_edge : [[Edge_t(123, 213), Edge_t(213, 234)], [...]]
         const std::vector<std::vector<Edge_t>> list_paths_edge = decompose_path_list_str(path_list);
@@ -632,7 +630,7 @@ void SnarlAnalyser::binary_table(const std::vector<Snarl_data_t>& snarls,
     std::mutex mutex_file;
     std::vector<std::thread> threads;
 
-    cout << "Start binary_table " << endl;
+    cout << "Start binary_table " << std::endl;
     for (size_t thread_id = 0; thread_id < num_threads; ++thread_id) {
         threads.emplace_back([&, thread_id]() {
             size_t start = thread_id * chunk_size;
@@ -641,9 +639,9 @@ void SnarlAnalyser::binary_table(const std::vector<Snarl_data_t>& snarls,
 
             for (size_t itr = start; itr < end; ++itr) {
                 const Snarl_data_t& snarl_data_s = snarls[itr];
-                cout << "start get snarl data" << endl;
+                cout << "start get snarl data" << std::endl;
                 const auto& [snarl_id, list_path_snarl, start_pos, end_pos, type_var] = snarl_data_s.get_snarl();
-                cout << "snarl_id : " << snarl_id << endl;
+                cout << "snarl_id : " << snarl_id << std::endl;
 
                 std::ostringstream oss;
                 for (size_t i = 0; i < type_var.size(); ++i) {
@@ -680,8 +678,8 @@ void SnarlAnalyser::binary_table(const std::vector<Snarl_data_t>& snarls,
                     
                     // Plot regression table
                     if (table_threshold != -1 && stoat_vcf::isPValueSignificant(table_threshold, p_value)) {
-                        string variant_file_name = regression_dir + "/" + snarl_id + ".tsv";
-                        stoat_vcf::writeSignificantTableToTSV(df,stoat_vcf::stringToVector<string>(vectorPathToString(list_path_snarl)), sampleNames, variant_file_name);
+                        std::string variant_file_name = regression_dir + "/" + snarl_id + ".tsv";
+                        stoat_vcf::writeSignificantTableToTSV(df,stoat_vcf::stringToVector<std::string>(vectorPathToString(list_path_snarl)), sampleNames, variant_file_name);
                     }
     
                     // chr, pos, snarl, type, p_value, p_adjusted, t-dist, beta, se, allele_number
@@ -695,10 +693,10 @@ void SnarlAnalyser::binary_table(const std::vector<Snarl_data_t>& snarls,
                     std::vector<size_t> g0(length_column_headers, 0); // can be replace by size_t arr[length_column_headers] = {0};
                     std::vector<size_t> g1(length_column_headers, 0); // can be replace by size_t arr[length_column_headers] = {0};
 
-                    cout << "Creating binary table for snarl: " << snarl_id << endl;
+                    cout << "Creating binary table for snarl: " << snarl_id << std::endl;
                     size_t total_sum = create_binary_table(g0, g1, binary_phenotype, list_path_snarl, length_column_headers, number_samples, matrix);
                     bool df_filtration = check_MAF_threshold(g0, g1, total_sum, length_column_headers, maf);
-                    cout << "Creating binary table finish" << endl;
+                    cout << "Creating binary table finish" << std::endl;
 
                     std::string fastfisher_p_value = "NA", chi2_p_value = "NA",
                     group_paths = "NA", allele_number_str = "NA", min_row_index_str = "NA",
@@ -734,7 +732,7 @@ void SnarlAnalyser::binary_table(const std::vector<Snarl_data_t>& snarls,
 // Quantitative Table Generation
 void SnarlAnalyser::quantitative_table(const std::vector<Snarl_data_t>& snarls,
                                        const std::vector<double>& quantitative_phenotype, 
-                                       const string &chr,
+                                       const std::string &chr,
                                        const std::vector<std::vector<double>>& covar,
                                        const double& maf, const KinshipMatrix& kinship, const size_t& num_threads, 
                                        const double& table_threshold, const std::string& regression_dir, std::ofstream& outf) {
@@ -767,7 +765,7 @@ void SnarlAnalyser::quantitative_table(const std::vector<Snarl_data_t>& snarls,
                     df_filtration = check_MAF_threshold_quantitative(df, maf);
                 }
 
-                // make a string separated by ',' from a vector of string
+                // make a std::string separated by ',' from a vector of std::string
                 std::ostringstream oss;
                 for (size_t i = 0; i < type_var.size(); ++i) {
                     if (i != 0) oss << ","; // Add comma before all elements except the first
@@ -791,8 +789,8 @@ void SnarlAnalyser::quantitative_table(const std::vector<Snarl_data_t>& snarls,
                 }
                 
                 if (table_threshold != -1 && stoat_vcf::isPValueSignificant(table_threshold, p_value)) {
-                    string variant_file_name = regression_dir + "/" + snarl_id + ".tsv";
-                    stoat_vcf::writeSignificantTableToTSV(df,stoat_vcf::stringToVector<string>(vectorPathToString(list_path_snarl)), sampleNames, variant_file_name);
+                    std::string variant_file_name = regression_dir + "/" + snarl_id + ".tsv";
+                    stoat_vcf::writeSignificantTableToTSV(df,stoat_vcf::stringToVector<std::string>(vectorPathToString(list_path_snarl)), sampleNames, variant_file_name);
                 }
                 
                 // chr, pos, snarl, type, p_value, p_adjusted, r2, beta, se, allele_number
@@ -914,7 +912,7 @@ void SnarlAnalyser::eqtl_table(
                     std::vector<double> gene_expression = std::get<1>(eqtl[gene_idx]);
                     stoat_vcf::retain_indices(gene_expression, index_filtered);
 
-                    // make a string separated by ',' from a vector of string
+                    // make a std::string separated by ',' from a vector of std::string
                     std::ostringstream oss;
                     for (size_t i = 0; i < type_var.size(); ++i) {
                         if (i != 0) oss << ","; // Add comma before all elements except the first
@@ -939,8 +937,8 @@ void SnarlAnalyser::eqtl_table(
                     }
 
                     if (table_threshold != -1 && stoat_vcf::isPValueSignificant(table_threshold, p_value)) {
-                        string variant_file_name = regression_dir + "/" + snarl_id + ".tsv";
-                        stoat_vcf::writeSignificantTableToTSV(df,stoat_vcf::stringToVector<string>(vectorPathToString(list_path_snarl)), sampleNames, variant_file_name);
+                        std::string variant_file_name = regression_dir + "/" + snarl_id + ".tsv";
+                        stoat_vcf::writeSignificantTableToTSV(df,stoat_vcf::stringToVector<std::string>(vectorPathToString(list_path_snarl)), sampleNames, variant_file_name);
                     }
 
                    // "CHR\tPOS\tSNARL\tTYPE\tGENE\tP\tP_ADJUSTED\tRSQUARE\tBETA\tSE\tALLELE_NUM\n";

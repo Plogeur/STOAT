@@ -22,6 +22,8 @@
 #include "snarl_analyser.hpp"
 #include "utils.hpp"
 
+using namespace std;
+
 // ------------------------ Logistic regression ------------------------
 double normal_cdf(double z);
 inline double sigmoid(double x);
@@ -69,20 +71,20 @@ std::string fastFishersExactTest(size_t m11, size_t m12,
 
 // ------------------------ Binary table ------------------------
 
-// Write a string of: g0[0]:g1[1],g0[1]:g1[1],g0[2]:g1[2]...
+// Write a std::string of: g0[0]:g1[1],g0[1]:g1[1],g0[2]:g1[2]...
 std::string format_group_paths(const std::vector<size_t>& g0, const std::vector<size_t>& g1);
 
 // Given two vectors of genotypes representing two groups, fill in the p-values, etc by running the relevant tests
 void binary_stat_test(const std::vector<size_t>& g0, const std::vector<size_t>& g1, 
-    string& fastfisher_p_value, string& chi2_p_value, string& group_paths,
-    string& allele_number_str, string& min_row_index_str, string& numb_colum_str, 
-    string& inter_group_str, string& average_str);
+    std::string& fastfisher_p_value, std::string& chi2_p_value, std::string& group_paths,
+    std::string& allele_number_str, std::string& min_row_index_str, std::string& numb_colum_str, 
+    std::string& inter_group_str, std::string& average_str);
 
 // Given two vectors of genotypes representing two groups (with length number_paths), fill them in with counts of the number of times each path is seen  
 // g0 and g1 can be used in binary_stat_test()
 size_t create_binary_table(
     std::vector<size_t>& g0, std::vector<size_t>& g1,
-    const vector<bool>& binary_phenotype, 
+    const std::vector<bool>& binary_phenotype, 
     const std::vector<Path_traversal_t>& list_path_snarl, 
     const size_t& number_paths,
     const size_t& number_samples,
