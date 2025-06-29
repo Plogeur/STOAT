@@ -8,21 +8,25 @@
 
 using namespace std;
 
-void chromosome_chuck_make_bed(htsFile* &ptr_vcf, bcf_hdr_t* &hdr, bcf1_t* &rec, 
-    const std::vector<std::string> &list_samples,
-    const std::unordered_map<std::string, std::vector<Snarl_data_t>>& snarl_chr,
-    const string& output_dir) {
+namespace stoat_vcf {
 
-    const std::string output_bed = output_dir + ".bed";
-    const std::string output_bim = output_dir + ".bim";
+void chromosome_chuck_binary(htsFile* &ptr_vcf, bcf_hdr_t* &hdr, bcf1_t* &rec, 
+    const std::vector<std::string> &list_samples, 
+    const unordered_map<string, std::vector<Snarl_data_t>> &snarl_chr,
+    const std::vector<bool>& binary_pheno, std::vector<std::vector<double>> covar, 
+    const double& maf, const KinshipMatrix& kinship, const size_t& num_threads, 
+    const double& table_threshold, const std::string& regression_dir,
+    const std::string& output_binary) {
 
-    std::ofstream outbim(output_bim);
-    std::ofstream outbed(output_bed, std::ios::binary);  // Open BED file as binary
-    
-    // Write the 3-byte 'BED' header for the BED file
-    char bed_magic[] = {0x6C, 0x1B, 0x01};  // PLINK header: 0x6C ('l'), 0x1B, 0x01 (snp-major mode)
-    outbed.write(bed_magic, 3);
-    
+    std::ofstream outf(output_binary, std::ios::binary);
+    std::string headers;
+    if (covar.size() > 0) {
+        headers = "CHR\tPOS\tSNARL\tTYPE\tP\tP_ADJUSTED\tBETA\tSE\tALLELE_NUM\tALLELE_PATHS\n";
+    } else {
+        headers = "CHR\tPOS\tSNARL\tTYPE\tP_FISHER\tP_CHI2\tP_ADJUSTED\tALLELE_NUM\tMIN_ROW_INDEX\tNUM_COLUM\tINTER_GROUP\tAVERAGE\tGROUP_PATHS\n";
+    }
+    outf.write(headers.c_str(), headers.size());
+
     std::cout << "GWAS analysis for chromosome : " << std::endl;
     while (bcf_read(ptr_vcf, hdr, rec) >= 0) {
 
@@ -45,30 +49,25 @@ void chromosome_chuck_make_bed(htsFile* &ptr_vcf, bcf_hdr_t* &hdr, bcf1_t* &rec,
                 return;  // exit if no more records are available
             }
         }
-
         std::cout << "> " << chr << std::endl;
         size_t size_chr = snarl_chr.at(chr).size();
-
         // Make genotype matrix by chromosome    
         auto [vcf_object, ptr_vcf_new, hdr_new, rec_new] = make_matrix(ptr_vcf, hdr, rec, list_samples, chr, size_chr);
         ptr_vcf = ptr_vcf_new;
         hdr = hdr_new;
         rec = rec_new;
-
         auto& snarl = snarl_chr.at(chr);
 
+        cout << "make_matrix done" << std::endl;
         // Gwas analysis by chromosome
-        vcf_object.create_bim_bed(snarl, chr, outbim, outbed);
+        vcf_object.binary_table(snarl, binary_pheno, chr, covar, maf, kinship, num_threads, table_threshold, regression_dir, outf);
     }
-    
     // Cleanup
-    outbim.close();
-    outbed.close();
-    
     bcf_destroy(rec);
     bcf_hdr_destroy(hdr);
     bcf_close(ptr_vcf);
 }
+
 
 void chromosome_chuck_quantitative(htsFile* &ptr_vcf, bcf_hdr_t* &hdr, bcf1_t* &rec, 
     const std::vector<std::string> &list_samples,
@@ -126,6 +125,7 @@ void chromosome_chuck_quantitative(htsFile* &ptr_vcf, bcf_hdr_t* &hdr, bcf1_t* &
     bcf_close(ptr_vcf);
 }
 
+
 void chromosome_chuck_eqtl(htsFile* &ptr_vcf, bcf_hdr_t* &hdr, bcf1_t* &rec, 
     const std::vector<std::string> &list_samples,
     const std::unordered_map<std::string, std::vector<Snarl_data_t>> &snarl_chr,
@@ -182,23 +182,21 @@ void chromosome_chuck_eqtl(htsFile* &ptr_vcf, bcf_hdr_t* &hdr, bcf1_t* &rec,
     bcf_close(ptr_vcf);
 }
 
-void chromosome_chuck_binary(htsFile* &ptr_vcf, bcf_hdr_t* &hdr, bcf1_t* &rec, 
-    const std::vector<std::string> &list_samples, 
-    const unordered_map<string, std::vector<Snarl_data_t>> &snarl_chr,
-    const std::vector<bool>& binary_pheno, std::vector<std::vector<double>> covar, 
-    const double& maf, const KinshipMatrix& kinship, const size_t& num_threads, 
-    const double& table_threshold, const std::string& regression_dir,
-    const std::string& output_binary) {
+void chromosome_chuck_make_bed(htsFile* &ptr_vcf, bcf_hdr_t* &hdr, bcf1_t* &rec, 
+    const std::vector<std::string> &list_samples,
+    const std::unordered_map<std::string, std::vector<Snarl_data_t>>& snarl_chr,
+    const string& output_dir) {
 
-    std::ofstream outf(output_binary, std::ios::binary);
-    std::string headers;
-    if (covar.size() > 0) {
-        headers = "CHR\tPOS\tSNARL\tTYPE\tP\tP_ADJUSTED\tBETA\tSE\tALLELE_NUM\tALLELE_PATHS\n";
-    } else {
-        headers = "CHR\tPOS\tSNARL\tTYPE\tP_FISHER\tP_CHI2\tP_ADJUSTED\tALLELE_NUM\tMIN_ROW_INDEX\tNUM_COLUM\tINTER_GROUP\tAVERAGE\tGROUP_PATHS\n";
-    }
-    outf.write(headers.c_str(), headers.size());
+    const std::string output_bed = output_dir + ".bed";
+    const std::string output_bim = output_dir + ".bim";
 
+    std::ofstream outbim(output_bim);
+    std::ofstream outbed(output_bed, std::ios::binary);  // Open BED file as binary
+    
+    // Write the 3-byte 'BED' header for the BED file
+    char bed_magic[] = {0x6C, 0x1B, 0x01};  // PLINK header: 0x6C ('l'), 0x1B, 0x01 (snp-major mode)
+    outbed.write(bed_magic, 3);
+    
     std::cout << "GWAS analysis for chromosome : " << std::endl;
     while (bcf_read(ptr_vcf, hdr, rec) >= 0) {
 
@@ -221,18 +219,26 @@ void chromosome_chuck_binary(htsFile* &ptr_vcf, bcf_hdr_t* &hdr, bcf1_t* &rec,
                 return;  // exit if no more records are available
             }
         }
+
         std::cout << "> " << chr << std::endl;
         size_t size_chr = snarl_chr.at(chr).size();
+
         // Make genotype matrix by chromosome    
         auto [vcf_object, ptr_vcf_new, hdr_new, rec_new] = make_matrix(ptr_vcf, hdr, rec, list_samples, chr, size_chr);
         ptr_vcf = ptr_vcf_new;
         hdr = hdr_new;
         rec = rec_new;
+
         auto& snarl = snarl_chr.at(chr);
+
         // Gwas analysis by chromosome
-        vcf_object.binary_table(snarl, binary_pheno, chr, covar, maf, kinship, num_threads, table_threshold, regression_dir, outf);
+        vcf_object.create_bim_bed(snarl, chr, outbim, outbed);
     }
+    
     // Cleanup
+    outbim.close();
+    outbed.close();
+    
     bcf_destroy(rec);
     bcf_hdr_destroy(hdr);
     bcf_close(ptr_vcf);
@@ -419,9 +425,10 @@ std::vector<Edge_t> decompose_path_to_edges(const Path_traversal_t& list_paths) 
 }
 
 // Decompose a list of paths Path_traversal_t into a vector of Edge_t
-const std::vector<std::vector<Edge_t>> decompose_path_list_str(const std::vector<Path_traversal_t>& list_paths) {
+const std::vector<std::vector<Edge_t>> decompose_path_list_path(const std::vector<Path_traversal_t>& list_paths) {
+    size_t size_list_paths = list_paths.size();
     std::vector<std::vector<Edge_t>> paths_snarl;
-    for (const auto& path : list_paths) {
+    for (const Path_traversal_t& path : list_paths) {
         paths_snarl.push_back(decompose_path_to_edges(path));
     }
     return paths_snarl;
@@ -429,33 +436,30 @@ const std::vector<std::vector<Edge_t>> decompose_path_list_str(const std::vector
 
 // Decompose path string to vector Edge_t
 vector<Edge_t> decompose_path_str_to_edge(const std::string& s) {
-    vector<Edge_t> edges;
-    size_t length_s = s.length();
+    std::vector<Edge_t> edges;
+    std::vector<Node_traversal_t> nodes;
+
     size_t i = 0;
+    while (i < s.size()) {
+        if (s[i] == '>' || s[i] == '<') {
+            bool is_rev = (s[i] == '<');
+            ++i;
 
-    while (i < length_s) {
-        // Skip any whitespace
-        while (i < length_s && isspace(s[i])) {
-            i++;
+            size_t node_id = 0;
+            while (i < s.size() && isdigit(s[i])) {
+                node_id = node_id * 10 + (s[i] - '0');
+                ++i;
+            }
+            nodes.emplace_back(node_id, is_rev);
+        } else {
+            ++i; // Skip invalid characters
         }
-
-        if (i >= length_s) break; // End of string
-
-        // Extract first node ID
-        size_t node_id_1 = extract_node_id(s, length_s, i);
-        bool is_reverse_1 = (i < length_s && s[i] == '<');
-        if (is_reverse_1) i++; // Skip '<'
-
-        // Extract second node ID
-        size_t node_id_2 = extract_node_id(s, length_s, i);
-        bool is_reverse_2 = (i < length_s && s[i] == '<');
-        if (is_reverse_2) i++; // Skip '<'
-
-        // Create Edge_t and add to the list
-        Node_traversal_t nt1(node_id_1, is_reverse_1);
-        Node_traversal_t nt2(node_id_2, is_reverse_2);
-        edges.emplace_back(nt1, nt2);
     }
+
+    for (size_t j = 0; j + 1 < nodes.size(); ++j) {
+        edges.emplace_back(nodes[j], nodes[j + 1]);
+    }
+
     return edges;
 }
 
@@ -539,7 +543,7 @@ std::tuple<SnarlAnalyser, htsFile*, bcf_hdr_t*, bcf1_t*> make_matrix(htsFile *pt
         }
 
         // Decompose snarl paths [vector string] into [vector vector Edge_t]
-        // paths : >123>213<234, >123<234, >123<234<345
+        // paths : >123>213<234,>123<234,>123<234<345
         // list_paths_edge : [[Edge_t(123, 213), Edge_t(213, 234)], [...]]
         const std::vector<std::vector<Edge_t>> list_paths_edge = decompose_path_list_str(path_list);
 
@@ -628,6 +632,7 @@ void SnarlAnalyser::binary_table(const std::vector<Snarl_data_t>& snarls,
     std::mutex mutex_file;
     std::vector<std::thread> threads;
 
+    cout << "Start binary_table " << endl;
     for (size_t thread_id = 0; thread_id < num_threads; ++thread_id) {
         threads.emplace_back([&, thread_id]() {
             size_t start = thread_id * chunk_size;
@@ -636,7 +641,9 @@ void SnarlAnalyser::binary_table(const std::vector<Snarl_data_t>& snarls,
 
             for (size_t itr = start; itr < end; ++itr) {
                 const Snarl_data_t& snarl_data_s = snarls[itr];
+                cout << "start get snarl data" << endl;
                 const auto& [snarl_id, list_path_snarl, start_pos, end_pos, type_var] = snarl_data_s.get_snarl();
+                cout << "snarl_id : " << snarl_id << endl;
 
                 std::ostringstream oss;
                 for (size_t i = 0; i < type_var.size(); ++i) {
@@ -688,8 +695,10 @@ void SnarlAnalyser::binary_table(const std::vector<Snarl_data_t>& snarls,
                     std::vector<size_t> g0(length_column_headers, 0); // can be replace by size_t arr[length_column_headers] = {0};
                     std::vector<size_t> g1(length_column_headers, 0); // can be replace by size_t arr[length_column_headers] = {0};
 
+                    cout << "Creating binary table for snarl: " << snarl_id << endl;
                     size_t total_sum = create_binary_table(g0, g1, binary_phenotype, list_path_snarl, length_column_headers, number_samples, matrix);
                     bool df_filtration = check_MAF_threshold(g0, g1, total_sum, length_column_headers, maf);
+                    cout << "Creating binary table finish" << endl;
 
                     std::string fastfisher_p_value = "NA", chi2_p_value = "NA",
                     group_paths = "NA", allele_number_str = "NA", min_row_index_str = "NA",
@@ -700,7 +709,7 @@ void SnarlAnalyser::binary_table(const std::vector<Snarl_data_t>& snarls,
                         binary_stat_test(g0, g1, fastfisher_p_value, chi2_p_value, group_paths,
                             allele_number_str, min_row_index_str, numb_colum_str, inter_group_str, average_str);
                     }
-
+                    
                     data << chr << "\t" << start_pos << "\t" << snarl_id << "\t" << type_var_str
                          << "\t" << fastfisher_p_value << "\t" << chi2_p_value << "\t" << ""
                          << "\t" << allele_number_str << "\t" << min_row_index_str << "\t" << numb_colum_str 
@@ -954,3 +963,5 @@ void SnarlAnalyser::eqtl_table(
         t.join();
     }
 }
+
+} // end namespace stoat_vcf

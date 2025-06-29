@@ -23,6 +23,8 @@
 using namespace std;
 using namespace bdsg;
 
+namespace stoat_vcf {
+
 std::pair<double, double> calcul_proportion_signi(int number_ind_group0, int number_ind_group1, double p_value);
 std::string addSuffixToFilename(const std::string& filename, const std::string& suffix);
 string add_suffix_to_filename(const string& filename, const string& suffix);
@@ -33,5 +35,7 @@ int calcul_path_length(PackedGraph& pg, const string& snarl);
 void write_gaf_lines(const string& sequence_name, const string& path, int length, double prop, ofstream& outfile);
 void gaf_creation(const string& input_file, std::unordered_map<std::string, std::vector<Snarl_data_t>>& snarl_chr,
     PackedGraph& pg, const string& output_file);
+
+} //end stoat_vcf namespace
 
 #endif // GAF_CREATOR_HPP

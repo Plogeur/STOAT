@@ -1,4 +1,5 @@
-// This file is part of STOAT 0.0.1, copyright (C) 2024-2025 Matis Alias-Bagarre, Jean Monlong & Xian-hui Chang.
+// This file is part of STOAT 0.0.1, copyright (C) 2024-2025 
+// Authors : Matis Alias-Bagarre, Jean Monlong & Xian-hui Chang.
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -20,6 +21,15 @@
 #include <Eigen/Dense>
 #include <cstdlib>
 #include <getopt.h>
+
+// #include <bdsg/overlays/overlay_helper.hpp>
+// #include <handlegraph/path_handle_graph.hpp>
+// #include <bdsg/hash_graph.hpp>
+// #include <vg/io/vpkg.hpp>
+
+// #include "io/register_io.hpp"
+// #include "path_association_finder.hpp"
+// #include "utils.hpp"
 
 #include "arg_parser.hpp"
 #include "snarl_analyser.hpp"     

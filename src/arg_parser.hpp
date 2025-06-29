@@ -23,6 +23,8 @@
 
 using namespace std;
 
+namespace stoat_vcf {
+
 // KinshipMatrix struct
 struct KinshipMatrix {
     std::vector<std::string> ids;
@@ -79,5 +81,7 @@ void check_match_samples(const std::unordered_map<std::string, T>& map, const st
 std::unordered_map<std::string, std::vector<Snarl_data_t>> parse_snarl_path(const std::string& path_file);
 
 void check_file(const std::string& file_path);
+
+} //end stoat_vcf namespace
 
 #endif

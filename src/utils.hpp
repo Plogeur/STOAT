@@ -23,27 +23,27 @@
 using namespace std;
 namespace stoat_vcf {
 
-    std::string set_precision(const double& value);
-    std::string set_precision_float_50(const boost::multiprecision::cpp_dec_float_50& value);
+std::string set_precision(const double& value);
+std::string set_precision_float_50(const boost::multiprecision::cpp_dec_float_50& value);
 
-    bool is_na(const std::string& s);
-    double string_to_pvalue(const std::string& p1);
+bool is_na(const std::string& s);
+double string_to_pvalue(const std::string& p1);
 
-    void writeSignificantTableToTSV(
-        const std::vector<std::vector<double>>& table,
-        const std::vector<std::string>& list_snarl,
-        const std::vector<std::string>& list_samples,
-        const std::string& filename);
+void writeSignificantTableToTSV(
+    const std::vector<std::vector<double>>& table,
+    const std::vector<std::string>& list_snarl,
+    const std::vector<std::string>& list_samples,
+    const std::string& filename);
 
-    bool isPValueSignificant(const double& pvalue_threshold, const std::string& pvalue_str);
-    void retain_indices(std::vector<double>& vec, const std::unordered_set<size_t>& indices_to_keep);
-    std::vector<double> adjusted_holm(const std::vector<double>& p_values);
+bool isPValueSignificant(const double& pvalue_threshold, const std::string& pvalue_str);
+void retain_indices(std::vector<double>& vec, const std::unordered_set<size_t>& indices_to_keep);
+std::vector<double> adjusted_holm(const std::vector<double>& p_values);
 
-    template <typename T>
-    std::string vectorToString(const std::vector<T>& vec);
+template <typename T>
+std::string vectorToString(const std::vector<T>& vec);
 
-    template <typename T>
-    std::vector<T> stringToVector(const std::string& str);
+template <typename T>
+std::vector<T> stringToVector(const std::string& str);
 
 } // end namespace stoat_vcf
 

@@ -7,6 +7,8 @@
 
 using namespace std;
 
+namespace stoat_vcf {
+
 std::pair<double, double> calcul_proportion_signi(int number_ind_group0, int number_ind_group1, double p_value) {
     // Step 1: Calculate initial proportions based on a total of 60
     int total_ind = number_ind_group0 + number_ind_group1;
@@ -193,3 +195,4 @@ void gaf_creation(const string& input_file, std::unordered_map<std::string, std:
     }
 }
 
+} //end stoat_vcf namespace

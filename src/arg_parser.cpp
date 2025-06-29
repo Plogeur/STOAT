@@ -4,6 +4,8 @@
 namespace fs = std::filesystem;
 using namespace std;
 
+namespace stoat_vcf {
+
 KinshipMatrix parseKinshipMatrix(const std::string& filename) {
     KinshipMatrix km;
     std::ifstream file(filename);
@@ -559,3 +561,5 @@ void check_file(const std::string& file_path) {
 
     file.close();
 }
+
+} //end stoat_vcf namespace

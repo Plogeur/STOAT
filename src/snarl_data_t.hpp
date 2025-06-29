@@ -31,6 +31,8 @@ using handlegraph::step_handle_t;
 using handlegraph::handle_t;
 using handlegraph::net_handle_t;
 
+namespace stoat_vcf {
+
 // Define a Node_traversal_t structure to represent a node with orientation
 struct Node_traversal_t { // 64 bits per node 
     private:
@@ -132,7 +134,7 @@ struct Snarl_data_t {
     private:
         std::vector<std::string> type_variants;
         std::vector<Path_traversal_t> snarl_paths;
-        std::pair<size_t, size_t> snarl_id;
+        std::pair<size_t, size_t> snarl_id; // handlegraph::subrange_t Snarl_data_t::snarl_id
         size_t start_positions;
         size_t end_positions;
 };
@@ -222,5 +224,7 @@ std::unordered_map<std::string, std::vector<Snarl_data_t>> loop_over_snarls_writ
                             const size_t& path_length_threshold,
                             const size_t& cycle_threshold,
                             bool bool_return);
+
+} // end namespace stoat_vcf
 
 #endif

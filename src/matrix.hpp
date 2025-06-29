@@ -9,6 +9,8 @@
 
 #include "snarl_data_t.hpp"
 
+namespace stoat_vcf {
+
 // A class to store a 2d bit-matrix
 // Rows represent edges and the index of each edge can be found from the row_header
 // Columns represent samples/haplotypes
@@ -57,5 +59,7 @@ private:
     std::unordered_map<Edge_t, size_t> row_header;
     std::unordered_map<Edge_t, size_t>::iterator row_header_end;
 };
+
+} // end namespace stoat_vcf
 
 #endif

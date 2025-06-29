@@ -1,5 +1,7 @@
 #include "matrix.hpp"
 
+namespace stoat_vcf {
+
 // Constructor implementation
 EdgeBySampleMatrix::EdgeBySampleMatrix(size_t rows, size_t cols) : cols_(cols) {
 
@@ -78,3 +80,5 @@ void EdgeBySampleMatrix::shrink(size_t current_rows) {
     matrix_1D.resize(new_bytes); // Resize
     matrix_1D.shrink_to_fit(); // Free unused capacity
 }
+
+} // end namespace stoat_vcf

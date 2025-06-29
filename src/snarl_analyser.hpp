@@ -23,6 +23,8 @@
 
 using namespace std;
 
+namespace stoat_vcf {
+
 /// A SnarlAnalyser stores a bit matrix of samples (columns) vs edges they take (rows), taken from a VCF
 /// It also has a vector of sample names 
 class SnarlAnalyser {
@@ -125,7 +127,10 @@ inline size_t extract_node_id(const std::string& s, size_t length_s, size_t& i);
 std::vector<Edge_t> decompose_path_to_edges(const Path_traversal_t& s);
 
 // Decompose a list of paths Path_traversal_t into a vector of Edge_t
-const std::vector<std::vector<Edge_t>> decompose_path_list_str(const std::vector<Path_traversal_t>& list_paths);
+const std::vector<std::vector<Edge_t>> decompose_path_list_path(const std::vector<Path_traversal_t>& list_paths);
+
+// Decompose a list of paths string into a vector of Edge_t
+const std::vector<std::vector<Edge_t>> decompose_path_list_str(const std::vector<std::string>& list_paths);
 
 // Decompose path string to vector Edge_t
 vector<Edge_t> decompose_path_str_to_edge(const std::string& s);
@@ -141,5 +146,7 @@ std::vector<std::vector<size_t>> transpose_matrix(const std::vector<std::vector<
 
 /// Set major_index_1 and major_index2 to be the indices of the largest and second largest values in vec
 void find_two_largest_indices(const std::vector<size_t>& vec, size_t& major_index_1, size_t& major_index_2);
+
+} //end stoat_vcf namespace
 
 #endif
