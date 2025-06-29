@@ -49,7 +49,7 @@ public:
                             const double& table_threshold, const std::string& output_dir, std::ofstream& outf);
 
     /// For each snarl, write a bim file and a bed file (PLINK formats)
-    void create_bim_bed(const std::vector<std::tuple<string, vector<string>, size_t, size_t, vector<string>>>& snarls, 
+    void create_bim_bed(const std::vector<Snarl_data_t>& snarls, 
         string chromosome, std::ofstream& outbim, std::ofstream& outbed);
 
     /// Similar to binary_table and quantitative_table, get the genotype and write the tsv output
@@ -68,7 +68,6 @@ public:
 
 /// Return true if any column exceeds the MAF threshold 
 bool check_MAF_threshold_quantitative(const std::vector<std::vector<double>>& df, const double& maf);
-
 
 /// Go through the vcf by chromosome, parse it to get a matrix of genotypes (SnarlParser of edges), then write the binary table
 void chromosome_chuck_binary(htsFile* &ptr_vcf, bcf_hdr_t* &hdr, bcf1_t* &rec, 
@@ -116,11 +115,10 @@ void create_fam(const std::vector<std::pair<std::string, int>> &pheno,
 /// Make a SnarlParser representing the genotypes in a vcf and the pointers to the vcf but advanced to the end of the chromosome?
 std::tuple<SnarlAnalyser, htsFile*, bcf_hdr_t*, bcf1_t*> make_matrix(htsFile *ptr_vcf, bcf_hdr_t *hdr, bcf1_t *rec, const vector<string>& sample_names, string &chr, size_t &num_paths_ch);
 
-// Retrieve the index of `key` if it exists in edge_index_dict. Otherwise, add it and return the new index.
+// Retrieve the index of `edge` if it exists in edge_index_dict. Otherwise, add it and return the new index.
 size_t getOrAddIndex(std::unordered_map<Edge_t, size_t>& edge_index_dict, const Edge_t& key, const size_t& size_edge_index_dict);
 
-
-// Function to determine and extract an integer from the string
+// Function to determine and extract an node id from the string
 inline size_t extract_node_id(const std::string& s, size_t length_s, size_t& i);
 
 // Decompose path Path_traversal_t to vector Edge_t

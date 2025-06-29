@@ -13,8 +13,8 @@
 
 // Given a vector of <p-value, 1.0, line index from the input file>, fill in the vector with the adjusted p-value
 // and sort the vector by adjusted p-value
-// TODO: This header isn't actually what got implemented
-void adjust_pvalues_BH(std::vector<double>& vector_pvalues);
+// TODO : correct this function
+void adjust_pvalues_with_BH(std::vector<std::tuple<double, double, size_t>>& data);
 
 // Read a tsv from input_file, collect the p-values from the correct column (depending on phenotype_type), 
 // and write the same file plus a BH-adjusted p-value to outupt_file_significant.

@@ -1,30 +1,35 @@
 #include "post_processing.hpp"
 #include "utils.hpp"
 
-// BH Adjustment
-void adjust_pvalues_BH(std::vector<std::tuple<double, double, size_t>>& data) {
+// Adjust p-values using the Benjamini-Hochberg procedure
+void adjust_pvalues_with_BH(std::vector<std::tuple<double, double, size_t>>& data) {
     size_t n = data.size();
+    if (n == 0) return;
+
+    // Sort by raw p-value
     std::sort(data.begin(), data.end(), [](const auto& a, const auto& b) {
         return std::get<0>(a) < std::get<0>(b);
     });
 
-    std::vector<double> adjusted(n);
+    std::vector<double> adjusted(n, 0.0);
+
+    // Compute adjusted p-values
     for (size_t i = 0; i < n; ++i) {
         double p = std::get<0>(data[i]);
-        if (p == 0.0) continue;
         adjusted[i] = p * n / (i + 1);
     }
 
+    // Ensure monotonicity (adjusted[i - 1] <= adjusted[i])
     for (size_t i = n - 1; i > 0; --i) {
-        if (adjusted[i - 1] > adjusted[i]) {
-            adjusted[i - 1] = adjusted[i];
-        }
+        adjusted[i - 1] = std::min(adjusted[i - 1], adjusted[i]);
     }
 
+    // Clamp to [0, 1] and assign adjusted p-values back
     for (size_t i = 0; i < n; ++i) {
         std::get<1>(data[i]) = std::min(1.0, adjusted[i]);
     }
 
+    // Restore original order by index
     std::sort(data.begin(), data.end(), [](const auto& a, const auto& b) {
         return std::get<2>(a) < std::get<2>(b);
     });
@@ -85,7 +90,7 @@ void add_BH_adjusted_column(
     infile.close();
 
     // Apply BH correction
-    adjust_pvalues_BH(pvalues);
+    adjust_pvalues_with_BH(pvalues);
 
     // Second pass: rewrite with BH-adjusted values
     infile.open(input_file);

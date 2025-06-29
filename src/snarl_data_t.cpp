@@ -243,7 +243,7 @@ size_t Path::nreversed() const {
 // Function to calculate the type of variant
 // tuple<string, size_t, size_t, size_t>
 // seq_net, minimum_distance, maximun_distance, size_path, sum_path
-vector<string> calcul_pos_type_variant(const vector<tuple<string, size_t, size_t, size_t, size_t, bool>>& list_length_paths) {
+vector<string> calcul_pos_type_variant(const vector<tuple<size_t, size_t, size_t, size_t, size_t, bool>>& list_length_paths) {
     vector<string> list_type_variant;
 
     for (const auto& tuple_info : list_length_paths) {
@@ -259,8 +259,7 @@ vector<string> calcul_pos_type_variant(const vector<tuple<string, size_t, size_t
             }
 
         } else if (path_length == 3) { // Case simple path len 3 (INS or SNP)
-            string seq = std::get<0>(tuple_info);
-            size_t seq_length = seq.length();
+            size_t seq_length = std::get<0>(tuple_info);
             list_type_variant.push_back(to_string(seq_length));
 
         } else if (path_length == 2) { // case Deletion
@@ -472,11 +471,11 @@ tuple<vector<Path_traversal_t>, vector<string>> fill_pretty_paths(
 
     // seq_net, minimum_distance, maximun_distance, size_path, sum_path
     // Used to calculate the type of variant
-    vector<tuple<string, size_t, size_t, size_t, size_t, bool>> seq_net_paths;
+    vector<tuple<size_t, size_t, size_t, size_t, size_t, bool>> seq_net_paths;
 
     for (const auto& path : finished_paths) {
         Path ppath;
-        string seq_net;
+        size_t size_node_2;
         bool is_complex = false;
         size_t sum_path = 0;
         size_t minimum_distance=0;
@@ -499,7 +498,7 @@ tuple<vector<Path_traversal_t>, vector<string>> fill_pretty_paths(
                 size_node[i] = pg.get_length(node_handle);
                 //TODO: Why do we only care about the sequence of the second node?
                 if (ppath.size() == 2) { // add only the node seq in position 2 on the snarl (ex : X>P>Q, P is in position 2)
-                    seq_net = pg.get_sequence(node_handle);
+                    size_node_2 = size_node[i];
                 }
             }
 
@@ -511,7 +510,7 @@ tuple<vector<Path_traversal_t>, vector<string>> fill_pretty_paths(
                 handle_t net_trivial_chain = pg.get_handle(node_start_id);
                 size_node[i] = pg.get_length(net_trivial_chain);
                 if (ppath.size() == 2) {
-                    seq_net = pg.get_sequence(net_trivial_chain);
+                    size_node_2 = size_node[i];
                 }
             }
 
@@ -564,13 +563,14 @@ tuple<vector<Path_traversal_t>, vector<string>> fill_pretty_paths(
                 bool revr = stree.ends_at_start(nodr);
 
                 size_t size_chain = size_start_node + size_end_node;
-                //TODO: I think this can use minimum_length() and maximum_length(), just to be simpler
+                // TODO: I think this can use minimum_length() and maximum_length(), just to be simpler
+                // matis ans : yes for minimum_length() but maximum_length() do not exist 
                 size_t min_dist = stree.minimum_distance(complex_start_id, revl, size_start_node, complex_end_id, revr, 0);
                 size_t max_dist = stree.maximum_distance(complex_start_id, revl, size_start_node, complex_end_id, revr, 0);
 
                 // Fail case 
-                // assert(max_dist != static_cast<size_t>(INT_MAX) && "Overflow max distance");
-                // assert(min_dist != static_cast<size_t>(INT_MAX) && "Overflow min distance");
+                assert(max_dist != static_cast<size_t>(INT_MAX) && "Overflow max distance");
+                assert(min_dist != static_cast<size_t>(INT_MAX) && "Overflow min distance");
 
                 minimum_distance += size_chain + min_dist;
                 maximun_distance += size_chain + max_dist;
@@ -594,7 +594,7 @@ tuple<vector<Path_traversal_t>, vector<string>> fill_pretty_paths(
 
         pretty_paths.push_back(ppath.print());
         size_t size_path = ppath.size();
-        seq_net_paths.push_back(std::make_tuple(seq_net, minimum_distance, maximun_distance, size_path, sum_path, is_complex));
+        seq_net_paths.push_back(std::make_tuple(size_node_2, minimum_distance, maximun_distance, size_path, sum_path, is_complex));
     }
 
     vector<string> type_variants = calcul_pos_type_variant(seq_net_paths);

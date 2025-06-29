@@ -76,7 +76,7 @@ void binary_stat_test(const std::vector<size_t>& g0, const std::vector<size_t>& 
     string& allele_number_str, string& min_row_index_str, string& numb_colum_str, 
     string& inter_group_str, string& average_str);
 
-//Given two vectors of genotypes representing two groups (with length number_paths), fill them in with counts of the number of times each path is seen  
+// Given two vectors of genotypes representing two groups (with length number_paths), fill them in with counts of the number of times each path is seen  
 // g0 and g1 can be used in binary_stat_test()
 size_t create_binary_table(
     std::vector<size_t>& g0, std::vector<size_t>& g1,

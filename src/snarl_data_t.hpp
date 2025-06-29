@@ -31,12 +31,7 @@ using handlegraph::step_handle_t;
 using handlegraph::handle_t;
 using handlegraph::net_handle_t;
 
-// Container for snarl data : 
-// const std::pair<size_t, size_t>& snarl_id_,
-// const std::vector<Path_traversal_t>& snarl_paths_,
-// size_t start_positions_, size_t end_positions_,
-// const std::vector<std::string>& type_variants_
-
+// Define a Node_traversal_t structure to represent a node with orientation
 struct Node_traversal_t { // 64 bits per node 
     private:
         size_t node_id : 63; // 63 bits for node ID
@@ -55,6 +50,7 @@ struct Node_traversal_t { // 64 bits per node
         bool operator==(const Node_traversal_t& other) const;
 };
 
+// Define a Edge_t structure to represent an edge between two Node_traversal_t nodes
 struct Edge_t { // 128 bits per edge 
     private:
         std::pair<Node_traversal_t, Node_traversal_t> edge;
@@ -73,6 +69,7 @@ struct Edge_t { // 128 bits per edge
         bool operator==(const Edge_t &other) const;
 };
 
+// Hash functions for Node_traversal_t
 namespace std {
     template <>
     struct hash<Node_traversal_t> {
@@ -83,6 +80,7 @@ namespace std {
     };
 }
 
+// Hash function for Edge_t
 namespace std {
     template <>
     struct hash<Edge_t> {
@@ -97,6 +95,7 @@ namespace std {
     };
 }
 
+// Define a Path_traversal_t structure to represent a path through the graph
 struct Path_traversal_t {
     private:
         std::vector<Node_traversal_t> paths; // Nodes in the path
@@ -113,6 +112,7 @@ struct Path_traversal_t {
         std::string to_string() const;
 };
 
+// Define a Snarl_data_t structure to hold snarl information
 struct Snarl_data_t {
     public:
         // Constructor definition
@@ -143,6 +143,7 @@ std::pair<size_t, size_t> stringToPair(const std::string& str);
 std::string vectorPathToString(const std::vector<Path_traversal_t>& vec_paths);
 std::vector<Path_traversal_t> stringToVectorPath(std::string& str);
 
+// A class representing a path as a vector of strings representing nodes
 class Path {
 private:
     std::vector<std::string> nodes;
@@ -171,6 +172,7 @@ public:
     size_t nreversed() const;
 };
 
+// Load the distance index and graph and return unique_ptrs to them
 std::tuple<std::unique_ptr<bdsg::SnarlDistanceIndex>, 
            std::unique_ptr<bdsg::PackedGraph>, 
            handlegraph::net_handle_t, 
@@ -178,7 +180,9 @@ std::tuple<std::unique_ptr<bdsg::SnarlDistanceIndex>,
 parse_graph_tree(const std::string& pg_file, const std::string& dist_file);
 
 // Function to calculate the type of variant
-vector<string> calcul_pos_type_variant(const vector<tuple<string, size_t, size_t, size_t, size_t, bool>>& list_length_paths);
+// Given a vector of <size node 2, min length of the snarl, max length of the snarl, path length, sum_path, is_complex)
+// TODO : change sum_path to definition using the length of the path including in the boundary nodes
+vector<string> calcul_pos_type_variant(const vector<tuple<size_t, size_t, size_t, size_t, size_t, bool>>& list_length_paths);
 
 // Function to find snarl ID
 std::pair<size_t, size_t> find_snarl_id(SnarlDistanceIndex& stree, net_handle_t& snarl);
@@ -205,7 +209,9 @@ tuple<vector<Path_traversal_t>, vector<string>> fill_pretty_paths(
                             PackedGraph& pg, 
                             vector<vector<net_handle_t>>& finished_paths);
 
-// Function to loop over snarls and write output
+// Function to loop over snarls and write output to output_file
+// Output is a tsv of <chromosome, start pos, end pos, snarl, paths, variant type, reference>
+// Returns a map from chromosome name to a vector of <snarl name, paths, start position, end position, variant type>
 std::unordered_map<std::string, std::vector<Snarl_data_t>> loop_over_snarls_write(
                             SnarlDistanceIndex& stree, 
                             vector<tuple<net_handle_t, string, size_t, size_t, bool>>& snarls, 

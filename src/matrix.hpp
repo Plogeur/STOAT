@@ -9,7 +9,6 @@
 
 #include "snarl_data_t.hpp"
 
-
 // A class to store a 2d bit-matrix
 // Rows represent edges and the index of each edge can be found from the row_header
 // Columns represent samples/haplotypes
@@ -43,7 +42,6 @@ public:
     void shrink(size_t current_rows);
 
     // Return an iterator to the given snarl in row_header
-    // TODO: I think this should be edge not snarl
     std::unordered_map<Edge_t, size_t>::const_iterator find_edge(const Edge_t& edge) const;
 
     // Return row_header_end, an iterator to the end of row_header

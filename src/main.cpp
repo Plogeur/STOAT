@@ -333,12 +333,9 @@ int main(int argc, char* argv[]) {
         handlegraph::net_handle_t root;
         std::unique_ptr<bdsg::PackedPositionOverlay> pp_overlay;
 
-        if (!snarl_path.empty()){
-        // If we have already saved the paths in snarls, load them
+        if (!snarl_path.empty()){ // If we have already saved the paths in snarls, load them
             snarls_chr = parse_snarl_path(snarl_path);
-        } else {
-        // Otherwise, find them from the graph and snarl tree
-
+        } else { // Otherwise, find them from the graph and snarl tree
             std::cout << "Start snarl analysis... " << std::endl;
             auto start_0 = std::chrono::high_resolution_clock::now();
             // Load the snarl tree and graph
