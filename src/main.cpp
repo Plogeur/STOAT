@@ -341,7 +341,6 @@ int main(int argc, char* argv[]) {
         // scope declaration
         // chr : <snarl, paths, pos(start, end), type>
         std::unordered_map<std::string, std::vector<stoat_vcf::Snarl_data_t>> snarls_chr;
-        std::unordered_map<std::string, std::vector<stoat_vcf::Snarl_data_t>> snarls_chr;
         std::unique_ptr<bdsg::SnarlDistanceIndex> stree;
         std::unique_ptr<bdsg::PackedGraph> pg;
         handlegraph::net_handle_t root;
@@ -394,7 +393,7 @@ int main(int argc, char* argv[]) {
 
         } else if (!binary_path.empty()) {
 
-            std::string output_binary = output_dir + "/binary_test.tsv";
+            std::string output_binary = output_dir + "/binary_table.tsv";
             stoat_vcf::chromosome_chuck_binary(*stree, ptr_vcf, hdr, rec, list_samples, snarls_chr, binary, covariate, maf, num_threads, table_threshold, regression_dir, output_binary);
 
             std::string output_significative = output_dir + "/top_variant_binary.tsv";
@@ -408,7 +407,7 @@ int main(int argc, char* argv[]) {
 
         } else if (!quantitative_path.empty()) {
 
-            std::string output_quantitive = output_dir + "/quantitative_test.tsv";
+            std::string output_quantitive = output_dir + "/quantitative_table.tsv";
             stoat_vcf::chromosome_chuck_quantitative(*stree, ptr_vcf, hdr, rec, list_samples, snarls_chr, quantitative, covariate, maf, num_threads, table_threshold, regression_dir, output_quantitive);
 
             std::string output_significative = output_dir + "/top_variant_quantitative.tsv";

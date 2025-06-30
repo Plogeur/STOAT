@@ -1,9 +1,8 @@
 #include "snarl_analyser.hpp"
 #include "matrix.hpp"
-#include "binary_test.hpp"
-#include "quantitative_test.hpp"
+#include "binary_table.hpp"
+#include "quantitative_table.hpp"
 #include "utils.hpp"
-#include "lmm.hpp"
 #include "arg_parser.hpp"
 #include "writer.hpp"
 
@@ -55,7 +54,6 @@ void chromosome_chuck_binary(const bdsg::SnarlDistanceIndex& stree, htsFile* &pt
         rec = rec_new;
         auto& snarl = snarl_chr.at(chr);
 
-        cout << "make_matrix done" << std::endl;
         // Gwas analysis by chromosome
         vcf_object.binary_table(stree, snarl, binary_pheno, chr, covar, maf, num_threads, table_threshold, regression_dir, outf);
     }
@@ -112,7 +110,7 @@ void chromosome_chuck_quantitative(const bdsg::SnarlDistanceIndex& stree, htsFil
         auto& snarl = snarl_chr.at(chr);
 
         // Gwas analysis by chromosome
-        vcf_object.quantitative_table(stree, snarl, quantitative_phenotype, chr, covar, maf, kinship, num_threads, table_threshold, regression_dir, outf);
+        vcf_object.quantitative_table(stree, snarl, quantitative_phenotype, chr, covar, maf, num_threads, table_threshold, regression_dir, outf);
     }
     // Cleanup
     bcf_destroy(rec);
@@ -167,7 +165,7 @@ void chromosome_chuck_eqtl(const bdsg::SnarlDistanceIndex& stree, htsFile* &ptr_
         auto& eqtl = eqtl_map.at(chr);
 
         // Gwas analysis by chromosome
-        vcf_object.eqtl_table(stree, snarl, eqtl, chr, covar, maf, kinship, num_threads, table_threshold, regression_dir, windows_gene_threshold, outf);
+        vcf_object.eqtl_table(stree, snarl, eqtl, chr, covar, maf, num_threads, table_threshold, regression_dir, windows_gene_threshold, outf);
     }
     // Cleanup
     bcf_destroy(rec);
@@ -629,7 +627,6 @@ void SnarlAnalyser::binary_table(const bdsg::SnarlDistanceIndex& stree, const st
     std::mutex mutex_file;
     std::vector<std::thread> threads;
 
-    cout << "Start binary_table " << std::endl;
     for (size_t thread_id = 0; thread_id < num_threads; ++thread_id) {
         threads.emplace_back([&, thread_id]() {
             size_t start = thread_id * chunk_size;
@@ -638,8 +635,6 @@ void SnarlAnalyser::binary_table(const bdsg::SnarlDistanceIndex& stree, const st
 
             for (size_t itr = start; itr < end; ++itr) {
                 const Snarl_data_t& snarl_data_s = snarls[itr];
-                cout << "start get snarl data" << std::endl;
-                cout << "snarl_id : " << pairToString(find_snarl_id(stree, snarl_data_s.snarl)) << std::endl;
 
                 std::ostringstream oss;
                 for (size_t i = 0; i < snarl_data_s.type_variants.size(); ++i) {
@@ -676,7 +671,7 @@ void SnarlAnalyser::binary_table(const bdsg::SnarlDistanceIndex& stree, const st
                     }
 
                     // } else { // lmm
-                    //     // lmm_binary(df, phenotype_filtered, kinship, covar, p_value, beta, se, r2);
+                    //     // lmm_binary(df, phenotype_filtered, covar, p_value, beta, se, r2);
                     //     continue; // TODO: implement LMM for binary phenotype
                     // }
                     
@@ -697,10 +692,8 @@ void SnarlAnalyser::binary_table(const bdsg::SnarlDistanceIndex& stree, const st
                     std::vector<size_t> g0(length_column_headers, 0); // can be replace by size_t arr[length_column_headers] = {0};
                     std::vector<size_t> g1(length_column_headers, 0); // can be replace by size_t arr[length_column_headers] = {0};
 
-                    cout << "Creating binary table for snarl: " << pairToString(find_snarl_id(stree, snarl_data_s.snarl)) << std::endl;
                     size_t total_sum = create_binary_table(g0, g1, binary_phenotype, snarl_data_s.snarl_paths, length_column_headers, number_samples, matrix);
                     bool df_filtration = check_MAF_threshold(g0, g1, total_sum, length_column_headers, maf);
-                    cout << "Creating binary table finish" << std::endl;
 
                     std::string fastfisher_p_value = "NA", chi2_p_value = "NA",
                     group_paths = "NA", allele_number_str = "NA", min_row_index_str = "NA",
@@ -785,7 +778,7 @@ void SnarlAnalyser::quantitative_table(const bdsg::SnarlDistanceIndex& stree, co
                     // do not analyse this snarl
                     continue;
                 // } else if (covar.size() > 0 && !kinship.empty()) { // lmm
-                //     // lmm_quantitative(df, gene_expression, kinship, covar, p_value, beta, se, r2);
+                //     // lmm_quantitative(df, gene_expression, covar, p_value, beta, se, r2);
                 //     continue; // TODO: implement LMM for quantitative phenotype
 
                 } else if (covar.size() > 0) { // glm
@@ -936,7 +929,7 @@ void SnarlAnalyser::eqtl_table(
                         continue;
 
                     // } else if (covar.size() > 0 && !kinship.empty()) { // lmm
-                    //     // lmm_quantitative(df, gene_expression, kinship, covar, p_value, beta, se, r2);
+                    //     // lmm_quantitative(df, gene_expression, covar, p_value, beta, se, r2);
                     //     continue; // TODO: implement LMM for quantitative phenotype
 
                     } else if (covar.size() > 0) { // glm

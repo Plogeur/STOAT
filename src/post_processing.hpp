@@ -13,14 +13,10 @@
 
 using namespace std;
 
-namespace stoat_vcf {
-
-namespace stoat_vcf {
-
 namespace stoat_vcf{
+
 // Given a vector of <p-value, 1.0, line index from the input file>, fill in the vector with the adjusted p-value
 // and sort the vector by adjusted p-value
-// TODO : correct this function
 void adjust_pvalues_with_BH(std::vector<std::tuple<double, double, size_t>>& data);
 
 // Read a tsv from input_file, collect the p-values from the correct column (depending on phenotype_type), 
@@ -29,9 +25,6 @@ void add_BH_adjusted_column(
     const std::string& input_file, 
     const std::string& output_file_significant,
     const std::string& phenotype_type);
-}
-
-} // namespace stoat_vcf
 
 } // namespace stoat_vcf
 

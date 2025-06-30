@@ -233,24 +233,21 @@ size_t Path::nreversed() const {
 // Function to calculate the type of variant
 // tuple<std::string, size_t, size_t, size_t>
 // seq_net, minimum_distance, maximun_distance, size_path, sum_path
-std::vector<std::string> calcul_pos_type_variant(const std::vector<std::tuple<size_t, size_t, size_t, size_t, size_t, bool>>& list_length_paths) {
+std::vector<std::string> calcul_pos_type_variant(const std::vector<std::tuple<size_t, size_t, size_t, size_t, bool>>& list_length_paths) {
     std::vector<std::string> list_type_variant;
 
     for (const auto& tuple_info : list_length_paths) {
-        size_t path_length = std::get<3>(tuple_info);
-        size_t sum_path = std::get<4>(tuple_info);
-        bool is_complex = std::get<5>(tuple_info);
-        if (path_length > 3) {
+        size_t path_length = std::get<2>(tuple_info);
+        size_t sum_path = std::get<3>(tuple_info);
+        bool is_complex = std::get<4>(tuple_info);
+
+        if (path_length >= 3) {
             if (is_complex) { // Case complex
-                std::string complex = std::to_string(std::get<1>(tuple_info)) + "/" + std::to_string(std::get<2>(tuple_info));
+                std::string complex = std::to_string(std::get<0>(tuple_info)) + "/" + std::to_string(std::get<1>(tuple_info));
                 list_type_variant.push_back(complex);
             } else { // Case multiple nodes (ex : INS+SNP+...)
                 list_type_variant.push_back(std::to_string(sum_path));
             }
-
-        } else if (path_length == 3) { // Case simple path len 3 (INS or SNP)
-            size_t seq_length = std::get<0>(tuple_info);
-            list_type_variant.push_back(to_string(seq_length));
 
         } else if (path_length == 2) { // case Deletion
             list_type_variant.push_back("0");
@@ -329,7 +326,6 @@ void follow_edges(bdsg::SnarlDistanceIndex& stree,
         } else {
 
             if (cycle) { // Case where we find a loop
-                // cout << "cycle found" << std::endl;
                 return false;
             }
             paths.emplace_back(path);
@@ -461,11 +457,10 @@ std::tuple<std::vector<stoat_vcf::Path_traversal_t>, std::vector<std::string>> f
 
     // seq_net, minimum_distance, maximun_distance, size_path, sum_path
     // Used to calculate the type of variant
-    std::vector<std::tuple<size_t, size_t, size_t, size_t, size_t, bool>> seq_net_paths;
+    std::vector<std::tuple<size_t, size_t, size_t, size_t, bool>> seq_net_paths;
 
     for (const auto& path : finished_paths) {
         Path ppath;
-        size_t size_node_2;
         bool is_complex = false;
         size_t sum_path = 0;
         size_t minimum_distance=0;
@@ -483,13 +478,9 @@ std::tuple<std::vector<stoat_vcf::Path_traversal_t>, std::vector<std::string>> f
             // Node case
             if (stree.is_node(net)) {
                 bool rev = ppath.addNodeHandle(net, stree);
-                nid_t node_start_id = stree.node_id(net);
-                handle_t node_handle = pg.get_handle(node_start_id);
+                handlegraph::nid_t node_start_id = stree.node_id(net);
+                handlegraph::handle_t node_handle = pg.get_handle(node_start_id);
                 size_node[i] = pg.get_length(node_handle);
-                //TODO: Why do we only care about the sequence of the second node?
-                if (ppath.size() == 2) { // add only the node seq in position 2 on the snarl (ex : X>P>Q, P is in position 2)
-                    size_node_2 = size_node[i];
-                }
             }
 
             // Trivial chain case
@@ -499,9 +490,6 @@ std::tuple<std::vector<stoat_vcf::Path_traversal_t>, std::vector<std::string>> f
                 handlegraph::nid_t node_start_id = stree.node_id(stn_start);
                 handlegraph::handle_t net_trivial_chain = pg.get_handle(node_start_id);
                 size_node[i] = pg.get_length(net_trivial_chain);
-                if (ppath.size() == 2) {
-                    size_node_2 = size_node[i];
-                }
             }
 
             // Chain case aka complex
@@ -518,6 +506,7 @@ std::tuple<std::vector<stoat_vcf::Path_traversal_t>, std::vector<std::string>> f
                 ppath.addNodeHandle(nodl, stree);
 
                 // test chain : handlegraph::net_handle_t is composed of 2 element && if both element is_node == true ?
+                // idk ask to jean
                 bool chain_2node = true;
                 int child_count = 0;
                 size_t sum_node = 0;
@@ -584,7 +573,7 @@ std::tuple<std::vector<stoat_vcf::Path_traversal_t>, std::vector<std::string>> f
 
         pretty_paths.push_back(ppath.print());
         size_t size_path = ppath.size();
-        seq_net_paths.push_back(std::make_tuple(size_node_2, minimum_distance, maximun_distance, size_path, sum_path, is_complex));
+        seq_net_paths.push_back(std::make_tuple(minimum_distance, maximun_distance, size_path, sum_path, is_complex));
     }
 
     std::vector<std::string> type_variants = calcul_pos_type_variant(seq_net_paths);
@@ -644,6 +633,7 @@ std::unordered_map<std::string, std::vector<Snarl_data_t>> loop_over_snarls_writ
 
         while (!paths.empty()) {
             //TODO: I think path should be a reference so it doesn't get copied
+            //Matis ans: No it elements must remain in copy because it will be used later (i test the & and it breaks the code : 0 paths found)
             std::vector<handlegraph::net_handle_t> path = paths.back();
             std::unordered_map<handlegraph::net_handle_t, size_t> dict_path_occ;
             bool cycle = false;

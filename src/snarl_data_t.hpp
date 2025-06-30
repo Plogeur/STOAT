@@ -149,7 +149,7 @@ parse_graph_tree(const std::string& pg_file, const std::string& dist_file);
 // Function to calculate the type of variant
 // Given a vector of <size node 2, min length of the snarl, max length of the snarl, path length, sum_path, is_complex)
 // TODO : change sum_path to definition using the length of the path including in the boundary nodes
-std::vector<std::string> calcul_pos_type_variant(const std::vector<std::tuple<size_t, size_t, size_t, size_t, size_t, bool>>& list_length_paths);
+std::vector<std::string> calcul_pos_type_variant(const std::vector<std::tuple<size_t, size_t, size_t, size_t, bool>>& list_length_paths);
 
 // Function to find snarl ID
 std::pair<size_t, size_t> find_snarl_id(const bdsg::SnarlDistanceIndex& stree, const handlegraph::net_handle_t& snarl);
