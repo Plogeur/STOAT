@@ -371,7 +371,7 @@ std::vector<std::tuple<handlegraph::net_handle_t, std::string, size_t, size_t, b
        std::tuple<string, size_t, size_t> ret_pos;
 
         auto step_callback = [&](const step_handle_t& step_handle) {
-            path_handle_t path_handle = pg.get_path_handle_of_step(step_handle);
+            handlegraph::path_handle_t path_handle = pg.get_path_handle_of_step(step_handle);
             std::string chr_path = pg.get_path_name(path_handle);
 
             // check if chr_path is in ref_chr
@@ -490,7 +490,7 @@ tuple<std::vector<Path_traversal_t>, std::vector<std::string>> fill_pretty_paths
             // Node case
             if (stree.is_node(net)) {
                 bool rev = ppath.addNodeHandle(net, stree);
-                nid_t node_start_id = stree.node_id(net);
+                handlegraph::nid_t node_start_id = stree.node_id(net);
                 handle_t node_handle = pg.get_handle(node_start_id);
                 size_node[i] = pg.get_length(node_handle);
                 //TODO: Why do we only care about the sequence of the second node?
@@ -503,7 +503,7 @@ tuple<std::vector<Path_traversal_t>, std::vector<std::string>> fill_pretty_paths
             else if (stree.is_trivial_chain(net)) {
                 bool rev = ppath.addNodeHandle(net, stree);
                 auto stn_start = stree.starts_at_start(net) ? stree.get_bound(net, false, true) : stree.get_bound(net, true, true);
-                nid_t node_start_id = stree.node_id(stn_start);
+                handlegraph::nid_t node_start_id = stree.node_id(stn_start);
                 handle_t net_trivial_chain = pg.get_handle(node_start_id);
                 size_node[i] = pg.get_length(net_trivial_chain);
                 if (ppath.size() == 2) {

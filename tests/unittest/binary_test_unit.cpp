@@ -1,6 +1,7 @@
 #include <catch2/catch_test_macros.hpp>
 #include "../../src/binary_test.hpp"
 
+using namespace stoat_vcf; 
 TEST_CASE("Chi-square & Fisher test function", "[chi2_2xN]") {
     SECTION("Valid chi-square test & valid Fisher test calculation") {
         std::vector<size_t> g0 = {10, 20};

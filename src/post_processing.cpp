@@ -1,6 +1,8 @@
 #include "post_processing.hpp"
 #include "utils.hpp"
 
+namespace stoat_vcf { 
+
 // Adjust p-values using the Benjamini-Hochberg procedure
 void adjust_pvalues_with_BH(std::vector<std::tuple<double, double, size_t>>& data) {
     size_t n = data.size();
@@ -141,4 +143,5 @@ void add_BH_adjusted_column(
     // Replace original file
     std::remove(input_file.c_str());
     std::rename("temp_output.tsv", input_file.c_str());
+}
 }

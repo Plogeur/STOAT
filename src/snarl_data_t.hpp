@@ -204,8 +204,8 @@ std::unordered_map<std::string, std::vector<Snarl_data_t>> loop_over_snarls_writ
 // Hash functions for Node_traversal_t
 namespace std {
     template <>
-    struct hash<Node_traversal_t> {
-        size_t operator()(const Node_traversal_t& node) const {
+    struct hash<stoat_vcf::Node_traversal_t> {
+        size_t operator()(const stoat_vcf::Node_traversal_t& node) const {
             // Simple way: Shift node_id and pack is_reverse into the lower bit
             return (node.get_node_id() << 1) | static_cast<size_t>(node.get_is_reverse());
         }
@@ -213,11 +213,11 @@ namespace std {
 
     // Hash function for Edge_t
     template <>
-    struct hash<Edge_t> {
-        size_t operator()(const Edge_t& edge) const {
+    struct hash<stoat_vcf::Edge_t> {
+        size_t operator()(const stoat_vcf::Edge_t& edge) const {
             const auto& pair = edge.get_edge();
-            size_t h1 = hash<Node_traversal_t>()(pair.first);
-            size_t h2 = hash<Node_traversal_t>()(pair.second);
+            size_t h1 = hash<stoat_vcf::Node_traversal_t>()(pair.first);
+            size_t h2 = hash<stoat_vcf::Node_traversal_t>()(pair.second);
             
             // Standard hash combination
             return h1 ^ (h2 + 0x9e3779b9 + (h1 << 6) + (h1 >> 2));

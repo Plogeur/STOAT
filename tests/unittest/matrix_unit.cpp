@@ -1,6 +1,9 @@
 #include <catch2/catch_test_macros.hpp>
 #include "../../src/matrix.hpp"
 
+
+using namespace stoat_vcf;
+
 TEST_CASE("stoat_vcf::EdgeBySampleMatrix Constructor and Basic Properties", "[stoat_vcf::EdgeBySampleMatrix]") {
     SECTION("stoat_vcf::EdgeBySampleMatrix initializes correctly") {
         stoat_vcf::EdgeBySampleMatrix mat(4, 5);

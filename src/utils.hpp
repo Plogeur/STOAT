@@ -22,6 +22,7 @@
 
 using namespace std;
 
+namespace stoat_vcf {
 std::string set_precision(const double& value);
 std::string set_precision_float_50(const boost::multiprecision::cpp_dec_float_50& value);
 
@@ -76,4 +77,5 @@ bool is_equal(T a, T b, T e = std::numeric_limits<T>::epsilon()) {
     return std::fabs(a-b) <= e;
 };
 
+}
 #endif

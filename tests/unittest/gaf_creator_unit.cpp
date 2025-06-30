@@ -3,6 +3,7 @@
 #include <fstream>
 #include <sstream>
 
+using namespace stoat_vcf;
 TEST_CASE("Calcul des proportions significatives", "[calcul_proportion_signi]") {
     SECTION("Cas normal avec groupes égaux") {
         auto result = calcul_proportion_signi(10, 10, 0.01);

@@ -24,6 +24,8 @@
 
 using namespace std;
 
+namespace stoat_vcf{
+
 // Linear regression function that returns a tuple of p_value, standard error (se), and beta
 void linear_regression(
     const std::vector<std::vector<double>>& df,
@@ -71,4 +73,5 @@ create_eqtl_table(
     const std::vector<Path_traversal_t>& column_headers,
     const EdgeBySampleMatrix& matrix);
 
+}
 #endif

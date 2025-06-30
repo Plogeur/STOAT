@@ -30,6 +30,8 @@ static const double kExactTestBias = 0.00000000000000000000000010339757656912845
 static const boost::math::chi_squared chi_squared_dist(1);
 boost::math::chi_squared_distribution<cpp_dec_float_50> cpp_dec_float_50_dist(1);
 
+namespace stoat_vcf{
+
 // ------------------------ Logistic regression ------------------------
 
 // Standard normal cumulative distribution function
@@ -560,4 +562,5 @@ bool check_MAF_threshold(
         }
     }
     return false; // No column met MAF threshold
+}
 }

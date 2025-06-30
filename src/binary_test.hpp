@@ -24,6 +24,7 @@
 
 using namespace std;
 
+namespace stoat_vcf{
 // ------------------------ Logistic regression ------------------------
 double normal_cdf(double z);
 inline double sigmoid(double x);
@@ -96,4 +97,5 @@ bool check_MAF_threshold(
     const size_t& totalSum, const size_t& length_column_headers, 
     const double& maf);
 
+}
 #endif

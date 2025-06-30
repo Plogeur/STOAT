@@ -5,6 +5,7 @@
 
 using namespace std;
 
+namespace stoat_vcf {
 // Linear regression function OLS with intercept
 void linear_regression(
     const std::vector<std::vector<double>>& df,
@@ -303,4 +304,5 @@ std::tuple<std::vector<std::vector<double>>, std::unordered_set<size_t>, size_t,
     }
 
     return {genotypes_filtered, index_used, allele_number, allele_paths};
+}
 }

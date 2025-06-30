@@ -4,6 +4,7 @@
 
 using namespace std;
 using namespace bdsg;
+using namespace stoat_vcf;
 using handlegraph::step_handle_t;
 using handlegraph::handle_t;
 using handlegraph::net_handle_t;

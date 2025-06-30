@@ -1,5 +1,7 @@
 #include "utils.hpp"
 
+namespace stoat_vcf{
+
 std::string set_precision(const double& value) {
     std::ostringstream oss;
     oss << std::setprecision(4);
@@ -157,14 +159,6 @@ std::vector<T> stringToVector(const std::string& str) {
     return result;
 }
 
-std::string vectorPathToString(const std::vector<stoat_vcf::Path_traversal_t>& vec) {
-    std::ostringstream oss;
-    for (size_t i = 0; i < vec.size(); ++i) {
-        if (i > 0) oss << ",";
-        oss << vec[i].to_string();
-    }
-    return oss.str();
-}
 
 std::string get_sample_name_from_path(const handlegraph::PathPositionHandleGraph& graph, const handlegraph::path_handle_t& path) {
 
@@ -189,4 +183,5 @@ sample_hap_t get_sample_and_haplotype(const handlegraph::PathPositionHandleGraph
     result.haplotype = graph.get_haplotype(path);
 
     return result;
+}
 }
