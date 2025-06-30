@@ -449,7 +449,6 @@ std::string fastFishersExactTest(size_t m11, size_t m12,
     return stoat_vcf::set_precision(tprob / (cprob + tprob));
 }
 
-
 // Linear regression function OLS with intercept
 void linear_regression(
     const std::vector<std::vector<double>>& df,
@@ -564,6 +563,7 @@ void glm_quantitative(
         }
     }
     
+    // Coefficients beta
     Eigen::VectorXd beta = (X.transpose() * X).ldlt().solve(X.transpose() * y);
     Eigen::VectorXd y_pred = X * beta;
     Eigen::VectorXd residuals = y - y_pred;
@@ -571,25 +571,34 @@ void glm_quantitative(
     // R²
     double rss = residuals.squaredNorm();
     double tss = (y.array() - y.mean()).matrix().squaredNorm();
-    double r2 = 1.0 - (rss / tss);
+    double r2 = 1 - (rss / tss);
 
-    int df_res = num_samples - X.cols();    // residual degrees of freedom
+    int df_res = (num_samples - X.cols() + 1); // residual degrees of freedom
+    df_res = std::max(df_res, 1); // Ensure df_res is at least 1 to avoid division by zero
     double mse = rss / df_res;
 
     // Standard errors
-    Eigen::LDLT<Eigen::MatrixXd> ldlt(X.transpose() * X);
-    Eigen::MatrixXd cov_matrix = ldlt.solve(Eigen::MatrixXd::Identity(X.cols(), X.cols()));
-    Eigen::VectorXd se = (cov_matrix.diagonal() * mse).array().sqrt();
+    Eigen::MatrixXd cov_matrix = (X.transpose() * X).inverse();    
+    Eigen::VectorXd se = (cov_matrix.diagonal() * mse).array().sqrt().matrix();
 
-    // Standard errors
-    // Eigen::MatrixXd cov_matrix = (X.transpose() * X).inverse();
-    // Eigen::VectorXd se = (cov_matrix.diagonal() * mse).array().sqrt().matrix();
+    // change cov_matrix calcul if X.transpose() * X might be ill-conditioned or nearly singular
+    if (se.hasNaN()) {
+        Eigen::MatrixXd XtX = X.transpose() * X;
+        Eigen::MatrixXd cov_matrix = XtX.ldlt().solve(Eigen::MatrixXd::Identity(X.cols(), X.cols()));
+        se = (cov_matrix.diagonal() * mse).array().sqrt().matrix();
+        // std::cerr << "Warning: se is nan" << std::endl;
+    }
 
     // t-statistics
     Eigen::VectorXd t_stats = beta.array() / se.array();
     boost::math::students_t t_dist(df_res);
+ 
     std::vector<double> p_values;
-    for (int i = 1; i < num_variants+1; ++i) {
+    for (int i = 1; i < num_features+1; ++i) { // i = 1 avoid const p-value
+        if (std::isnan(t_stats[i]) || std::isinf(t_stats[i])) {
+            p_values.push_back(1.0); // Assign a high p-value for invalid t-statistics
+            continue;
+        }
         p_values.push_back(2 * boost::math::cdf(boost::math::complement(t_dist, std::abs(t_stats[i])))); // two-tailed
     }
 
@@ -993,20 +1002,20 @@ void glm_quantitative(
 //     r2_str = r2_ss.str();
 // }
 
-void lmm_binary(
-    const std::vector<std::vector<double>>& df,              // N x P (paths)
-    const std::vector<bool>& phenotype_binary,               // N
-    const stoat_vcf::KinshipMatrix& kinship,                                              
-    const std::vector<std::vector<double>>& covariates,      // N x C
-    std::string& p_value_str, std::string& beta_str,
-    std::string& se_str, std::string& r2_str) {
-}
+// void lmm_binary(
+//     const std::vector<std::vector<double>>& df,              // N x P (paths)
+//     const std::vector<bool>& phenotype_binary,               // N
+//     const stoat_vcf::KinshipMatrix& kinship,                                              
+//     const std::vector<std::vector<double>>& covariates,      // N x C
+//     std::string& p_value_str, std::string& beta_str,
+//     std::string& se_str, std::string& r2_str) {
+// }
 
-void lmm_quantitative(
-    const std::vector<std::vector<double>>& df,                  
-    const std::vector<double>& phenotype_table,      
-    const stoat_vcf::KinshipMatrix& kinship,                                              
-    const std::vector<std::vector<double>>& covariates,
-    std::string& p_value_str, std::string& beta_str, 
-    std::string& se_str, std::string& r2_str) {
-}
+// void lmm_quantitative(
+//     const std::vector<std::vector<double>>& df,                  
+//     const std::vector<double>& phenotype_table,      
+//     const stoat_vcf::KinshipMatrix& kinship,                                              
+//     const std::vector<std::vector<double>>& covariates,
+//     std::string& p_value_str, std::string& beta_str, 
+//     std::string& se_str, std::string& r2_str) {
+// }

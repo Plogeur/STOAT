@@ -22,10 +22,10 @@
 #include <boost/math/distributions/chi_squared.hpp>
 #include <boost/math/distributions/normal.hpp>
 
+#include "arg_parser.hpp"
 #include "matrix.hpp"
 #include "snarl_analyser.hpp"
 #include "utils.hpp"
-#include "arg_parser.hpp"
 
 using namespace std;
 
@@ -100,24 +100,24 @@ std::string fastFishersExactTest(size_t m11, size_t m12,
 
 // ------------------------------ LMM ------------------------------
 
-void lmm_quantitative(
-    const std::vector<std::vector<double>>& df,
-    const std::vector<double>& phenotype_table,
-    const stoat_vcf::KinshipMatrix& kinship,
-    const std::vector<std::vector<double>>& covariates,
-    std::string& p_value_str, 
-    std::string& beta_str, 
-    std::string& se_str, 
-    std::string& r2_str);
+// void lmm_quantitative(
+//     const std::vector<std::vector<double>>& df,
+//     const std::vector<double>& phenotype_table,
+//     const stoat_vcf::KinshipMatrix& kinship,
+//     const std::vector<std::vector<double>>& covariates,
+//     std::string& p_value_str, 
+//     std::string& beta_str, 
+//     std::string& se_str, 
+//     std::string& r2_str);
 
-void lmm_binary(
-    const std::vector<std::vector<double>>& df,
-    const std::vector<bool>& phenotype_binary,
-    const stoat_vcf::KinshipMatrix& kinship,
-    const std::vector<std::vector<double>>& covariates,
-    std::string& p_value_str, 
-    std::string& beta_str, 
-    std::string& se_str, 
-    std::string& r2_str);
+// void lmm_binary(
+//     const std::vector<std::vector<double>>& df,
+//     const std::vector<bool>& phenotype_binary,
+//     const stoat_vcf::KinshipMatrix& kinship,
+//     const std::vector<std::vector<double>>& covariates,
+//     std::string& p_value_str, 
+//     std::string& beta_str, 
+//     std::string& se_str, 
+//     std::string& r2_str);
 
 #endif 

@@ -15,10 +15,11 @@
 #include <filesystem>
 #include <stdexcept>
 #include <regex>
-#include <Eigen/Dense>
 
+#include <Eigen/Dense>
 #include <htslib/vcf.h>
 #include <htslib/hts.h>
+
 #include "snarl_data_t.hpp"
 #include "snarl_analyser.hpp"
 
@@ -26,23 +27,20 @@ using namespace std;
 
 namespace stoat_vcf {
 
-// KinshipMatrix struct
-struct KinshipMatrix {
-    std::vector<std::string> ids;
-    std::vector<std::vector<double>> matrix;
+// struct KinshipMatrix {
+//     std::vector<std::string> ids;
+//     std::vector<std::vector<double>> matrix;
 
-    // Default constructor
-    KinshipMatrix() = default;
+//     // Default constructor
+//     KinshipMatrix() = default;
 
-    // Parameterized constructor
-    KinshipMatrix(const std::vector<std::string>& ids,
-                  const std::vector<std::vector<double>>& matrix)
-        : ids(ids), matrix(matrix) {}
+//     // Parameterized constructor
+//     KinshipMatrix(const std::vector<std::string>& ids,
+//                   const std::vector<std::vector<double>>& matrix)
+//         : ids(ids), matrix(matrix) {}
     
-    const bool empty() const;
-};
-
-KinshipMatrix parseKinshipMatrix(const std::string& filename);
+//     const bool empty() const;
+// };
 
 std::unordered_map<std::string, std::vector<double>> parse_qtl_file(
     const std::string& filename, const std::vector<std::string>& list_samples);

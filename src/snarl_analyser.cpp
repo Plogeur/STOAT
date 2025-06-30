@@ -1,10 +1,4 @@
 #include "snarl_analyser.hpp"
-#include "matrix.hpp"
-#include "binary_table.hpp"
-#include "quantitative_test.hpp"
-#include "utils.hpp"
-#include "lmm.hpp"
-#include "arg_parser.hpp"
 
 namespace stoat_vcf {
 
@@ -12,17 +6,19 @@ void chromosome_chuck_binary(htsFile* &ptr_vcf, bcf_hdr_t* &hdr, bcf1_t* &rec,
     const std::vector<std::string> &list_samples, 
     const unordered_map<string, std::vector<Snarl_data_t>> &snarl_chr,
     const std::vector<bool>& binary_pheno, std::vector<std::vector<double>> covar, 
-    const double& maf, const stoat_vcf::KinshipMatrix& kinship, const size_t& num_threads, 
+    const double& maf, const size_t& num_threads,
     const double& table_threshold, const std::string& regression_dir,
     const std::string& output_binary) {
 
     std::ofstream outf(output_binary, std::ios::binary);
     std::string headers;
+
     if (covar.size() > 0) {
         headers = "CHR\tPOS\tSNARL\tTYPE\tP\tP_ADJUSTED\tBETA\tSE\tALLELE_NUM\tALLELE_PATHS\n";
     } else {
         headers = "CHR\tPOS\tSNARL\tTYPE\tP_FISHER\tP_CHI2\tP_ADJUSTED\tALLELE_NUM\tMIN_ROW_INDEX\tNUM_COLUM\tINTER_GROUP\tAVERAGE\tGROUP_PATHS\n";
     }
+
     outf.write(headers.c_str(), headers.size());
 
     std::cout << "GWAS analysis for chromosome : " << std::endl;
@@ -58,7 +54,7 @@ void chromosome_chuck_binary(htsFile* &ptr_vcf, bcf_hdr_t* &hdr, bcf1_t* &rec,
 
         cout << "make_matrix done" << std::endl;
         // Gwas analysis by chromosome
-        vcf_object.binary_table(snarl, binary_pheno, chr, covar, maf, kinship, num_threads, table_threshold, regression_dir, outf);
+        vcf_object.binary_table(snarl, binary_pheno, chr, covar, maf, num_threads, table_threshold, regression_dir, outf);
     }
     // Cleanup
     bcf_destroy(rec);
@@ -71,7 +67,7 @@ void chromosome_chuck_quantitative(htsFile* &ptr_vcf, bcf_hdr_t* &hdr, bcf1_t* &
     const std::vector<std::string> &list_samples,
     const unordered_map<string, std::vector<Snarl_data_t>> &snarl_chr,
     const std::vector<double>& quantitative_phenotype, std::vector<std::vector<double>> covar,
-    const double& maf, const stoat_vcf::KinshipMatrix& kinship, const size_t& num_threads, 
+    const double& maf, const size_t& num_threads,
     const double& table_threshold, const std::string& regression_dir,
     const std::string& output_quantitive) {
 
@@ -115,7 +111,7 @@ void chromosome_chuck_quantitative(htsFile* &ptr_vcf, bcf_hdr_t* &hdr, bcf1_t* &
         auto& snarl = snarl_chr.at(chr);
 
         // Gwas analysis by chromosome
-        vcf_object.quantitative_table(snarl, quantitative_phenotype, chr, covar, maf, kinship, num_threads, table_threshold, regression_dir, outf);
+        vcf_object.quantitative_table(snarl, quantitative_phenotype, chr, covar, maf, num_threads, table_threshold, regression_dir, outf);
     }
     // Cleanup
     bcf_destroy(rec);
@@ -123,13 +119,12 @@ void chromosome_chuck_quantitative(htsFile* &ptr_vcf, bcf_hdr_t* &hdr, bcf1_t* &
     bcf_close(ptr_vcf);
 }
 
-
 void chromosome_chuck_eqtl(htsFile* &ptr_vcf, bcf_hdr_t* &hdr, bcf1_t* &rec, 
     const std::vector<std::string> &list_samples,
     const std::unordered_map<std::string, std::vector<Snarl_data_t>> &snarl_chr,
     const std::unordered_map<std::string, std::vector<std::tuple<std::string, std::vector<double>, size_t, size_t>>>& eqtl_map,
     const std::vector<std::vector<double>>& covar,
-    const double& maf, const stoat_vcf::KinshipMatrix& kinship, const size_t& num_threads, 
+    const double& maf, const size_t& num_threads,
     const double& table_threshold, const std::string& regression_dir,
     const size_t& windows_gene_threshold, const std::string& out_eqtl) {
 
@@ -172,7 +167,7 @@ void chromosome_chuck_eqtl(htsFile* &ptr_vcf, bcf_hdr_t* &hdr, bcf1_t* &rec,
         auto& eqtl = eqtl_map.at(chr);
 
         // Gwas analysis by chromosome
-        vcf_object.eqtl_table(snarl, eqtl, chr, covar, maf, kinship, num_threads, table_threshold, regression_dir, windows_gene_threshold, outf);
+        vcf_object.eqtl_table(snarl, eqtl, chr, covar, maf, num_threads, table_threshold, regression_dir, windows_gene_threshold, outf);
     }
     // Cleanup
     bcf_destroy(rec);
@@ -620,8 +615,11 @@ std::vector<size_t> identify_path(
 void SnarlAnalyser::binary_table(const std::vector<Snarl_data_t>& snarls,
                                const std::vector<bool>& binary_phenotype, const std::string& chr,
                                const std::vector<std::vector<double>>& covar,
-                               const double& maf, const stoat_vcf::KinshipMatrix& kinship, const size_t& num_threads, 
-                               const double& table_threshold, const std::string& regression_dir, std::ofstream& outf) {
+                               const double& maf, 
+                               const size_t& num_threads, 
+                               const double& table_threshold, 
+                               const std::string& regression_dir, 
+                               std::ofstream& outf) {
 
     size_t length_sample = sampleNames.size();
     const size_t total = snarls.size();
@@ -658,7 +656,7 @@ void SnarlAnalyser::binary_table(const std::vector<Snarl_data_t>& snarls,
                     bool df_filtration = false;
                     bool df_empty = false;
 
-                    if (allele_number < 5) {
+                    if ((allele_number < 5) || (df.size() < 2)) {
                         df_empty = true;
                     } else {
                         df_filtration = check_MAF_threshold_quantitative(df, maf);
@@ -669,12 +667,18 @@ void SnarlAnalyser::binary_table(const std::vector<Snarl_data_t>& snarls,
                     if (df_empty || df_filtration) { // filtred variant
                         // do not analyse this snarl
                         continue;
-                    } else if (kinship.empty()) { // logistic regression + covar
+                    } else if (!covar.empty()) { 
+                        // logistic regression
                         logistic_regression(df, phenotype_filtered, p_value, beta, se, r2);
-                        // glm_logistic_covar(df, phenotype_filtered, covar, p_value, beta, se, r2);
-                    } else { // lmm
-                        lmm_binary(df, phenotype_filtered, kinship, covar, p_value, beta, se, r2);
+                    } else {
+                        // logistic regression with covariates
+                        glm_logistic_covar(df, phenotype_filtered, covar, p_value, beta, se, r2);
                     }
+
+                    // } else { // lmm
+                    //     // lmm_binary(df, phenotype_filtered, kinship, covar, p_value, beta, se, r2);
+                    //     continue; // TODO: implement LMM for binary phenotype
+                    // }
                     
                     // Plot regression table
                     if (table_threshold != -1 && stoat_vcf::isPValueSignificant(table_threshold, p_value)) {
@@ -734,8 +738,11 @@ void SnarlAnalyser::quantitative_table(const std::vector<Snarl_data_t>& snarls,
                                        const std::vector<double>& quantitative_phenotype, 
                                        const std::string &chr,
                                        const std::vector<std::vector<double>>& covar,
-                                       const double& maf, const stoat_vcf::KinshipMatrix& kinship, const size_t& num_threads, 
-                                       const double& table_threshold, const std::string& regression_dir, std::ofstream& outf) {
+                                       const double& maf, 
+                                       const size_t& num_threads, 
+                                       const double& table_threshold, 
+                                       const std::string& regression_dir, 
+                                       std::ofstream& outf) {
 
     size_t length_sample = sampleNames.size();
     const size_t total = snarls.size();
@@ -759,7 +766,7 @@ void SnarlAnalyser::quantitative_table(const std::vector<Snarl_data_t>& snarls,
                 bool df_filtration = false;
                 bool df_empty = false;
 
-                if (allele_number < 5) {
+                if ((allele_number < 5) || (df.size() < 2)) {
                     df_empty = true;
                 } else {
                     df_filtration = check_MAF_threshold_quantitative(df, maf);
@@ -778,10 +785,11 @@ void SnarlAnalyser::quantitative_table(const std::vector<Snarl_data_t>& snarls,
                 if (df_empty || df_filtration) { // filtred variant
                     // do not analyse this snarl
                     continue;
-                } else if (covar.size() > 0 && !kinship.empty()) { // lmm
-                    lmm_quantitative(df, phenotype_filtered, kinship, covar, p_value, beta, se, r2);
+                // } else if (covar.size() > 0 && !kinship.empty()) { // lmm
+                //     // lmm_quantitative(df, gene_expression, kinship, covar, p_value, beta, se, r2);
+                //     continue; // TODO: implement LMM for quantitative phenotype
 
-                } else if (covar.size() > 0 && kinship.empty()) { // glm
+                } else if (covar.size() > 0) { // glm
                     glm_quantitative(df, phenotype_filtered, covar, p_value, beta, se, r2);
 
                 } else { // single test
@@ -870,10 +878,14 @@ std::vector<size_t> found_gene_snarl(
 void SnarlAnalyser::eqtl_table(
     const std::vector<Snarl_data_t>& snarls,
     const std::vector<std::tuple<std::string, std::vector<double>, size_t, size_t>>& eqtl,
-    const std::string& chr, const std::vector<std::vector<double>>& covar,
-    const double& maf, const stoat_vcf::KinshipMatrix& kinship, const size_t& num_threads, 
-    const double& table_threshold, const std::string& regression_dir, 
-    const size_t& windows_gene_threshold, std::ofstream& outf) {
+    const std::string& chr, 
+    const std::vector<std::vector<double>>& covar,
+    const double& maf, 
+    const size_t& num_threads, 
+    const double& table_threshold, 
+    const std::string& regression_dir, 
+    const size_t& windows_gene_threshold, 
+    std::ofstream& outf) {
 
     size_t length_sample = sampleNames.size();
     const size_t total = snarls.size();
@@ -898,12 +910,10 @@ void SnarlAnalyser::eqtl_table(
                 bool df_filtration = false;
                 bool df_empty = false;
 
-                if (allele_number < 5) {
+                if ((allele_number < 5) || (df.size() < 2)) {
                     df_empty = true;
                 } else {
-                    if (df[0].size() > 1) {
-                        df_filtration = check_MAF_threshold_quantitative(df, maf);
-                    }
+                    df_filtration = check_MAF_threshold_quantitative(df, maf);
                 }
 
                 for (size_t i = 0; i < list_gene_index.size(); ++i) {
@@ -926,10 +936,12 @@ void SnarlAnalyser::eqtl_table(
                     if (df_empty || df_filtration) { // filtred variant
                         // do not analyse this snarl
                         continue;
-                    } else if (covar.size() > 0 && !kinship.empty()) { // lmm
-                        lmm_quantitative(df, gene_expression, kinship, covar, p_value, beta, se, r2);
 
-                    } else if (covar.size() > 0 && kinship.empty()) { // glm
+                    // } else if (covar.size() > 0 && !kinship.empty()) { // lmm
+                    //     // lmm_quantitative(df, gene_expression, kinship, covar, p_value, beta, se, r2);
+                    //     continue; // TODO: implement LMM for quantitative phenotype
+
+                    } else if (covar.size() > 0) { // glm
                         glm_quantitative(df, gene_expression, covar, p_value, beta, se, r2); // TODO : se nan problem
 
                     } else { // single test

@@ -31,10 +31,10 @@
 // #include "path_association_finder.hpp"
 // #include "utils.hpp"
 
-#include "arg_parser.hpp"
-#include "snarl_analyser.hpp"     
-#include "matrix.hpp"
 #include "snarl_data_t.hpp"
+#include "snarl_analyser.hpp"
+#include "arg_parser.hpp"
+#include "matrix.hpp"
 #include "gaf_creator.hpp"
 #include "post_processing.hpp"
 
@@ -86,7 +86,7 @@ void print_help_graph() {
 }
 
 void print_help() {
-    std::cerr   << "stoat: gwas analysis tool, version v0.0.1\n"
+    std::cerr   << "stoat: gwas analysis tool, version " << VERSION << "\n"
                 << "usage: stoat <command> [options]\n\n"    
                 << "main usage:\n"
                 << "  -- vcf       gwas analysis base on vcf pangenome calling\n"
@@ -331,11 +331,11 @@ int main(int argc, char* argv[]) {
             eqtl = stoat_vcf::parse_qtl_gene_file(eqtl_path, gene_position_path, list_samples);
         }
 
-        stoat_vcf::KinshipMatrix kinship;
-        if (!kinship_path.empty()) {
-            // check_format_kinship(kinship_path);
-            kinship = stoat_vcf::parseKinshipMatrix(kinship_path);
-        }
+        // stoat_vcf::KinshipMatrix kinship;
+        // if (!kinship_path.empty()) {
+        //     // check_format_kinship(kinship_path);
+        //     kinship = stoat_vcf::parseKinshipMatrix(kinship_path);
+        // }
 
         // scope declaration
         // chr : <snarl, paths, pos(start, end), type>
@@ -393,7 +393,7 @@ int main(int argc, char* argv[]) {
         } else if (!binary_path.empty()) {
 
             std::string output_binary = output_dir + "/binary_table.tsv";
-            stoat_vcf::chromosome_chuck_binary(ptr_vcf, hdr, rec, list_samples, snarls_chr, binary, covariate, maf, kinship, num_threads, table_threshold, regression_dir, output_binary);
+            stoat_vcf::chromosome_chuck_binary(ptr_vcf, hdr, rec, list_samples, snarls_chr, binary, covariate, maf, num_threads, table_threshold, regression_dir, output_binary);
 
             std::string output_significative = output_dir + "/top_variant_binary.tsv";
             std::string phenotype_type = covariate.empty() ? "binary" : "quantitative";
@@ -406,8 +406,8 @@ int main(int argc, char* argv[]) {
 
         } else if (!quantitative_path.empty()) {
 
-            std::string output_quantitive = output_dir + "/quantitative_test.tsv";
-            stoat_vcf::chromosome_chuck_quantitative(ptr_vcf, hdr, rec, list_samples, snarls_chr, quantitative, covariate, maf, kinship, num_threads, table_threshold, regression_dir, output_quantitive);
+            std::string output_quantitive = output_dir + "/quantitative_table.tsv";
+            stoat_vcf::chromosome_chuck_quantitative(ptr_vcf, hdr, rec, list_samples, snarls_chr, quantitative, covariate, maf, num_threads, table_threshold, regression_dir, output_quantitive);
 
             std::string output_significative = output_dir + "/top_variant_quantitative.tsv";
             std::string phenotype_type = "quantitative";
@@ -416,8 +416,7 @@ int main(int argc, char* argv[]) {
         } else if (!eqtl_path.empty()) {
 
             std::string eqtl_output = output_dir + "/eqtl_gwas.tsv";
-            stoat_vcf::chromosome_chuck_eqtl(ptr_vcf, hdr, rec, list_samples, snarls_chr, eqtl, covariate, maf, 
-                kinship, num_threads, table_threshold, regression_dir, windows_gene_threshold, eqtl_output);
+            stoat_vcf::chromosome_chuck_eqtl(ptr_vcf, hdr, rec, list_samples, snarls_chr, eqtl, covariate, maf, num_threads, table_threshold, regression_dir, windows_gene_threshold, eqtl_output);
             
             std::string output_significative = output_dir + "/top_variant_eqtl.tsv";
             std::string phenotype_type = "eqtl";

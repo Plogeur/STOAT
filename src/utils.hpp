@@ -16,9 +16,15 @@
 #include <Eigen/Dense>
 #include <fstream>
 
+#include <bdsg/hash_graph.hpp>
+#include <bdsg/packed_graph.hpp>
+#include <bdsg/snarl_distance_index.hpp>
+#include <bdsg/overlays/packed_path_position_overlay.hpp>
+#include <handlegraph/handle_graph.hpp>
+#include <handlegraph/path_handle_graph.hpp>
+
 #include <boost/math/distributions/chi_squared.hpp>
 #include <boost/multiprecision/cpp_dec_float.hpp>
-#include "snarl_data_t.hpp"
 
 using namespace std;
 
