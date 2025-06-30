@@ -609,6 +609,8 @@ std::unordered_map<std::string, std::vector<Snarl_data_t>> loop_over_snarls_writ
     std::string save_chr = "";
 
     // TODO: I think this should just be a size_t child_count, it doesn't look like it ever uses anything except the first value
+    // Matis ans : i think size_t variable isn't in the scope of the lambda, so i use a vector with one element
+    // but i agree that it is not the best way to do it, i will change if it's work with size_t
     std::vector<size_t> children = {0};
     auto count_children = [&](handlegraph::net_handle_t net) {
         children[0] += 1;
@@ -634,7 +636,7 @@ std::unordered_map<std::string, std::vector<Snarl_data_t>> loop_over_snarls_writ
 
         while (!paths.empty()) {
             //TODO: I think path should be a reference so it doesn't get copied
-            //Matis ans: No it elements must remain in copy because it will be used later (i test the & and it breaks the code : 0 paths found)
+            //Matis ans: No it elements must remain in copy because it will be modified later (i test the & and it breaks the code : 0 paths found)
             std::vector<handlegraph::net_handle_t> path = paths.back();
             std::unordered_map<handlegraph::net_handle_t, size_t> dict_path_occ;
             bool cycle = false;
