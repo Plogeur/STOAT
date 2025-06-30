@@ -97,15 +97,6 @@ struct Snarl_data_t {
                     const size_t start_positions_, const size_t end_positions_,
                     std::vector<std::string> type_variants_);  // Assuming path_nodes correspond to type_variants
 
-        // Getters
-        const std::pair<size_t, size_t>& get_snarl_id() const;
-        const std::vector<Path_traversal_t>& get_snarl_paths() const;
-        const size_t& get_start_positions() const;
-        const size_t& get_end_positions() const;
-        const std::vector<std::string>& get_type_variants() const;
-        const std::tuple<std::string, std::vector<Path_traversal_t>, size_t, size_t, std::vector<std::string>>& get_snarl() const;
-
-    private:
         std::vector<std::string> type_variants;
         std::vector<Path_traversal_t> snarl_paths;
         std::pair<size_t, size_t> snarl_id; // handlegraph::subrange_t Snarl_data_t::snarl_id
