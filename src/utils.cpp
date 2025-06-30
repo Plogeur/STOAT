@@ -196,6 +196,5 @@ sample_hap_t get_sample_and_haplotype(const handlegraph::PathPositionHandleGraph
 
     return result;
 }
-}
 
 } // namespace stoat_vcf

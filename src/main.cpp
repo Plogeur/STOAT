@@ -170,23 +170,15 @@ int main(int argc, char* argv[]) {
                 case 'b': binary_path = optarg; phenotype++; stoat_vcf::check_file(binary_path); break;
                 case 'q': quantitative_path = optarg; phenotype++; stoat_vcf::check_file(quantitative_path); break;
                 case 'e': eqtl_path = optarg; phenotype++; stoat_vcf::check_file(eqtl_path); break;
-                case 'v': vcf_path = optarg; stoat_vcf::check_file(vcf_path); break;
-                case 's': snarl_path = optarg; stoat_vcf::check_file(snarl_path); break;
-                case 'p': pg_path = optarg; stoat_vcf::check_file(pg_path); break;
-                case 'd': dist_path = optarg; stoat_vcf::check_file(dist_path); break;
-                case 'r': chromosome_path = optarg; stoat_vcf::check_file(chromosome_path); break;
-                case 'b': binary_path = optarg; phenotype++; stoat_vcf::check_file(binary_path); break;
-                case 'q': quantitative_path = optarg; phenotype++; stoat_vcf::check_file(quantitative_path); break;
-                case 'e': eqtl_path = optarg; phenotype++; stoat_vcf::check_file(eqtl_path); break;
                 case 'm': make_bed = true; break;
-                case 'c': covariate_path = optarg; stoat_vcf::stoat_vcf::check_file(covariate_path); break;
+                case 'c': covariate_path = optarg; stoat_vcf::check_file(covariate_path); break;
                 case 'C': {
                     std::stringstream ss(optarg);
                     std::string token;
                     while (std::getline(ss, token, ',')) covar_names.push_back(token);
                     break;
                 }
-                case 'k': kinship_path = optarg; stoat_vcf::stoat_vcf::check_file(kinship_path); break;
+                case 'k': kinship_path = optarg; stoat_vcf::check_file(kinship_path); break;
                 case 'g': gaf = true; break;
                 case 'i':
                     children_threshold = std::stoi(optarg);
@@ -209,7 +201,7 @@ int main(int argc, char* argv[]) {
                         return EXIT_FAILURE;
                     }
                     break;
-                case 'G': gene_position_path = optarg; stoat_vcf::stoat_vcf::check_file(gene_position_path); break;
+                case 'G': gene_position_path = optarg; stoat_vcf::check_file(gene_position_path); break;
                 case 'w':
                     windows_gene_threshold = std::stoi(optarg);
                     if (windows_gene_threshold < 1) {
@@ -274,7 +266,7 @@ int main(int argc, char* argv[]) {
             std::cout << "Warning : chromosome_path file not provided, 'ref' reference chromosome name will be used instead" << std::endl;
         }
 
-        std::unordered_set<std::string> ref_chr = (!chromosome_path.empty()) ? stoat_vcf::stoat_vcf::parse_chromosome_reference(chromosome_path) : std::unordered_set<std::string>{"ref"};
+        std::unordered_set<std::string> ref_chr = (!chromosome_path.empty()) ? stoat_vcf::parse_chromosome_reference(chromosome_path) : std::unordered_set<std::string>{"ref"};
         std::string regression_dir = output_dir + "/regression";
 
         if (table_threshold != -1) {
@@ -316,7 +308,7 @@ int main(int argc, char* argv[]) {
         bcf1_t* rec;
 
         if (!only_snarl_parsing) {
-            std::tie(list_samples, ptr_vcf, hdr, rec) = stoat_vcf::stoat_vcf::parseHeader(vcf_path); 
+            std::tie(list_samples, ptr_vcf, hdr, rec) = stoat_vcf::parseHeader(vcf_path); 
         }
 
         std::vector<bool> binary;
@@ -331,13 +323,13 @@ int main(int argc, char* argv[]) {
         }
 
         if (!binary_path.empty()) {
-            binary = stoat_vcf::stoat_vcf::parse_binary_pheno(binary_path, list_samples);
+            binary = stoat_vcf::parse_binary_pheno(binary_path, list_samples);
 
         } else if (!quantitative_path.empty()) {
-            quantitative = stoat_vcf::stoat_vcf::parse_quantitative_pheno(quantitative_path, list_samples);
+            quantitative = stoat_vcf::parse_quantitative_pheno(quantitative_path, list_samples);
 
         } else if (!eqtl_path.empty() && !gene_position_path.empty()) {
-            eqtl = stoat_vcf::stoat_vcf::parse_qtl_gene_file(eqtl_path, gene_position_path, list_samples);
+            eqtl = stoat_vcf::parse_qtl_gene_file(eqtl_path, gene_position_path, list_samples);
         }
 
         // stoat_vcf::KinshipMatrix kinship;
@@ -356,7 +348,6 @@ int main(int argc, char* argv[]) {
         std::unique_ptr<bdsg::PackedPositionOverlay> pp_overlay;
 
         if (!snarl_path.empty()){ // If we have already saved the paths in snarls, load them
-            snarls_chr = stoat_vcf::parse_snarl_path(snarl_path);
             snarls_chr = stoat_vcf::parse_snarl_path(snarl_path);
         } else { // Otherwise, find them from the graph and snarl tree
             std::cout << "Start snarl analysis... " << std::endl;
@@ -418,7 +409,7 @@ int main(int argc, char* argv[]) {
         } else if (!quantitative_path.empty()) {
 
             std::string output_quantitive = output_dir + "/quantitative_test.tsv";
-            stoat_vcf::chromosome_chuck_quantitative(*stree, ptr_vcf, hdr, rec, list_samples, snarls_chr, quantitative, covariate, maf, kinship, num_threads, table_threshold, regression_dir, output_quantitive);
+            stoat_vcf::chromosome_chuck_quantitative(*stree, ptr_vcf, hdr, rec, list_samples, snarls_chr, quantitative, covariate, maf, num_threads, table_threshold, regression_dir, output_quantitive);
 
             std::string output_significative = output_dir + "/top_variant_quantitative.tsv";
             std::string phenotype_type = "quantitative";
