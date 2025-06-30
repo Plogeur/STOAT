@@ -22,6 +22,9 @@
 
 using namespace std;
 
+namespace stoat_vcf {
+
+std::string format_group_paths(const std::vector<size_t>& g0, const std::vector<size_t>& g1);
 std::string set_precision(const double& value);
 std::string set_precision_float_50(const boost::multiprecision::cpp_dec_float_50& value);
 
@@ -63,6 +66,7 @@ struct sample_hap_t {
         }
     }
 };
+
 inline std::ostream& operator<<(std::ostream& out, const sample_hap_t& sample) {
     return out << sample.sample << "#" << sample.haplotype;
 }
@@ -75,5 +79,7 @@ template<typename T>
 bool is_equal(T a, T b, T e = std::numeric_limits<T>::epsilon()) {
     return std::fabs(a-b) <= e;
 };
+
+} // namespace stoat_vcf
 
 #endif

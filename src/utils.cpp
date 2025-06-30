@@ -1,5 +1,20 @@
 #include "utils.hpp"
 
+namespace stoat_vcf {
+
+std::string format_group_paths(const std::vector<size_t>& g0, const std::vector<size_t>& g1) {
+
+    std::string result;
+    size_t numb_col = g0.size();
+    for (size_t index_col = 0; index_col < numb_col; ++index_col) {
+        result += std::to_string(g0[index_col]) + ":" + std::to_string(g1[index_col]);
+        if (index_col < numb_col - 1) {
+            result += ","; // Separate row pairs with ','
+        }
+    }
+    return result;
+}
+
 std::string set_precision(const double& value) {
     std::ostringstream oss;
     oss << std::setprecision(4);
@@ -190,3 +205,5 @@ sample_hap_t get_sample_and_haplotype(const handlegraph::PathPositionHandleGraph
 
     return result;
 }
+
+} // namespace stoat_vcf

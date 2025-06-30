@@ -31,7 +31,7 @@ public:
     const std::vector<uint8_t>& get_matrix() const;
 
     // Get the row_header
-    const std::unordered_map<Edge_t, size_t>& get_row_header() const;
+    const std::unordered_map<stoat_vcf::Edge_t, size_t>& get_row_header() const;
 
     // Get the maximum index into the vector representing the matrix
     size_t getMaxElement() const;
@@ -40,16 +40,16 @@ public:
     void expandMatrix();
 
     // Reset row_header
-    void set_row_header(const std::unordered_map<Edge_t, size_t>& row_header);
+    void set_row_header(const std::unordered_map<stoat_vcf::Edge_t, size_t>& row_header);
 
     // Shrink to use the minimum amount of memory possible allowing current_rows
     void shrink(size_t current_rows);
 
     // Return an iterator to the given snarl in row_header
-    std::unordered_map<Edge_t, size_t>::const_iterator find_edge(const Edge_t& edge) const;
+    std::unordered_map<stoat_vcf::Edge_t, size_t>::const_iterator find_edge(const stoat_vcf::Edge_t& edge) const;
 
     // Return row_header_end, an iterator to the end of row_header
-    std::unordered_map<Edge_t, size_t>::const_iterator get_end_dict() const;
+    std::unordered_map<stoat_vcf::Edge_t, size_t>::const_iterator get_end_dict() const;
 
     // Reset row_header_end to be the end of row_header
     void set_end_dict();
@@ -58,8 +58,8 @@ private:
     size_t cols_;
     size_t MaxElement;
     std::vector<uint8_t> matrix_1D;
-    std::unordered_map<Edge_t, size_t> row_header;
-    std::unordered_map<Edge_t, size_t>::iterator row_header_end;
+    std::unordered_map<stoat_vcf::Edge_t, size_t> row_header;
+    std::unordered_map<stoat_vcf::Edge_t, size_t>::iterator row_header_end;
 };
 
 } // end namespace stoat_vcf

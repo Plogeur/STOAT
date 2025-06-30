@@ -85,10 +85,10 @@ void binary_stat_test(const std::vector<size_t>& g0, const std::vector<size_t>& 
 size_t create_binary_table(
     std::vector<size_t>& g0, std::vector<size_t>& g1,
     const std::vector<bool>& binary_phenotype, 
-    const std::vector<Path_traversal_t>& list_path_snarl, 
+    const std::vector<stoat_vcf::Path_traversal_t>& list_path_snarl, 
     const size_t& number_paths,
     const size_t& number_samples,
-    const EdgeBySampleMatrix& matrix);
+    const stoat_vcf::EdgeBySampleMatrix& matrix);
 
 // Does at least one column meet the MAF threshold?
 bool check_MAF_threshold(

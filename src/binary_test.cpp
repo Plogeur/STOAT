@@ -156,15 +156,15 @@ void logistic_regression(
     double ll_null = calculate_log_likelihood(y, p_null);
     double r2 = clamp(1.0 - (ll_full / ll_null), 0.0, 1.0);
 
-    std::vector<double> p_values_adjusted = adjusted_holm(p_values);
+    std::vector<double> p_values_adjusted = stoat_vcf::adjusted_holm(p_values);
     size_t min_index = std::distance(p_values_adjusted.begin(), std::min_element(p_values_adjusted.begin(), p_values_adjusted.end()));
     double min_p_value_adjusted = p_values_adjusted[min_index];
 
     // set precision : 4 digit
-    r2_str = set_precision(r2);
-    beta_str = set_precision(beta[min_index]);
-    se_str = set_precision(se[min_index]);
-    p_value_str = set_precision(min_p_value_adjusted);
+    r2_str = stoat_vcf::set_precision(r2);
+    beta_str = stoat_vcf::set_precision(beta[min_index]);
+    se_str = stoat_vcf::set_precision(se[min_index]);
+    p_value_str = stoat_vcf::set_precision(min_p_value_adjusted);
 }
 
 // GLM Implementation with Iteratively Reweighted Least Squares (IRLS)
@@ -267,15 +267,15 @@ void glm_logistic_covar(
     double ll_null = calculate_log_likelihood(y, p_null);
     double r2 = clamp(1.0 - (ll_full / ll_null), 0.0, 1.0);
 
-    std::vector<double> p_values_adjusted = adjusted_holm(p_values);
+    std::vector<double> p_values_adjusted = stoat_vcf::adjusted_holm(p_values);
     size_t min_index = std::distance(p_values_adjusted.begin(), std::min_element(p_values_adjusted.begin(), p_values_adjusted.end()));
     double min_p_value_adjusted = p_values_adjusted[min_index];
 
     // set precision : 4 digit
-    r2_str = set_precision(r2);
-    beta_str = set_precision(beta[min_index]);
-    se_str = set_precision(se[min_index]);
-    p_value_str = set_precision(min_p_value_adjusted);
+    r2_str = stoat_vcf::set_precision(r2);
+    beta_str = stoat_vcf::set_precision(beta[min_index]);
+    se_str = stoat_vcf::set_precision(se[min_index]);
+    p_value_str = stoat_vcf::set_precision(min_p_value_adjusted);
 }
 
 // ------------------------ Chi2 test ------------------------
@@ -295,7 +295,7 @@ std::string chi2_2x2(const size_t& a, const size_t& b, const size_t& c, const si
     double expected_d = (double)(col2) * (row2) / total;
 
     if (expected_a == 0 || expected_b == 0 || expected_c == 0 || expected_d == 0)
-        return set_precision(std::numeric_limits<double>::max());
+        return stoat_vcf::set_precision(std::numeric_limits<double>::max());
 
     double chi2_stat = 0;
     chi2_stat += std::pow((double)a - expected_a, 2) / expected_a;
@@ -306,9 +306,9 @@ std::string chi2_2x2(const size_t& a, const size_t& b, const size_t& c, const si
     if (chi2_stat > 85.0) {
         cpp_dec_float_50 chi2_stat_float_50 = chi2_stat;
         cpp_dec_float_50 pval = 1.0 - boost::math::cdf(cpp_dec_float_50_dist, chi2_stat_float_50);
-        return set_precision_float_50(pval.convert_to<double>());
+        return stoat_vcf::set_precision_float_50(pval.convert_to<double>());
     }
-    return set_precision(1.0 - boost::math::cdf(chi_squared_dist, chi2_stat));
+    return stoat_vcf::set_precision(1.0 - boost::math::cdf(chi_squared_dist, chi2_stat));
 }
 
 // Check if the observed matrix is valid (no zero rows/columns)
@@ -349,12 +349,12 @@ std::string chi2_2xN(const std::vector<size_t>& g0, const std::vector<size_t>& g
         cpp_dec_float_50 chi2_stat_float_50 = chi2;
         boost::math::chi_squared_distribution<cpp_dec_float_50> cpp_dec_float_50_dist_2xN(df);
         cpp_dec_float_50 p_value = 1.0 - boost::math::cdf(cpp_dec_float_50_dist_2xN, chi2_stat_float_50);
-        return set_precision_float_50(p_value);
+        return stoat_vcf::set_precision_float_50(p_value);
     }
 
     boost::math::chi_squared dist_2xN(df);
     double pvalue = 1.0 - boost::math::cdf(dist_2xN, chi2);
-    return set_precision(pvalue);
+    return stoat_vcf::set_precision(pvalue);
 }
 
 // ------------------------ Fisher exact test ------------------------
@@ -452,12 +452,12 @@ std::string fastFishersExactTest(size_t m11, size_t m12,
         preaddp = tprob;
         tprob += cur_prob;
         if (tprob <= preaddp) {
-            return set_precision(preaddp / (cprob + preaddp));
+            return stoat_vcf::set_precision(preaddp / (cprob + preaddp));
         }
         } while (cur11 > 0.5);
     }
 
-    return set_precision(tprob / (cprob + tprob));
+    return stoat_vcf::set_precision(tprob / (cprob + tprob));
 }
 
 // ------------------------ Binary table & stats ------------------------
@@ -499,25 +499,12 @@ void binary_stat_test(const std::vector<size_t>& g0, const std::vector<size_t>& 
     } else {
         chi2_p_value = chi2_2xN(g0, g1);
     }
-    group_paths = format_group_paths(g0, g1);
+    group_paths = stoat_vcf::format_group_paths(g0, g1);
     allele_number_str = std::to_string(allele_number);
     min_row_index_str = std::to_string(min_row_index);
     numb_colum_str = std::to_string(numb_colum);
     inter_group_str = std::to_string(inter_group);
     average_str = std::to_string(average);
-}
-
-std::string format_group_paths(const std::vector<size_t>& g0, const std::vector<size_t>& g1) {
-
-    std::string result;
-    size_t numb_col = g0.size();
-    for (size_t index_col = 0; index_col < numb_col; ++index_col) {
-        result += std::to_string(g0[index_col]) + ":" + std::to_string(g1[index_col]);
-        if (index_col < numb_col - 1) {
-            result += ","; // Separate row pairs with ','
-        }
-    }
-    return result;
 }
 
 size_t create_binary_table(
@@ -531,8 +518,8 @@ size_t create_binary_table(
     size_t total_sum = 0;
     for (size_t idx_g = 0; idx_g < number_paths; ++idx_g) {
         const stoat_vcf::Path_traversal_t& path_snarl = list_path_snarl[idx_g];
-        std::vector<Edge_t> list_edge_path = decompose_path_to_edges(path_snarl);
-        std::vector<size_t> idx_srr_save = identify_path(list_edge_path, matrix, number_samples * 2);
+        std::vector<stoat_vcf::Edge_t> list_edge_path = stoat_vcf::decompose_path_to_edges(path_snarl);
+        std::vector<size_t> idx_srr_save = stoat_vcf::identify_path(list_edge_path, matrix, number_samples * 2);
 
         for (size_t idx : idx_srr_save) {
             bool group = binary_phenotype[idx / 2];

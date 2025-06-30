@@ -259,7 +259,7 @@ std::pair<std::vector<size_t>, std::vector<size_t>> SnarlAnalyser::create_table_
     // Genotype paths
     for (size_t col_idx = 0; col_idx < length_column; ++col_idx) {
         const stoat_vcf::Path_traversal_t& path_snarl = list_path_snarl[col_idx];
-        std::vector<Edge_t> decomposed_snarl = decompose_path_to_edges(path_snarl);
+        std::vector<stoat_vcf::Edge_t> decomposed_snarl = decompose_path_to_edges(path_snarl);
 
         // Identify correct paths
         std::vector<size_t> idx_srr_save = identify_path(decomposed_snarl, matrix, length_sample*2);
@@ -323,7 +323,7 @@ void SnarlAnalyser::create_bim_bed(const std::vector<Snarl_data_t>& snarls,
     // <snarl, paths, pos, type>
     for (const Snarl_data_t& snarl_data_s : snarls) {
 
-        std::string snarl_id = pairToString(snarl_data_s.get_snarl_id());
+        std::string snarl_id = stoat_vcf::pairToString(snarl_data_s.get_snarl_id());
         std::vector<stoat_vcf::Path_traversal_t> list_path_snarl = snarl_data_s.get_snarl_paths();
         size_t start_pos = snarl_data_s.get_start_positions();
 
@@ -409,8 +409,8 @@ inline size_t extract_node_id(const std::string& s, size_t length_s, size_t& i) 
 }
 
 // Decompose path Path_traversal_t to vector Edge_t
-std::vector<Edge_t> decompose_path_to_edges(const stoat_vcf::Path_traversal_t& list_paths) {
-    std::vector<Edge_t> edges;
+std::vector<stoat_vcf::Edge_t> decompose_path_to_edges(const stoat_vcf::Path_traversal_t& list_paths) {
+    std::vector<stoat_vcf::Edge_t> edges;
     const std::vector<Node_traversal_t>& list_nodes = list_paths.get_paths();
     size_t length_s = list_nodes.size();
     edges.reserve(length_s - 1); // Reserve memory
@@ -423,9 +423,9 @@ std::vector<Edge_t> decompose_path_to_edges(const stoat_vcf::Path_traversal_t& l
 }
 
 // Decompose a list of paths Path_traversal_t into a vector of Edge_t
-const std::vector<std::vector<Edge_t>> decompose_path_list_path(const std::vector<stoat_vcf::Path_traversal_t>& list_paths) {
+const std::vector<std::vector<stoat_vcf::Edge_t>> decompose_path_list_path(const std::vector<stoat_vcf::Path_traversal_t>& list_paths) {
     size_t size_list_paths = list_paths.size();
-    std::vector<std::vector<Edge_t>> paths_snarl;
+    std::vector<std::vector<stoat_vcf::Edge_t>> paths_snarl;
     for (const stoat_vcf::Path_traversal_t& path : list_paths) {
         paths_snarl.push_back(decompose_path_to_edges(path));
     }
@@ -433,8 +433,8 @@ const std::vector<std::vector<Edge_t>> decompose_path_list_path(const std::vecto
 }
 
 // Decompose path std::string to vector Edge_t
-std::vector<Edge_t> decompose_path_str_to_edge(const std::string& s) {
-    std::vector<Edge_t> edges;
+std::vector<stoat_vcf::Edge_t> decompose_path_str_to_edge(const std::string& s) {
+    std::vector<stoat_vcf::Edge_t> edges;
     std::vector<Node_traversal_t> nodes;
 
     size_t i = 0;
@@ -462,8 +462,8 @@ std::vector<Edge_t> decompose_path_str_to_edge(const std::string& s) {
 }
 
 // Decompose a list of paths str into a vector of Edge_t
-const std::vector<std::vector<Edge_t>> decompose_path_list_str(const std::vector<std::string>& list_paths) {
-    std::vector<std::vector<Edge_t>> paths_snarl;
+const std::vector<std::vector<stoat_vcf::Edge_t>> decompose_path_list_str(const std::vector<std::string>& list_paths) {
+    std::vector<std::vector<stoat_vcf::Edge_t>> paths_snarl;
     for (const auto& path : list_paths) {
         paths_snarl.push_back(decompose_path_str_to_edge(path));
     }
@@ -471,7 +471,7 @@ const std::vector<std::vector<Edge_t>> decompose_path_list_str(const std::vector
 }
 
 // Retrieve the index of `key` if it exists in the dict. Otherwise, add it and return the new index.
-size_t getOrAddIndex(std::unordered_map<Edge_t, size_t>& edge_index_dict, const Edge_t& key, const size_t& size_edge_index_dict) {
+size_t getOrAddIndex(std::unordered_map<stoat_vcf::Edge_t, size_t>& edge_index_dict, const Edge_t& key, const size_t& size_edge_index_dict) {
     auto it = edge_index_dict.find(key);
     if (it != edge_index_dict.end()) {
         return it->second;
@@ -483,7 +483,7 @@ size_t getOrAddIndex(std::unordered_map<Edge_t, size_t>& edge_index_dict, const 
 }
 
 // Add True to the matrix if snarl is found
-void SnarlAnalyser::push_matrix(const Edge_t& EdgePath, std::unordered_map<Edge_t, size_t>& edge_index_dict, size_t indexColumn) {
+void SnarlAnalyser::push_matrix(const Edge_t& EdgePath, std::unordered_map<stoat_vcf::Edge_t, size_t>& edge_index_dict, size_t indexColumn) {
     
     size_t lengthOrderedMap = edge_index_dict.size();
     size_t idxSnarl = getOrAddIndex(edge_index_dict, EdgePath, lengthOrderedMap);
@@ -500,7 +500,7 @@ void SnarlAnalyser::push_matrix(const Edge_t& EdgePath, std::unordered_map<Edge_
 std::tuple<SnarlAnalyser, htsFile*, bcf_hdr_t*, bcf1_t*> make_matrix(htsFile *ptr_vcf, bcf_hdr_t *hdr, bcf1_t *rec, const std::vector<std::string> &sampleNames, std::string &chr, size_t &num_paths_chr) {
 
     SnarlAnalyser snarl_data(sampleNames, num_paths_chr);
-    std::unordered_map<Edge_t, size_t> edge_dict;
+    std::unordered_map<stoat_vcf::Edge_t, size_t> edge_dict;
 
     // loop over the VCF file for each line and stop where chr is different
     do {
@@ -543,7 +543,7 @@ std::tuple<SnarlAnalyser, htsFile*, bcf_hdr_t*, bcf1_t*> make_matrix(htsFile *pt
         // Decompose snarl paths [vector std::string] into [vector vector Edge_t]
         // paths : >123>213<234,>123<234,>123<234<345
         // list_paths_edge : [[Edge_t(123, 213), Edge_t(213, 234)], [...]]
-        const std::vector<std::vector<Edge_t>> list_paths_edge = decompose_path_list_str(path_list);
+        const std::vector<std::vector<stoat_vcf::Edge_t>> list_paths_edge = decompose_path_list_str(path_list);
 
         for (int i = 0; i < rec->n_sample; ++i) {
             int idex_path_allele_1 = bcf_gt_allele(gt[i * 2]);
@@ -679,7 +679,7 @@ void SnarlAnalyser::binary_table(const std::vector<Snarl_data_t>& snarls,
                     // Plot regression table
                     if (table_threshold != -1 && stoat_vcf::isPValueSignificant(table_threshold, p_value)) {
                         std::string variant_file_name = regression_dir + "/" + snarl_id + ".tsv";
-                        stoat_vcf::writeSignificantTableToTSV(df,stringToVector<std::string>(vectorPathToString(list_path_snarl)), sampleNames, variant_file_name);
+                        stoat_vcf::writeSignificantTableToTSV(df,stringToVector<std::string>((stoat_vcf::vectorPathToString(list_path_snarl)), sampleNames, variant_file_name);
                     }
     
                     // chr, pos, snarl, type, p_value, p_adjusted, t-dist, beta, se, allele_number
@@ -790,7 +790,7 @@ void SnarlAnalyser::quantitative_table(const std::vector<Snarl_data_t>& snarls,
                 
                 if (table_threshold != -1 && stoat_vcf::isPValueSignificant(table_threshold, p_value)) {
                     std::string variant_file_name = regression_dir + "/" + snarl_id + ".tsv";
-                    stoat_vcf::writeSignificantTableToTSV(df,stringToVector<std::string>(vectorPathToString(list_path_snarl)), sampleNames, variant_file_name);
+                    stoat_vcf::writeSignificantTableToTSV(df,stringToVector<std::string>((stoat_vcf::vectorPathToString(list_path_snarl)), sampleNames, variant_file_name);
                 }
                 
                 // chr, pos, snarl, type, p_value, p_adjusted, r2, beta, se, allele_number
@@ -938,7 +938,7 @@ void SnarlAnalyser::eqtl_table(
 
                     if (table_threshold != -1 && stoat_vcf::isPValueSignificant(table_threshold, p_value)) {
                         std::string variant_file_name = regression_dir + "/" + snarl_id + ".tsv";
-                        stoat_vcf::writeSignificantTableToTSV(df,stringToVector<std::string>(vectorPathToString(list_path_snarl)), sampleNames, variant_file_name);
+                        stoat_vcf::writeSignificantTableToTSV(df,stringToVector<std::string>((stoat_vcf::vectorPathToString(list_path_snarl)), sampleNames, variant_file_name);
                     }
 
                    // "CHR\tPOS\tSNARL\tTYPE\tGENE\tP\tP_ADJUSTED\tRSQUARE\tBETA\tSE\tALLELE_NUM\n";

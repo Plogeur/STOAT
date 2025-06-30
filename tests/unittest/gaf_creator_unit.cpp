@@ -3,9 +3,9 @@
 #include <fstream>
 #include <sstream>
 
-TEST_CASE("Calcul des proportions significatives", "[calcul_proportion_signi]") {
+TEST_CASE("Calcul des proportions significatives", "[stoat_vcf::calcul_proportion_signi]") {
     SECTION("Cas normal avec groupes égaux") {
-        auto result = calcul_proportion_signi(10, 10, 0.01);
+        auto result = stoat_vcf::calcul_proportion_signi(10, 10, 0.01);
         REQUIRE(result.first >= 0.0);
         REQUIRE(result.first <= 60.0);
         REQUIRE(result.second >= 0.0);
@@ -14,7 +14,7 @@ TEST_CASE("Calcul des proportions significatives", "[calcul_proportion_signi]") 
     }
 
     SECTION("Cas avec groupes de tailles différentes") {
-        auto result = calcul_proportion_signi(15, 5, 0.01);
+        auto result = stoat_vcf::calcul_proportion_signi(15, 5, 0.01);
         REQUIRE(result.first >= 0.0);
         REQUIRE(result.first <= 60.0);
         REQUIRE(result.second >= 0.0);
@@ -23,7 +23,7 @@ TEST_CASE("Calcul des proportions significatives", "[calcul_proportion_signi]") 
     }
 
     SECTION("Cas limite avec petits groupes") {
-        auto result = calcul_proportion_signi(1, 1, 0.01);
+        auto result = stoat_vcf::calcul_proportion_signi(1, 1, 0.01);
         REQUIRE(result.first >= 0.0);
         REQUIRE(result.first <= 60.0);
         REQUIRE(result.second >= 0.0);
@@ -32,13 +32,13 @@ TEST_CASE("Calcul des proportions significatives", "[calcul_proportion_signi]") 
     }
 
     SECTION("Cas avec groupe vide") {
-        auto result = calcul_proportion_signi(0, 0, 0.01);
+        auto result = stoat_vcf::calcul_proportion_signi(0, 0, 0.01);
         REQUIRE(result.first == 0.0);
         REQUIRE(result.second == 0.0);
     }
 
     SECTION("Cas avec p-value extrême") {
-        auto result = calcul_proportion_signi(10, 10, 1e-10);
+        auto result = stoat_vcf::calcul_proportion_signi(10, 10, 1e-10);
         REQUIRE(result.first >= 0.0);
         REQUIRE(result.first <= 60.0);
         REQUIRE(result.second >= 0.0);
@@ -85,10 +85,10 @@ TEST_CASE("Décomposition de snarl", "[stoat_vcf::decompose_snarl]") {
     }
 }
 
-TEST_CASE("Écriture des lignes GAF", "[write_gaf_lines]") {
+TEST_CASE("Écriture des lignes GAF", "[stoat_vcf::write_gaf_lines]") {
     SECTION("Test d'écriture de base") {
         std::ofstream outfile("test_gaf.txt");
-        write_gaf_lines("seq1", "1>2>3", 100, 0.75, outfile);
+        stoat_vcf::write_gaf_lines("seq1", "1>2>3", 100, 0.75, outfile);
         outfile.close();
 
         std::ifstream infile("test_gaf.txt");
