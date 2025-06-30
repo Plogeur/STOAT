@@ -134,7 +134,8 @@ Snarl_data_t::Snarl_data_t(const std::pair<size_t, size_t>& snarl_id_,
     snarl_id(snarl_id_),
     snarl_paths(std::move(snarl_paths_)),
     start_positions(start_positions_),
-    end_positions(end_positions_) {}
+    end_positions(end_positions_),
+    type_variants(std::move(type_variants_) {}
 
 const std::pair<size_t, size_t>& Snarl_data_t::get_snarl_id() const { return snarl_id; }
 const std::vector<Path_traversal_t>& Snarl_data_t::get_snarl_paths() const { return snarl_paths; }
