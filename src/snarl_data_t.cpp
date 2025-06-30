@@ -128,16 +128,13 @@ std::vector<Path_traversal_t> stringToVectorPath(std::string& input) {
 
 // Add a snarl
 Snarl_data_t::Snarl_data_t(const std::pair<size_t, size_t>& snarl_id_,
-    const std::vector<Path_traversal_t>& snarl_paths_,
+    std::vector<Path_traversal_t> snarl_paths_,
     const size_t start_positions_, const size_t end_positions_,
-    const std::vector<std::string>& type_variants_) {
-
-    type_variants = type_variants_;
-    snarl_paths = snarl_paths_;
-    snarl_id = snarl_id_;
-    start_positions = start_positions_;
-    end_positions = end_positions_;
-}
+    std::vector<std::string> type_variants_) :
+    snarl_id(snarl_id_),
+    snarl_paths(std::move(snarl_paths_)),
+    start_positions(start_positions_),
+    end_positions(end_positions_) {}
 
 const std::pair<size_t, size_t>& Snarl_data_t::get_snarl_id() const { return snarl_id; }
 const std::vector<Path_traversal_t>& Snarl_data_t::get_snarl_paths() const { return snarl_paths; }

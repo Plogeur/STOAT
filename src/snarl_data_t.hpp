@@ -93,9 +93,9 @@ struct Snarl_data_t {
     public:
         // Constructor definition
         Snarl_data_t(const std::pair<size_t, size_t>& snarl_id_,
-                    const std::vector<Path_traversal_t>& snarl_paths_,
+                    std::vector<Path_traversal_t> snarl_paths_,
                     const size_t start_positions_, const size_t end_positions_,
-                    const std::vector<std::string>& type_variants_);  // Assuming path_nodes correspond to type_variants
+                    std::vector<std::string> type_variants_);  // Assuming path_nodes correspond to type_variants
 
         // Getters
         const std::pair<size_t, size_t>& get_snarl_id() const;
