@@ -24,50 +24,7 @@
 
 using namespace std;
 
-// ------------------------ Logistic regression ------------------------
-double normal_cdf(double z);
-inline double sigmoid(double x);
-inline double clamp(double x, double lo, double hi);
-double calculate_log_likelihood(const Eigen::VectorXd& y, const Eigen::VectorXd& p);
-
-// Standard normal cumulative distribution function
-double normal_cdf(double z);
-
-// Sigmoid function
-inline double sigmoid(double x);
-
-// Clamp helper
-inline double clamp(double x, double lo, double hi);
-
-void logistic_regression(
-    const std::vector<std::vector<double>>& variants_data,
-    const std::vector<bool>& phenotype,
-    std::string& p_value_out,
-    std::string& beta_out,
-    std::string& se_out,
-    std::string& r2_out);
-
-void glm_logistic_covar(
-    const std::vector<std::vector<double>>& variant_data,
-    const std::vector<bool>& phenotype,
-    const std::vector<std::vector<double>>& covariates,
-    std::string& p_value_str, std::string& beta_str, 
-    std::string& se_str, std::string& r2_str);
-    
-// ------------------------ Chi2 test ------------------------
-
-// Function to perform the Chi-square test on row size > 2 
-std::string chi2_2xN(const std::vector<size_t>& g0, const std::vector<size_t>& g1);
-
-// Function to perform the Chi-square test on row size == 2 
-std::string chi2_2x2(const size_t& m11, const size_t& m12,
-    const size_t& m21, const size_t& m22);
-
-// ------------------------ Fisher exact test ------------------------
-
-// Function to perform Fisher's exact test
-std::string fastFishersExactTest(size_t m11, size_t m12,
-    size_t m21, size_t m22);
+namespace stoat_vcf {
 
 // ------------------------ Binary table ------------------------
 
@@ -95,5 +52,7 @@ bool check_MAF_threshold(
     const std::vector<size_t>& g0, const std::vector<size_t>& g1,
     const size_t& totalSum, const size_t& length_column_headers, 
     const double& maf);
+
+} // namespace stoat_vcf
 
 #endif

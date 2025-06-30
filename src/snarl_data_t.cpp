@@ -86,7 +86,7 @@ std::pair<size_t, size_t> stringToPair(const std::string& str) {
     return {first, second};
 }
 
-std::string vectorPathToString(const std::vector<handlegraph::Path_traversal_t>& vec_paths) {
+std::string vectorPathToString(const std::vector<stoat_vcf::Path_traversal_t>& vec_paths) {
     std::ostringstream oss;
     for (size_t i = 0; i < vec_paths.size(); ++i) {
         if (i > 0) oss << ",";
@@ -95,8 +95,8 @@ std::string vectorPathToString(const std::vector<handlegraph::Path_traversal_t>&
     return oss.str();
 }
 
-std::vector<handlegraph::Path_traversal_t> stringToVectorPath(std::string& input) {
-    std::vector<handlegraph::Path_traversal_t> vec_paths;
+std::vector<stoat_vcf::Path_traversal_t> stringToVectorPath(std::string& input) {
+    std::vector<stoat_vcf::Path_traversal_t> vec_paths;
     std::istringstream iss(input);
     std::string path_str;
 
@@ -128,7 +128,7 @@ std::vector<handlegraph::Path_traversal_t> stringToVectorPath(std::string& input
 
 // Add a snarl
 Snarl_data_t::Snarl_data_t(const std::pair<size_t, size_t>& snarl_id_,
-    const std::vector<handlegraph::Path_traversal_t>& snarl_paths_,
+    const std::vector<stoat_vcf::Path_traversal_t>& snarl_paths_,
     const size_t start_positions_, const size_t end_positions_,
     const std::vector<std::string>& type_variants_) {
 
@@ -140,11 +140,11 @@ Snarl_data_t::Snarl_data_t(const std::pair<size_t, size_t>& snarl_id_,
 }
 
 const std::pair<size_t, size_t>& Snarl_data_t::get_snarl_id() const { return snarl_id; }
-const std::vector<handlegraph::Path_traversal_t>& Snarl_data_t::get_snarl_paths() const { return snarl_paths; }
+const std::vector<stoat_vcf::Path_traversal_t>& Snarl_data_t::get_snarl_paths() const { return snarl_paths; }
 const size_t& Snarl_data_t::get_start_positions() const { return start_positions; }
 const size_t& Snarl_data_t::get_end_positions() const { return end_positions; }
 const std::vector<std::string>& Snarl_data_t::get_type_variants() const { return type_variants; }
-const std::tuple<std::string, std::vector<handlegraph::Path_traversal_t>, size_t, size_t, std::vector<std::string>>& Snarl_data_t::get_snarl() const {
+const std::tuple<std::string, std::vector<stoat_vcf::Path_traversal_t>, size_t, size_t, std::vector<std::string>>& Snarl_data_t::get_snarl() const {
     return std::make_tuple(pairToString(snarl_id), snarl_paths, start_positions, end_positions, type_variants);
 }
 
@@ -461,13 +461,13 @@ std::vector<std::tuple<handlegraph::net_handle_t, std::string, size_t, size_t, b
     return snarls;
 }
 
-std::tuple<std::vector<handlegraph::Path_traversal_t>, std::vector<std::string>> fill_pretty_paths(
+std::tuple<std::vector<stoat_vcf::Path_traversal_t>, std::vector<std::string>> fill_pretty_paths(
     bdsg::SnarlDistanceIndex& stree, 
     bdsg::PackedGraph& pg, 
     std::vector<std::vector<handlegraph::net_handle_t>>& finished_paths) {
     
     // list of paths
-    std::vector<handlegraph::Path_traversal_t> pretty_paths;
+    std::vector<stoat_vcf::Path_traversal_t> pretty_paths;
 
     // seq_net, minimum_distance, maximun_distance, size_path, sum_path
     // Used to calculate the type of variant

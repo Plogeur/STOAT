@@ -13,10 +13,6 @@
 #include <unordered_set>
 #include <tuple>
 #include <iomanip>
-#include <Eigen/Dense>
-#include <boost/math/distributions/fisher_f.hpp>
-#include <boost/math/distributions/students_t.hpp>  // For t-distribution
-#include <boost/math/distributions/chi_squared.hpp>
 
 #include "matrix.hpp"
 #include "snarl_analyser.hpp"
@@ -24,19 +20,7 @@
 
 using namespace std;
 
-// Linear regression function that returns a tuple of p_value, standard error (se), and beta
-void linear_regression(
-    const std::vector<std::vector<double>>& df,
-    const std::vector<double>& quantitative_phenotype,
-    std::string& p_value_str, std::string& beta_str, 
-    std::string& se_str, std::string& r2_str);
-
-void glm_quantitative(
-    const std::vector<std::vector<double>>& df,
-    const std::vector<double>& quantitative_phenotype,
-    const std::vector<std::vector<double>>& covar,
-    std::string& p_value_str, std::string& beta_str, 
-    std::string& se_str, std::string& r2_str);
+namespace stoat_vcf {
 
 std::tuple<std::vector<std::vector<double>>, size_t, std::unordered_set<size_t>, bool, std::vector<size_t>>
 process_table_quantitative(
@@ -70,5 +54,7 @@ create_eqtl_table(
     const size_t& number_samples,
     const std::vector<stoat_vcf::Path_traversal_t>& column_headers,
     const stoat_vcf::EdgeBySampleMatrix& matrix);
+
+} // namespace stoat_vcf
 
 #endif

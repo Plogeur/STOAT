@@ -409,7 +409,7 @@ inline size_t extract_node_id(const std::string& s, size_t length_s, size_t& i) 
 }
 
 // Decompose path Path_traversal_t to vector Edge_t
-std::vector<stoat_vcf::Edge_t> decompose_path_to_edges(const stoat_vcf::Path_traversal_t& list_paths) {
+std::vector<stoat_vcf::Edge_t> decompose_path_to_edges(conststoat_vcf::Path_traversal_t& list_paths) {
     std::vector<stoat_vcf::Edge_t> edges;
     const std::vector<Node_traversal_t>& list_nodes = list_paths.get_paths();
     size_t length_s = list_nodes.size();
@@ -654,7 +654,7 @@ void SnarlAnalyser::binary_table(const std::vector<Snarl_data_t>& snarls,
 
                 if (!covar.empty()) {
                     // Logistic regression
-                    const auto& [df, phenotype_filtered, allele_number, allele_paths] = create_quantitative_table(length_sample, list_path_snarl, binary_phenotype, matrix);
+                    const auto& [df, phenotype_filtered, allele_number, allele_paths] = stoat_vcf::create_quantitative_table(length_sample, list_path_snarl, binary_phenotype, matrix);
                     bool df_filtration = false;
                     bool df_empty = false;
 
@@ -679,7 +679,7 @@ void SnarlAnalyser::binary_table(const std::vector<Snarl_data_t>& snarls,
                     // Plot regression table
                     if (table_threshold != -1 && stoat_vcf::isPValueSignificant(table_threshold, p_value)) {
                         std::string variant_file_name = regression_dir + "/" + snarl_id + ".tsv";
-                        stoat_vcf::writeSignificantTableToTSV(df,stringToVector<std::string>((stoat_vcf::vectorPathToString(list_path_snarl)), sampleNames, variant_file_name);
+                        stoat_vcf::writeSignificantTableToTSV(df, stoat_vcf::stringToVector<std::string>(stoat_vcf::vectorPathToString(list_path_snarl)), sampleNames, variant_file_name);
                     }
     
                     // chr, pos, snarl, type, p_value, p_adjusted, t-dist, beta, se, allele_number
@@ -755,7 +755,7 @@ void SnarlAnalyser::quantitative_table(const std::vector<Snarl_data_t>& snarls,
                 const Snarl_data_t& snarl_data_s = snarls[itr];
                 const auto& [snarl_id, list_path_snarl, start_pos, end_pos, type_var] = snarl_data_s.get_snarl();
 
-                const auto& [df, phenotype_filtered, allele_number, allele_paths] = create_quantitative_table(length_sample, list_path_snarl, quantitative_phenotype, matrix);
+                const auto& [df, phenotype_filtered, allele_number, allele_paths] = stoat_vcf::create_quantitative_table(length_sample, list_path_snarl, quantitative_phenotype, matrix);
                 bool df_filtration = false;
                 bool df_empty = false;
 
@@ -790,7 +790,7 @@ void SnarlAnalyser::quantitative_table(const std::vector<Snarl_data_t>& snarls,
                 
                 if (table_threshold != -1 && stoat_vcf::isPValueSignificant(table_threshold, p_value)) {
                     std::string variant_file_name = regression_dir + "/" + snarl_id + ".tsv";
-                    stoat_vcf::writeSignificantTableToTSV(df,stringToVector<std::string>((stoat_vcf::vectorPathToString(list_path_snarl)), sampleNames, variant_file_name);
+                    stoat_vcf::writeSignificantTableToTSV(df, stoat_vcf::stringToVector<std::string>(stoat_vcf::vectorPathToString(list_path_snarl)), sampleNames, variant_file_name);
                 }
                 
                 // chr, pos, snarl, type, p_value, p_adjusted, r2, beta, se, allele_number
@@ -938,7 +938,7 @@ void SnarlAnalyser::eqtl_table(
 
                     if (table_threshold != -1 && stoat_vcf::isPValueSignificant(table_threshold, p_value)) {
                         std::string variant_file_name = regression_dir + "/" + snarl_id + ".tsv";
-                        stoat_vcf::writeSignificantTableToTSV(df,stringToVector<std::string>((stoat_vcf::vectorPathToString(list_path_snarl)), sampleNames, variant_file_name);
+                        stoat_vcf::writeSignificantTableToTSV(df, stoat_vcf::stringToVector<std::string>(stoat_vcf::vectorPathToString(list_path_snarl)), sampleNames, variant_file_name);
                     }
 
                    // "CHR\tPOS\tSNARL\tTYPE\tGENE\tP\tP_ADJUSTED\tRSQUARE\tBETA\tSE\tALLELE_NUM\n";
