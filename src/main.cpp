@@ -383,7 +383,7 @@ int main(int argc, char* argv[]) {
 
             const std::string output_fam = output_dir + ".fam";
             stoat_vcf::create_fam(pheno, output_fam);
-            stoat_vcf::chromosome_chuck_make_bed(ptr_vcf, hdr, rec, list_samples, snarls_chr, output_dir);
+            stoat_vcf::chromosome_chuck_make_bed(*stree, ptr_vcf, hdr, rec, list_samples, snarls_chr, output_dir);
 
             auto end_1 = std::chrono::high_resolution_clock::now();
             std::cout << "Time genotype plink files creations : " << std::chrono::duration<double>(end_1 - start_1).count() << " s" << std::endl;
@@ -392,7 +392,7 @@ int main(int argc, char* argv[]) {
         } else if (!binary_path.empty()) {
 
             std::string output_binary = output_dir + "/binary_test.tsv";
-            stoat_vcf::chromosome_chuck_binary(ptr_vcf, hdr, rec, list_samples, snarls_chr, binary, covariate, maf, kinship, num_threads, table_threshold, regression_dir, output_binary);
+            stoat_vcf::chromosome_chuck_binary(*stree, ptr_vcf, hdr, rec, list_samples, snarls_chr, binary, covariate, maf, kinship, num_threads, table_threshold, regression_dir, output_binary);
 
             std::string output_significative = output_dir + "/top_variant_binary.tsv";
             std::string phenotype_type = covariate.empty() ? "binary" : "quantitative";
@@ -406,7 +406,7 @@ int main(int argc, char* argv[]) {
         } else if (!quantitative_path.empty()) {
 
             std::string output_quantitive = output_dir + "/quantitative_test.tsv";
-            stoat_vcf::chromosome_chuck_quantitative(ptr_vcf, hdr, rec, list_samples, snarls_chr, quantitative, covariate, maf, kinship, num_threads, table_threshold, regression_dir, output_quantitive);
+            stoat_vcf::chromosome_chuck_quantitative(*stree, ptr_vcf, hdr, rec, list_samples, snarls_chr, quantitative, covariate, maf, kinship, num_threads, table_threshold, regression_dir, output_quantitive);
 
             std::string output_significative = output_dir + "/top_variant_quantitative.tsv";
             std::string phenotype_type = "quantitative";
@@ -415,7 +415,7 @@ int main(int argc, char* argv[]) {
         } else if (!eqtl_path.empty()) {
 
             std::string eqtl_output = output_dir + "/eqtl_gwas.tsv";
-            stoat_vcf::chromosome_chuck_eqtl(ptr_vcf, hdr, rec, list_samples, snarls_chr, eqtl, covariate, maf, 
+            stoat_vcf::chromosome_chuck_eqtl(*stree, ptr_vcf, hdr, rec, list_samples, snarls_chr, eqtl, covariate, maf, 
                 kinship, num_threads, table_threshold, regression_dir, windows_gene_threshold, eqtl_output);
             
             std::string output_significative = output_dir + "/top_variant_eqtl.tsv";
