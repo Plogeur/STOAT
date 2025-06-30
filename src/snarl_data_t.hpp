@@ -92,23 +92,14 @@ struct Path_traversal_t {
 struct Snarl_data_t {
     public:
         // Constructor definition
-        Snarl_data_t(const std::pair<size_t, size_t>& snarl_id_,
-                    const std::vector<Path_traversal_t>& snarl_paths_,
+        Snarl_data_t(net_handle_t snarl,
+                    std::vector<Path_traversal_t> snarl_paths_,
                     const size_t start_positions_, const size_t end_positions_,
-                    const std::vector<std::string>& type_variants_);  // Assuming path_nodes correspond to type_variants
+                    std::vector<std::string> type_variants_);  // Assuming path_nodes correspond to type_variants
 
-        // Getters
-        const std::pair<size_t, size_t>& get_snarl_id() const;
-        const std::vector<Path_traversal_t>& get_snarl_paths() const;
-        const size_t& get_start_positions() const;
-        const size_t& get_end_positions() const;
-        const std::vector<std::string>& get_type_variants() const;
-        const std::tuple<std::string, std::vector<Path_traversal_t>, size_t, size_t, std::vector<std::string>>& get_snarl() const;
-
-    private:
         std::vector<std::string> type_variants;
         std::vector<Path_traversal_t> snarl_paths;
-        std::pair<size_t, size_t> snarl_id; // handlegraph::subrange_t Snarl_data_t::snarl_id
+        net_handle_t snarl; // handlegraph::subrange_t Snarl_data_t::snarl_id
         size_t start_positions;
         size_t end_positions;
 };
@@ -161,7 +152,7 @@ parse_graph_tree(const std::string& pg_file, const std::string& dist_file);
 std::vector<std::string> calcul_pos_type_variant(const std::vector<std::tuple<size_t, size_t, size_t, size_t, size_t, bool>>& list_length_paths);
 
 // Function to find snarl ID
-std::pair<size_t, size_t> find_snarl_id(bdsg::SnarlDistanceIndex& stree, handlegraph::net_handle_t& snarl);
+std::pair<size_t, size_t> find_snarl_id(const bdsg::SnarlDistanceIndex& stree, const handlegraph::net_handle_t& snarl);
 
 // Function to follow edges
 void follow_edges(bdsg::SnarlDistanceIndex& stree,

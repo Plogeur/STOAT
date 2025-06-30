@@ -88,4 +88,7 @@ bool is_equal(T a, T b, T e = std::numeric_limits<T>::epsilon()) {
 
 } // namespace stoat_vcf
 
+} // namespace stoat_vcf
+
+}
 #endif

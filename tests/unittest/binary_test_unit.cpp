@@ -2,6 +2,7 @@
 #include "../../src/binary_table.hpp"
 #include "../../src/stats_test.hpp"
 
+using namespace stoat_vcf; 
 TEST_CASE("Chi-square & Fisher test function", "[chi2_2xN]") {
     SECTION("Valid chi-square test & valid Fisher test calculation") {
         std::vector<size_t> g0 = {10, 20};
