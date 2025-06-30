@@ -31,17 +31,9 @@ using namespace std;
 
 // ------------------------ Linear regression ------------------------
 
-// Linear regression function OLS with intercept
-void linear_regression(
-    const std::vector<std::vector<double>>& df,
-    const std::vector<double>& quantitative_phenotype,
-    std::string& p_value_str, 
-    std::string& beta_str, 
-    std::string& se_str, 
-    std::string& r2_str);
+// Linear regression function OLS with intercept + covariate if not empty
 
-// Linear regression function OLS with intercept + covariate
-void glm_quantitative(
+void linear_regression(
     const std::vector<std::vector<double>>& df,
     const std::vector<double>& quantitative_phenotype,
     const std::vector<std::vector<double>>& covar,
@@ -67,14 +59,6 @@ inline double sigmoid(double x);
 inline double clamp(double x, double lo, double hi);
 
 void logistic_regression(
-    const std::vector<std::vector<double>>& variants_data,
-    const std::vector<bool>& phenotype,
-    std::string& p_value_out,
-    std::string& beta_out,
-    std::string& se_out,
-    std::string& r2_out);
-
-void glm_logistic_covar(
     const std::vector<std::vector<double>>& variant_data,
     const std::vector<bool>& phenotype,
     const std::vector<std::vector<double>>& covariates,

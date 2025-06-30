@@ -662,12 +662,9 @@ void SnarlAnalyser::binary_table(const bdsg::SnarlDistanceIndex& stree, const st
                     if (df_empty || df_filtration) { // filtred variant
                         // do not analyse this snarl
                         continue;
-                    } else if (!covar.empty()) { 
-                        // logistic regression
-                        logistic_regression(df, phenotype_filtered, p_value, beta, se, r2);
                     } else {
-                        // logistic regression with covariates
-                        glm_logistic_covar(df, phenotype_filtered, covar, p_value, beta, se, r2);
+                        // logistic regression with covariates if not empty
+                        logistic_regression(df, phenotype_filtered, covar, p_value, beta, se, r2);
                     }
 
                     // } else { // lmm
@@ -692,23 +689,34 @@ void SnarlAnalyser::binary_table(const bdsg::SnarlDistanceIndex& stree, const st
                     std::vector<size_t> g0(length_column_headers, 0); // can be replace by size_t arr[length_column_headers] = {0};
                     std::vector<size_t> g1(length_column_headers, 0); // can be replace by size_t arr[length_column_headers] = {0};
 
-                    size_t total_sum = create_binary_table(g0, g1, binary_phenotype, snarl_data_s.snarl_paths, length_column_headers, number_samples, matrix);
+                    std::cout << "create_binary_table start" << std::endl;
+
+                    size_t total_sum = stoat_vcf::create_binary_table(g0, g1, binary_phenotype, snarl_data_s.snarl_paths, length_column_headers, number_samples, matrix);
                     bool df_filtration = check_MAF_threshold(g0, g1, total_sum, length_column_headers, maf);
+                    
+                    std::cout << "create_binary_table end" << std::endl;
 
                     std::string fastfisher_p_value = "NA", chi2_p_value = "NA",
                     group_paths = "NA", allele_number_str = "NA", min_row_index_str = "NA",
                     numb_colum_str = "NA", inter_group_str = "NA", average_str = "NA";
 
+                    std::cout << "binary_stat_test start" << std::endl;
+
                     // Binary analysis single test
                     if (!df_filtration) { // good df
-                        binary_stat_test(g0, g1, fastfisher_p_value, chi2_p_value, group_paths,
+                        stoat_vcf::binary_stat_test(g0, g1, fastfisher_p_value, chi2_p_value, group_paths,
                             allele_number_str, min_row_index_str, numb_colum_str, inter_group_str, average_str);
                     }
                     
+                    std::cout << "binary_stat_test end" << std::endl;
+
                     data << chr << "\t" << snarl_data_s.start_positions << "\t" << pairToString(find_snarl_id(stree, snarl_data_s.snarl)) << "\t" << type_var_str
                          << "\t" << fastfisher_p_value << "\t" << chi2_p_value << "\t" << ""
                          << "\t" << allele_number_str << "\t" << min_row_index_str << "\t" << numb_colum_str 
                          << "\t" << inter_group_str << "\t" << average_str << "\t" << group_paths << "\n";
+                    
+                    std::cout << "data writen end" << std::endl;
+
                 }
 
                 local_buffer << data.str();
@@ -777,15 +785,13 @@ void SnarlAnalyser::quantitative_table(const bdsg::SnarlDistanceIndex& stree, co
                 if (df_empty || df_filtration) { // filtred variant
                     // do not analyse this snarl
                     continue;
-                // } else if (covar.size() > 0 && !kinship.empty()) { // lmm
+
+                // } else if (!kinship.empty()) { // lmm
                 //     // lmm_quantitative(df, gene_expression, covar, p_value, beta, se, r2);
                 //     continue; // TODO: implement LMM for quantitative phenotype
 
-                } else if (covar.size() > 0) { // glm
-                    glm_quantitative(df, phenotype_filtered, covar, p_value, beta, se, r2);
-
-                } else { // single test
-                    linear_regression(df, phenotype_filtered, p_value, beta, se, r2);
+                } else { // linear regression with covariates if not empty
+                    linear_regression(df, phenotype_filtered, covar, p_value, beta, se, r2);
                 }
                 
                 if (table_threshold != -1 && stoat_vcf::isPValueSignificant(table_threshold, p_value)) {
@@ -932,11 +938,8 @@ void SnarlAnalyser::eqtl_table(
                     //     // lmm_quantitative(df, gene_expression, covar, p_value, beta, se, r2);
                     //     continue; // TODO: implement LMM for quantitative phenotype
 
-                    } else if (covar.size() > 0) { // glm
-                        glm_quantitative(df, gene_expression, covar, p_value, beta, se, r2); // TODO : se nan problem
-
-                    } else { // single test
-                        linear_regression(df, gene_expression, p_value, beta, se, r2);
+                    } else { // glm
+                        linear_regression(df, gene_expression, covar, p_value, beta, se, r2); // TODO : se nan problem
                     }
 
                     if (table_threshold != -1 && stoat_vcf::isPValueSignificant(table_threshold, p_value)) {

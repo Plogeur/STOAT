@@ -259,6 +259,7 @@ std::vector<std::string> calcul_pos_type_variant(const std::vector<std::tuple<si
 }
 
 std::pair<size_t, size_t> find_snarl_id(const bdsg::SnarlDistanceIndex& stree, const handlegraph::net_handle_t& snarl) {
+    
     // Get start and end boundary nodes for the snarl
     auto sstart = stree.get_bound(snarl, false, true);  // False for the left boundary
     auto send = stree.get_bound(snarl, true, true);     // True for the right boundary
