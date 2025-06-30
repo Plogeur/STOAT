@@ -32,6 +32,7 @@ add_executable(${PROJECT_NAME}
     src/snarl_data_t.cpp
     src/matrix.cpp
     src/quantitative_test.cpp
+    src/writer.cpp
     src/snarl_analyser.cpp
     src/lmm.cpp
     ${ALGLIB_SOURCES}
@@ -80,6 +81,7 @@ add_executable(unit_tests
     src/snarl_data_t.cpp
     src/matrix.cpp
     src/quantitative_test.cpp
+    src/writer.cpp
     src/snarl_analyser.cpp
     src/lmm.cpp
 )

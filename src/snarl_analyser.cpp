@@ -5,6 +5,7 @@
 #include "utils.hpp"
 #include "lmm.hpp"
 #include "arg_parser.hpp"
+#include "writer.hpp"
 
 namespace stoat_vcf {
 
@@ -17,13 +18,11 @@ void chromosome_chuck_binary(const bdsg::SnarlDistanceIndex& stree, htsFile* &pt
     const std::string& output_binary) {
 
     std::ofstream outf(output_binary, std::ios::binary);
-    std::string headers;
     if (covar.size() > 0) {
-        headers = "CHR\tPOS\tSNARL\tTYPE\tP\tP_ADJUSTED\tBETA\tSE\tALLELE_NUM\tALLELE_PATHS\n";
+        write_binary_covar_header(outf);
     } else {
-        headers = "CHR\tPOS\tSNARL\tTYPE\tP_FISHER\tP_CHI2\tP_ADJUSTED\tALLELE_NUM\tMIN_ROW_INDEX\tNUM_COLUM\tINTER_GROUP\tAVERAGE\tGROUP_PATHS\n";
+        write_binary_header(outf);
     }
-    outf.write(headers.c_str(), headers.size());
 
     std::cout << "GWAS analysis for chromosome : " << std::endl;
     while (bcf_read(ptr_vcf, hdr, rec) >= 0) {
@@ -76,9 +75,7 @@ void chromosome_chuck_quantitative(const bdsg::SnarlDistanceIndex& stree, htsFil
     const std::string& output_quantitive) {
 
     std::ofstream outf(output_quantitive, std::ios::binary);
-    std::string headers;
-    headers = "CHR\tPOS\tSNARL\tTYPE\tP\tP_ADJUSTED\tRSQUARE\tBETA\tSE\tALLELE_NUM\tALLELE_PATHS\n";
-    outf.write(headers.c_str(), headers.size());
+    write_quantitative_header(outf);
 
     std::cout << "GWAS analysis for chromosome : " << std::endl;
     while (bcf_read(ptr_vcf, hdr, rec) >= 0) {
@@ -134,8 +131,7 @@ void chromosome_chuck_eqtl(const bdsg::SnarlDistanceIndex& stree, htsFile* &ptr_
     const size_t& windows_gene_threshold, const std::string& out_eqtl) {
 
     std::ofstream outf(out_eqtl, std::ios::binary);
-    std::string headers = "CHR\tPOS\tSNARL\tTYPE\tGENE\tP\tP_ADJUSTED\tRSQUARE\tBETA\tSE\tALLELE_NUM\tALLELE_PATHS\n";
-    outf.write(headers.c_str(), headers.size());
+    write_eqtl_header(outf);
     
     std::cout << "GWAS analysis for chromosome : " << std::endl;
     while (bcf_read(ptr_vcf, hdr, rec) >= 0) {
