@@ -1,6 +1,4 @@
-#include "binary_test.hpp"
-#include "snarl_analyser.hpp"
-#include "utils.hpp"
+#include "binary_table.hpp"
 
 // ------------------------ Binary table & stats ------------------------
 namespace stoat_vcf {

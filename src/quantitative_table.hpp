@@ -14,9 +14,11 @@
 #include <tuple>
 #include <iomanip>
 
+#include "arg_parser.hpp"
 #include "matrix.hpp"
 #include "snarl_analyser.hpp"
 #include "utils.hpp"
+#include "stats_test.hpp"
 
 using namespace std;
 

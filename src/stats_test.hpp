@@ -35,16 +35,20 @@ using namespace std;
 void linear_regression(
     const std::vector<std::vector<double>>& df,
     const std::vector<double>& quantitative_phenotype,
-    std::string& p_value_str, std::string& beta_str, 
-    std::string& se_str, std::string& r2_str);
+    std::string& p_value_str, 
+    std::string& beta_str, 
+    std::string& se_str, 
+    std::string& r2_str);
 
 // Linear regression function OLS with intercept + covariate
 void glm_quantitative(
     const std::vector<std::vector<double>>& df,
     const std::vector<double>& quantitative_phenotype,
     const std::vector<std::vector<double>>& covar,
-    std::string& p_value_str, std::string& beta_str, 
-    std::string& se_str, std::string& r2_str);
+    std::string& p_value_str, 
+    std::string& beta_str, 
+    std::string& se_str, 
+    std::string& r2_str);
 
 // ------------------------ Logistic regression ------------------------
 
@@ -74,8 +78,10 @@ void glm_logistic_covar(
     const std::vector<std::vector<double>>& variant_data,
     const std::vector<bool>& phenotype,
     const std::vector<std::vector<double>>& covariates,
-    std::string& p_value_str, std::string& beta_str, 
-    std::string& se_str, std::string& r2_str);
+    std::string& p_value_str, 
+    std::string& beta_str, 
+    std::string& se_str, 
+    std::string& r2_str);
     
 // ------------------------ Chi2 test ------------------------
 
@@ -97,15 +103,21 @@ std::string fastFishersExactTest(size_t m11, size_t m12,
 void lmm_quantitative(
     const std::vector<std::vector<double>>& df,
     const std::vector<double>& phenotype_table,
-    const KinshipMatrix& kinship,
+    const stoat_vcf::KinshipMatrix& kinship,
     const std::vector<std::vector<double>>& covariates,
-    std::string& p_value_str, std::string& beta_str, std::string& se_str, std::string& r2_str);
+    std::string& p_value_str, 
+    std::string& beta_str, 
+    std::string& se_str, 
+    std::string& r2_str);
 
 void lmm_binary(
     const std::vector<std::vector<double>>& df,
     const std::vector<bool>& phenotype_binary,
-    const KinshipMatrix& kinship,
+    const stoat_vcf::KinshipMatrix& kinship,
     const std::vector<std::vector<double>>& covariates,
-    std::string& p_value_str, std::string& beta_str, std::string& se_str, std::string& r2_str);
+    std::string& p_value_str, 
+    std::string& beta_str, 
+    std::string& se_str, 
+    std::string& r2_str);
 
 #endif 

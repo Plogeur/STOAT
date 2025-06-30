@@ -1,5 +1,5 @@
-#ifndef binary_test_HPP
-#define binary_test_HPP
+#ifndef binary_table_HPP
+#define binary_table_HPP
 
 #include <vector>
 #include <string>
@@ -21,6 +21,7 @@
 #include "matrix.hpp"
 #include "snarl_analyser.hpp"
 #include "utils.hpp"
+#include "stats_test.hpp"
 
 using namespace std;
 

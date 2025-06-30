@@ -1,5 +1,4 @@
 #include "arg_parser.hpp"
-#include "snarl_analyser.hpp"
 
 namespace fs = std::filesystem;
 

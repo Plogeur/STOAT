@@ -1,6 +1,7 @@
 #include <catch2/catch_test_macros.hpp>
 
 #include "../../src/quantitative_test.hpp"
+#include "../../src/stats_test.hpp"
 #include "../../src/matrix.hpp"
 
 TEST_CASE("create_quantitative_table basic behavior", "[quantitative]") {

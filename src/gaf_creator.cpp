@@ -1,9 +1,4 @@
-#include "snarl_analyser.hpp"
-#include "matrix.hpp"
-#include "binary_test.hpp"
 #include "gaf_creator.hpp"
-#include "utils.hpp"
-#include "snarl_data_t.hpp"
 
 namespace stoat_vcf {
 

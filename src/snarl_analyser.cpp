@@ -1,6 +1,6 @@
 #include "snarl_analyser.hpp"
 #include "matrix.hpp"
-#include "binary_test.hpp"
+#include "binary_table.hpp"
 #include "quantitative_test.hpp"
 #include "utils.hpp"
 #include "lmm.hpp"
@@ -12,7 +12,7 @@ void chromosome_chuck_binary(htsFile* &ptr_vcf, bcf_hdr_t* &hdr, bcf1_t* &rec,
     const std::vector<std::string> &list_samples, 
     const unordered_map<string, std::vector<Snarl_data_t>> &snarl_chr,
     const std::vector<bool>& binary_pheno, std::vector<std::vector<double>> covar, 
-    const double& maf, const KinshipMatrix& kinship, const size_t& num_threads, 
+    const double& maf, const stoat_vcf::KinshipMatrix& kinship, const size_t& num_threads, 
     const double& table_threshold, const std::string& regression_dir,
     const std::string& output_binary) {
 
@@ -71,7 +71,7 @@ void chromosome_chuck_quantitative(htsFile* &ptr_vcf, bcf_hdr_t* &hdr, bcf1_t* &
     const std::vector<std::string> &list_samples,
     const unordered_map<string, std::vector<Snarl_data_t>> &snarl_chr,
     const std::vector<double>& quantitative_phenotype, std::vector<std::vector<double>> covar,
-    const double& maf, const KinshipMatrix& kinship, const size_t& num_threads, 
+    const double& maf, const stoat_vcf::KinshipMatrix& kinship, const size_t& num_threads, 
     const double& table_threshold, const std::string& regression_dir,
     const std::string& output_quantitive) {
 
@@ -129,7 +129,7 @@ void chromosome_chuck_eqtl(htsFile* &ptr_vcf, bcf_hdr_t* &hdr, bcf1_t* &rec,
     const std::unordered_map<std::string, std::vector<Snarl_data_t>> &snarl_chr,
     const std::unordered_map<std::string, std::vector<std::tuple<std::string, std::vector<double>, size_t, size_t>>>& eqtl_map,
     const std::vector<std::vector<double>>& covar,
-    const double& maf, const KinshipMatrix& kinship, const size_t& num_threads, 
+    const double& maf, const stoat_vcf::KinshipMatrix& kinship, const size_t& num_threads, 
     const double& table_threshold, const std::string& regression_dir,
     const size_t& windows_gene_threshold, const std::string& out_eqtl) {
 
@@ -409,7 +409,7 @@ inline size_t extract_node_id(const std::string& s, size_t length_s, size_t& i) 
 }
 
 // Decompose path Path_traversal_t to vector Edge_t
-std::vector<stoat_vcf::Edge_t> decompose_path_to_edges(conststoat_vcf::Path_traversal_t& list_paths) {
+std::vector<stoat_vcf::Edge_t> decompose_path_to_edges(const stoat_vcf::Path_traversal_t& list_paths) {
     std::vector<stoat_vcf::Edge_t> edges;
     const std::vector<Node_traversal_t>& list_nodes = list_paths.get_paths();
     size_t length_s = list_nodes.size();
@@ -620,7 +620,7 @@ std::vector<size_t> identify_path(
 void SnarlAnalyser::binary_table(const std::vector<Snarl_data_t>& snarls,
                                const std::vector<bool>& binary_phenotype, const std::string& chr,
                                const std::vector<std::vector<double>>& covar,
-                               const double& maf, const KinshipMatrix& kinship, const size_t& num_threads, 
+                               const double& maf, const stoat_vcf::KinshipMatrix& kinship, const size_t& num_threads, 
                                const double& table_threshold, const std::string& regression_dir, std::ofstream& outf) {
 
     size_t length_sample = sampleNames.size();
@@ -734,7 +734,7 @@ void SnarlAnalyser::quantitative_table(const std::vector<Snarl_data_t>& snarls,
                                        const std::vector<double>& quantitative_phenotype, 
                                        const std::string &chr,
                                        const std::vector<std::vector<double>>& covar,
-                                       const double& maf, const KinshipMatrix& kinship, const size_t& num_threads, 
+                                       const double& maf, const stoat_vcf::KinshipMatrix& kinship, const size_t& num_threads, 
                                        const double& table_threshold, const std::string& regression_dir, std::ofstream& outf) {
 
     size_t length_sample = sampleNames.size();
@@ -871,7 +871,7 @@ void SnarlAnalyser::eqtl_table(
     const std::vector<Snarl_data_t>& snarls,
     const std::vector<std::tuple<std::string, std::vector<double>, size_t, size_t>>& eqtl,
     const std::string& chr, const std::vector<std::vector<double>>& covar,
-    const double& maf, const KinshipMatrix& kinship, const size_t& num_threads, 
+    const double& maf, const stoat_vcf::KinshipMatrix& kinship, const size_t& num_threads, 
     const double& table_threshold, const std::string& regression_dir, 
     const size_t& windows_gene_threshold, std::ofstream& outf) {
 

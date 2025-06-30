@@ -1,7 +1,4 @@
 #include "quantitative_test.hpp"
-#include "snarl_analyser.hpp"
-#include "utils.hpp"
-#include "arg_parser.hpp"
 
 using namespace std;
 

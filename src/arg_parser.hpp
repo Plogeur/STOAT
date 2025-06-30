@@ -20,6 +20,7 @@
 #include <htslib/vcf.h>
 #include <htslib/hts.h>
 #include "snarl_data_t.hpp"
+#include "snarl_analyser.hpp"
 
 using namespace std;
 
