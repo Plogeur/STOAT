@@ -22,8 +22,6 @@
 
 using namespace std;
 
-namespace stoat_vcf{
-
 namespace stoat_vcf {
 
 std::tuple<std::vector<std::vector<double>>, size_t, std::unordered_set<size_t>, bool, std::vector<size_t>>
@@ -61,5 +59,4 @@ create_eqtl_table(
 
 } // namespace stoat_vcf
 
-}
 #endif
