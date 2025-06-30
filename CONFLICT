@@ -1,0 +1,4 @@
+Add namespace (stoat_vcf) only on stoat vcf files and not on shared files like tests or utils (we can found a new namespace for this like stoat_shared or stoat_common)
+Threads working with std will be more maintainable and readable + we will easly compile without using high level libraries hard to compile in other OS.
+Class/struct is like antibiotic it's not automatic ! In some case it will help to identify stuff but create class just one function or variable that can be use in global scope is not a good idea.
+

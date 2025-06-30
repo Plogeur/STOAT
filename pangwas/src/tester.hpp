@@ -24,13 +24,11 @@ class Tester {
     /// Is the set of samples associated? 
     virtual bool is_associated(const std::set<std::string>& samples) = 0;
 
-
     protected:
 
     // The samples known to be associated with the trait of interest
     // This should really be const but since I need a shared_ptr to it it can't be
     const std::set<std::string>& samples_of_interest;
-
  
 };
 
@@ -47,8 +45,6 @@ class ExactTester : public Tester {
     bool is_associated(const std::set<std::string>& samples) {
         return samples == samples_of_interest;
     }
-
-    
 };
 
 /***
@@ -60,7 +56,6 @@ class FishersTester : public Tester {
         FishersTester(const std::set<std::string>& samples_of_interest, double p_cutoff, size_t sample_count);
 
         bool is_associated(const std::set<std::string>& samples) ;
-
 
     protected:
         ///////////////////////// Helper functions
@@ -102,7 +97,6 @@ class Chi2Tester : public Tester {
         Chi2Tester(const std::set<std::string>& samples_of_interest, double p_cutoff, size_t sample_count);
 
         bool is_associated(const std::set<std::string>& samples) ;
-
 
     protected:
         ///////////////////////// Helper functions

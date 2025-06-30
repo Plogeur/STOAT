@@ -40,7 +40,7 @@ PathAssociationFinder::PathAssociationFinder(const handlegraph::PathPositionHand
     } else if (test_method == "fishers" || test_method == "chi2") {
 
         #ifdef DEBUG_ASSOCIATION_FINDER
-        assert(sample_count >= samples_of_interest.size());
+            assert(sample_count >= samples_of_interest.size());
         #endif
         if (test_method == "fishers") {
             tester.reset(new pangwas::FishersTester(samples_of_interest, p_value, sample_count));

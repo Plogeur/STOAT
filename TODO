@@ -1,5 +1,6 @@
-Debug all
-Found the major snarl data t problem
+Debug all : 
+- Found the major snarl data t problem
+- Correct the namespace bug
 Identify ref paths if .chr file not present
 Test in the snarl decompose paths if in the .chr chr name are present in the graph if not stop the analysis and return a error ("chr not found")
 Correct the P-ajusted (done but must be tested)

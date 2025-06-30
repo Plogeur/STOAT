@@ -1,10 +1,4 @@
 #include "snarl_analyser.hpp"
-#include "matrix.hpp"
-#include "binary_test.hpp"
-#include "quantitative_test.hpp"
-#include "utils.hpp"
-#include "lmm.hpp"
-#include "arg_parser.hpp"
 
 namespace stoat_vcf {
 
@@ -12,17 +6,19 @@ void chromosome_chuck_binary(htsFile* &ptr_vcf, bcf_hdr_t* &hdr, bcf1_t* &rec,
     const std::vector<std::string> &list_samples, 
     const unordered_map<string, std::vector<Snarl_data_t>> &snarl_chr,
     const std::vector<bool>& binary_pheno, std::vector<std::vector<double>> covar, 
-    const double& maf, const KinshipMatrix& kinship, const size_t& num_threads, 
+    const double& maf, const size_t& num_threads,
     const double& table_threshold, const std::string& regression_dir,
     const std::string& output_binary) {
 
     std::ofstream outf(output_binary, std::ios::binary);
     std::string headers;
+
     if (covar.size() > 0) {
         headers = "CHR\tPOS\tSNARL\tTYPE\tP\tP_ADJUSTED\tBETA\tSE\tALLELE_NUM\tALLELE_PATHS\n";
     } else {
         headers = "CHR\tPOS\tSNARL\tTYPE\tP_FISHER\tP_CHI2\tP_ADJUSTED\tALLELE_NUM\tMIN_ROW_INDEX\tNUM_COLUM\tINTER_GROUP\tAVERAGE\tGROUP_PATHS\n";
     }
+
     outf.write(headers.c_str(), headers.size());
 
     std::cout << "GWAS analysis for chromosome : " << std::endl;
@@ -58,7 +54,7 @@ void chromosome_chuck_binary(htsFile* &ptr_vcf, bcf_hdr_t* &hdr, bcf1_t* &rec,
 
         cout << "make_matrix done" << std::endl;
         // Gwas analysis by chromosome
-        vcf_object.binary_table(snarl, binary_pheno, chr, covar, maf, kinship, num_threads, table_threshold, regression_dir, outf);
+        vcf_object.binary_table(snarl, binary_pheno, chr, covar, maf, num_threads, table_threshold, regression_dir, outf);
     }
     // Cleanup
     bcf_destroy(rec);
@@ -71,7 +67,7 @@ void chromosome_chuck_quantitative(htsFile* &ptr_vcf, bcf_hdr_t* &hdr, bcf1_t* &
     const std::vector<std::string> &list_samples,
     const unordered_map<string, std::vector<Snarl_data_t>> &snarl_chr,
     const std::vector<double>& quantitative_phenotype, std::vector<std::vector<double>> covar,
-    const double& maf, const KinshipMatrix& kinship, const size_t& num_threads, 
+    const double& maf, const size_t& num_threads,
     const double& table_threshold, const std::string& regression_dir,
     const std::string& output_quantitive) {
 
@@ -115,7 +111,7 @@ void chromosome_chuck_quantitative(htsFile* &ptr_vcf, bcf_hdr_t* &hdr, bcf1_t* &
         auto& snarl = snarl_chr.at(chr);
 
         // Gwas analysis by chromosome
-        vcf_object.quantitative_table(snarl, quantitative_phenotype, chr, covar, maf, kinship, num_threads, table_threshold, regression_dir, outf);
+        vcf_object.quantitative_table(snarl, quantitative_phenotype, chr, covar, maf, num_threads, table_threshold, regression_dir, outf);
     }
     // Cleanup
     bcf_destroy(rec);
@@ -123,13 +119,12 @@ void chromosome_chuck_quantitative(htsFile* &ptr_vcf, bcf_hdr_t* &hdr, bcf1_t* &
     bcf_close(ptr_vcf);
 }
 
-
 void chromosome_chuck_eqtl(htsFile* &ptr_vcf, bcf_hdr_t* &hdr, bcf1_t* &rec, 
     const std::vector<std::string> &list_samples,
     const std::unordered_map<std::string, std::vector<Snarl_data_t>> &snarl_chr,
     const std::unordered_map<std::string, std::vector<std::tuple<std::string, std::vector<double>, size_t, size_t>>>& eqtl_map,
     const std::vector<std::vector<double>>& covar,
-    const double& maf, const KinshipMatrix& kinship, const size_t& num_threads, 
+    const double& maf, const size_t& num_threads,
     const double& table_threshold, const std::string& regression_dir,
     const size_t& windows_gene_threshold, const std::string& out_eqtl) {
 
@@ -172,7 +167,7 @@ void chromosome_chuck_eqtl(htsFile* &ptr_vcf, bcf_hdr_t* &hdr, bcf1_t* &rec,
         auto& eqtl = eqtl_map.at(chr);
 
         // Gwas analysis by chromosome
-        vcf_object.eqtl_table(snarl, eqtl, chr, covar, maf, kinship, num_threads, table_threshold, regression_dir, windows_gene_threshold, outf);
+        vcf_object.eqtl_table(snarl, eqtl, chr, covar, maf, num_threads, table_threshold, regression_dir, windows_gene_threshold, outf);
     }
     // Cleanup
     bcf_destroy(rec);
@@ -259,7 +254,7 @@ std::pair<std::vector<size_t>, std::vector<size_t>> SnarlAnalyser::create_table_
     // Genotype paths
     for (size_t col_idx = 0; col_idx < length_column; ++col_idx) {
         const stoat_vcf::Path_traversal_t& path_snarl = list_path_snarl[col_idx];
-        std::vector<Edge_t> decomposed_snarl = decompose_path_to_edges(path_snarl);
+        std::vector<stoat_vcf::Edge_t> decomposed_snarl = decompose_path_to_edges(path_snarl);
 
         // Identify correct paths
         std::vector<size_t> idx_srr_save = identify_path(decomposed_snarl, matrix, length_sample*2);
@@ -323,7 +318,7 @@ void SnarlAnalyser::create_bim_bed(const std::vector<Snarl_data_t>& snarls,
     // <snarl, paths, pos, type>
     for (const Snarl_data_t& snarl_data_s : snarls) {
 
-        std::string snarl_id = pairToString(snarl_data_s.get_snarl_id());
+        std::string snarl_id = stoat_vcf::pairToString(snarl_data_s.get_snarl_id());
         std::vector<stoat_vcf::Path_traversal_t> list_path_snarl = snarl_data_s.get_snarl_paths();
         size_t start_pos = snarl_data_s.get_start_positions();
 
@@ -409,8 +404,8 @@ inline size_t extract_node_id(const std::string& s, size_t length_s, size_t& i) 
 }
 
 // Decompose path Path_traversal_t to vector Edge_t
-std::vector<Edge_t> decompose_path_to_edges(const stoat_vcf::Path_traversal_t& list_paths) {
-    std::vector<Edge_t> edges;
+std::vector<stoat_vcf::Edge_t> decompose_path_to_edges(const stoat_vcf::Path_traversal_t& list_paths) {
+    std::vector<stoat_vcf::Edge_t> edges;
     const std::vector<Node_traversal_t>& list_nodes = list_paths.get_paths();
     size_t length_s = list_nodes.size();
     edges.reserve(length_s - 1); // Reserve memory
@@ -423,9 +418,9 @@ std::vector<Edge_t> decompose_path_to_edges(const stoat_vcf::Path_traversal_t& l
 }
 
 // Decompose a list of paths Path_traversal_t into a vector of Edge_t
-const std::vector<std::vector<Edge_t>> decompose_path_list_path(const std::vector<stoat_vcf::Path_traversal_t>& list_paths) {
+const std::vector<std::vector<stoat_vcf::Edge_t>> decompose_path_list_path(const std::vector<stoat_vcf::Path_traversal_t>& list_paths) {
     size_t size_list_paths = list_paths.size();
-    std::vector<std::vector<Edge_t>> paths_snarl;
+    std::vector<std::vector<stoat_vcf::Edge_t>> paths_snarl;
     for (const stoat_vcf::Path_traversal_t& path : list_paths) {
         paths_snarl.push_back(decompose_path_to_edges(path));
     }
@@ -433,8 +428,8 @@ const std::vector<std::vector<Edge_t>> decompose_path_list_path(const std::vecto
 }
 
 // Decompose path std::string to vector Edge_t
-std::vector<Edge_t> decompose_path_str_to_edge(const std::string& s) {
-    std::vector<Edge_t> edges;
+std::vector<stoat_vcf::Edge_t> decompose_path_str_to_edge(const std::string& s) {
+    std::vector<stoat_vcf::Edge_t> edges;
     std::vector<Node_traversal_t> nodes;
 
     size_t i = 0;
@@ -462,8 +457,8 @@ std::vector<Edge_t> decompose_path_str_to_edge(const std::string& s) {
 }
 
 // Decompose a list of paths str into a vector of Edge_t
-const std::vector<std::vector<Edge_t>> decompose_path_list_str(const std::vector<std::string>& list_paths) {
-    std::vector<std::vector<Edge_t>> paths_snarl;
+const std::vector<std::vector<stoat_vcf::Edge_t>> decompose_path_list_str(const std::vector<std::string>& list_paths) {
+    std::vector<std::vector<stoat_vcf::Edge_t>> paths_snarl;
     for (const auto& path : list_paths) {
         paths_snarl.push_back(decompose_path_str_to_edge(path));
     }
@@ -471,7 +466,7 @@ const std::vector<std::vector<Edge_t>> decompose_path_list_str(const std::vector
 }
 
 // Retrieve the index of `key` if it exists in the dict. Otherwise, add it and return the new index.
-size_t getOrAddIndex(std::unordered_map<Edge_t, size_t>& edge_index_dict, const Edge_t& key, const size_t& size_edge_index_dict) {
+size_t getOrAddIndex(std::unordered_map<stoat_vcf::Edge_t, size_t>& edge_index_dict, const Edge_t& key, const size_t& size_edge_index_dict) {
     auto it = edge_index_dict.find(key);
     if (it != edge_index_dict.end()) {
         return it->second;
@@ -483,7 +478,7 @@ size_t getOrAddIndex(std::unordered_map<Edge_t, size_t>& edge_index_dict, const 
 }
 
 // Add True to the matrix if snarl is found
-void SnarlAnalyser::push_matrix(const Edge_t& EdgePath, std::unordered_map<Edge_t, size_t>& edge_index_dict, size_t indexColumn) {
+void SnarlAnalyser::push_matrix(const Edge_t& EdgePath, std::unordered_map<stoat_vcf::Edge_t, size_t>& edge_index_dict, size_t indexColumn) {
     
     size_t lengthOrderedMap = edge_index_dict.size();
     size_t idxSnarl = getOrAddIndex(edge_index_dict, EdgePath, lengthOrderedMap);
@@ -500,7 +495,7 @@ void SnarlAnalyser::push_matrix(const Edge_t& EdgePath, std::unordered_map<Edge_
 std::tuple<SnarlAnalyser, htsFile*, bcf_hdr_t*, bcf1_t*> make_matrix(htsFile *ptr_vcf, bcf_hdr_t *hdr, bcf1_t *rec, const std::vector<std::string> &sampleNames, std::string &chr, size_t &num_paths_chr) {
 
     SnarlAnalyser snarl_data(sampleNames, num_paths_chr);
-    std::unordered_map<Edge_t, size_t> edge_dict;
+    std::unordered_map<stoat_vcf::Edge_t, size_t> edge_dict;
 
     // loop over the VCF file for each line and stop where chr is different
     do {
@@ -543,7 +538,7 @@ std::tuple<SnarlAnalyser, htsFile*, bcf_hdr_t*, bcf1_t*> make_matrix(htsFile *pt
         // Decompose snarl paths [vector std::string] into [vector vector Edge_t]
         // paths : >123>213<234,>123<234,>123<234<345
         // list_paths_edge : [[Edge_t(123, 213), Edge_t(213, 234)], [...]]
-        const std::vector<std::vector<Edge_t>> list_paths_edge = decompose_path_list_str(path_list);
+        const std::vector<std::vector<stoat_vcf::Edge_t>> list_paths_edge = decompose_path_list_str(path_list);
 
         for (int i = 0; i < rec->n_sample; ++i) {
             int idex_path_allele_1 = bcf_gt_allele(gt[i * 2]);
@@ -620,8 +615,11 @@ std::vector<size_t> identify_path(
 void SnarlAnalyser::binary_table(const std::vector<Snarl_data_t>& snarls,
                                const std::vector<bool>& binary_phenotype, const std::string& chr,
                                const std::vector<std::vector<double>>& covar,
-                               const double& maf, const KinshipMatrix& kinship, const size_t& num_threads, 
-                               const double& table_threshold, const std::string& regression_dir, std::ofstream& outf) {
+                               const double& maf, 
+                               const size_t& num_threads, 
+                               const double& table_threshold, 
+                               const std::string& regression_dir, 
+                               std::ofstream& outf) {
 
     size_t length_sample = sampleNames.size();
     const size_t total = snarls.size();
@@ -654,11 +652,11 @@ void SnarlAnalyser::binary_table(const std::vector<Snarl_data_t>& snarls,
 
                 if (!covar.empty()) {
                     // Logistic regression
-                    const auto& [df, phenotype_filtered, allele_number, allele_paths] = create_quantitative_table(length_sample, list_path_snarl, binary_phenotype, matrix);
+                    const auto& [df, phenotype_filtered, allele_number, allele_paths] = stoat_vcf::create_quantitative_table(length_sample, list_path_snarl, binary_phenotype, matrix);
                     bool df_filtration = false;
                     bool df_empty = false;
 
-                    if (allele_number < 5) {
+                    if ((allele_number < 5) || (df.size() < 2)) {
                         df_empty = true;
                     } else {
                         df_filtration = check_MAF_threshold_quantitative(df, maf);
@@ -669,17 +667,23 @@ void SnarlAnalyser::binary_table(const std::vector<Snarl_data_t>& snarls,
                     if (df_empty || df_filtration) { // filtred variant
                         // do not analyse this snarl
                         continue;
-                    } else if (kinship.empty()) { // logistic regression + covar
+                    } else if (!covar.empty()) { 
+                        // logistic regression
                         logistic_regression(df, phenotype_filtered, p_value, beta, se, r2);
-                        // glm_logistic_covar(df, phenotype_filtered, covar, p_value, beta, se, r2);
-                    } else { // lmm
-                        lmm_binary(df, phenotype_filtered, kinship, covar, p_value, beta, se, r2);
+                    } else {
+                        // logistic regression with covariates
+                        glm_logistic_covar(df, phenotype_filtered, covar, p_value, beta, se, r2);
                     }
+
+                    // } else { // lmm
+                    //     // lmm_binary(df, phenotype_filtered, kinship, covar, p_value, beta, se, r2);
+                    //     continue; // TODO: implement LMM for binary phenotype
+                    // }
                     
                     // Plot regression table
                     if (table_threshold != -1 && stoat_vcf::isPValueSignificant(table_threshold, p_value)) {
                         std::string variant_file_name = regression_dir + "/" + snarl_id + ".tsv";
-                        stoat_vcf::writeSignificantTableToTSV(df,stringToVector<std::string>(vectorPathToString(list_path_snarl)), sampleNames, variant_file_name);
+                        stoat_vcf::writeSignificantTableToTSV(df, stoat_vcf::stringToVector<std::string>(stoat_vcf::vectorPathToString(list_path_snarl)), sampleNames, variant_file_name);
                     }
     
                     // chr, pos, snarl, type, p_value, p_adjusted, t-dist, beta, se, allele_number
@@ -734,8 +738,11 @@ void SnarlAnalyser::quantitative_table(const std::vector<Snarl_data_t>& snarls,
                                        const std::vector<double>& quantitative_phenotype, 
                                        const std::string &chr,
                                        const std::vector<std::vector<double>>& covar,
-                                       const double& maf, const KinshipMatrix& kinship, const size_t& num_threads, 
-                                       const double& table_threshold, const std::string& regression_dir, std::ofstream& outf) {
+                                       const double& maf, 
+                                       const size_t& num_threads, 
+                                       const double& table_threshold, 
+                                       const std::string& regression_dir, 
+                                       std::ofstream& outf) {
 
     size_t length_sample = sampleNames.size();
     const size_t total = snarls.size();
@@ -755,11 +762,11 @@ void SnarlAnalyser::quantitative_table(const std::vector<Snarl_data_t>& snarls,
                 const Snarl_data_t& snarl_data_s = snarls[itr];
                 const auto& [snarl_id, list_path_snarl, start_pos, end_pos, type_var] = snarl_data_s.get_snarl();
 
-                const auto& [df, phenotype_filtered, allele_number, allele_paths] = create_quantitative_table(length_sample, list_path_snarl, quantitative_phenotype, matrix);
+                const auto& [df, phenotype_filtered, allele_number, allele_paths] = stoat_vcf::create_quantitative_table(length_sample, list_path_snarl, quantitative_phenotype, matrix);
                 bool df_filtration = false;
                 bool df_empty = false;
 
-                if (allele_number < 5) {
+                if ((allele_number < 5) || (df.size() < 2)) {
                     df_empty = true;
                 } else {
                     df_filtration = check_MAF_threshold_quantitative(df, maf);
@@ -778,10 +785,11 @@ void SnarlAnalyser::quantitative_table(const std::vector<Snarl_data_t>& snarls,
                 if (df_empty || df_filtration) { // filtred variant
                     // do not analyse this snarl
                     continue;
-                } else if (covar.size() > 0 && !kinship.empty()) { // lmm
-                    lmm_quantitative(df, phenotype_filtered, kinship, covar, p_value, beta, se, r2);
+                // } else if (covar.size() > 0 && !kinship.empty()) { // lmm
+                //     // lmm_quantitative(df, gene_expression, kinship, covar, p_value, beta, se, r2);
+                //     continue; // TODO: implement LMM for quantitative phenotype
 
-                } else if (covar.size() > 0 && kinship.empty()) { // glm
+                } else if (covar.size() > 0) { // glm
                     glm_quantitative(df, phenotype_filtered, covar, p_value, beta, se, r2);
 
                 } else { // single test
@@ -790,7 +798,7 @@ void SnarlAnalyser::quantitative_table(const std::vector<Snarl_data_t>& snarls,
                 
                 if (table_threshold != -1 && stoat_vcf::isPValueSignificant(table_threshold, p_value)) {
                     std::string variant_file_name = regression_dir + "/" + snarl_id + ".tsv";
-                    stoat_vcf::writeSignificantTableToTSV(df,stringToVector<std::string>(vectorPathToString(list_path_snarl)), sampleNames, variant_file_name);
+                    stoat_vcf::writeSignificantTableToTSV(df, stoat_vcf::stringToVector<std::string>(stoat_vcf::vectorPathToString(list_path_snarl)), sampleNames, variant_file_name);
                 }
                 
                 // chr, pos, snarl, type, p_value, p_adjusted, r2, beta, se, allele_number
@@ -870,10 +878,14 @@ std::vector<size_t> found_gene_snarl(
 void SnarlAnalyser::eqtl_table(
     const std::vector<Snarl_data_t>& snarls,
     const std::vector<std::tuple<std::string, std::vector<double>, size_t, size_t>>& eqtl,
-    const std::string& chr, const std::vector<std::vector<double>>& covar,
-    const double& maf, const KinshipMatrix& kinship, const size_t& num_threads, 
-    const double& table_threshold, const std::string& regression_dir, 
-    const size_t& windows_gene_threshold, std::ofstream& outf) {
+    const std::string& chr, 
+    const std::vector<std::vector<double>>& covar,
+    const double& maf, 
+    const size_t& num_threads, 
+    const double& table_threshold, 
+    const std::string& regression_dir, 
+    const size_t& windows_gene_threshold, 
+    std::ofstream& outf) {
 
     size_t length_sample = sampleNames.size();
     const size_t total = snarls.size();
@@ -898,12 +910,10 @@ void SnarlAnalyser::eqtl_table(
                 bool df_filtration = false;
                 bool df_empty = false;
 
-                if (allele_number < 5) {
+                if ((allele_number < 5) || (df.size() < 2)) {
                     df_empty = true;
                 } else {
-                    if (df[0].size() > 1) {
-                        df_filtration = check_MAF_threshold_quantitative(df, maf);
-                    }
+                    df_filtration = check_MAF_threshold_quantitative(df, maf);
                 }
 
                 for (size_t i = 0; i < list_gene_index.size(); ++i) {
@@ -926,10 +936,12 @@ void SnarlAnalyser::eqtl_table(
                     if (df_empty || df_filtration) { // filtred variant
                         // do not analyse this snarl
                         continue;
-                    } else if (covar.size() > 0 && !kinship.empty()) { // lmm
-                        lmm_quantitative(df, gene_expression, kinship, covar, p_value, beta, se, r2);
 
-                    } else if (covar.size() > 0 && kinship.empty()) { // glm
+                    // } else if (covar.size() > 0 && !kinship.empty()) { // lmm
+                    //     // lmm_quantitative(df, gene_expression, kinship, covar, p_value, beta, se, r2);
+                    //     continue; // TODO: implement LMM for quantitative phenotype
+
+                    } else if (covar.size() > 0) { // glm
                         glm_quantitative(df, gene_expression, covar, p_value, beta, se, r2); // TODO : se nan problem
 
                     } else { // single test
@@ -938,7 +950,7 @@ void SnarlAnalyser::eqtl_table(
 
                     if (table_threshold != -1 && stoat_vcf::isPValueSignificant(table_threshold, p_value)) {
                         std::string variant_file_name = regression_dir + "/" + snarl_id + ".tsv";
-                        stoat_vcf::writeSignificantTableToTSV(df,stringToVector<std::string>(vectorPathToString(list_path_snarl)), sampleNames, variant_file_name);
+                        stoat_vcf::writeSignificantTableToTSV(df, stoat_vcf::stringToVector<std::string>(stoat_vcf::vectorPathToString(list_path_snarl)), sampleNames, variant_file_name);
                     }
 
                    // "CHR\tPOS\tSNARL\tTYPE\tGENE\tP\tP_ADJUSTED\tRSQUARE\tBETA\tSE\tALLELE_NUM\n";

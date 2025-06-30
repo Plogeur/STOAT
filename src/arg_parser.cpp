@@ -1,46 +1,45 @@
 #include "arg_parser.hpp"
-#include "snarl_analyser.hpp"
 
 namespace fs = std::filesystem;
 
 namespace stoat_vcf {
 
-KinshipMatrix parseKinshipMatrix(const std::string& filename) {
-    KinshipMatrix km;
-    std::ifstream file(filename);
-    std::string line;
+// KinshipMatrix parseKinshipMatrix(const std::string& filename) {
+//     KinshipMatrix km;
+//     std::ifstream file(filename);
+//     std::string line;
 
-    // Parse header line for IDs
-    if (std::getline(file, line)) {
-        std::stringstream ss(line);
-        std::string token;
-        // Skip the empty top-left cell
-        std::getline(ss, token, '\t');
-        while (std::getline(ss, token, '\t')) {
-            km.ids.push_back(token);
-        }
-    }
+//     // Parse header line for IDs
+//     if (std::getline(file, line)) {
+//         std::stringstream ss(line);
+//         std::string token;
+//         // Skip the empty top-left cell
+//         std::getline(ss, token, '\t');
+//         while (std::getline(ss, token, '\t')) {
+//             km.ids.push_back(token);
+//         }
+//     }
 
-    // Parse matrix rows
-    while (std::getline(file, line)) {
-        std::stringstream ss(line);
-        std::string rowLabel;
-        std::getline(ss, rowLabel, '\t'); // row label
-        std::vector<double> row;
-        std::string value;
-        while (std::getline(ss, value, '\t')) {
-            row.push_back(std::stod(value));
-        }
-        km.matrix.push_back(row);
-    }
+//     // Parse matrix rows
+//     while (std::getline(file, line)) {
+//         std::stringstream ss(line);
+//         std::string rowLabel;
+//         std::getline(ss, rowLabel, '\t'); // row label
+//         std::vector<double> row;
+//         std::string value;
+//         while (std::getline(ss, value, '\t')) {
+//             row.push_back(std::stod(value));
+//         }
+//         km.matrix.push_back(row);
+//     }
 
-    file.close();
-    return km;
-}
+//     file.close();
+//     return km;
+// }
 
-const bool KinshipMatrix::empty() const {
-    return ids.empty() || matrix.empty();
-}
+// const bool KinshipMatrix::empty() const {
+//     return ids.empty() || matrix.empty();
+// }
 
 std::unordered_set<std::string> parse_chromosome_reference(const std::string& file_path) {
     std::unordered_set<std::string> reference;
