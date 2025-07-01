@@ -132,10 +132,12 @@ std::vector<stoat_vcf::Path_traversal_t> stringToVectorPath(std::string& input) 
 
 // Add a snarl
 Snarl_data_t::Snarl_data_t(bdsg::net_handle_t snarl_,
+    std::pair<size_t, size_t> snarl_ids_,
     std::vector<Path_traversal_t> snarl_paths_,
     const size_t start_positions_, const size_t end_positions_,
     std::vector<std::string> type_variants_) :
     snarl(snarl_),
+    snarl_ids(snarl_ids_),
     snarl_paths(std::move(snarl_paths_)),
     start_positions(start_positions_),
     end_positions(end_positions_),
@@ -605,8 +607,9 @@ std::unordered_map<std::string, std::vector<Snarl_data_t>> loop_over_snarls_writ
 
     for (const auto& snarl_path_pos : snarls) {
         handlegraph::net_handle_t snarl = std::get<0>(snarl_path_pos);
+        std::pair<size_t, size_t> snarl_id = find_snarl_id(stree, snarl);
         size_t itr = 0;
-        std::string snarl_id_str = pairToString(find_snarl_id(stree, snarl));
+        std::string snarl_id_str = pairToString(snarl_id);
         bool not_break = true;
         
         size_t children = 0;
@@ -666,10 +669,11 @@ std::unordered_map<std::string, std::vector<Snarl_data_t>> loop_over_snarls_writ
             size_t end_pos = std::get<3>(snarl_path_pos);
             paths_number_analysis += pretty_paths_size;
             std::string str_reference = std::get<4>(snarl_path_pos) == true ? "1" : "0"; // 1 : on reference, 0 : out reference
+            std::string snarl_id_string = pairToString(snarl_id);
 
             if (bool_return) {
                 out_snarl << chr << "\t" << strat_pos << "\t" << end_pos
-                    << "\t" << handlegraph::as_integer(snarl) << "\t" << vectorPathToString(pretty_paths)
+                    << "\t" << handlegraph::as_integer(snarl) << "\t" << snarl_id_string << "\t" << vectorPathToString(pretty_paths)
                     << "\t" << vectorToString(type_variants) << "\t" << str_reference << "\n";
             } else {
                 // case new chr
@@ -678,7 +682,7 @@ std::unordered_map<std::string, std::vector<Snarl_data_t>> loop_over_snarls_writ
                     snarl_paths.clear();
                 }
                 save_chr = chr;
-                Snarl_data_t snarl_path(snarl, pretty_paths, strat_pos, end_pos, type_variants);
+                Snarl_data_t snarl_path(snarl, snarl_id, pretty_paths, strat_pos, end_pos, type_variants);
                 snarl_paths.push_back(snarl_path);
             }
         }

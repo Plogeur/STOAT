@@ -266,7 +266,7 @@ std::unordered_map<std::string, std::vector<std::tuple<std::string, std::vector<
 // Function to parse the snarl path file
 std::unordered_map<std::string, std::vector<Snarl_data_t>> parse_snarl_path(const std::string& file_path) {
 
-    std::string line, chr, snarl, start_pos_str, end_pos_str, path_list, type_var;
+    std::string line, chr, snarl, snarl_id, start_pos_str, end_pos_str, path_list, type_var;
     unordered_map<string, std::vector<Snarl_data_t>> chr_snarl_matrix;
     std::vector<Snarl_data_t> snarl_paths;
     std::ifstream file(file_path);
@@ -313,6 +313,7 @@ std::unordered_map<std::string, std::vector<Snarl_data_t>> parse_snarl_path(cons
         std::getline(ss, start_pos_str, '\t');   // pos column
         std::getline(ss, end_pos_str, '\t');   // pos column
         std::getline(ss, snarl, '\t');   // snarl column
+        std::getline(ss, snarl_id, '\t');   // snarl_id column
         std::getline(ss, path_list, '\t'); // paths column
         std::getline(ss, type_var, '\t');   // type_var column
 
@@ -345,8 +346,9 @@ std::unordered_map<std::string, std::vector<Snarl_data_t>> parse_snarl_path(cons
         }
         save_chr = chr;
 
+        std::pair<size_t, size_t> snarl_ids = stringToPair(snarl_id);
         std::vector<stoat_vcf::Path_traversal_t> paths = stringToVectorPath(paths_str);
-        Snarl_data_t snarl_path(handlegraph::as_net_handle(std::stoi(snarl)), paths, start_pos, end_pos, type);
+        Snarl_data_t snarl_path(handlegraph::as_net_handle(std::stoi(snarl)), snarl_ids, paths, start_pos, end_pos, type);
         snarl_paths.push_back(snarl_path);
     }
     // last chr adding

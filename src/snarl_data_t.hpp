@@ -92,7 +92,8 @@ struct Path_traversal_t {
 struct Snarl_data_t {
     public:
         // Constructor definition
-        Snarl_data_t(net_handle_t snarl,
+        Snarl_data_t(net_handle_t snarl_,
+                    std::pair<size_t, size_t> snarl_ids_,
                     std::vector<Path_traversal_t> snarl_paths_,
                     const size_t start_positions_, const size_t end_positions_,
                     std::vector<std::string> type_variants_);  // Assuming path_nodes correspond to type_variants
@@ -100,6 +101,7 @@ struct Snarl_data_t {
         std::vector<std::string> type_variants;
         std::vector<Path_traversal_t> snarl_paths;
         net_handle_t snarl; // handlegraph::subrange_t Snarl_data_t::snarl_id
+        std::pair<size_t, size_t> snarl_ids;
         size_t start_positions;
         size_t end_positions;
 };
