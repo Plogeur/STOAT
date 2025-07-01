@@ -625,7 +625,6 @@ void SnarlAnalyser::binary_table(const std::vector<Snarl_data_t>& snarls,
     #pragma omp parallel for schedule(static)
 
     for (size_t itr = 0; itr < snarls.size(); ++itr) {
-        std::stringstream local_buffer;
         const Snarl_data_t& snarl_data_s = snarls[itr];
 
         std::ostringstream oss;
@@ -665,12 +664,11 @@ void SnarlAnalyser::binary_table(const std::vector<Snarl_data_t>& snarls,
                 std::string variant_file_name = regression_dir + "/" + pairToString(snarl_data_s.snarl_ids) + ".tsv";
                 stoat_vcf::writeSignificantTableToTSV(df,stringToVector<std::string>(vectorPathToString(snarl_data_s.snarl_paths)), sampleNames, variant_file_name);
             }
+            # pragma omp critical (outf) 
+            {
+                write_binary_covar(outf, chr, snarl_data_s, type_var_str, p_value, "", r2, beta, se, allele_number, allele_paths);
+            }
     
-            // chr, pos, snarl, type, p_value, p_adjusted, t-dist, beta, se, allele_number
-            data << chr << "\t" << snarl_data_s.start_positions << "\t" << pairToString(snarl_data_s.snarl_ids) << "\t" << type_var_str
-            << "\t" << p_value << "\t" << "" << "\t" << r2 << "\t" << beta << "\t" << se 
-            << "\t" << allele_number << "\t" << vectorToString(allele_paths) << "\n";
-                        
         } else {
             size_t length_column_headers = snarl_data_s.snarl_paths.size();
             size_t number_samples = sampleNames.size();
@@ -697,21 +695,14 @@ void SnarlAnalyser::binary_table(const std::vector<Snarl_data_t>& snarls,
             }
             
             std::cout << "binary_stat_test end" << std::endl;
-
-            data << chr << "\t" << snarl_data_s.start_positions << "\t" << pairToString(snarl_data_s.snarl_ids) << "\t" << type_var_str
-                 << "\t" << fastfisher_p_value << "\t" << chi2_p_value << "\t" << ""
-                 << "\t" << allele_number_str << "\t" << min_row_index_str << "\t" << numb_colum_str 
-                 << "\t" << inter_group_str << "\t" << average_str << "\t" << group_paths << "\n";
+            # pragma omp critical (outf) 
+            {
+                write_binary(outf, chr, snarl_data_s, type_var_str, fastfisher_p_value, chi2_p_value, "", allele_number_str, min_row_index_str,
+                             numb_colum_str, inter_group_str, average_str, group_paths);
+            }
             
             std::cout << "data writen end" << std::endl;
 
-        }
-
-        local_buffer << data.str();
-
-        # pragma omp critical (outf) 
-        {
-            outf.write(local_buffer.str().c_str(), local_buffer.str().size());
         }
     }
 }
@@ -731,7 +722,6 @@ void SnarlAnalyser::quantitative_table(const std::vector<Snarl_data_t>& snarls,
     #pragma omp parallel for schedule(static)
     // Iterate over each snarl
     for (size_t itr = 0; itr < snarls.size(); ++itr) {
-        std::stringstream local_buffer;
         const Snarl_data_t& snarl_data_s = snarls[itr];
 
         const auto& [df, phenotype_filtered, allele_number, allele_paths] = create_quantitative_table(length_sample, snarl_data_s.snarl_paths, quantitative_phenotype, matrix);
@@ -770,18 +760,12 @@ void SnarlAnalyser::quantitative_table(const std::vector<Snarl_data_t>& snarls,
             std::string variant_file_name = regression_dir + "/" + pairToString(snarl_data_s.snarl_ids) + ".tsv";
             stoat_vcf::writeSignificantTableToTSV(df,stringToVector<std::string>(vectorPathToString(snarl_data_s.snarl_paths)), sampleNames, variant_file_name);
         }
-        
-        // chr, pos, snarl, type, p_value, p_adjusted, r2, beta, se, allele_number
-        data << chr << "\t" << snarl_data_s.start_positions << "\t" << pairToString(snarl_data_s.snarl_ids) << "\t" << type_var_str
-        << "\t" << p_value  << "\t" << "" << "\t" << r2 << "\t" << beta << "\t" << se 
-        << "\t" << allele_number << "\t" << vectorToString(allele_paths) << "\n";
-
-        local_buffer << data.str();
 
         #pragma omp critical (outf)
         {
-            outf.write(local_buffer.str().c_str(), local_buffer.str().size());
+            write_quantitative(outf, chr, snarl_data_s, type_var_str, p_value, "", r2, beta, se, allele_number, allele_paths);
         }
+
     }
 }
 
@@ -855,7 +839,6 @@ void SnarlAnalyser::eqtl_table(const std::vector<Snarl_data_t>& snarls,
     #pragma omp parallel for schedule(static)
     // Iterate over each snarl
     for (size_t itr = 0; itr < snarls.size(); ++itr) {
-        std::stringstream local_buffer;
         const Snarl_data_t& snarl_data_s = snarls[itr];
 
         std::vector<size_t> list_gene_index = found_gene_snarl(eqtl, snarl_data_s.start_positions, snarl_data_s.end_positions, windows_gene_threshold);
@@ -903,17 +886,11 @@ void SnarlAnalyser::eqtl_table(const std::vector<Snarl_data_t>& snarls,
                 stoat_vcf::writeSignificantTableToTSV(df,stringToVector<std::string>(vectorPathToString(snarl_data_s.snarl_paths)), sampleNames, variant_file_name);
             }
 
-           // "CHR\tPOS\tSNARL\tTYPE\tGENE\tP\tP_ADJUSTED\tRSQUARE\tBETA\tSE\tALLELE_NUM\n";
-            data << chr << "\t" << snarl_data_s.start_positions << "\t" << pairToString(snarl_data_s.snarl_ids) << "\t" << type_var_str
-            << "\t" << gene_name << "\t" << p_value  << "\t" << "" << "\t" << r2
-            << "\t" << beta << "\t" << se << "\t" << allele_number << "\t" << vectorToString(allele_paths) << "\n";
+            #pragma omp critical (outf)
 
-            local_buffer << data.str();
-        }
-        #pragma omp critical (outf)
-
-        {
-            outf.write(local_buffer.str().c_str(), local_buffer.str().size());
+            {
+                stoat_vcf::write_eqtl(outf, chr, snarl_data_s, type_var_str, gene_name, p_value, "", r2, beta, se, allele_number, allele_paths);
+            }
         }
     }
 }
