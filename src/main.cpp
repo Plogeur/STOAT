@@ -107,6 +107,8 @@ int main(int argc, char* argv[]) {
     // Shift argv to skip the subcommand itself
     argc -= 1;
     argv += 1;
+    // Set the number of threads to 1 by default
+    omp_set_num_threads(1);
 
     if (subcommand == "vcf") {
 
