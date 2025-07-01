@@ -4,8 +4,6 @@
 // using handlegraph::handle_t;
 // using handlegraph::net_handle_t;
 
-
-
 //#define DEBUG_SNARL_DATA_T
 
 namespace stoat_vcf {
@@ -142,7 +140,6 @@ Snarl_data_t::Snarl_data_t(bdsg::net_handle_t snarl_,
     start_positions(start_positions_),
     end_positions(end_positions_),
     type_variants(std::move(type_variants_)) {}
-
 
 Path::Path() {}
 
@@ -592,8 +589,6 @@ std::tuple<std::vector<stoat_vcf::Path_traversal_t>, std::vector<std::string>> f
         seq_net_paths.push_back(std::make_tuple(minimum_distance, maximun_distance, size_path, sum_path, is_complex));
     }
 
-    // TODO : change sum_path to use boundary to compute it / remove size_node_2 
-    // Matis ans : I remove size_node_2 BUT i don't know how to use boundary to compute it.
     std::vector<std::string> type_variants = calcul_pos_type_variant(seq_net_paths);
     return std::make_tuple(pretty_paths, type_variants);
 }
@@ -625,7 +620,6 @@ std::unordered_map<std::string, std::vector<Snarl_data_t>> loop_over_snarls_writ
     size_t paths_number_analysis = 0;
     std::string save_chr = "";
 
-
     for (const auto& snarl_path_pos : snarls) {
         handlegraph::net_handle_t snarl = std::get<0>(snarl_path_pos);
         std::pair<size_t, size_t> snarl_id = find_snarl_id(stree, snarl);
@@ -638,6 +632,7 @@ std::unordered_map<std::string, std::vector<Snarl_data_t>> loop_over_snarls_writ
             children += 1;
             return true;
         });
+
         if (children > children_threshold) {
             out_fail << snarl_id_str << "\ttoo_many_children = " << children << " children" << "\n";
             continue;
@@ -660,7 +655,6 @@ std::unordered_map<std::string, std::vector<Snarl_data_t>> loop_over_snarls_writ
                     break;
                 }
             }
-
 
             if (itr > path_length_threshold) {
                 out_fail << snarl_id_str << "\titeration_calculation_out = " << children << " children" << "\n";
@@ -687,11 +681,10 @@ std::unordered_map<std::string, std::vector<Snarl_data_t>> loop_over_snarls_writ
             size_t end_pos = std::get<3>(snarl_path_pos);
             paths_number_analysis += pretty_paths_size;
             std::string str_reference = std::get<4>(snarl_path_pos) == true ? "1" : "0"; // 1 : on reference, 0 : out reference
-            std::string snarl_id_string = pairToString(snarl_id);
 
             if (bool_return) {
                 out_snarl << chr << "\t" << strat_pos << "\t" << end_pos
-                    << "\t" << handlegraph::as_integer(snarl) << "\t" << snarl_id_string << "\t" << vectorPathToString(pretty_paths)
+                    << "\t" << handlegraph::as_integer(snarl) << "\t" << snarl_id_str << "\t" << vectorPathToString(pretty_paths)
                     << "\t" << vectorToString(type_variants) << "\t" << str_reference << "\n";
             } else {
                 // case new chr
