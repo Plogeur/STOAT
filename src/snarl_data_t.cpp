@@ -545,6 +545,27 @@ std::tuple<std::vector<stoat_vcf::Path_traversal_t>, std::vector<std::string>> f
                 assert(stree.minimum_length(net) != static_cast<size_t>(INT_MAX) && "Overflow min distance");
                 #endif
 
+                /*
+                // Old code for getting the maximum length of the chain
+                // This version uses the maximum distance, which allows loops by finding paths that exit the chain and come back
+                // Get the size of the chain and return the distance (minimum and maximum)
+                size_t complex_start_id = stree.node_id(nodl);
+                handlegraph::handle_t handle_start = pg.get_handle(complex_start_id);
+                size_t size_start_node = pg.get_length(handle_start);
+                bool revl = stree.ends_at_start(nodl);
+
+                size_t complex_end_id = stree.node_id(nodr);
+                handlegraph::handle_t handle_end = pg.get_handle(complex_end_id);
+                size_t size_end_node = pg.get_length(handle_end);
+                bool revr = stree.ends_at_start(nodr);
+
+                size_t size_chain = size_start_node + size_end_node;
+
+                size_t max_dist = stree.maximum_distance(complex_start_id, revl, size_start_node, complex_end_id, revr, 0) + size_chain;
+                */
+
+
+
                 // Add the minimum/maximum lengths of the chain
                 minimum_distance += stree.minimum_length(net);
                 maximun_distance += stree.maximum_length(net);
