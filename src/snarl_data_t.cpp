@@ -627,10 +627,8 @@ std::unordered_map<std::string, std::vector<Snarl_data_t>> loop_over_snarls_writ
         std::vector<std::vector<handlegraph::net_handle_t>> finished_paths;
 
         while (!paths.empty()) {
-            //TODO: I think path should be a reference so it doesn't get copied
-            //Matis ans: No it elements must remain in copy because it will be modified later (i test the & and it breaks the code : 0 paths found)
-            //Change to move instead
-            std::vector<handlegraph::net_handle_t> path = paths.back();
+            std::vector<handlegraph::net_handle_t> path = std::move(paths.back());
+            paths.pop_back();
             std::unordered_map<handlegraph::net_handle_t, size_t> dict_path_occ;
             bool cycle = false;
 
@@ -642,7 +640,6 @@ std::unordered_map<std::string, std::vector<Snarl_data_t>> loop_over_snarls_writ
                 }
             }
 
-            paths.pop_back();
 
             if (itr > path_length_threshold) {
                 out_fail << snarl_id_str << "\titeration_calculation_out = " << children << " children" << "\n";
