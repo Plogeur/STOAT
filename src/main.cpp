@@ -21,6 +21,7 @@
 #include <Eigen/Dense>
 #include <cstdlib>
 #include <getopt.h>
+#include <omp.h>
 
 // #include <bdsg/overlays/overlay_helper.hpp>
 // #include <handlegraph/path_handle_graph.hpp>
@@ -229,6 +230,7 @@ int main(int argc, char* argv[]) {
                         std::cerr << "Error: Number of threads must be > 0\n";
                         return EXIT_FAILURE;
                     }
+                    omp_set_num_threads(std::stoi(optarg));
                     break;
                 case 'o': output_dir = optarg; break;
                 case 'h': print_help_vcf(); exit(EXIT_SUCCESS); break;
