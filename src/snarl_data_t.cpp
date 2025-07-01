@@ -602,12 +602,9 @@ std::unordered_map<std::string, std::vector<Snarl_data_t>> loop_over_snarls_writ
     size_t paths_number_analysis = 0;
     std::string save_chr = "";
 
-    // TODO: I think this should just be a size_t child_count, it doesn't look like it ever uses anything except the first value
-    // Matis ans : i think size_t variable isn't in the scope of the lambda, so i use a vector with one element
-    // but i agree that it is not the best way to do it, i will change if it's work with size_t
-    std::vector<size_t> children = {0};
+    size_t children = 0;
     auto count_children = [&](handlegraph::net_handle_t net) {
-        children[0] += 1;
+        children += 1;
         return true;
     };
 
@@ -616,11 +613,10 @@ std::unordered_map<std::string, std::vector<Snarl_data_t>> loop_over_snarls_writ
         size_t itr = 0;
         std::string snarl_id_str = pairToString(find_snarl_id(stree, snarl));
         bool not_break = true;
-        children = {0}; // re-initialise the children vec
         
         stree.for_each_child(snarl, count_children);
-        if (children[0] > children_threshold) {
-            out_fail << snarl_id_str << "\ttoo_many_children = " << children[0] << " children" << "\n";
+        if (children > children_threshold) {
+            out_fail << snarl_id_str << "\ttoo_many_children = " << children << " children" << "\n";
             continue;
         }
         
@@ -647,7 +643,7 @@ std::unordered_map<std::string, std::vector<Snarl_data_t>> loop_over_snarls_writ
             paths.pop_back();
 
             if (itr > path_length_threshold) {
-                out_fail << snarl_id_str << "\titeration_calculation_out = " << children[0] << " children" << "\n";
+                out_fail << snarl_id_str << "\titeration_calculation_out = " << children << " children" << "\n";
                 not_break = false;
                 break;
             }
