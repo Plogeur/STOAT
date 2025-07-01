@@ -506,7 +506,7 @@ std::tuple<std::vector<stoat_vcf::Path_traversal_t>, std::vector<std::string>> f
 
                 ppath.addNodeHandle(nodl, stree);
 
-                // test chain : handlegraph::net_handle_t is composed of 2 element && if both element is_node == true ?
+                // TODO? test chain : handlegraph::net_handle_t is composed of 2 element && if both element is_node == true ?
                 // idk ask to jean
                 bool chain_2node = true;
                 int child_count = 0;
@@ -577,6 +577,8 @@ std::tuple<std::vector<stoat_vcf::Path_traversal_t>, std::vector<std::string>> f
         seq_net_paths.push_back(std::make_tuple(minimum_distance, maximun_distance, size_path, sum_path, is_complex));
     }
 
+    // TODO : change sum_path to use boundary to compute it / remove size_node_2 
+    // Matis ans : I remove size_node_2 BUT i don't know how to use boundary to compute it.
     std::vector<std::string> type_variants = calcul_pos_type_variant(seq_net_paths);
     return std::make_tuple(pretty_paths, type_variants);
 }
@@ -637,6 +639,7 @@ std::unordered_map<std::string, std::vector<Snarl_data_t>> loop_over_snarls_writ
         while (!paths.empty()) {
             //TODO: I think path should be a reference so it doesn't get copied
             //Matis ans: No it elements must remain in copy because it will be modified later (i test the & and it breaks the code : 0 paths found)
+            //Change to move instead
             std::vector<handlegraph::net_handle_t> path = paths.back();
             std::unordered_map<handlegraph::net_handle_t, size_t> dict_path_occ;
             bool cycle = false;

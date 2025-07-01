@@ -173,7 +173,6 @@ void chromosome_chuck_eqtl(const bdsg::SnarlDistanceIndex& stree, htsFile* &ptr_
     bcf_close(ptr_vcf);
 }
 
-// TODO: Probably won't need the stree later
 void chromosome_chuck_make_bed(const bdsg::SnarlDistanceIndex& stree, htsFile* &ptr_vcf, bcf_hdr_t* &hdr, bcf1_t* &rec, 
     const std::vector<std::string> &list_samples,
     const std::unordered_map<std::string, std::vector<Snarl_data_t>>& snarl_chr,
