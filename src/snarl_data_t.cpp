@@ -4,6 +4,10 @@
 // using handlegraph::handle_t;
 // using handlegraph::net_handle_t;
 
+
+
+//#define DEBUG_SNARL_DATA_T
+
 namespace stoat_vcf {
 
 // Node_traversal_t
@@ -128,10 +132,12 @@ std::vector<stoat_vcf::Path_traversal_t> stringToVectorPath(std::string& input) 
 
 // Add a snarl
 Snarl_data_t::Snarl_data_t(bdsg::net_handle_t snarl_,
+    std::pair<size_t, size_t> snarl_ids_,
     std::vector<Path_traversal_t> snarl_paths_,
     const size_t start_positions_, const size_t end_positions_,
     std::vector<std::string> type_variants_) :
     snarl(snarl_),
+    snarl_ids(snarl_ids_),
     snarl_paths(std::move(snarl_paths_)),
     start_positions(start_positions_),
     end_positions(end_positions_),
@@ -395,7 +401,9 @@ std::vector<std::tuple<handlegraph::net_handle_t, std::string, size_t, size_t, b
         if (std::get<0>(bnode1_p).empty()) return bnode1_p;
         if (std::get<0>(bnode2_p).empty()) return bnode2_p;
 
+        #ifdef DEBUG_SNARL_DATA_T
         assert(std::get<0>(bnode1_p) == std::get<0>(bnode2_p)); // Ensure they are on the same reference path
+        #endif
 
         size_t start;
         size_t end;
@@ -531,6 +539,15 @@ std::tuple<std::vector<stoat_vcf::Path_traversal_t>, std::vector<std::string>> f
                 }
                 ppath.addNodeHandle(nodr, stree);
 
+                // Fail case 
+                #ifdef DEBUG_SNARL_DATA_T
+                assert(stree.maximum_length(net) != static_cast<size_t>(INT_MAX) && "Overflow max distance");
+                assert(stree.minimum_length(net) != static_cast<size_t>(INT_MAX) && "Overflow min distance");
+                #endif
+
+                /*
+                // Old code for getting the maximum length of the chain
+                // This version uses the maximum distance, which allows loops by finding paths that exit the chain and come back
                 // Get the size of the chain and return the distance (minimum and maximum)
                 size_t complex_start_id = stree.node_id(nodl);
                 handlegraph::handle_t handle_start = pg.get_handle(complex_start_id);
@@ -543,17 +560,15 @@ std::tuple<std::vector<stoat_vcf::Path_traversal_t>, std::vector<std::string>> f
                 bool revr = stree.ends_at_start(nodr);
 
                 size_t size_chain = size_start_node + size_end_node;
-                // TODO: I think this can use minimum_length() and maximum_length(), just to be simpler
-                // matis ans : yes for minimum_length() but maximum_length() do not exist 
-                size_t min_dist = stree.minimum_distance(complex_start_id, revl, size_start_node, complex_end_id, revr, 0);
-                size_t max_dist = stree.maximum_distance(complex_start_id, revl, size_start_node, complex_end_id, revr, 0);
 
-                // Fail case 
-                assert(max_dist != static_cast<size_t>(INT_MAX) && "Overflow max distance");
-                assert(min_dist != static_cast<size_t>(INT_MAX) && "Overflow min distance");
+                size_t max_dist = stree.maximum_distance(complex_start_id, revl, size_start_node, complex_end_id, revr, 0) + size_chain;
+                */
 
-                minimum_distance += size_chain + min_dist;
-                maximun_distance += size_chain + max_dist;
+
+
+                // Add the minimum/maximum lengths of the chain
+                minimum_distance += stree.minimum_length(net);
+                maximun_distance += stree.maximum_length(net);
             }
         }
 
@@ -610,25 +625,21 @@ std::unordered_map<std::string, std::vector<Snarl_data_t>> loop_over_snarls_writ
     size_t paths_number_analysis = 0;
     std::string save_chr = "";
 
-    // TODO: I think this should just be a size_t child_count, it doesn't look like it ever uses anything except the first value
-    // Matis ans : i think size_t variable isn't in the scope of the lambda, so i use a vector with one element
-    // but i agree that it is not the best way to do it, i will change if it's work with size_t
-    std::vector<size_t> children = {0};
-    auto count_children = [&](handlegraph::net_handle_t net) {
-        children[0] += 1;
-        return true;
-    };
 
     for (const auto& snarl_path_pos : snarls) {
         handlegraph::net_handle_t snarl = std::get<0>(snarl_path_pos);
+        std::pair<size_t, size_t> snarl_id = find_snarl_id(stree, snarl);
         size_t itr = 0;
-        std::string snarl_id_str = pairToString(find_snarl_id(stree, snarl));
+        std::string snarl_id_str = pairToString(snarl_id);
         bool not_break = true;
-        children = {0}; // re-initialise the children vec
         
-        stree.for_each_child(snarl, count_children);
-        if (children[0] > children_threshold) {
-            out_fail << snarl_id_str << "\ttoo_many_children = " << children[0] << " children" << "\n";
+        size_t children = 0;
+        stree.for_each_child(snarl, [&](const handlegraph::net_handle_t& net) {
+            children += 1;
+            return true;
+        });
+        if (children > children_threshold) {
+            out_fail << snarl_id_str << "\ttoo_many_children = " << children << " children" << "\n";
             continue;
         }
         
@@ -637,10 +648,8 @@ std::unordered_map<std::string, std::vector<Snarl_data_t>> loop_over_snarls_writ
         std::vector<std::vector<handlegraph::net_handle_t>> finished_paths;
 
         while (!paths.empty()) {
-            //TODO: I think path should be a reference so it doesn't get copied
-            //Matis ans: No it elements must remain in copy because it will be modified later (i test the & and it breaks the code : 0 paths found)
-            //Change to move instead
-            std::vector<handlegraph::net_handle_t> path = paths.back();
+            std::vector<handlegraph::net_handle_t> path = std::move(paths.back());
+            paths.pop_back();
             std::unordered_map<handlegraph::net_handle_t, size_t> dict_path_occ;
             bool cycle = false;
 
@@ -652,10 +661,9 @@ std::unordered_map<std::string, std::vector<Snarl_data_t>> loop_over_snarls_writ
                 }
             }
 
-            paths.pop_back();
 
             if (itr > path_length_threshold) {
-                out_fail << snarl_id_str << "\titeration_calculation_out = " << children[0] << " children" << "\n";
+                out_fail << snarl_id_str << "\titeration_calculation_out = " << children << " children" << "\n";
                 not_break = false;
                 break;
             }
@@ -679,10 +687,11 @@ std::unordered_map<std::string, std::vector<Snarl_data_t>> loop_over_snarls_writ
             size_t end_pos = std::get<3>(snarl_path_pos);
             paths_number_analysis += pretty_paths_size;
             std::string str_reference = std::get<4>(snarl_path_pos) == true ? "1" : "0"; // 1 : on reference, 0 : out reference
+            std::string snarl_id_string = pairToString(snarl_id);
 
             if (bool_return) {
                 out_snarl << chr << "\t" << strat_pos << "\t" << end_pos
-                    << "\t" << handlegraph::as_integer(snarl) << "\t" << vectorPathToString(pretty_paths)
+                    << "\t" << handlegraph::as_integer(snarl) << "\t" << snarl_id_string << "\t" << vectorPathToString(pretty_paths)
                     << "\t" << vectorToString(type_variants) << "\t" << str_reference << "\n";
             } else {
                 // case new chr
@@ -691,7 +700,7 @@ std::unordered_map<std::string, std::vector<Snarl_data_t>> loop_over_snarls_writ
                     snarl_paths.clear();
                 }
                 save_chr = chr;
-                Snarl_data_t snarl_path(snarl, pretty_paths, strat_pos, end_pos, type_variants);
+                Snarl_data_t snarl_path(snarl, snarl_id, pretty_paths, strat_pos, end_pos, type_variants);
                 snarl_paths.push_back(snarl_path);
             }
         }
