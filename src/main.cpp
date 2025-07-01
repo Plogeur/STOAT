@@ -21,6 +21,7 @@
 #include <Eigen/Dense>
 #include <cstdlib>
 #include <getopt.h>
+#include <omp.h>
 
 // #include <bdsg/overlays/overlay_helper.hpp>
 // #include <handlegraph/path_handle_graph.hpp>
@@ -106,6 +107,8 @@ int main(int argc, char* argv[]) {
     // Shift argv to skip the subcommand itself
     argc -= 1;
     argv += 1;
+    // Set the number of threads to 1 by default
+    omp_set_num_threads(1);
 
     if (subcommand == "vcf") {
 
@@ -115,7 +118,6 @@ int main(int argc, char* argv[]) {
             eqtl_path, covariate_path, gene_position_path, 
             kinship_path, output_dir;
 
-        size_t num_threads = 1;
         size_t phenotype = 0;
         size_t cycle_threshold = 1;
         size_t children_threshold = 50;
@@ -224,11 +226,11 @@ int main(int argc, char* argv[]) {
                     }
                     break;
                 case 't':
-                    num_threads = std::stoi(optarg);
-                    if (num_threads < 1) {
+                    if (std::stoi(optarg) < 1) {
                         std::cerr << "Error: Number of threads must be > 0\n";
                         return EXIT_FAILURE;
                     }
+                    omp_set_num_threads(std::stoi(optarg));
                     break;
                 case 'o': output_dir = optarg; break;
                 case 'h': print_help_vcf(); exit(EXIT_SUCCESS); break;
@@ -394,7 +396,7 @@ int main(int argc, char* argv[]) {
         } else if (!binary_path.empty()) {
 
             std::string output_binary = output_dir + "/binary_table.tsv";
-            stoat_vcf::chromosome_chuck_binary(ptr_vcf, hdr, rec, list_samples, snarls_chr, binary, covariate, maf, num_threads, table_threshold, regression_dir, output_binary);
+            stoat_vcf::chromosome_chuck_binary(ptr_vcf, hdr, rec, list_samples, snarls_chr, binary, covariate, maf, table_threshold, regression_dir, output_binary);
 
             std::string output_significative = output_dir + "/top_variant_binary.tsv";
             std::string phenotype_type = covariate.empty() ? "binary" : "quantitative";
@@ -408,7 +410,7 @@ int main(int argc, char* argv[]) {
         } else if (!quantitative_path.empty()) {
 
             std::string output_quantitive = output_dir + "/quantitative_table.tsv";
-            stoat_vcf::chromosome_chuck_quantitative(ptr_vcf, hdr, rec, list_samples, snarls_chr, quantitative, covariate, maf, num_threads, table_threshold, regression_dir, output_quantitive);
+            stoat_vcf::chromosome_chuck_quantitative(ptr_vcf, hdr, rec, list_samples, snarls_chr, quantitative, covariate, maf, table_threshold, regression_dir, output_quantitive);
 
             std::string output_significative = output_dir + "/top_variant_quantitative.tsv";
             std::string phenotype_type = "quantitative";
@@ -418,7 +420,7 @@ int main(int argc, char* argv[]) {
 
             std::string eqtl_output = output_dir + "/eqtl_gwas.tsv";
             stoat_vcf::chromosome_chuck_eqtl(ptr_vcf, hdr, rec, list_samples, snarls_chr, eqtl, covariate, maf, 
-                num_threads, table_threshold, regression_dir, windows_gene_threshold, eqtl_output);
+                table_threshold, regression_dir, windows_gene_threshold, eqtl_output);
             
             std::string output_significative = output_dir + "/top_variant_eqtl.tsv";
             std::string phenotype_type = "eqtl";
