@@ -4,6 +4,10 @@
 // using handlegraph::handle_t;
 // using handlegraph::net_handle_t;
 
+
+
+//#define DEBUG_SNARL_DATA_T
+
 namespace stoat_vcf {
 
 // Node_traversal_t
@@ -409,7 +413,9 @@ std::vector<std::tuple<handlegraph::net_handle_t, std::string, size_t, size_t, b
         if (std::get<0>(bnode1_p).empty()) return bnode1_p;
         if (std::get<0>(bnode2_p).empty()) return bnode2_p;
 
+        #ifdef DEBUG_SNARL_DATA_T
         assert(std::get<0>(bnode1_p) == std::get<0>(bnode2_p)); // Ensure they are on the same reference path
+        #endif
 
         size_t start;
         size_t end;
@@ -552,8 +558,10 @@ tuple<std::vector<Path_traversal_t>, std::vector<std::string>> fill_pretty_paths
                 ppath.addNodeHandle(nodr, stree);
 
                 // Fail case 
-                assert(max_dist != static_cast<size_t>(INT_MAX) && "Overflow max distance");
-                assert(min_dist != static_cast<size_t>(INT_MAX) && "Overflow min distance");
+                #ifdef DEBUG_SNARL_DATA_T
+                assert(stree.maximum_length(net) != static_cast<size_t>(INT_MAX) && "Overflow max distance");
+                assert(stree.minimum_length(net) != static_cast<size_t>(INT_MAX) && "Overflow min distance");
+                #endif
 
                 // Add the minimum/maximum lengths of the chain
                 minimum_distance += stree.minimum_length(net);
