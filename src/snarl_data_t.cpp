@@ -551,29 +551,13 @@ tuple<std::vector<Path_traversal_t>, std::vector<std::string>> fill_pretty_paths
                 }
                 ppath.addNodeHandle(nodr, stree);
 
-                // Get the size of the chain and return the distance (minimum and maximum)
-                size_t complex_start_id = stree.node_id(nodl);
-                handle_t handle_start = pg.get_handle(complex_start_id);
-                size_t size_start_node = pg.get_length(handle_start);
-                bool revl = stree.ends_at_start(nodl);
-
-                size_t complex_end_id = stree.node_id(nodr);
-                handle_t handle_end = pg.get_handle(complex_end_id);
-                size_t size_end_node = pg.get_length(handle_end);
-                bool revr = stree.ends_at_start(nodr);
-
-                size_t size_chain = size_start_node + size_end_node;
-                // TODO: I think this can use minimum_length() and maximum_length(), just to be simpler
-                // matis ans : yes for minimum_length() but maximum_length() do not exist 
-                size_t min_dist = stree.minimum_distance(complex_start_id, revl, size_start_node, complex_end_id, revr, 0);
-                size_t max_dist = stree.maximum_distance(complex_start_id, revl, size_start_node, complex_end_id, revr, 0);
-
                 // Fail case 
                 assert(max_dist != static_cast<size_t>(INT_MAX) && "Overflow max distance");
                 assert(min_dist != static_cast<size_t>(INT_MAX) && "Overflow min distance");
 
-                minimum_distance += size_chain + min_dist;
-                maximun_distance += size_chain + max_dist;
+                // Add the minimum/maximum lengths of the chain
+                minimum_distance += stree.minimum_length(net);
+                maximun_distance += stree.maximum_length(net);
             }
         }
 
