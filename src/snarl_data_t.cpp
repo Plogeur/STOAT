@@ -602,11 +602,6 @@ std::unordered_map<std::string, std::vector<Snarl_data_t>> loop_over_snarls_writ
     size_t paths_number_analysis = 0;
     std::string save_chr = "";
 
-    size_t children = 0;
-    auto count_children = [&](handlegraph::net_handle_t net) {
-        children += 1;
-        return true;
-    };
 
     for (const auto& snarl_path_pos : snarls) {
         handlegraph::net_handle_t snarl = std::get<0>(snarl_path_pos);
@@ -614,7 +609,11 @@ std::unordered_map<std::string, std::vector<Snarl_data_t>> loop_over_snarls_writ
         std::string snarl_id_str = pairToString(find_snarl_id(stree, snarl));
         bool not_break = true;
         
-        stree.for_each_child(snarl, count_children);
+        size_t children = 0;
+        stree.for_each_child(snarl, [&](const handlegraph::net_handle_t& net) {
+            children += 1;
+            return true;
+        });
         if (children > children_threshold) {
             out_fail << snarl_id_str << "\ttoo_many_children = " << children << " children" << "\n";
             continue;
