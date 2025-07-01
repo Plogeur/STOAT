@@ -622,7 +622,7 @@ void SnarlAnalyser::binary_table(const std::vector<Snarl_data_t>& snarls,
 
 
     // TODO: This used to be done in batches but for now just do it like this because it's simpler
-    #pragma omp parallel for
+    #pragma omp parallel for schedule(static)
 
     for (size_t itr = 0; itr < snarls.size(); ++itr) {
         std::stringstream local_buffer;
@@ -728,7 +728,7 @@ void SnarlAnalyser::quantitative_table(const std::vector<Snarl_data_t>& snarls,
 
     size_t length_sample = sampleNames.size();
 
-    #pragma omp parallel for
+    #pragma omp parallel for schedule(static)
     // Iterate over each snarl
     for (size_t itr = 0; itr < snarls.size(); ++itr) {
         std::stringstream local_buffer;
@@ -852,7 +852,7 @@ void SnarlAnalyser::eqtl_table(const std::vector<Snarl_data_t>& snarls,
 
     size_t length_sample = sampleNames.size();
 
-    #pragma omp parallel for
+    #pragma omp parallel for schedule(static)
     // Iterate over each snarl
     for (size_t itr = 0; itr < snarls.size(); ++itr) {
         std::stringstream local_buffer;
