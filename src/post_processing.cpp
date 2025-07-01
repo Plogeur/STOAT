@@ -1,6 +1,8 @@
 #include "post_processing.hpp"
 #include "utils.hpp"
 
+namespace stoat_vcf {
+
 // Adjust p-values using the Benjamini-Hochberg procedure
 void adjust_pvalues_with_BH(std::vector<std::tuple<double, double, size_t>>& data) {
     size_t n = data.size();
@@ -77,7 +79,7 @@ void add_BH_adjusted_column(
         double pval = 1.0;
         if (phenotype_type == "binary") {
             // combine both p-value
-            //pval = set_precision_float_50(columns[4], columns[5]);
+            //pval = stoat_vcf::set_precision_float_50(columns[4], columns[5]);
             
             // use only chi2
             pval = string_to_pvalue(columns[adjusted_col_index-1]); // use only chi2
@@ -142,3 +144,5 @@ void add_BH_adjusted_column(
     std::remove(input_file.c_str());
     std::rename("temp_output.tsv", input_file.c_str());
 }
+
+} // namespace stoat_vcf

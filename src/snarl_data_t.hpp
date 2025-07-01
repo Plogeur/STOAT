@@ -92,23 +92,14 @@ struct Path_traversal_t {
 struct Snarl_data_t {
     public:
         // Constructor definition
-        Snarl_data_t(const std::pair<size_t, size_t>& snarl_id_,
-                    const std::vector<Path_traversal_t>& snarl_paths_,
+        Snarl_data_t(net_handle_t snarl,
+                    std::vector<Path_traversal_t> snarl_paths_,
                     const size_t start_positions_, const size_t end_positions_,
-                    const std::vector<std::string>& type_variants_);  // Assuming path_nodes correspond to type_variants
+                    std::vector<std::string> type_variants_);  // Assuming path_nodes correspond to type_variants
 
-        // Getters
-        const std::pair<size_t, size_t>& get_snarl_id() const;
-        const std::vector<Path_traversal_t>& get_snarl_paths() const;
-        const size_t& get_start_positions() const;
-        const size_t& get_end_positions() const;
-        const std::vector<std::string>& get_type_variants() const;
-        const std::tuple<std::string, std::vector<Path_traversal_t>, size_t, size_t, std::vector<std::string>>& get_snarl() const;
-
-    private:
         std::vector<std::string> type_variants;
         std::vector<Path_traversal_t> snarl_paths;
-        std::pair<size_t, size_t> snarl_id; // handlegraph::subrange_t Snarl_data_t::snarl_id
+        net_handle_t snarl; // handlegraph::subrange_t Snarl_data_t::snarl_id
         size_t start_positions;
         size_t end_positions;
 };
@@ -158,10 +149,11 @@ parse_graph_tree(const std::string& pg_file, const std::string& dist_file);
 // Function to calculate the type of variant
 // Given a vector of <size node 2, min length of the snarl, max length of the snarl, path length, sum_path, is_complex)
 // TODO : change sum_path to definition using the length of the path including in the boundary nodes
-std::vector<std::string> calcul_pos_type_variant(const std::vector<std::tuple<size_t, size_t, size_t, size_t, size_t, bool>>& list_length_paths);
+// Matis ans : i don t know how to do it
+std::vector<std::string> calcul_pos_type_variant(const std::vector<std::tuple<size_t, size_t, size_t, size_t, bool>>& list_length_paths);
 
 // Function to find snarl ID
-std::pair<size_t, size_t> find_snarl_id(bdsg::SnarlDistanceIndex& stree, handlegraph::net_handle_t& snarl);
+std::pair<size_t, size_t> find_snarl_id(const bdsg::SnarlDistanceIndex& stree, const handlegraph::net_handle_t& snarl);
 
 // Function to follow edges
 void follow_edges(bdsg::SnarlDistanceIndex& stree,
@@ -180,7 +172,7 @@ std::vector<std::tuple<handlegraph::net_handle_t, std::string, size_t, size_t, b
                            bdsg::PackedPositionOverlay& ppo);
 
 // Function to fill pretty paths
-tuple<std::vector<Path_traversal_t>, std::vector<std::string>> fill_pretty_paths(
+tuple<std::vector<stoat_vcf::Path_traversal_t>, std::vector<std::string>> fill_pretty_paths(
                             bdsg::SnarlDistanceIndex& stree, 
                             bdsg::PackedGraph& pg, 
                             std::vector<std::vector<handlegraph::net_handle_t>>& finished_paths);
@@ -204,8 +196,8 @@ std::unordered_map<std::string, std::vector<Snarl_data_t>> loop_over_snarls_writ
 // Hash functions for Node_traversal_t
 namespace std {
     template <>
-    struct hash<Node_traversal_t> {
-        size_t operator()(const Node_traversal_t& node) const {
+    struct hash<stoat_vcf::Node_traversal_t> {
+        size_t operator()(const stoat_vcf::Node_traversal_t& node) const {
             // Simple way: Shift node_id and pack is_reverse into the lower bit
             return (node.get_node_id() << 1) | static_cast<size_t>(node.get_is_reverse());
         }
@@ -213,11 +205,11 @@ namespace std {
 
     // Hash function for Edge_t
     template <>
-    struct hash<Edge_t> {
-        size_t operator()(const Edge_t& edge) const {
+    struct hash<stoat_vcf::Edge_t> {
+        size_t operator()(const stoat_vcf::Edge_t& edge) const {
             const auto& pair = edge.get_edge();
-            size_t h1 = hash<Node_traversal_t>()(pair.first);
-            size_t h2 = hash<Node_traversal_t>()(pair.second);
+            size_t h1 = hash<stoat_vcf::Node_traversal_t>()(pair.first);
+            size_t h2 = hash<stoat_vcf::Node_traversal_t>()(pair.second);
             
             // Standard hash combination
             return h1 ^ (h2 + 0x9e3779b9 + (h1 << 6) + (h1 >> 2));

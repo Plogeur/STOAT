@@ -26,7 +26,6 @@ TEST_CASE( "Exact test ","[tester]" ) {
     std::set<std::string> samples_of_interest ({"1", "2", "3"});
     ExactTester tester(samples_of_interest);
 
-
     SECTION("Test tester") {
         REQUIRE(tester.is_associated(std::set<std::string>({"2", "1", "3"})));
         REQUIRE(!tester.is_associated(std::set<std::string>({"2", "1"})));

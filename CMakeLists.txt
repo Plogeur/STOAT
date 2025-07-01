@@ -26,14 +26,15 @@ add_executable(${PROJECT_NAME}
     src/main.cpp
     src/utils.cpp
     src/arg_parser.cpp
-    src/binary_test.cpp
     src/post_processing.cpp
     src/gaf_creator.cpp
     src/snarl_data_t.cpp
     src/matrix.cpp
-    src/quantitative_test.cpp
+    src/binary_table.cpp
+    src/quantitative_table.cpp
+    src/stats_test.cpp
+    src/writer.cpp
     src/snarl_analyser.cpp
-    src/lmm.cpp
     ${ALGLIB_SOURCES}
 )
 
@@ -75,13 +76,14 @@ add_executable(unit_tests
 
     src/utils.cpp
     src/arg_parser.cpp
-    src/binary_test.cpp
     src/gaf_creator.cpp
     src/snarl_data_t.cpp
     src/matrix.cpp
-    src/quantitative_test.cpp
+    src/binary_table.cpp
+    src/quantitative_table.cpp
+    src/stats_test.cpp
+    src/writer.cpp
     src/snarl_analyser.cpp
-    src/lmm.cpp
 )
 
 target_compile_options(unit_tests PRIVATE -w) # fix warning
