@@ -253,7 +253,7 @@ TEST_CASE("Test simulated case", "[Path]") {
         REQUIRE(stoat_vcf::stringToVector<std::string>(vectorPathToString(snarls_chr["ref"][0].snarl_paths)) == std::vector<std::string>{">2>3>0>6>8",">2>3>0>6>3>0>6>8",">2>7>8"});
         REQUIRE(snarls_chr["ref"][0].start_positions == 8);
         REQUIRE(snarls_chr["ref"][0].end_positions == 10);
-        REQUIRE(snarls_chr["ref"][0].type_variants == std::vector<std::string>{"3/8","6/16","1"});
+        REQUIRE(snarls_chr["ref"][0].type_variants == std::vector<std::string>{"3/4","6/8","1"});
 
         REQUIRE(pairToString(find_snarl_id(*stree, snarls_chr["ref"][1].snarl)) == "3_6");
         REQUIRE(stoat_vcf::stringToVector<std::string>(vectorPathToString(snarls_chr["ref"][1].snarl_paths)) == std::vector<std::string>{">3>5>6",">3>4>6"});
