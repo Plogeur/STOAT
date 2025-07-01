@@ -13,7 +13,7 @@ void chromosome_chuck_binary(htsFile* &ptr_vcf, bcf_hdr_t* &hdr, bcf1_t* &rec,
     const std::vector<std::string> &list_samples, 
     const unordered_map<string, std::vector<Snarl_data_t>> &snarl_chr,
     const std::vector<bool>& binary_pheno, std::vector<std::vector<double>> covar, 
-    const double& maf, const size_t& num_threads,
+    const double& maf,
     const double& table_threshold, const std::string& regression_dir,
     const std::string& output_binary) {
 
@@ -56,7 +56,7 @@ void chromosome_chuck_binary(htsFile* &ptr_vcf, bcf_hdr_t* &hdr, bcf1_t* &rec,
         auto& snarl = snarl_chr.at(chr);
 
         // Gwas analysis by chromosome
-        vcf_object.binary_table(snarl, binary_pheno, chr, covar, maf, num_threads, table_threshold, regression_dir, outf);
+        vcf_object.binary_table(snarl, binary_pheno, chr, covar, maf, table_threshold, regression_dir, outf);
     }
     // Cleanup
     bcf_destroy(rec);
@@ -69,7 +69,7 @@ void chromosome_chuck_quantitative(htsFile* &ptr_vcf, bcf_hdr_t* &hdr, bcf1_t* &
     const std::vector<std::string> &list_samples,
     const unordered_map<string, std::vector<Snarl_data_t>> &snarl_chr,
     const std::vector<double>& quantitative_phenotype, std::vector<std::vector<double>> covar,
-    const double& maf, const size_t& num_threads,
+    const double& maf,
     const double& table_threshold, const std::string& regression_dir,
     const std::string& output_quantitive) {
 
@@ -111,7 +111,7 @@ void chromosome_chuck_quantitative(htsFile* &ptr_vcf, bcf_hdr_t* &hdr, bcf1_t* &
         auto& snarl = snarl_chr.at(chr);
 
         // Gwas analysis by chromosome
-        vcf_object.quantitative_table(snarl, quantitative_phenotype, chr, covar, maf, num_threads, table_threshold, regression_dir, outf);
+        vcf_object.quantitative_table(snarl, quantitative_phenotype, chr, covar, maf, table_threshold, regression_dir, outf);
     }
     // Cleanup
     bcf_destroy(rec);
@@ -124,7 +124,7 @@ void chromosome_chuck_eqtl(htsFile* &ptr_vcf, bcf_hdr_t* &hdr, bcf1_t* &rec,
     const std::unordered_map<std::string, std::vector<Snarl_data_t>> &snarl_chr,
     const std::unordered_map<std::string, std::vector<std::tuple<std::string, std::vector<double>, size_t, size_t>>>& eqtl_map,
     const std::vector<std::vector<double>>& covar,
-    const double& maf, const size_t& num_threads,
+    const double& maf,
     const double& table_threshold, const std::string& regression_dir,
     const size_t& windows_gene_threshold, const std::string& out_eqtl) {
 
@@ -166,7 +166,7 @@ void chromosome_chuck_eqtl(htsFile* &ptr_vcf, bcf_hdr_t* &hdr, bcf1_t* &rec,
         auto& eqtl = eqtl_map.at(chr);
 
         // Gwas analysis by chromosome
-        vcf_object.eqtl_table(snarl, eqtl, chr, covar, maf, num_threads, table_threshold, regression_dir, windows_gene_threshold, outf);
+        vcf_object.eqtl_table(snarl, eqtl, chr, covar, maf, table_threshold, regression_dir, windows_gene_threshold, outf);
     }
     // Cleanup
     bcf_destroy(rec);
@@ -613,8 +613,7 @@ std::vector<size_t> identify_path(
 void SnarlAnalyser::binary_table(const std::vector<Snarl_data_t>& snarls,
                                const std::vector<bool>& binary_phenotype, const std::string& chr,
                                const std::vector<std::vector<double>>& covar,
-                               const double& maf, 
-                               const size_t& num_threads, 
+                               const double& maf,  
                                const double& table_threshold, 
                                const std::string& regression_dir, 
                                std::ofstream& outf) {
@@ -723,7 +722,6 @@ void SnarlAnalyser::quantitative_table(const std::vector<Snarl_data_t>& snarls,
                                        const std::string &chr,
                                        const std::vector<std::vector<double>>& covar,
                                        const double& maf, 
-                                       const size_t& num_threads, 
                                        const double& table_threshold, 
                                        const std::string& regression_dir, 
                                        std::ofstream& outf) {
@@ -847,7 +845,6 @@ void SnarlAnalyser::eqtl_table(const std::vector<Snarl_data_t>& snarls,
     const std::string& chr, 
     const std::vector<std::vector<double>>& covar,
     const double& maf, 
-    const size_t& num_threads, 
     const double& table_threshold, 
     const std::string& regression_dir, 
     const size_t& windows_gene_threshold, 
