@@ -1,10 +1,7 @@
-src/__pycache__
-output/*
-stoat.egg-info/*
-build/*
-src/CMakeFiles/*
 .docker/
 .vscode
 .Rproj.user
+build/*
 data/droso/
 output_droso/
+output/*
