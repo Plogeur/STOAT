@@ -171,7 +171,7 @@ std::vector<std::tuple<handlegraph::net_handle_t, std::string, size_t, size_t, b
                             handlegraph::net_handle_t& root,
                             bdsg::PackedGraph& pg, 
                             unordered_set<std::string>& ref_paths,
-                           bdsg::PackedPositionOverlay& ppo);
+                            bdsg::PackedPositionOverlay& ppo);
 
 // Function to fill pretty paths
 tuple<std::vector<stoat_vcf::Path_traversal_t>, std::vector<std::string>> fill_pretty_paths(
@@ -212,11 +212,12 @@ namespace std {
             const auto& pair = edge.get_edge();
             size_t h1 = hash<stoat_vcf::Node_traversal_t>()(pair.first);
             size_t h2 = hash<stoat_vcf::Node_traversal_t>()(pair.second);
-            
+
             // Standard hash combination
             return h1 ^ (h2 + 0x9e3779b9 + (h1 << 6) + (h1 >> 2));
         }
     };
+
 } // end namespace std
 
 #endif
