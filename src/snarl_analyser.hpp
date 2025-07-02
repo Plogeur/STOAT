@@ -40,27 +40,29 @@ public:
     ~SnarlAnalyser()=default;
     void push_matrix(const Edge_t& EdgePath, std::unordered_map<stoat_vcf::Edge_t, size_t>& edge_dict, size_t indexColumn);
     
-    void binary_table(const std::vector<Snarl_data_t>& snarls,
+    void binary_table(const Snarl_data_t& snarl_data_s,
         const std::vector<bool>& binary_phenotype, 
         const std::string& chr,
         const std::vector<std::vector<double>>& covar,
         const double& maf,  
         const double& table_threshold, 
         const std::string& output_dir, 
+        size_t length_sample,
         std::ofstream& outf);
 
     /// Similar to binary_table, get the genotypes and write the tsv output
-    void quantitative_table(const std::vector<Snarl_data_t>& snarls,
+    void quantitative_table(const Snarl_data_t& snarl_data_s,
                             const std::vector<double>& quantitative_phenotype, 
                             const std::string &chr,
                             const std::vector<std::vector<double>>& covar,
                             const double& maf,  
                             const double& table_threshold, 
                             const std::string& output_dir, 
+                            size_t length_sample,
                             std::ofstream& outf);
 
     /// Similar to binary_table and quantitative_table, get the genotype and write the tsv output
-    void eqtl_table(const std::vector<Snarl_data_t>& snarls,
+    void eqtl_table(const Snarl_data_t& snarl_data_s,
         const std::vector<std::tuple<std::string, std::vector<double>, size_t, size_t>>& eqtl,
         const std::string& chr, 
         const std::vector<std::vector<double>>& covar,
@@ -68,6 +70,7 @@ public:
         const double& table_threshold, 
         const std::string& regression_dir,
         const size_t& windows_gene_threshold, 
+        size_t length_sample,
         std::ofstream& outf);
 
     /// For each snarl, write a bim file and a bed file (PLINK formats)
