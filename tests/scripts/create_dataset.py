@@ -21,7 +21,7 @@ def generate_qtl_gene_position(chr_number, num_samples, number_genes, output_qtl
     chroms = [str(i+1) for i in range(chr_number)]
     list_of_genes = [f"gene_{i}" for i in range(0, number_genes)]
     with open(output_gene_position, "w") as f:
-        f.write("gene_name\tchr\tstart_pos\tend_pos\n")
+        f.write("gene_name\tchr\tstart\tend\n")
         for i in range(0, number_genes):
             start_pos = (i + 10) * 10000
             end_pos = start_pos + 100
@@ -89,6 +89,9 @@ def generate_vcf_and_paths(chr_number, num_samples, num_variants, vcf_file, path
         alt = "T"
         fmt = "GT"
 
+        # Fake net handle 
+        net = 0
+
         for chrom in chroms:
             for i in range(variants_per_chrom):
                 pos = (i + 10) * 10000
@@ -98,7 +101,7 @@ def generate_vcf_and_paths(chr_number, num_samples, num_variants, vcf_file, path
                 genotypes = '\t'.join([random_genotype() for _ in range(num_samples)])
                 var_id = f"{chrom}_{i+1}"
                 vcf.write(f"{chrom}\t{pos}\trs{var_id}\t{ref}\t{alt}\t.\tPASS\t{at_info}\t{fmt}\t{genotypes}\n")
-                paths.write(f"{chrom}\t{pos}\t{pos+1}\trs{var_id}\t{all_paths}\t{ref},{alt}\t0\n")
+                paths.write(f"{chrom}\t{pos}\t{pos+1}\t{net}\t{var_id}\t{all_paths}\t{ref},{alt}\t0\n")
 
 if __name__ == "__main__":
     parser = argparse.ArgumentParser(description="Generate phenotype, VCF, and path info for simulated pangenome variants.")
