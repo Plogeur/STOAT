@@ -40,6 +40,7 @@ public:
     ~SnarlAnalyser()=default;
     void push_matrix(const Edge_t& EdgePath, std::unordered_map<stoat_vcf::Edge_t, size_t>& edge_dict, size_t indexColumn);
     
+    /// Given a snarl_data_s for one snarl, make a genotype matrix and write the tsv output
     void write_snarl_line_binary(const Snarl_data_t& snarl_data_s,
         const std::vector<bool>& binary_phenotype, 
         const std::string& chr,

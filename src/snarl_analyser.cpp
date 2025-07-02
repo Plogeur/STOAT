@@ -81,7 +81,7 @@ void chunk_chromosome_and_write_tsv(phenotype_type_t phenotype_type,
         // Iterate over each snarl
         for (size_t itr = 0; itr < snarls.size(); ++itr) {
             const Snarl_data_t& snarl_data_s = snarls[itr];
-            // Do the GWAS analysis by chromosome
+            // Do the GWAS analysis by snarl
             if (phenotype_type == BINARY) {
                 vcf_object.write_snarl_line_binary(snarl_data_s, binary_pheno, chr, covar, maf, table_threshold, regression_dir, length_samples, outf);
             } else if (phenotype_type == QUANTITATIVE) {
