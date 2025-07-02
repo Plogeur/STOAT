@@ -313,6 +313,8 @@ int main(int argc, char* argv[]) {
             std::tie(list_samples, ptr_vcf, hdr, rec) = stoat_vcf::parseHeader(vcf_path); 
         }
 
+        //////////////////// Load the phenotypes and covariate matrix from files
+
         std::vector<bool> binary_vector;
         std::vector<double> quantitative_vector;
         // TODO : eqtl struct
@@ -339,6 +341,9 @@ int main(int argc, char* argv[]) {
         //     // check_format_kinship(kinship_path);
         //     kinship = stoat_vcf::parseKinshipMatrix(kinship_path);
         // }
+
+
+        //////////////////////////////////// Load or calculate the snarl information
 
         // scope declaration
         // chr : <snarl, paths, pos(start, end), type>
@@ -375,6 +380,8 @@ int main(int argc, char* argv[]) {
             stree.reset();
             pp_overlay.reset();
         }
+
+        //////////////////////////////////////// Go through the vcf, do the analysis, and write the output
 
         auto start_2 = std::chrono::high_resolution_clock::now();
 
