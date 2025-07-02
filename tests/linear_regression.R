@@ -28,4 +28,5 @@ model <- lm(y ~ ., data = X)
 summary(model)
 
 # Run it in terminal like:
-# Rscript linear_regression.R ../output/regression/4220_4223.tsv ../data/quantitative/phenotype.tsv
+# remove the last column header if column empty
+# Rscript linear_regression.R ../output/regression/48_51.tsv ../data/quantitative/phenotype.tsv

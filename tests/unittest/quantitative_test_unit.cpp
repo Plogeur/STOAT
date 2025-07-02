@@ -2,268 +2,116 @@
 
 #include "../../src/quantitative_table.hpp"
 #include "../../src/stats_test.hpp"
-#include "../../src/matrix.hpp"
 
-// TEST_CASE("create_quantitative_table basic behavior", "[quantitative]") {
-//     SECTION("2 column simple case") {
+TEST_CASE("Linear Regression Test without cov", "[linear_regression]") {
+    SECTION("Linear Regression 1 - Perfect Linear Relationship") {
 
-//         size_t num_samples = 4;
-//         std::vector<std::string> headers = {"path1", "path2"};
-//         std::vector<double> phenotype = {-2.4234, -1.3242, 0.3214, 2.3248};
+        std::vector<std::vector<double>> df = {
+            {0, 1},
+            {1, 0},
+            {0, 0.5}
+        };
 
-//         // Create a simple matrix (4 samples / 2 haplotypes)
-//         stoat_vcf::EdgeBySampleMatrix matrix(4, 2);
+        std::vector<double> quantitative_phenotype = {2.0, 4.0, 6.0};
+        std::vector<std::vector<double>> covar;  // No covariates
 
-//         // Simulate that paths match at certain indices
-//         matrix.set(0, 1);
-//         matrix.set(0, 1);
-//         matrix.set(1, 0);
-//         matrix.set(1, 0);
-//         matrix.set(2, 1);
-//         matrix.set(2, 1);
-//         matrix.set(3, 1);
-//         matrix.set(3, 0);
+        std::string se, beta, p_value, r2;
 
-//         auto [genotypes, phenotype_filtered, allele_count] =
-//             create_quantitative_table(num_samples, headers, phenotype, matrix);
+        linear_regression(df, quantitative_phenotype, covar, p_value, beta, se, r2);
 
-//         REQUIRE(genotypes.size() == 4);
-//         REQUIRE(genotypes[0].size() == 2);
-//         REQUIRE(phenotype_filtered.size() == 3);
-//         REQUIRE(allele_count == 5);
-//         REQUIRE(phenotype_filtered[0] == -2.4234);
-//         REQUIRE(phenotype_filtered[1] == 0.3214); // remove the second pheno without allele passing throught
-//         REQUIRE(phenotype_filtered[2] == 2.3248);
-//     }
+        INFO("se = " << se);
+        INFO("beta = " << beta);
+        INFO("p_value = " << p_value);
+        INFO("r2 = " << r2);
 
-//     SECTION("2 column case 1th col full 0") {
-//         size_t num_samples = 4;
-//         std::vector<std::string> headers = {"path1", "path2"};
-//         std::vector<double> phenotype = {-2.4234, -1.3242, 0.3214, 2.3248};
+        REQUIRE(se == "NA");
+        REQUIRE(beta == "-8.0000");
+        REQUIRE(p_value == "NA");
+        REQUIRE(r2 == "1.0000");
+    }
 
-//         // Create a simple matrix (4 samples / 2 haplotypes)
-//         stoat_vcf::EdgeBySampleMatrix matrix(4, 2);
+    SECTION("Linear Regression 2 - Moderate") {
 
-//         // Simulate that paths match at certain indices
-//         matrix.set(0, 0);
-//         matrix.set(0, 1);
-//         matrix.set(1, 0);
-//         matrix.set(1, 1);
-//         matrix.set(2, 0);
-//         matrix.set(2, 1);
-//         matrix.set(3, 0);
-//         matrix.set(3, 0);
+        std::vector<std::vector<double>> df = {
+            {0.5, 0, 0.5},
+            {0, 0.5, 0.5},
+            {1, 0, 0},
+            {0, 1, 0},
+            {0, 0.5, 0}
+        };
 
-//         auto [genotypes, phenotype_filtered, allele_count] =
-//             create_quantitative_table(num_samples, headers, phenotype, matrix);
+        std::vector<double> quantitative_phenotype = {10.5, 13.0, 15.8, 19.7, 21.5};
+        std::vector<std::vector<double>> covar;
+        std::string se, beta, p_value, r2;
 
-//         REQUIRE(genotypes.size() == 4);
-//         REQUIRE(genotypes[0].size() == 1); // remove the 2 column composed of full 0
-//         REQUIRE(phenotype_filtered.size() == 3);
-//         REQUIRE(allele_count == 3);
-//         REQUIRE(phenotype_filtered[0] == -2.4234);
-//         REQUIRE(phenotype_filtered[1] == -1.3242);
-//         REQUIRE(phenotype_filtered[2] == 0.3214); // remove the third pheno without allele passing throught
-//     }
+        linear_regression(df, quantitative_phenotype, covar, p_value, beta, se, r2);
 
-//     SECTION("3 column case") {
-//         size_t num_samples = 4;
-//         std::vector<std::string> headers = {"path1", "path2"};
-//         std::vector<double> phenotype = {-2.4234, -1.3242, 0.3214, 2.3248};
+        INFO("se = " << se);
+        INFO("beta = " << beta);
+        INFO("p_value = " << p_value);
+        INFO("r2 = " << r2);
 
-//         // Create a simple matrix (4 samples / 3 haplotypes)
-//         stoat_vcf::EdgeBySampleMatrix matrix(2, 8);
+        REQUIRE(std::stod(se) == 0.880);
+        REQUIRE(std::stod(beta) == -17.4400);
+        REQUIRE(std::stod(p_value) == 0.0320);
+        REQUIRE(std::stod(r2) == 0.999);
+    }
 
-//         // Simulate that paths match at certain indices
-//         matrix.set(0, 1);
-//         matrix.set(0, 1);
-//         matrix.set(0, 1);
-//         matrix.set(0, 1);
-//         matrix.set(1, 1);
-//         matrix.set(1, 1);
-//         matrix.set(1, 1);
-//         matrix.set(1, 1);
+    SECTION("Linear Regression 3 - Weaker Correlation") {
 
-//         auto [genotypes, phenotype_filtered, allele_count] =
-//             create_quantitative_table(num_samples, headers, phenotype, matrix);
+        std::vector<std::vector<double>> df = {
+            {1, 0, 0},
+            {1, 0, 0},
+            {1, 0, 0},
+            {1, 0, 0},
+            {1, 0, 0},
+            {1, 0, 0},
+            {1, 0, 0},
+            {0, 1, 0},
+            {0, 0, 0.5},
 
-//         REQUIRE(genotypes.size() == 4);
-//         REQUIRE(genotypes[0].size() == 2);
-//         REQUIRE(phenotype_filtered.size() == 4);
-//         REQUIRE(allele_count == 3);
-//     }
-// }
+        };
 
-// TEST_CASE("Linear regression + covariate", "[quantitative]") {
-//     SECTION("2 column simple case + 1 covariate") {
+        std::vector<double> quantitative_phenotype = {4.5, 7.0, 9.2, 10.9, 13.0, 14.0, 11.0, 15.0, 16.0};
+        std::vector<std::vector<double>> covar;  // No covariates
+        std::string se, beta, p_value, r2;
+        linear_regression(df, quantitative_phenotype, covar, p_value, beta, se, r2);
 
-//         size_t num_samples = 4;
-//         std::vector<std::string> headers = {"path1", "path2"};
-//         std::vector<double> phenotype = {-2.4234, -1.3242, 0.3214, 2.3248};
+        INFO("se = " << se);
+        INFO("beta = " << beta);
+        INFO("p_value = " << p_value);
+        INFO("r2 = " << r2);
 
-//         // Create a simple matrix (4 samples / 2 haplotypes)
-//         stoat_vcf::EdgeBySampleMatrix matrix(4, 2);
+        REQUIRE(std::stod(se) == 3.033);
+        REQUIRE(std::stod(beta) == 6.5878);
+        REQUIRE(std::stod(p_value) == 0.0730);
+        REQUIRE(std::stod(r2) == 0.4210);
+    }
 
-//         // Simulate that paths match at certain indices
-//         matrix.set(0, 1);
-//         matrix.set(0, 1);
-//         matrix.set(1, 0);
-//         matrix.set(1, 0);
-//         matrix.set(2, 1);
-//         matrix.set(2, 1);
-//         matrix.set(3, 1);
-//         matrix.set(3, 0);
+    SECTION("Linear Regression Error Case") {
 
-//         auto [genotypes, phenotype_filtered, allele_count] =
-//             create_quantitative_table(num_samples, headers, phenotype, matrix);
+        std::vector<std::vector<double>> df = {
+            {0, 0, 0},
+            {0, 0, 0},
+            {0, 0, 0}
+        };
 
-//         REQUIRE(genotypes.size() == 4);
-//         REQUIRE(genotypes[0].size() == 2);
-//         REQUIRE(phenotype_filtered.size() == 3);
-//         REQUIRE(allele_count == 5);
-//         REQUIRE(phenotype_filtered[0] == -2.4234);
-//         REQUIRE(phenotype_filtered[1] == 0.3214); // remove the second pheno without allele passing throught
-//         REQUIRE(phenotype_filtered[2] == 2.3248);
-//     }
+        std::vector<double> quantitative_phenotype = {-5.0, 126.0, -80.0};
 
-//     SECTION("2 column simple case + 2 covariate") {
-//         size_t num_samples = 4;
-//         std::vector<std::string> headers = {"path1", "path2"};
-//         std::vector<double> phenotype = {-2.4234, -1.3242, 0.3214, 2.3248};
+        std::vector<std::vector<double>> covar;
 
-//         // Create a simple matrix (4 samples / 2 haplotypes)
-//         stoat_vcf::EdgeBySampleMatrix matrix(4, 2);
+        std::string se, beta, p_value, r2;
 
-//         // Simulate that paths match at certain indices
-//         matrix.set(0, 0);
-//         matrix.set(0, 1);
-//         matrix.set(1, 0);
-//         matrix.set(1, 1);
-//         matrix.set(2, 0);
-//         matrix.set(2, 1);
-//         matrix.set(3, 0);
-//         matrix.set(3, 0);
+        linear_regression(df, quantitative_phenotype, covar, p_value, beta, se, r2);
 
-//         auto [genotypes, phenotype_filtered, allele_count] =
-//             create_quantitative_table(num_samples, headers, phenotype, matrix);
+        INFO("se = " << se);
+        INFO("beta = " << beta);
+        INFO("p_value = " << p_value);
+        INFO("r2 = " << r2);
 
-//         REQUIRE(genotypes.size() == 4);
-//         REQUIRE(genotypes[0].size() == 1); // remove the 2 column composed of full 0
-//         REQUIRE(phenotype_filtered.size() == 3);
-//         REQUIRE(allele_count == 3);
-//         REQUIRE(phenotype_filtered[0] == -2.4234);
-//         REQUIRE(phenotype_filtered[1] == -1.3242);
-//         REQUIRE(phenotype_filtered[2] == 0.3214); // remove the third pheno without allele passing throught
-//     }
-
-//     SECTION("2 column simple case + 1 covariate + 1 sexual covariate") {
-//         size_t num_samples = 4;
-//         std::vector<std::string> headers = {"path1", "path2"};
-//         std::vector<double> phenotype = {-2.4234, -1.3242, 0.3214, 2.3248};
-
-//         // Create a simple matrix (4 samples / 3 haplotypes)
-//         stoat_vcf::EdgeBySampleMatrix matrix(2, 8);
-
-//         // Simulate that paths match at certain indices
-//         matrix.set(0, 1);
-//         matrix.set(0, 1);
-//         matrix.set(0, 1);
-//         matrix.set(0, 1);
-//         matrix.set(1, 1);
-//         matrix.set(1, 1);
-//         matrix.set(1, 1);
-//         matrix.set(1, 1);
-
-//         auto [genotypes, phenotype_filtered, allele_count] =
-//             create_quantitative_table(num_samples, headers, phenotype, matrix);
-
-//         REQUIRE(genotypes.size() == 4);
-//         REQUIRE(genotypes[0].size() == 2);
-//         REQUIRE(phenotype_filtered.size() == 4);
-//         REQUIRE(allele_count == 3);
-//     }
-// }
-
-// TEST_CASE("Linear Regression Test", "[linear_regression]") {
-//     SECTION("Régression linéaire simple") {
-
-//         std::unordered_map<std::string, std::vector<int>> df = {
-//             {"Sample1", {1, 10, 20}},
-//             {"Sample2", {2, 15, 25}},
-//             {"Sample3", {3, 30, 35}}
-//         };
-
-//         std::unordered_map<std::string, double> quantitative_phenotype = {
-//             {"Sample1", 2.0},
-//             {"Sample2", 4.0},
-//             {"Sample3", 6.0}
-//         };
-
-//         auto [se, beta, p_value, r2] = linear_regression(df, quantitative_phenotype);
-
-//         // Afficher les valeurs pour le débogage
-//         INFO("se = " << se);
-//         INFO("beta = " << beta);
-//         INFO("p_value = " << p_value);
-//         INFO("r2 = " << r2);
-
-//         // Vérifier que les valeurs sont correctes
-//         REQUIRE(se != "NA");
-//         REQUIRE(beta == "2.000");  // La pente devrait être exactement 2 (Y = 2X)
-//         REQUIRE(p_value != "NA");
-//         REQUIRE(r2 == "1.000");  // R² devrait être exactement 1 pour une relation linéaire parfaite
-//     }
-
-//     SECTION("Régression linéaire imparfaite") {
-//         // Note: La régression utilise uniquement la première valeur de chaque vecteur
-//         // X = [1, 2, 3, 4] et Y = [2, 3.9, 6.1, 7.8]
-//         // Cela donne une relation approximativement linéaire avec :
-//         // - pente proche de 2
-//         // - R² < 1 car les points ne sont pas parfaitement alignés
-//         std::unordered_map<std::string, std::vector<int>> df = {
-//             {"Sample1", {1, 10, 20}},
-//             {"Sample2", {2, 15, 25}},
-//             {"Sample3", {3, 30, 35}},
-//             {"Sample4", {4, 40, 45}}
-//         };
-
-//         std::unordered_map<std::string, double> quantitative_phenotype = {
-//             {"Sample1", 2.0},
-//             {"Sample2", 3.9},
-//             {"Sample3", 6.1},
-//             {"Sample4", 7.8}
-//         };
-
-//         auto [se, beta, p_value, r2] = linear_regression(df, quantitative_phenotype);
-
-//         // Afficher les valeurs pour le débogage
-//         INFO("se = " << se);
-//         INFO("beta = " << beta);
-//         INFO("p_value = " << p_value);
-//         INFO("r2 = " << r2);
-
-//         // Vérifier que les valeurs sont correctes
-//         REQUIRE(se != "NA");  // Il devrait y avoir une erreur standard non nulle
-//         REQUIRE(std::stod(beta) == 1.93);  // La pente devrait être proche de 1.93
-//         REQUIRE(std::stod(p_value) < 0.05);  // La relation devrait être significative
-//         REQUIRE(std::stod(r2) > 0.95);  // R² devrait être élevé mais pas égal à 1
-//     }
-// }
-
-// TEST_CASE("Création de table quantitative", "[create_quantitative_table]") {
-//     SECTION("Table simple") {
-//         std::vector<std::string> list_samples = {"Sample1", "Sample2", "Sample3"};
-//         std::vector<std::string> column_headers = {"Path1", "Path2"};
-
-//         stoat_vcf::EdgeBySampleMatrix matrix(3, 2);  // 3 échantillons, 2 chemins
-//         matrix.set(0, 0);  // Sample1, Path1
-//         matrix.set(1, 1);  // Sample2, Path2
-
-//         auto [table, size] = create_quantitative_table(list_samples, column_headers, matrix);
-
-//         REQUIRE(table.size() == list_samples.size());
-//         for (const auto& [sample, values] : table) {
-//             REQUIRE(values.size() == column_headers.size());
-//         }
-//     }
-// }
+        REQUIRE(se == "0.0000e+00");
+        REQUIRE(beta == "0.0000e+00");
+        REQUIRE(p_value == "NA");
+        REQUIRE(r2 == "0.0000e+00");
+    }
+}
