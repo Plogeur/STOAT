@@ -30,12 +30,6 @@ public:
     // Set this value to true
     void set(size_t row, size_t col);
 
-    // Get the matrix itself
-    const std::vector<uint8_t>& get_matrix() const;
-
-    // Get the row_header
-    const std::unordered_map<stoat_vcf::Edge_t, size_t>& get_row_header() const;
-
     // Get the maximum index into the vector representing the matrix
     size_t getMaxElement() const;
     
@@ -61,7 +55,7 @@ public:
     size_t getOrAddIndex(std::unordered_map<stoat_vcf::Edge_t, size_t>& edge_index_dict, const Edge_t& key, const size_t& size_edge_index_dict);
 
 
-private:
+protected:
     size_t cols_;
     size_t MaxElement;
     std::vector<uint8_t> matrix_1D;

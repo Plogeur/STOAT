@@ -12,11 +12,6 @@ EdgeBySampleMatrix::EdgeBySampleMatrix(const std::vector<std::string>& sampleNam
     matrix_1D.resize(length_matrix, 0); // Initialize with zeros
 }
 
-// Getter for matrix
-const std::vector<uint8_t>& EdgeBySampleMatrix::get_matrix() const {
-    return matrix_1D;
-}
-
 // Getter for row header
 std::unordered_map<stoat_vcf::Edge_t, size_t>::const_iterator EdgeBySampleMatrix::find_edge(const stoat_vcf::Edge_t& edge_s) const {
     return row_header.find(edge_s);
@@ -60,17 +55,13 @@ void EdgeBySampleMatrix::set_end_dict() {
     row_header_end = row_header.end();
 }
 
-// Getter for row header
-const std::unordered_map<stoat_vcf::Edge_t, size_t>& EdgeBySampleMatrix::get_row_header() const {
-    return row_header;
-}
-
 // Getter row number
 size_t EdgeBySampleMatrix::getMaxElement() const {
     return MaxElement;  // Convert bits back to rows
 }
 
 // Setter for row header
+// TODO: This could be done when things are added to the matrix in push_matrix
 void EdgeBySampleMatrix::set_row_header(const std::unordered_map<stoat_vcf::Edge_t, size_t>& new_row_header) {
     row_header = std::move(new_row_header);
 }
