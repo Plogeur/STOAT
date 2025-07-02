@@ -19,15 +19,6 @@ df = pd.merge(features, pheno, on="IID")
 # --- Prepare data for model ---
 X = df.drop(columns=["IID", "PHENO"])
 
-# Apply transformation rule to create new column 2 based on column 1
-col1 = X.iloc[:, 1]
-
-# Apply your rule
-col2 = col1.apply(lambda v: 1 if v == 0 else (0 if v == 1 else 0.5))
-
-# Add col2 as a new feature
-X['>7690843>7690845>7690846'] = col2
-
 # Add intercept
 X = sm.add_constant(X)
 
@@ -43,6 +34,4 @@ model = sm.OLS(y, X).fit()
 # Print full summary
 print(model.summary())
 
-# python3 linear_regression.py ../output/regression/4220_4223.tsv ../data/quantitative/phenotype.tsv
-
-# python3 linear_regression.py ../output/regression/4220_4223.tsv ../data/quantitative/phenotype.tsv
+# python3 linear_regression.py ../output/regression/48_51.tsv ../data/quantitative/phenotype.tsv

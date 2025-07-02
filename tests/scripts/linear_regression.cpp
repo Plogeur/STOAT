@@ -59,6 +59,7 @@ void linear_regression(
 
     // change cov_matrix calcul if X.transpose() * X might be ill-conditioned or nearly singular
     if (se.hasNaN()) {
+        cout << "Warning: se is NaN, using alternative calculation." << std::endl;
         Eigen::MatrixXd XtX = X.transpose() * X;
         Eigen::MatrixXd cov_matrix = XtX.ldlt().solve(Eigen::MatrixXd::Identity(X.cols(), X.cols()));
         se = (cov_matrix.diagonal() * mse).array().sqrt().matrix();
@@ -86,10 +87,22 @@ void linear_regression(
             continue;
         }
         p_values_2.push_back(2 * boost::math::cdf(boost::math::complement(t_dist, std::abs(t_stats[i])))); // two-tailed
-        cout << "p_values_2[" << i << "] : " << p_values_2[i-1] << std::endl;
+        cout << "p_values_2[" << i-1 << "] : " << p_values_2[i-1] << std::endl;
     }
 
-    // p_values[1] : 0.841009
+    // Print results
+    std::cout << std::fixed << std::setprecision(4);
+    std::cout << "Coefficients (beta):" << std::endl;
+    for (int i = 0; i < beta.size(); ++i) {
+        std::cout << "beta[" << i << "] = " << beta[i] << std::endl;
+    }
+    std::cout << "Standard Errors (se):" << std::endl;
+    for (int i = 0; i < se.size(); ++i) {
+        std::cout << "se[" << i << "] = " << se[i] << std::endl;
+    }
+    std::cout << "R²: " << r2 << std::endl;
+    std::cout << "Residual Degrees of Freedom: " << df_res << std::endl;
+    std::cout << "Mean Squared Error (MSE): " << mse << std::endl;
 }
 
 // Function to parse the feature file
@@ -176,8 +189,7 @@ int main(int argc, char* argv[]) {
         parse_feature_file(feature_file, sample_ids, features);
         parse_phenotype_file(phenotype_file, sample_ids, phenotype);
 
-        std::cout << "Parsed " << features.size() << " samples with "
-                  << features[0].size() << " features.\n";
+        std::cout << "Parsed " << features.size() << " samples with " << features[0].size() << " features.\n";
         std::cout << "Parsed " << phenotype.size() << " phenotype values.\n";
 
         linear_regression(features, phenotype);
@@ -189,6 +201,10 @@ int main(int argc, char* argv[]) {
     return EXIT_SUCCESS;
 }
 
-// g++ -std=c++17 -I/usr/local/include/eigen3 -lboost_math_c99 -lgsl -lgslcblas -o linear_regression linear_regression.cpp
+// LINUX
+// g++ -std=c++17 -I/usr/include/eigen3 -lboost_math_c99 -o linear_regression linear_regression.cpp
+
+// MACOS
 // g++ -std=c++17 -I/usr/local/eigen3 -lboost_math_c99 -o linear_regression linear_regression.cpp
-// ./linear_regression 7 ../output_droso/regression/7690843_7690846.tsv ../data/droso/pangenome_pheno.tsv
+
+// ./linear_regression ../output/regression/48_51.tsv ../data/quantitative/phenotype.tsv
