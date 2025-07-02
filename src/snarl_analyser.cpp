@@ -83,13 +83,13 @@ void chunk_chromosome_and_write_tsv(phenotype_type_t phenotype_type,
             const Snarl_data_t& snarl_data_s = snarls[itr];
             // Do the GWAS analysis by chromosome
             if (phenotype_type == BINARY) {
-                vcf_object.binary_table(snarl_data_s, binary_pheno, chr, covar, maf, table_threshold, regression_dir, length_samples, outf);
+                vcf_object.write_snarl_line_binary(snarl_data_s, binary_pheno, chr, covar, maf, table_threshold, regression_dir, length_samples, outf);
             } else if (phenotype_type == QUANTITATIVE) {
-                vcf_object.quantitative_table(snarl_data_s, quantitative_pheno, chr, covar, maf, table_threshold, regression_dir, length_samples, outf);
+                vcf_object.write_snarl_line_quantitative(snarl_data_s, quantitative_pheno, chr, covar, maf, table_threshold, regression_dir, length_samples, outf);
             } else if (phenotype_type == EQTL) {
 
                 auto& eqtl = eqtl_map.at(chr);
-                vcf_object.eqtl_table(snarl_data_s, eqtl, chr, covar, maf, table_threshold, regression_dir, windows_gene_threshold, length_samples, outf);
+                vcf_object.write_snarl_line_eqtl(snarl_data_s, eqtl, chr, covar, maf, table_threshold, regression_dir, windows_gene_threshold, length_samples, outf);
             }
         }
     }
@@ -536,7 +536,7 @@ std::vector<size_t> identify_path(
     return idx_srr_save;
 }
 
-void SnarlAnalyser::binary_table(const Snarl_data_t& snarl_data_s,
+void SnarlAnalyser::write_snarl_line_binary(const Snarl_data_t& snarl_data_s,
                                const std::vector<bool>& binary_phenotype, const std::string& chr,
                                const std::vector<std::vector<double>>& covar,
                                const double& maf,  
@@ -626,7 +626,7 @@ void SnarlAnalyser::binary_table(const Snarl_data_t& snarl_data_s,
 }
 
 // Quantitative Table Generation
-void SnarlAnalyser::quantitative_table(const Snarl_data_t& snarl_data_s,
+void SnarlAnalyser::write_snarl_line_quantitative(const Snarl_data_t& snarl_data_s,
                                        const std::vector<double>& quantitative_phenotype, 
                                        const std::string &chr,
                                        const std::vector<std::vector<double>>& covar,
@@ -736,7 +736,7 @@ std::vector<size_t> found_gene_snarl(
     return gene_index;
 }
 
-void SnarlAnalyser::eqtl_table(const Snarl_data_t& snarl_data_s,
+void SnarlAnalyser::write_snarl_line_eqtl(const Snarl_data_t& snarl_data_s,
     const std::vector<std::tuple<std::string, std::vector<double>, size_t, size_t>>& eqtl,
     const std::string& chr, 
     const std::vector<std::vector<double>>& covar,

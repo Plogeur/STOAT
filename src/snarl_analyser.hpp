@@ -40,7 +40,7 @@ public:
     ~SnarlAnalyser()=default;
     void push_matrix(const Edge_t& EdgePath, std::unordered_map<stoat_vcf::Edge_t, size_t>& edge_dict, size_t indexColumn);
     
-    void binary_table(const Snarl_data_t& snarl_data_s,
+    void write_snarl_line_binary(const Snarl_data_t& snarl_data_s,
         const std::vector<bool>& binary_phenotype, 
         const std::string& chr,
         const std::vector<std::vector<double>>& covar,
@@ -50,8 +50,8 @@ public:
         size_t length_sample,
         std::ofstream& outf);
 
-    /// Similar to binary_table, get the genotypes and write the tsv output
-    void quantitative_table(const Snarl_data_t& snarl_data_s,
+    /// Similar to write_snarl_line_binary, get the genotypes and write the tsv output
+    void write_snarl_line_quantitative(const Snarl_data_t& snarl_data_s,
                             const std::vector<double>& quantitative_phenotype, 
                             const std::string &chr,
                             const std::vector<std::vector<double>>& covar,
@@ -61,8 +61,8 @@ public:
                             size_t length_sample,
                             std::ofstream& outf);
 
-    /// Similar to binary_table and quantitative_table, get the genotype and write the tsv output
-    void eqtl_table(const Snarl_data_t& snarl_data_s,
+    /// Similar to write_snarl_line_binary and write_snarl_line_quantitative, get the genotype and write the tsv output
+    void write_snarl_line_eqtl(const Snarl_data_t& snarl_data_s,
         const std::vector<std::tuple<std::string, std::vector<double>, size_t, size_t>>& eqtl,
         const std::string& chr, 
         const std::vector<std::vector<double>>& covar,
