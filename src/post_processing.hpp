@@ -24,7 +24,7 @@ void adjust_pvalues_with_BH(std::vector<std::tuple<double, double, size_t>>& dat
 void add_BH_adjusted_column(
     const std::string& input_file, 
     const std::string& output_file_significant,
-    const std::string& phenotype_type);
+    const phenotype_type_t& phenotype_type);
 
 } // namespace stoat_vcf
 

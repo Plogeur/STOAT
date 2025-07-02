@@ -41,7 +41,7 @@ void adjust_pvalues_with_BH(std::vector<std::tuple<double, double, size_t>>& dat
 void add_BH_adjusted_column(
     const std::string& input_file, 
     const std::string& output_file_significant,
-    const std::string& phenotype_type) {
+    const phenotype_type_t& phenotype_type) {
 
     std::ifstream infile(input_file);
     std::string col;
@@ -52,9 +52,9 @@ void add_BH_adjusted_column(
     size_t line_index = 0;
     size_t adjusted_col_index;
 
-    if (phenotype_type == "binary" || phenotype_type == "eqtl") {
+    if (phenotype_type == BINARY || phenotype_type == EQTL) {
         adjusted_col_index = 6;
-    } else if (phenotype_type == "quantitative") {
+    } else if (phenotype_type == QUANTITATIVE) {
         adjusted_col_index = 5;
     }
 
@@ -77,13 +77,13 @@ void add_BH_adjusted_column(
         }
 
         double pval = 1.0;
-        if (phenotype_type == "binary") {
+        if (phenotype_type == BINARY) {
             // combine both p-value
             //pval = stoat_vcf::set_precision_float_50(columns[4], columns[5]);
             
             // use only chi2
             pval = string_to_pvalue(columns[adjusted_col_index-1]); // use only chi2
-        } else if (phenotype_type == "quantitative") {
+        } else if (phenotype_type == QUANTITATIVE) {
             pval = string_to_pvalue(columns[adjusted_col_index-1]);
         }
 
