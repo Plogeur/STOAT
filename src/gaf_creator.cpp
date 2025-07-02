@@ -161,9 +161,9 @@ void gaf_creation(const std::string& input_file, std::unordered_map<std::string,
 
             // Case where "*" is in path
             // TODO : update to the snarl_data_t.hpp implementation
-            if (path.find('*') != std::string::npos) {
+            if (path.find("0") != std::string::npos) {
                 // If the path contains '*', split it into two sub-paths
-                size_t star_pos = path.find('*');
+                size_t star_pos = path.find("0");
                 std::string star_path_1 = path.substr(0, star_pos - 1);
                 std::string star_path_2 = path.substr(star_pos + 1);
 
