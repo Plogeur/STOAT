@@ -3,7 +3,7 @@
 namespace stoat_vcf {
 
 // Constructor implementation
-EdgeBySampleMatrix::EdgeBySampleMatrix(size_t rows, size_t cols) : cols_(cols) {
+EdgeBySampleMatrix::EdgeBySampleMatrix(const std::vector<std::string>& sampleNames, size_t rows, size_t cols) : cols_(cols), sampleNames(sampleNames) {
 
     size_t length_matrix = (rows * cols + 7) / 8;
     MaxElement = (length_matrix * 8) / cols_; // get the number of element in the matrix

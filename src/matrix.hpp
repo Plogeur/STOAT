@@ -18,7 +18,7 @@ namespace stoat_vcf {
 // Columns represent samples/haplotypes
 class EdgeBySampleMatrix {
 public:
-    EdgeBySampleMatrix(size_t rows, size_t cols);
+    EdgeBySampleMatrix(const std::vector<std::string>& sampleNames, size_t rows, size_t cols);
     ~EdgeBySampleMatrix()=default;
 
     // Operator to get the value
@@ -67,6 +67,9 @@ private:
     std::vector<uint8_t> matrix_1D;
     std::unordered_map<stoat_vcf::Edge_t, size_t> row_header;
     std::unordered_map<stoat_vcf::Edge_t, size_t>::iterator row_header_end;
+// TODO: This shouldn't be public
+public:
+    std::vector<std::string> sampleNames;
 };
 
 } // end namespace stoat_vcf

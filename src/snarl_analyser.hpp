@@ -28,59 +28,56 @@ using namespace std;
 
 namespace stoat_vcf {
 
-/// A SnarlAnalyser stores a bit matrix of samples (columns) vs edges they take (rows), taken from a VCF
-/// It also has a vector of sample names 
 class SnarlAnalyser {
 public:
-    // caca change to private
-    std::vector<std::string> sampleNames;
-    EdgeBySampleMatrix matrix;
-
-    SnarlAnalyser(const std::vector<std::string>& sample_names, size_t num_paths_chr);
+    SnarlAnalyser();
     ~SnarlAnalyser()=default;
     
-    /// Given a snarl_data_s for one snarl, make a genotype matrix and write the tsv output
-    void write_snarl_line_binary(const Snarl_data_t& snarl_data_s,
-        const std::vector<bool>& binary_phenotype, 
-        const std::string& chr,
-        const std::vector<std::vector<double>>& covar,
-        const double& maf,  
-        const double& table_threshold, 
-        const std::string& output_dir, 
-        size_t length_sample,
-        std::ofstream& outf);
 
-    /// Similar to write_snarl_line_binary, get the genotypes and write the tsv output
-    void write_snarl_line_quantitative(const Snarl_data_t& snarl_data_s,
-                            const std::vector<double>& quantitative_phenotype, 
-                            const std::string &chr,
-                            const std::vector<std::vector<double>>& covar,
-                            const double& maf,  
-                            const double& table_threshold, 
-                            const std::string& output_dir, 
-                            size_t length_sample,
-                            std::ofstream& outf);
-
-    /// Similar to write_snarl_line_binary and write_snarl_line_quantitative, get the genotype and write the tsv output
-    void write_snarl_line_eqtl(const Snarl_data_t& snarl_data_s,
-        const std::vector<std::tuple<std::string, std::vector<double>, size_t, size_t>>& eqtl,
-        const std::string& chr, 
-        const std::vector<std::vector<double>>& covar,
-        const double& maf,  
-        const double& table_threshold, 
-        const std::string& regression_dir,
-        const size_t& windows_gene_threshold, 
-        size_t length_sample,
-        std::ofstream& outf);
-
-    /// For each snarl, write a bim file and a bed file (PLINK formats)
-    void create_bim_bed(const std::vector<Snarl_data_t>& snarls, 
-        std::string chromosome, std::ofstream& outbim, std::ofstream& outbed);
-
-    /// Given a list of paths in a snarl, return vectors of counts of each sample taking an allele for the two alleles with the highest counts over all samples
-    /// Each vector returned corresponds to one allele, each entry in the vector is a sample, the value is a count of the number of times a sample takes the path/allele (probably binary?)
-    std::pair<std::vector<size_t>, std::vector<size_t>> create_table_short_path(const std::vector<stoat_vcf::Path_traversal_t>& list_path_snarl);
 };
+
+/// Given a snarl_data_s for one snarl, make a genotype matrix and write the tsv output
+void write_snarl_line_binary(const EdgeBySampleMatrix& edge_matrix, const Snarl_data_t& snarl_data_s,
+    const std::vector<bool>& binary_phenotype, 
+    const std::string& chr,
+    const std::vector<std::vector<double>>& covar,
+    const double& maf,  
+    const double& table_threshold, 
+    const std::string& output_dir, 
+    size_t sample_count,
+    std::ofstream& outf);
+
+/// Similar to write_snarl_line_binary, get the genotypes and write the tsv output
+void write_snarl_line_quantitative(const EdgeBySampleMatrix& edge_matrix, const Snarl_data_t& snarl_data_s,
+                        const std::vector<double>& quantitative_phenotype, 
+                        const std::string &chr,
+                        const std::vector<std::vector<double>>& covar,
+                        const double& maf,  
+                        const double& table_threshold, 
+                        const std::string& output_dir, 
+                        size_t sample_count,
+                        std::ofstream& outf);
+
+/// Similar to write_snarl_line_binary and write_snarl_line_quantitative, get the genotype and write the tsv output
+void write_snarl_line_eqtl(const EdgeBySampleMatrix& edge_matrix, const Snarl_data_t& snarl_data_s,
+    const std::vector<std::tuple<std::string, std::vector<double>, size_t, size_t>>& eqtl,
+    const std::string& chr, 
+    const std::vector<std::vector<double>>& covar,
+    const double& maf,  
+    const double& table_threshold, 
+    const std::string& regression_dir,
+    const size_t& windows_gene_threshold, 
+    size_t sample_count,
+    std::ofstream& outf);
+
+/// Given a list of paths in a snarl, return vectors of counts of each sample taking an allele for the two alleles with the highest counts over all samples
+/// Each vector returned corresponds to one allele, each entry in the vector is a sample, the value is a count of the number of times a sample takes the path/allele (probably binary?)
+std::pair<std::vector<size_t>, std::vector<size_t>> create_table_short_path(const std::vector<stoat_vcf::Path_traversal_t>& list_path_snarl, size_t sample_count, const EdgeBySampleMatrix& edge_matrix);
+
+/// For each snarl, write a bim file and a bed file (PLINK formats)
+void create_bim_bed(const std::vector<Snarl_data_t>& snarls, size_t sample_count, 
+    const EdgeBySampleMatrix& edge_matrix,
+    std::string chromosome, std::ofstream& outbim, std::ofstream& outbed);
 
 /// Return true if any column exceeds the MAF threshold 
 bool check_MAF_threshold_quantitative(const std::vector<std::vector<double>>& df, const double& maf);
@@ -121,8 +118,8 @@ std::vector<size_t> found_gene_snarl(
 void create_fam(const std::vector<std::pair<std::string, int>> &pheno, 
     const std::string& output_path);
 
-/// Make a SnarlParser representing the genotypes in a vcf and the pointers to the vcf but advanced to the end of the chromosome?
-std::tuple<SnarlAnalyser, htsFile*, bcf_hdr_t*, bcf1_t*> make_matrix(htsFile *ptr_vcf, bcf_hdr_t *hdr, bcf1_t *rec, const std::vector<std::string>& sample_names, std::string &chr, size_t &num_paths_ch);
+/// Make an EdgeBySampleMatrix representing the genotypes in a vcf and the pointers to the vcf but advanced to the end of the chromosome?
+std::tuple<EdgeBySampleMatrix, htsFile*, bcf_hdr_t*, bcf1_t*> make_matrix(htsFile *ptr_vcf, bcf_hdr_t *hdr, bcf1_t *rec, const std::vector<std::string>& sample_names, std::string &chr, size_t &num_paths_ch);
 
 // Function to determine and extract an node id from the std::string
 inline size_t extract_node_id(const std::string& s, size_t length_s, size_t& i);
