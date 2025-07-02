@@ -9,134 +9,44 @@
 
 namespace stoat_vcf {
 
-void chromosome_chuck_binary(htsFile* &ptr_vcf, bcf_hdr_t* &hdr, bcf1_t* &rec, 
-    const std::vector<std::string> &list_samples, 
-    const unordered_map<string, std::vector<Snarl_data_t>> &snarl_chr,
-    const std::vector<bool>& binary_pheno, std::vector<std::vector<double>> covar, 
-    const double& maf,
-    const double& table_threshold, const std::string& regression_dir,
-    const std::string& output_binary) {
-
-    std::ofstream outf(output_binary, std::ios::binary);
-    if (covar.size() > 0) {
-        write_binary_covar_header(outf);
-    } else {
-        write_binary_header(outf);
-    }
-
-    std::cout << "GWAS analysis for chromosome : " << std::endl;
-    while (bcf_read(ptr_vcf, hdr, rec) >= 0) {
-
-        std::string chr = bcf_hdr_id2name(hdr, rec->rid);
-        // Skip chromosomes not in snarl_chr
-        while (snarl_chr.find(chr) == snarl_chr.end()) {
-            std::cerr << "Warning: Chromosome " << chr << " not found in snarl paths file. Skipping." << std::endl;
-
-            bool found_new_chr = false;
-            while (bcf_read(ptr_vcf, hdr, rec) >= 0) {
-                std::string chr_next = bcf_hdr_id2name(hdr, rec->rid);
-                if (chr_next != chr) {
-                    chr = chr_next;  // Update to the new chromosome
-                    found_new_chr = true;
-                    break;
-                }
-            }
-
-            if (!found_new_chr) {
-                return;  // exit if no more records are available
-            }
-        }
-        std::cout << "> " << chr << std::endl;
-        size_t size_chr = snarl_chr.at(chr).size();
-        // Make genotype matrix by chromosome    
-        auto [vcf_object, ptr_vcf_new, hdr_new, rec_new] = make_matrix(ptr_vcf, hdr, rec, list_samples, chr, size_chr);
-        ptr_vcf = ptr_vcf_new;
-        hdr = hdr_new;
-        rec = rec_new;
-        auto& snarl = snarl_chr.at(chr);
-
-        // Gwas analysis by chromosome
-        vcf_object.binary_table(snarl, binary_pheno, chr, covar, maf, table_threshold, regression_dir, outf);
-    }
-    // Cleanup
-    bcf_destroy(rec);
-    bcf_hdr_destroy(hdr);
-    bcf_close(ptr_vcf);
-}
-
-
-void chromosome_chuck_quantitative(htsFile* &ptr_vcf, bcf_hdr_t* &hdr, bcf1_t* &rec, 
+void chunk_chromosome_and_write_tsv(phenotype_type_t phenotype_type,
+    htsFile* &ptr_vcf,
+    bcf_hdr_t* &hdr,
+    bcf1_t* &rec,
     const std::vector<std::string> &list_samples,
-    const unordered_map<string, std::vector<Snarl_data_t>> &snarl_chr,
-    const std::vector<double>& quantitative_phenotype, std::vector<std::vector<double>> covar,
-    const double& maf,
-    const double& table_threshold, const std::string& regression_dir,
-    const std::string& output_quantitive) {
-
-    std::ofstream outf(output_quantitive, std::ios::binary);
-    write_quantitative_header(outf);
-
-    std::cout << "GWAS analysis for chromosome : " << std::endl;
-    while (bcf_read(ptr_vcf, hdr, rec) >= 0) {
-
-        std::string chr = bcf_hdr_id2name(hdr, rec->rid);
-        // Skip chromosomes not in snarl_chr
-        while (snarl_chr.find(chr) == snarl_chr.end()) {
-            std::cerr << "Warning: Chromosome " << chr << " not found in snarl paths file. Skipping." << std::endl;
-
-            bool found_new_chr = false;
-            while (bcf_read(ptr_vcf, hdr, rec) >= 0) {
-                std::string chr_next = bcf_hdr_id2name(hdr, rec->rid);
-                if (chr_next != chr) {
-                    chr = chr_next;  // Update to the new chromosome
-                    found_new_chr = true;
-                    break;
-                }
-            }
-
-            if (!found_new_chr) {
-                return;  // exit if no more records are available
-            }
-        }
-
-        std::cout << "> " << chr << std::endl;
-        size_t size_chr = snarl_chr.at(chr).size();
-
-        // Make genotype matrix by chromosome    
-        auto [vcf_object, ptr_vcf_new, hdr_new, rec_new] = make_matrix(ptr_vcf, hdr, rec, list_samples, chr, size_chr);
-        ptr_vcf = ptr_vcf_new;
-        hdr = hdr_new;
-        rec = rec_new;
-
-        auto& snarl = snarl_chr.at(chr);
-
-        // Gwas analysis by chromosome
-        vcf_object.quantitative_table(snarl, quantitative_phenotype, chr, covar, maf, table_threshold, regression_dir, outf);
-    }
-    // Cleanup
-    bcf_destroy(rec);
-    bcf_hdr_destroy(hdr);
-    bcf_close(ptr_vcf);
-}
-
-void chromosome_chuck_eqtl(htsFile* &ptr_vcf, bcf_hdr_t* &hdr, bcf1_t* &rec, 
-    const std::vector<std::string> &list_samples,
-    const std::unordered_map<std::string, std::vector<Snarl_data_t>> &snarl_chr,
+    const std::unordered_map<std::string, std::vector<Snarl_data_t>> &chr_to_snarl_data,
+    const std::vector<bool>& binary_pheno,
+    const std::vector<double>& quantitative_pheno,
     const std::unordered_map<std::string, std::vector<std::tuple<std::string, std::vector<double>, size_t, size_t>>>& eqtl_map,
-    const std::vector<std::vector<double>>& covar,
+    std::vector<std::vector<double>> covar,
     const double& maf,
-    const double& table_threshold, const std::string& regression_dir,
-    const size_t& windows_gene_threshold, const std::string& out_eqtl) {
-
-    std::ofstream outf(out_eqtl, std::ios::binary);
-    write_eqtl_header(outf);
+    const double& table_threshold, 
+    const size_t& windows_gene_threshold,
+    const std::string& regression_dir,
+    const std::string& output_filename) {
     
+    std::ofstream outf(output_filename, std::ios::binary);
+
+    // Write the header for the relevant file
+    if (phenotype_type == BINARY) {
+        if (covar.size() > 0) {
+            write_binary_covar_header(outf);
+        } else {
+            write_binary_header(outf);
+        }
+    } else if (phenotype_type == QUANTITATIVE) {
+        write_quantitative_header(outf);
+    } else if (phenotype_type == EQTL) {
+        write_eqtl_header(outf);
+    }
+
+    // Go through the vcf and get chunks by chromosome. 
     std::cout << "GWAS analysis for chromosome : " << std::endl;
     while (bcf_read(ptr_vcf, hdr, rec) >= 0) {
 
         std::string chr = bcf_hdr_id2name(hdr, rec->rid);
-        // Skip chromosomes not in snarl_chr
-        while (snarl_chr.find(chr) == snarl_chr.end()) {
+        // Skip chromosomes not in chr_to_snarl_data
+        while (chr_to_snarl_data.find(chr) == chr_to_snarl_data.end()) {
             std::cerr << "Warning: Chromosome " << chr << " not found in snarl paths file. Skipping." << std::endl;
 
             bool found_new_chr = false;
@@ -153,26 +63,34 @@ void chromosome_chuck_eqtl(htsFile* &ptr_vcf, bcf_hdr_t* &hdr, bcf1_t* &rec,
                 return;  // exit if no more records are available
             }
         }
+
         std::cout << "> " << chr << std::endl;
-        size_t size_chr = snarl_chr.at(chr).size();
+        size_t size_chr = chr_to_snarl_data.at(chr).size();
 
         // Make genotype matrix by chromosome    
         auto [vcf_object, ptr_vcf_new, hdr_new, rec_new] = make_matrix(ptr_vcf, hdr, rec, list_samples, chr, size_chr);
         ptr_vcf = ptr_vcf_new;
         hdr = hdr_new;
         rec = rec_new;
+        auto& snarl = chr_to_snarl_data.at(chr);
 
-        auto& snarl = snarl_chr.at(chr);
-        auto& eqtl = eqtl_map.at(chr);
+        // Do the GWAS analysis by chromosome
+        if (phenotype_type == BINARY) {
+            vcf_object.binary_table(snarl, binary_pheno, chr, covar, maf, table_threshold, regression_dir, outf);
+        } else if (phenotype_type == QUANTITATIVE) {
+            vcf_object.quantitative_table(snarl, quantitative_pheno, chr, covar, maf, table_threshold, regression_dir, outf);
+        } else if (phenotype_type == EQTL) {
 
-        // Gwas analysis by chromosome
-        vcf_object.eqtl_table(snarl, eqtl, chr, covar, maf, table_threshold, regression_dir, windows_gene_threshold, outf);
+            auto& eqtl = eqtl_map.at(chr);
+            vcf_object.eqtl_table(snarl, eqtl, chr, covar, maf, table_threshold, regression_dir, windows_gene_threshold, outf);
+        }
     }
     // Cleanup
     bcf_destroy(rec);
     bcf_hdr_destroy(hdr);
     bcf_close(ptr_vcf);
 }
+
 
 void chromosome_chuck_make_bed(htsFile* &ptr_vcf, bcf_hdr_t* &hdr, bcf1_t* &rec, 
     const std::vector<std::string> &list_samples,

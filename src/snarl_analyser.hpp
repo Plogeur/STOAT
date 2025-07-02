@@ -41,29 +41,38 @@ public:
     void push_matrix(const Edge_t& EdgePath, std::unordered_map<stoat_vcf::Edge_t, size_t>& edge_dict, size_t indexColumn);
     
     void binary_table(const std::vector<Snarl_data_t>& snarls,
-        const std::vector<bool>& binary_phenotype, const std::string& chr,
+        const std::vector<bool>& binary_phenotype, 
+        const std::string& chr,
         const std::vector<std::vector<double>>& covar,
         const double& maf,  
-        const double& table_threshold, const std::string& output_dir, std::ofstream& outf);
+        const double& table_threshold, 
+        const std::string& output_dir, 
+        std::ofstream& outf);
 
     /// Similar to binary_table, get the genotypes and write the tsv output
     void quantitative_table(const std::vector<Snarl_data_t>& snarls,
-                            const std::vector<double>& quantitative_phenotype, const std::string &chr,
+                            const std::vector<double>& quantitative_phenotype, 
+                            const std::string &chr,
                             const std::vector<std::vector<double>>& covar,
                             const double& maf,  
-                            const double& table_threshold, const std::string& output_dir, std::ofstream& outf);
-
-    /// For each snarl, write a bim file and a bed file (PLINK formats)
-    void create_bim_bed(const std::vector<Snarl_data_t>& snarls, 
-        std::string chromosome, std::ofstream& outbim, std::ofstream& outbed);
+                            const double& table_threshold, 
+                            const std::string& output_dir, 
+                            std::ofstream& outf);
 
     /// Similar to binary_table and quantitative_table, get the genotype and write the tsv output
     void eqtl_table(const std::vector<Snarl_data_t>& snarls,
         const std::vector<std::tuple<std::string, std::vector<double>, size_t, size_t>>& eqtl,
-        const std::string& chr, const std::vector<std::vector<double>>& covar,
+        const std::string& chr, 
+        const std::vector<std::vector<double>>& covar,
         const double& maf,  
-        const double& table_threshold, const std::string& regression_dir,
-        const size_t& windows_gene_threshold, std::ofstream& outf);
+        const double& table_threshold, 
+        const std::string& regression_dir,
+        const size_t& windows_gene_threshold, 
+        std::ofstream& outf);
+
+    /// For each snarl, write a bim file and a bed file (PLINK formats)
+    void create_bim_bed(const std::vector<Snarl_data_t>& snarls, 
+        std::string chromosome, std::ofstream& outbim, std::ofstream& outbed);
 
     /// Given a list of paths in a snarl, return vectors of counts of each sample taking an allele for the two alleles with the highest counts over all samples
     /// Each vector returned corresponds to one allele, each entry in the vector is a sample, the value is a count of the number of times a sample takes the path/allele (probably binary?)
@@ -73,34 +82,30 @@ public:
 /// Return true if any column exceeds the MAF threshold 
 bool check_MAF_threshold_quantitative(const std::vector<std::vector<double>>& df, const double& maf);
 
-/// Go through the vcf by chromosome, parse it to get a matrix of genotypes (SnarlParser of edges), then write the binary table
-void chromosome_chuck_binary(htsFile* &ptr_vcf, bcf_hdr_t* &hdr, bcf1_t* &rec, 
-    const std::vector<std::string> &list_samples, 
-    const std::unordered_map<std::string, std::vector<Snarl_data_t>> &snarl_chr,
-    const std::vector<bool>& pheno, std::vector<std::vector<double>> covar, 
-    const double& maf, const double& table_threshold, 
-    const std::string& regression_dir, const std::string& output_binary);
-
-void chromosome_chuck_quantitative(htsFile* &ptr_vcf, bcf_hdr_t* &hdr, bcf1_t* &rec, 
-    const std::vector<std::string> &list_samples,
-    const std::unordered_map<std::string, std::vector<Snarl_data_t>> &snarl_chr,
-    const std::vector<double>& pheno, std::vector<std::vector<double>> covar,
-    const double& maf, const double& table_threshold, 
-    const std::string& regression_dir, const std::string& output_quantitative);
-
-void chromosome_chuck_eqtl(htsFile* &ptr_vcf, bcf_hdr_t* &hdr, bcf1_t* &rec, 
-    const std::vector<std::string> &list_samples,
-    const std::unordered_map<std::string, std::vector<Snarl_data_t>>& snarl_chr,
-    const std::unordered_map<std::string, std::vector<std::tuple<std::string, std::vector<double>, size_t, size_t>>>& eqtl_map,
-    const std::vector<std::vector<double>>& covar,
-    const double& maf, const double& table_threshold, 
-    const std::string& regression_dir, const size_t& windows_gene_threshold, 
-    const std::string& out_eqtl);
+/// Go through the vcf by chromosome, parse it to get a matrix of genotypes (either binary, quantitative, or eqtl, depending on the phenotype type),
+/// then write the output (also depending on the phenotype type).
+/// window_gene_threshold and eqtl_map are only used for eqtl output 
+void chunk_chromosome_and_write_tsv(phenotype_type_t phenotype_type,
+     htsFile* &ptr_vcf,
+     bcf_hdr_t* &hdr,
+     bcf1_t* &rec,
+     const std::vector<std::string> &list_samples,
+     const std::unordered_map<std::string, std::vector<Snarl_data_t>> &chr_to_snarl_data,
+     const std::vector<bool>& binary_pheno,
+     const std::vector<double>& quantitative_pheno,
+     const std::unordered_map<std::string, std::vector<std::tuple<std::string, std::vector<double>, size_t, size_t>>>& eqtl_map,
+     std::vector<std::vector<double>> covar,
+     const double& maf,
+     const double& table_threshold,
+     const size_t& windows_gene_threshold,
+     const std::string& regression_dir,
+     const std::string& output_filename);
 
 void chromosome_chuck_make_bed(htsFile* &ptr_vcf, bcf_hdr_t* &hdr, bcf1_t* &rec, 
     const std::vector<std::string> &list_samples,
     const std::unordered_map<std::string, std::vector<Snarl_data_t>>& snarl_chr,
     const std::string& output_dir);
+
 
 std::tuple<htsFile*, bcf_hdr_t*, bcf1_t*> parse_vcf(const std::string& vcf_path);
 
