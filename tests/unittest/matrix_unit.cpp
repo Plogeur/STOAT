@@ -43,12 +43,13 @@ TEST_CASE("stoat_vcf::EdgeBySampleMatrix Set and Access Elements", "[stoat_vcf::
         REQUIRE(mat(1, 3));  // Should now be true
     }
 }
+// TODO: Make this shrink to a specific size
 TEST_CASE("stoat_vcf::EdgeBySampleMatrix Shrink", "[stoat_vcf::EdgeBySampleMatrix]") {
     SECTION("stoat_vcf::EdgeBySampleMatrix correctly shrinks") {
         std::vector<string> sample_names;
         TestEdgeBySampleMatrix mat(sample_names, 10, 5);
         size_t original_size = mat.matrix_1D.size();
-        mat.shrink(5);  // Reduce row count
+        mat.shrink();  // Reduce row count
         REQUIRE(mat.matrix_1D.size() < original_size);
     }
 }

@@ -389,7 +389,6 @@ const std::vector<std::vector<stoat_vcf::Edge_t>> decompose_path_list_str(const 
 std::tuple<EdgeBySampleMatrix, htsFile*, bcf_hdr_t*, bcf1_t*> make_matrix(htsFile *ptr_vcf, bcf_hdr_t *hdr, bcf1_t *rec, const std::vector<std::string> &sampleNames, std::string &chr, size_t &num_paths_chr) {
 
     EdgeBySampleMatrix edge_matrix(sampleNames, num_paths_chr*4, sampleNames.size() * 2);
-    std::unordered_map<stoat_vcf::Edge_t, size_t> edge_dict;
 
     // loop over the VCF file for each line and stop where chr is different
     do {
@@ -441,13 +440,13 @@ std::tuple<EdgeBySampleMatrix, htsFile*, bcf_hdr_t*, bcf1_t*> make_matrix(htsFil
 
             if (idex_path_allele_1 != -1) { // Handle missing genotypes
                 for (const auto &edge_path_1 : list_paths_edge[idex_path_allele_1]) {
-                    edge_matrix.push_matrix(edge_path_1, edge_dict, col_idx);
+                    edge_matrix.push_matrix(edge_path_1, col_idx);
                 }
             }
 
             if (idex_path_allele_2 != -1) { // Handle missing genotypes
                 for (const auto &edge_path_2 : list_paths_edge[idex_path_allele_2]) {
-                    edge_matrix.push_matrix(edge_path_2, edge_dict, col_idx + 1);
+                    edge_matrix.push_matrix(edge_path_2, col_idx + 1);
                 }
             }
         }
@@ -455,8 +454,7 @@ std::tuple<EdgeBySampleMatrix, htsFile*, bcf_hdr_t*, bcf1_t*> make_matrix(htsFil
 
     } while ((bcf_read(ptr_vcf, hdr, rec) >= 0) && (chr == bcf_hdr_id2name(hdr, rec->rid)));
 
-    edge_matrix.set_row_header(edge_dict);
-    edge_matrix.shrink(edge_dict.size());
+    edge_matrix.shrink();
     edge_matrix.set_end_dict();
     return std::make_tuple(edge_matrix, ptr_vcf, hdr, rec);
 }

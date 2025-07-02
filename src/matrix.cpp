@@ -23,23 +23,23 @@ std::unordered_map<stoat_vcf::Edge_t, size_t>::const_iterator EdgeBySampleMatrix
 }
 
 // Retrieve the index of `key` if it exists in the dict. Otherwise, add it and return the new index.
-size_t EdgeBySampleMatrix::getOrAddIndex(std::unordered_map<stoat_vcf::Edge_t, size_t>& edge_index_dict, const Edge_t& key, const size_t& size_edge_index_dict) {
-    auto it = edge_index_dict.find(key);
-    if (it != edge_index_dict.end()) {
+size_t EdgeBySampleMatrix::getOrAddIndex(const Edge_t& key, const size_t& size_edge_index_dict) {
+    auto it = row_header.find(key);
+    if (it != row_header.end()) {
         return it->second;
     } else {
         size_t newIndex = size_edge_index_dict;
-        edge_index_dict[key] = newIndex;
+        row_header[key] = newIndex;
         return newIndex;
     }
 }
 
 
 // Add True to the matrix if edge is found
-void EdgeBySampleMatrix::push_matrix(const Edge_t& EdgePath, std::unordered_map<stoat_vcf::Edge_t, size_t>& edge_index_dict, size_t indexColumn) {
+void EdgeBySampleMatrix::push_matrix(const Edge_t& EdgePath, size_t indexColumn) {
 
-    size_t lengthOrderedMap = edge_index_dict.size();
-    size_t idxSnarl = getOrAddIndex(edge_index_dict, EdgePath, lengthOrderedMap);
+    size_t lengthOrderedMap = row_header.size();
+    size_t idxSnarl = getOrAddIndex(EdgePath, lengthOrderedMap);
     size_t currentRowsNumber = getMaxElement();
 
     if (lengthOrderedMap > currentRowsNumber - 1) {
@@ -58,12 +58,6 @@ void EdgeBySampleMatrix::set_end_dict() {
 // Getter row number
 size_t EdgeBySampleMatrix::getMaxElement() const {
     return MaxElement;  // Convert bits back to rows
-}
-
-// Setter for row header
-// TODO: This could be done when things are added to the matrix in push_matrix
-void EdgeBySampleMatrix::set_row_header(const std::unordered_map<stoat_vcf::Edge_t, size_t>& new_row_header) {
-    row_header = std::move(new_row_header);
 }
 
 void EdgeBySampleMatrix::expandMatrix() {
@@ -93,8 +87,8 @@ void EdgeBySampleMatrix::set(size_t row, size_t col) {
     matrix_1D[byteIndex] |= (1U << bitPosition);
 }
 
-void EdgeBySampleMatrix::shrink(size_t current_rows) {
-    size_t new_bits = current_rows * cols_;
+void EdgeBySampleMatrix::shrink() {
+    size_t new_bits = row_header.size() * cols_;
     size_t new_bytes = (new_bits + 7) / 8; // Compute required bytes (round up)
     matrix_1D.resize(new_bytes); // Resize
     matrix_1D.shrink_to_fit(); // Free unused capacity

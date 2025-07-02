@@ -25,7 +25,7 @@ public:
     bool operator()(size_t row, size_t col) const;
 
     // Add this edge to the matrix
-    void push_matrix(const Edge_t& EdgePath, std::unordered_map<stoat_vcf::Edge_t, size_t>& edge_dict, size_t indexColumn);
+    void push_matrix(const Edge_t& EdgePath, size_t indexColumn);
 
     // Set this value to true
     void set(size_t row, size_t col);
@@ -36,11 +36,8 @@ public:
     // Double the size of the matrix
     void expandMatrix();
 
-    // Reset row_header
-    void set_row_header(const std::unordered_map<stoat_vcf::Edge_t, size_t>& row_header);
-
-    // Shrink to use the minimum amount of memory possible allowing current_rows
-    void shrink(size_t current_rows);
+    // Shrink to use the minimum amount of memory possible allowing the current number of rows
+    void shrink();
 
     // Return an iterator to the given snarl in row_header
     std::unordered_map<stoat_vcf::Edge_t, size_t>::const_iterator find_edge(const stoat_vcf::Edge_t& edge) const;
@@ -51,8 +48,8 @@ public:
     // Reset row_header_end to be the end of row_header
     void set_end_dict();
 
-    // Retrieve the index of `edge` if it exists in edge_index_dict. Otherwise, add it and return the new index.
-    size_t getOrAddIndex(std::unordered_map<stoat_vcf::Edge_t, size_t>& edge_index_dict, const Edge_t& key, const size_t& size_edge_index_dict);
+    // Retrieve the index of `edge` if it exists. Otherwise, add it and return the new index.
+    size_t getOrAddIndex(const Edge_t& key, const size_t& size_edge_index_dict);
 
 
 protected:
