@@ -21,6 +21,45 @@ link_directories(${HTSLIB_LIBRARY_DIRS})
 find_package(Boost REQUIRED)
 find_package(Eigen3 REQUIRED)
 
+# Copied from https://github.com/vgteam/vg/wiki/Programming-with-the-vg-API
+# SDSL library ("sdsl" target) already exists from libbdsg
+
+# GBWT doesn't have CMake yet so we need to explain how to build it.
+
+# GBWT dependency: OpenMP
+if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+    # OpenMP may be installed by Homebrew in a place CMake can't find it by default.
+    set (HOMEBREW_PREFIX "$ENV{HOMEBREW_PREFIX}")
+    if ("${HOMEBREW_PREFIX}" STREQUAL "")
+        # Ask Homebrew if it exists and where it is.
+        execute_process(COMMAND brew --prefix OUTPUT_STRIP_TRAILING_WHITESPACE OUTPUT_VARIABLE HOMEBREW_PREFIX)
+    endif()
+    if ("${HOMEBREW_PREFIX}" STREQUAL "")
+        # Default to somewhere.
+        set (HOMEBREW_PREFIX "/opt/homebrew")
+    endif()
+    list(APPEND CMAKE_PREFIX_PATH "${HOMEBREW_PREFIX}")
+    list(APPEND CMAKE_PREFIX_PATH "${HOMEBREW_PREFIX}/opt/libomp")
+endif()
+find_package( OpenMP REQUIRED )
+
+# GBWT
+foreach (gbwt_source IN ITEMS algorithms.cpp bwtmerge.cpp cached_gbwt.cpp dynamic_gbwt.cpp fast_locate.cpp files.cpp gbwt.cpp internal.cpp metadata.cpp support.cpp test.cpp utils.cpp variants.cpp)
+    list(APPEND gbwt_libFiles "deps/gbwt/src/${gbwt_source}")
+endforeach()
+if(MSVC)
+    file(GLOB gbwt_headerFiles RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}  "${deps_DIR}/gbwt/include/gbwt/*.h")
+endif()
+set( gbwt_SRCS ${gbwt_libFiles} ${gbwt_headerFiles})
+add_library( gbwt ${gbwt_SRCS} )
+target_include_directories( gbwt PUBLIC "${deps_DIR}/gbwt/include")
+target_link_libraries( gbwt PUBLIC sdsl OpenMP::OpenMP_CXX )
+install(TARGETS gbwt
+        LIBRARY DESTINATION lib
+        ARCHIVE DESTINATION lib
+        PUBLIC_HEADER DESTINATION include)
+
+
 # Add Executable
 add_executable(${PROJECT_NAME}
     src/main.cpp
@@ -54,6 +93,7 @@ target_link_libraries(${PROJECT_NAME}
     Eigen3::Eigen
     libsdsl.so.3
     ${HTSLIB_LIBRARIES}
+    gbwt
 )
 
 # Enable testing
