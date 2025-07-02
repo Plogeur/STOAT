@@ -9,12 +9,18 @@
 
 namespace stoat_vcf {
 
-void chromosome_chuck_binary(htsFile* &ptr_vcf, bcf_hdr_t* &hdr, bcf1_t* &rec, 
+void chromosome_chuck_binary(
+    htsFile* &ptr_vcf, 
+    bcf_hdr_t* &hdr, 
+    bcf1_t* &rec, 
     const std::vector<std::string> &list_samples, 
-    const unordered_map<string, std::vector<Snarl_data_t>> &snarl_chr,
-    const std::vector<bool>& binary_pheno, std::vector<std::vector<double>> covar, 
+    const unordered_map<string, 
+    std::vector<Snarl_data_t>> &snarl_chr,
+    const std::vector<bool>& binary_pheno, 
+    std::vector<std::vector<double>> covar, 
     const double& maf,
-    const double& table_threshold, const std::string& regression_dir,
+    const double& table_threshold, 
+    const std::string& regression_dir,
     const std::string& output_binary) {
 
     std::ofstream outf(output_binary, std::ios::binary);
@@ -67,10 +73,13 @@ void chromosome_chuck_binary(htsFile* &ptr_vcf, bcf_hdr_t* &hdr, bcf1_t* &rec,
 
 void chromosome_chuck_quantitative(htsFile* &ptr_vcf, bcf_hdr_t* &hdr, bcf1_t* &rec, 
     const std::vector<std::string> &list_samples,
-    const unordered_map<string, std::vector<Snarl_data_t>> &snarl_chr,
-    const std::vector<double>& quantitative_phenotype, std::vector<std::vector<double>> covar,
+    const unordered_map<string, 
+    std::vector<Snarl_data_t>> &snarl_chr,
+    const std::vector<double>& quantitative_phenotype, 
+    std::vector<std::vector<double>> covar,
     const double& maf,
-    const double& table_threshold, const std::string& regression_dir,
+    const double& table_threshold, 
+    const std::string& regression_dir,
     const std::string& output_quantitive) {
 
     std::ofstream outf(output_quantitive, std::ios::binary);
@@ -121,12 +130,17 @@ void chromosome_chuck_quantitative(htsFile* &ptr_vcf, bcf_hdr_t* &hdr, bcf1_t* &
 
 void chromosome_chuck_eqtl(htsFile* &ptr_vcf, bcf_hdr_t* &hdr, bcf1_t* &rec, 
     const std::vector<std::string> &list_samples,
-    const std::unordered_map<std::string, std::vector<Snarl_data_t>> &snarl_chr,
-    const std::unordered_map<std::string, std::vector<std::tuple<std::string, std::vector<double>, size_t, size_t>>>& eqtl_map,
+    const std::unordered_map<std::string,
+    std::vector<Snarl_data_t>> &snarl_chr,
+    const std::unordered_map<std::string,
+    std::vector<std::tuple<std::string,
+    std::vector<double>, size_t, size_t>>>& eqtl_map,
     const std::vector<std::vector<double>>& covar,
     const double& maf,
-    const double& table_threshold, const std::string& regression_dir,
-    const size_t& windows_gene_threshold, const std::string& out_eqtl) {
+    const double& table_threshold,
+    const std::string& regression_dir,
+    const size_t& windows_gene_threshold,
+    const std::string& out_eqtl) {
 
     std::ofstream outf(out_eqtl, std::ios::binary);
     write_eqtl_header(outf);
