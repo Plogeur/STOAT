@@ -395,11 +395,11 @@ int main(int argc, char* argv[]) {
 
         } else {
             stoat_vcf::phenotype_type_t phenotype_type;
-            if (binary_path.empty()) {
+            if (!binary_path.empty()) {
                 phenotype_type = stoat_vcf::BINARY;
-            } else if (quantitative_path.empty()) {
+            } else if (!quantitative_path.empty()) {
                 phenotype_type = stoat_vcf::QUANTITATIVE;
-            } else if (eqtl_path.empty()) {
+            } else if (!eqtl_path.empty()) {
                 phenotype_type = stoat_vcf::EQTL;
             }
 
