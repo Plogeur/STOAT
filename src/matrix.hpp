@@ -39,6 +39,7 @@ public:
     // Shrink to use the minimum amount of memory possible allowing the current number of rows
     void shrink();
 
+    // TODO: Can this just be has_edge? I don't think it ever gets used as an iterator
     // Return an iterator to the given snarl in row_header
     std::unordered_map<stoat_vcf::Edge_t, size_t>::const_iterator find_edge(const stoat_vcf::Edge_t& edge) const;
 
