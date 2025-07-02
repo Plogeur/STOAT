@@ -10,6 +10,7 @@
 #include <sstream>
 #include <string>
 #include <cstdio>
+#include "utils.hpp"
 
 using namespace std;
 
@@ -22,9 +23,10 @@ void adjust_pvalues_with_BH(std::vector<std::tuple<double, double, size_t>>& dat
 // Read a tsv from input_file, collect the p-values from the correct column (depending on phenotype_type), 
 // and write the same file plus a BH-adjusted p-value to outupt_file_significant.
 void add_BH_adjusted_column(
-    const std::string& input_file, 
+    const std::string& input_file,
+    const std::string& output_dir,
     const std::string& output_file_significant,
-    const std::string& phenotype_type);
+    const phenotype_type_t& phenotype_type);
 
 } // namespace stoat_vcf
 

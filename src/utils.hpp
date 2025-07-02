@@ -86,6 +86,8 @@ bool is_equal(T a, T b, T e = std::numeric_limits<T>::epsilon()) {
     return std::fabs(a-b) <= e;
 };
 
+enum phenotype_type_t { BINARY = 1, QUANTITATIVE, EQTL };
+
 } // namespace stoat_vcf
 
 #endif
