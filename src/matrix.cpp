@@ -27,6 +27,34 @@ std::unordered_map<stoat_vcf::Edge_t, size_t>::const_iterator EdgeBySampleMatrix
     return row_header_end;
 }
 
+// Retrieve the index of `key` if it exists in the dict. Otherwise, add it and return the new index.
+size_t EdgeBySampleMatrix::getOrAddIndex(std::unordered_map<stoat_vcf::Edge_t, size_t>& edge_index_dict, const Edge_t& key, const size_t& size_edge_index_dict) {
+    auto it = edge_index_dict.find(key);
+    if (it != edge_index_dict.end()) {
+        return it->second;
+    } else {
+        size_t newIndex = size_edge_index_dict;
+        edge_index_dict[key] = newIndex;
+        return newIndex;
+    }
+}
+
+
+// Add True to the matrix if edge is found
+void EdgeBySampleMatrix::push_matrix(const Edge_t& EdgePath, std::unordered_map<stoat_vcf::Edge_t, size_t>& edge_index_dict, size_t indexColumn) {
+
+    size_t lengthOrderedMap = edge_index_dict.size();
+    size_t idxSnarl = getOrAddIndex(edge_index_dict, EdgePath, lengthOrderedMap);
+    size_t currentRowsNumber = getMaxElement();
+
+    if (lengthOrderedMap > currentRowsNumber - 1) {
+        expandMatrix();
+    }
+
+    set(idxSnarl, indexColumn);
+}
+
+
 // Getter for row header
 void EdgeBySampleMatrix::set_end_dict() {
     row_header_end = row_header.end();

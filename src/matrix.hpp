@@ -24,6 +24,9 @@ public:
     // Operator to get the value
     bool operator()(size_t row, size_t col) const;
 
+    // Add this edge to the matrix
+    void push_matrix(const Edge_t& EdgePath, std::unordered_map<stoat_vcf::Edge_t, size_t>& edge_dict, size_t indexColumn);
+
     // Set this value to true
     void set(size_t row, size_t col);
 
@@ -53,6 +56,10 @@ public:
 
     // Reset row_header_end to be the end of row_header
     void set_end_dict();
+
+    // Retrieve the index of `edge` if it exists in edge_index_dict. Otherwise, add it and return the new index.
+    size_t getOrAddIndex(std::unordered_map<stoat_vcf::Edge_t, size_t>& edge_index_dict, const Edge_t& key, const size_t& size_edge_index_dict);
+
 
 private:
     size_t cols_;

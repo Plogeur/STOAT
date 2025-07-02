@@ -389,32 +389,6 @@ const std::vector<std::vector<stoat_vcf::Edge_t>> decompose_path_list_str(const 
     return paths_snarl;
 }
 
-// Retrieve the index of `key` if it exists in the dict. Otherwise, add it and return the new index.
-size_t getOrAddIndex(std::unordered_map<stoat_vcf::Edge_t, size_t>& edge_index_dict, const Edge_t& key, const size_t& size_edge_index_dict) {
-    auto it = edge_index_dict.find(key);
-    if (it != edge_index_dict.end()) {
-        return it->second;
-    } else {
-        size_t newIndex = size_edge_index_dict;
-        edge_index_dict[key] = newIndex;
-        return newIndex;
-    }
-}
-
-// Add True to the matrix if snarl is found
-void SnarlAnalyser::push_matrix(const Edge_t& EdgePath, std::unordered_map<stoat_vcf::Edge_t, size_t>& edge_index_dict, size_t indexColumn) {
-    
-    size_t lengthOrderedMap = edge_index_dict.size();
-    size_t idxSnarl = getOrAddIndex(edge_index_dict, EdgePath, lengthOrderedMap);
-    size_t currentRowsNumber = matrix.getMaxElement();
-
-    if (lengthOrderedMap > currentRowsNumber - 1) {
-        matrix.expandMatrix();
-    }
-
-    matrix.set(idxSnarl, indexColumn);
-}
-
 // Function to parse VCF and fill matrix genotypes
 std::tuple<SnarlAnalyser, htsFile*, bcf_hdr_t*, bcf1_t*> make_matrix(htsFile *ptr_vcf, bcf_hdr_t *hdr, bcf1_t *rec, const std::vector<std::string> &sampleNames, std::string &chr, size_t &num_paths_chr) {
 
@@ -471,13 +445,13 @@ std::tuple<SnarlAnalyser, htsFile*, bcf_hdr_t*, bcf1_t*> make_matrix(htsFile *pt
 
             if (idex_path_allele_1 != -1) { // Handle missing genotypes
                 for (const auto &edge_path_1 : list_paths_edge[idex_path_allele_1]) {
-                    snarl_data.push_matrix(edge_path_1, edge_dict, col_idx);
+                    snarl_data.matrix.push_matrix(edge_path_1, edge_dict, col_idx);
                 }
             }
 
             if (idex_path_allele_2 != -1) { // Handle missing genotypes
                 for (const auto &edge_path_2 : list_paths_edge[idex_path_allele_2]) {
-                    snarl_data.push_matrix(edge_path_2, edge_dict, col_idx + 1);
+                    snarl_data.matrix.push_matrix(edge_path_2, edge_dict, col_idx + 1);
                 }
             }
         }
