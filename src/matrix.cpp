@@ -86,4 +86,17 @@ void EdgeBySampleMatrix::shrink() {
     matrix_1D.shrink_to_fit(); // Free unused capacity
 }
 
+void EdgeBySampleMatrix::reset(const std::vector<std::string>& sampleNames, size_t rows, size_t cols) 
+
+    matrix_1D.clear();
+    row_header.clear();
+    sample_names.clear();
+
+    size_t length_matrix = (rows * cols + 7) / 8;
+    MaxElement = (length_matrix * 8) / cols_; // get the number of element in the matrix
+    row_header.rehash(rows);
+    matrix_1D.reserve(length_matrix); // Reserve capacity to avoid frequent reallocations
+    matrix_1D.resize(length_matrix, 0); // Initialize with zeros{
+}
+
 } // end namespace stoat_vcf
