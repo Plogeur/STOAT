@@ -449,7 +449,7 @@ std::vector<std::tuple<handlegraph::net_handle_t, std::string, size_t, size_t, b
     };
 
     stree.for_each_child(root, save_snarl_tree_node);
-    std::cout << "Number of snarls : " << snarls.size() << std::endl;
+    std::cout << "Total number of snarls : " << snarls.size() << std::endl;
     return snarls;
 }
 
@@ -705,7 +705,7 @@ std::unordered_map<std::string, std::vector<Snarl_data_t>> loop_over_snarls_writ
     }
 
     // Print the size of snarl_paths
-    std::cout << "Number of paths : " << paths_number_analysis << std::endl;
+    std::cout << "Total number of paths : " << paths_number_analysis << std::endl;
 
     // Print chr_snarl_matrix
     for (const auto& chr_snarl : chr_snarl_matrix) {

@@ -79,12 +79,10 @@ void add_BH_adjusted_column(
 
         double pval = 1.0;
         if (phenotype_type == "binary") {
-            // combine both p-value
-            //pval = stoat_vcf::set_precision_float_50(columns[4], columns[5]);
-            
             // use only chi2
             pval = string_to_pvalue(columns[adjusted_col_index-1]); // use only chi2
         } else if (phenotype_type == "quantitative") {
+            // use linear regression
             pval = string_to_pvalue(columns[adjusted_col_index-1]);
         }
 
@@ -97,7 +95,8 @@ void add_BH_adjusted_column(
 
     // Second pass: rewrite with BH-adjusted values
     infile.open(input_file);
-    std::ofstream outfile(output_dir + "/temp_output.tsv");
+    const std::string output_temp_file = output_dir + "/temp_output.tsv";
+    std::ofstream outfile(output_temp_file);
     std::ofstream outfile_significant(output_file_significant);
 
     // Write headers
@@ -143,7 +142,7 @@ void add_BH_adjusted_column(
 
     // Replace original file
     std::remove(input_file.c_str());
-    std::rename("temp_output.tsv", input_file.c_str());
+    std::rename(output_temp_file.c_str(), input_file.c_str());
 }
 
 } // namespace stoat_vcf

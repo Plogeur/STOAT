@@ -70,8 +70,11 @@ public:
     std::pair<std::vector<size_t>, std::vector<size_t>> create_table_short_path(const std::vector<stoat_vcf::Path_traversal_t>& list_path_snarl);
 };
 
-/// Return true if any column exceeds the MAF threshold 
+/// Return true if any column exceeds the MAF threshold
 bool check_MAF_threshold_quantitative(const std::vector<std::vector<double>>& df, const double& maf);
+
+/// Return true if any column exceeds the MAF threshold
+bool check_MAF_threshold_binary(const std::vector<size_t>& g0, const std::vector<size_t>& g1, const size_t& totalSum, const size_t& length_column_headers, const double& maf);
 
 /// Go through the vcf by chromosome, parse it to get a matrix of genotypes (SnarlParser of edges), then write the binary table
 void chromosome_chuck_binary(htsFile* &ptr_vcf, bcf_hdr_t* &hdr, bcf1_t* &rec, 

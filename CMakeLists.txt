@@ -43,23 +43,6 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 endif()
 find_package( OpenMP REQUIRED )
 
-# GBWT
-foreach (gbwt_source IN ITEMS algorithms.cpp bwtmerge.cpp cached_gbwt.cpp dynamic_gbwt.cpp fast_locate.cpp files.cpp gbwt.cpp internal.cpp metadata.cpp support.cpp test.cpp utils.cpp variants.cpp)
-    list(APPEND gbwt_libFiles "deps/gbwt/src/${gbwt_source}")
-endforeach()
-if(MSVC)
-    file(GLOB gbwt_headerFiles RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}  "${deps_DIR}/gbwt/include/gbwt/*.h")
-endif()
-set( gbwt_SRCS ${gbwt_libFiles} ${gbwt_headerFiles})
-add_library( gbwt ${gbwt_SRCS} )
-target_include_directories( gbwt PUBLIC "${deps_DIR}/gbwt/include")
-target_link_libraries( gbwt PUBLIC sdsl OpenMP::OpenMP_CXX )
-install(TARGETS gbwt
-        LIBRARY DESTINATION lib
-        ARCHIVE DESTINATION lib
-        PUBLIC_HEADER DESTINATION include)
-
-
 # Add Executable
 add_executable(${PROJECT_NAME}
     src/main.cpp
@@ -93,7 +76,7 @@ target_link_libraries(${PROJECT_NAME}
     Eigen3::Eigen
     libsdsl.so.3
     ${HTSLIB_LIBRARIES}
-    gbwt
+    OpenMP::OpenMP_CXX
 )
 
 # Enable testing
@@ -128,7 +111,7 @@ add_executable(unit_tests
 
 target_compile_options(unit_tests PRIVATE -w) # fix warning
 
-# add src target lib + Catch2 lib 
+# add src target lib + Catch2 lib 
 target_link_libraries(unit_tests PRIVATE 
     Catch2::Catch2WithMain     
     Boost::boost
