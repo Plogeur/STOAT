@@ -12,14 +12,11 @@ EdgeBySampleMatrix::EdgeBySampleMatrix(const std::vector<std::string>& sampleNam
     matrix_1D.resize(length_matrix, 0); // Initialize with zeros
 }
 
-// Getter for row header
-std::unordered_map<stoat_vcf::Edge_t, size_t>::const_iterator EdgeBySampleMatrix::find_edge(const stoat_vcf::Edge_t& edge_s) const {
-    return row_header.find(edge_s);
-}
-
-// Getter for row header
-std::unordered_map<stoat_vcf::Edge_t, size_t>::const_iterator EdgeBySampleMatrix::get_end_dict() const {
-    return row_header_end;
+// Getter the row index of the edge
+size_t EdgeBySampleMatrix::find_edge(const stoat_vcf::Edge_t& edge_s) const {
+    auto itr = row_header.find(edge_s);
+    return itr == row_header.end() ? std::numeric_limits<size_t>::max()
+                                 : itr->second;
 }
 
 // Retrieve the index of `key` if it exists in the dict. Otherwise, add it and return the new index.
@@ -49,11 +46,6 @@ void EdgeBySampleMatrix::push_matrix(const Edge_t& EdgePath, size_t indexColumn)
     set(idxSnarl, indexColumn);
 }
 
-
-// Getter for row header
-void EdgeBySampleMatrix::set_end_dict() {
-    row_header_end = row_header.end();
-}
 
 // Getter row number
 size_t EdgeBySampleMatrix::getMaxElement() const {

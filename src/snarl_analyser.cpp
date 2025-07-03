@@ -455,7 +455,6 @@ std::tuple<EdgeBySampleMatrix, htsFile*, bcf_hdr_t*, bcf1_t*> make_matrix(htsFil
     } while ((bcf_read(ptr_vcf, hdr, rec) >= 0) && (chr == bcf_hdr_id2name(hdr, rec->rid)));
 
     edge_matrix.shrink();
-    edge_matrix.set_end_dict();
     return std::make_tuple(edge_matrix, ptr_vcf, hdr, rec);
 }
 
@@ -468,7 +467,6 @@ std::vector<size_t> identify_path(
     std::vector<size_t> rows_to_check;
     rows_to_check.reserve(list_edge_path.size());
 
-    // TODO: I think this is going through edges in the path through the snarl, not snarls
     // Map snarl names to row indices
     for (const Edge_t& edge : list_edge_path) {
         const auto& [node_id_1, node_id_2] = edge.print_pair_edge(); // Convert Edge_t to std::pair<size_t, size_t>
@@ -477,9 +475,9 @@ std::vector<size_t> identify_path(
         if (node_id_1 == 0 || node_id_2 == 0) {
             continue;
         }
-        auto it = edge_matrix.find_edge(edge);
-        if (it != edge_matrix.get_end_dict()) {
-            rows_to_check.push_back(it->second);
+        size_t row_index = edge_matrix.find_edge(edge);
+        if (row_index != std::numeric_limits<size_t>::max()) {
+            rows_to_check.push_back(row_index);
         } else {
             return {}; // If any snarl isn't found, abort early
         }
