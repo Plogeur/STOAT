@@ -323,7 +323,6 @@ int main(int argc, char* argv[]) {
 
         if (!covariate_path.empty()) {
             covariate = stoat_vcf::parse_covariates(covariate_path, covar_names, list_samples);
-            covariate = stoat_vcf::parse_covariates(covariate_path, covar_names, list_samples);
         }
 
         if (!binary_path.empty()) {
@@ -401,21 +400,31 @@ int main(int argc, char* argv[]) {
             return EXIT_SUCCESS;
 
         } else {
-            stoat_vcf::phenotype_type_t phenotype_type;
+
+            std::shared_ptr<stoat_vcf::SnarlAnalyzer> snarl_analyzer;
+
+            // Decide which type of SnarlAnalyzer we want
             if (!binary_path.empty()) {
-                phenotype_type = stoat_vcf::BINARY;
+                // binary
+                if (!covariate.empty()){
+                    // Normal binary
+                    snarl_analyzer.reset(new stoat_vcf::BinarySnarlAnalyzer(snarls_chr, list_samples, covariate, maf, table_threshold));
+                } else {
+                    // Binary covariate
+                    snarl_analyzer.reset(new stoat_vcf::BinaryCovariateSnarlAnalyzer(snarls_chr, list_samples, covariate, maf, table_threshold));
+                }
             } else if (!quantitative_path.empty()) {
-                phenotype_type = stoat_vcf::QUANTITATIVE;
+                // Quantitative
+                snarl_analyzer.reset(new stoat_vcf::QuantitativeSnarlAnalyzer snarl_analyzer(snarls_chr, list_samples, covariate, maf, table_threshold));
             } else if (!eqtl_path.empty()) {
-                phenotype_type = stoat_vcf::EQTL;
+                // EQTL
+                snarl_analyzer.reset(new stoat_vcf::EQTLSnarlAnalyzer snarl_analyzer(snarls_chr, list_samples, covariate, maf, table_threshold, windows_gene_threshold));
             }
 
             std::string output_tsv = output_dir + (phenotype_type == stoat_vcf::BINARY       ? "/binary_table.tsv" : 
                                                   (phenotype_type == stoat_vcf::QUANTITATIVE ? "/quantitative_table.tsv" 
                                                                                                : "/eqtl_gwas.tsv"));
-            stoat_vcf::chunk_chromosome_and_write_tsv(phenotype_type, ptr_vcf, hdr, rec, list_samples, snarls_chr, 
-                                                       binary_vector, quantitative_vector, eqtl, covariate, maf, table_threshold, 
-                                                       windows_gene_threshold, regression_dir, output_tsv);
+            snarl_analyzer->process_snarls_by_chromosome_chunk(ptr_vcf, hdr, rec, regression_dir, output_tsv);
 
             std::string output_significative = output_dir + (phenotype_type == stoat_vcf::BINARY       ?  "/top_variant_binary.tsv" : 
                                                             (phenotype_type == stoat_vcf::QUANTITATIVE ? "/top_variant_quantitative.tsv" 
