@@ -48,12 +48,6 @@ size_t create_binary_table(
     const size_t& number_samples,
     const stoat_vcf::EdgeBySampleMatrix& matrix);
 
-// Does at least one column meet the MAF threshold?
-bool check_MAF_threshold(
-    const std::vector<size_t>& g0, const std::vector<size_t>& g1,
-    const size_t& totalSum, const size_t& length_column_headers, 
-    const double& maf);
-
 } // namespace stoat_vcf
 
 #endif

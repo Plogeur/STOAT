@@ -75,19 +75,4 @@ size_t create_binary_table(
     return total_sum;
 }
 
-bool check_MAF_threshold(
-    const std::vector<size_t>& g0, const std::vector<size_t>& g1,
-    const size_t& totalSum, const size_t& length_column_headers, 
-    const double& maf) {
-
-    // Check MAF threshold
-    for (size_t i = 0; i < length_column_headers; ++i) {
-        int columnSum = g0[i] + g1[i];
-        if (static_cast<double>(columnSum) / totalSum >= maf) {
-            return true; // MAF threshold met
-        }
-    }
-    return false; // No column met MAF threshold
-}
-
 } // namespace stoat_vcf

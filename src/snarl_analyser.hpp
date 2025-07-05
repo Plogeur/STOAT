@@ -82,6 +82,11 @@ void create_bim_bed(const std::vector<Snarl_data_t>& snarls, size_t sample_count
 /// Return true if any column exceeds the MAF threshold 
 bool check_MAF_threshold_quantitative(const std::vector<std::vector<double>>& df, const double& maf);
 
+bool check_MAF_threshold_binary(
+    const std::vector<size_t>& g0, const std::vector<size_t>& g1,
+    const size_t& totalSum, const size_t& length_column_headers, 
+    const double& maf);
+
 /// Go through the vcf by chromosome, parse it to get a matrix of genotypes (either binary, quantitative, or eqtl, depending on the phenotype type),
 /// then write the output (also depending on the phenotype type).
 /// window_gene_threshold and eqtl_map are only used for eqtl output 

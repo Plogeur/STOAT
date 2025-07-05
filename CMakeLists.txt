@@ -24,45 +24,30 @@ find_package(Eigen3 REQUIRED)
 # Copied from https://github.com/vgteam/vg/wiki/Programming-with-the-vg-API
 # SDSL library ("sdsl" target) already exists from libbdsg
 
-# GBWT doesn't have CMake yet so we need to explain how to build it.
+# Detect Homebrew libomp
+execute_process(COMMAND brew --prefix libomp OUTPUT_VARIABLE LIBOMP_PREFIX OUTPUT_STRIP_TRAILING_WHITESPACE)
 
-# GBWT dependency: OpenMP
-if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-    # OpenMP may be installed by Homebrew in a place CMake can't find it by default.
-    set (HOMEBREW_PREFIX "$ENV{HOMEBREW_PREFIX}")
-    if ("${HOMEBREW_PREFIX}" STREQUAL "")
-        # Ask Homebrew if it exists and where it is.
-        execute_process(COMMAND brew --prefix OUTPUT_STRIP_TRAILING_WHITESPACE OUTPUT_VARIABLE HOMEBREW_PREFIX)
-    endif()
-    if ("${HOMEBREW_PREFIX}" STREQUAL "")
-        # Default to somewhere.
-        set (HOMEBREW_PREFIX "/opt/homebrew")
-    endif()
-    list(APPEND CMAKE_PREFIX_PATH "${HOMEBREW_PREFIX}")
-    list(APPEND CMAKE_PREFIX_PATH "${HOMEBREW_PREFIX}/opt/libomp")
+# Force OpenMP Flags for Apple Clang
+set(OpenMP_CXX_FLAGS "-Xpreprocessor -fopenmp -I${LIBOMP_PREFIX}/include")
+set(OpenMP_CXX_LIB_NAMES "omp")
+set(OpenMP_omp_LIBRARY "${LIBOMP_PREFIX}/lib/libomp.dylib")
+
+find_package(OpenMP REQUIRED)
+
+if(OpenMP_CXX_FOUND)
+    message(STATUS "Found OpenMP")
+    add_compile_options(${OpenMP_CXX_FLAGS})
+    link_directories(${LIBOMP_PREFIX}/lib)
+    link_libraries(${OpenMP_omp_LIBRARY})
+else()
+    message(FATAL_ERROR "OpenMP not found or misconfigured.")
 endif()
-find_package( OpenMP REQUIRED )
-
-# GBWT
-foreach (gbwt_source IN ITEMS algorithms.cpp bwtmerge.cpp cached_gbwt.cpp dynamic_gbwt.cpp fast_locate.cpp files.cpp gbwt.cpp internal.cpp metadata.cpp support.cpp test.cpp utils.cpp variants.cpp)
-    list(APPEND gbwt_libFiles "deps/gbwt/src/${gbwt_source}")
-endforeach()
-if(MSVC)
-    file(GLOB gbwt_headerFiles RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}  "${deps_DIR}/gbwt/include/gbwt/*.h")
-endif()
-set( gbwt_SRCS ${gbwt_libFiles} ${gbwt_headerFiles})
-add_library( gbwt ${gbwt_SRCS} )
-target_include_directories( gbwt PUBLIC "${deps_DIR}/gbwt/include")
-target_link_libraries( gbwt PUBLIC sdsl OpenMP::OpenMP_CXX )
-install(TARGETS gbwt
-        LIBRARY DESTINATION lib
-        ARCHIVE DESTINATION lib
-        PUBLIC_HEADER DESTINATION include)
-
 
 # Add Executable
 add_executable(${PROJECT_NAME}
     src/main.cpp
+    src/stoat_vcf.cpp
+    src/stoat_graph.cpp
     src/utils.cpp
     src/arg_parser.cpp
     src/post_processing.cpp
