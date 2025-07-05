@@ -1,5 +1,4 @@
-#include <stoat_vcf.hpp>
-
+#include "stoat_vcf.hpp"
 namespace stoat_vcf {
 
 void print_help_vcf() {
@@ -29,7 +28,8 @@ void print_help_vcf() {
               << "  -h, --help                   Print this help message\n";
 }
 
-void stoat_vcf(int argc, char* argv[]) {
+int stoat_vcf(int argc, char* argv[]) {
+    
     // Declare variables to hold argument values
     std::string vcf_path, snarl_path, pg_path, dist_path, 
         chromosome_path, binary_path, quantitative_path, 
@@ -233,11 +233,11 @@ void stoat_vcf(int argc, char* argv[]) {
 
     //////////////////// Load the phenotypes and covariate matrix from files
 
-    std::vector<bool> binary_vector;
-    std::vector<double> quantitative_vector;
+    std::vector<bool> binary_phenotype;
+    std::vector<double> quantitative_phenotype;
 
     // dict chr:string : vector{geneName:string, sample_expression:vector<double>, start_pos:size_t, end_pos:size_t}
-    std::unordered_map<std::string, std::vector<Qtl_data>> eqtl;
+    std::unordered_map<std::string, std::vector<stoat_vcf::Qtl_data>> eqtl;
     std::vector<std::vector<double>> covariate;
 
     if (!covariate_path.empty()) {
@@ -246,10 +246,10 @@ void stoat_vcf(int argc, char* argv[]) {
     }
 
     if (!binary_path.empty()) {
-        binary_vector = stoat_vcf::parse_binary_pheno(binary_path, list_samples);
+        binary_phenotype = stoat_vcf::parse_binary_pheno(binary_path, list_samples);
 
     } else if (!quantitative_path.empty()) {
-        quantitative_vector = stoat_vcf::parse_quantitative_pheno(quantitative_path, list_samples);
+        quantitative_phenotype = stoat_vcf::parse_quantitative_pheno(quantitative_path, list_samples);
 
     } else if (!eqtl_path.empty() && !gene_position_path.empty()) {
         eqtl = stoat_vcf::parse_qtl_gene_file(eqtl_path, gene_position_path, list_samples);
@@ -261,8 +261,7 @@ void stoat_vcf(int argc, char* argv[]) {
     //     kinship = stoat_vcf::parseKinshipMatrix(kinship_path);
     // }
 
-
-    //////////////////////////////////// Load or calculate the snarl information
+    // Load or calculate the snarl information
 
     // scope declaration
     // chr : <snarl, paths, pos(start, end), type>
@@ -334,10 +333,10 @@ void stoat_vcf(int argc, char* argv[]) {
                                                                                            : "/eqtl_gwas.tsv"));
 
         stoat_vcf::chunk_chromosome_and_write_tsv(phenotype_type, ptr_vcf, hdr, rec, list_samples, snarls_chr, 
-                                                    binary_vector, quantitative_vector, eqtl, covariate, maf, table_threshold, 
+                                                    binary_phenotype, quantitative_phenotype, eqtl, covariate, maf, table_threshold, 
                                                     windows_gene_threshold, regression_dir, output_tsv);
 
-        std::string output_significative = output_dir + (phenotype_type == stoat_vcf::BINARY       ?  "/top_variant_binary.tsv" : 
+        const std::string output_significative = output_dir + (phenotype_type == stoat_vcf::BINARY       ?  "/top_variant_binary.tsv" : 
                                                         (phenotype_type == stoat_vcf::QUANTITATIVE ? "/top_variant_quantitative.tsv" 
                                                                                                    : "/top_variant_eqtl.tsv"));
 

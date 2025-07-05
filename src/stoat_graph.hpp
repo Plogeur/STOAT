@@ -7,9 +7,15 @@
 #include <getopt.h>
 #include <omp.h>
 
+#include "snarl_data_t.hpp"
+#include "snarl_analyser.hpp"
+#include "arg_parser.hpp"
+#include "matrix.hpp"
+#include "gaf_creator.hpp"
+#include "post_processing.hpp"
 namespace stoat_graph {
 
 void print_help_graph();
-void stoat_graph(int argc, char* argv[]);
+int stoat_graph(int argc, char* argv[]);
 
 }

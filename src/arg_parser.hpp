@@ -21,34 +21,35 @@
 #include <htslib/hts.h>
 
 #include "snarl_data_t.hpp"
-#include "snarl_analyser.hpp"
 
 using namespace std;
 
 namespace stoat_vcf {
 
-// struct KinshipMatrix {
-//     std::vector<std::string> ids;
-//     std::vector<std::vector<double>> matrix;
+struct KinshipMatrix {
+    std::vector<std::string> ids;
+    std::vector<std::vector<double>> matrix;
 
-//     // Default constructor
-//     KinshipMatrix() = default;
+    // Default constructor
+    KinshipMatrix() = default;
 
-//     // Parameterized constructor
-//     KinshipMatrix(const std::vector<std::string>& ids,
-//                   const std::vector<std::vector<double>>& matrix)
-//         : ids(ids), matrix(matrix) {}
-    
-//     const bool empty() const;
-// };
+    // Parameterized constructor
+    KinshipMatrix(const std::vector<std::string>& ids,
+                  const std::vector<std::vector<double>>& matrix)
+        : ids(ids), matrix(matrix) {}
+
+    const bool empty() const {
+        return ids.empty() || matrix.empty();
+    } 
+};
 
 struct Qtl_data {
-    std::vector<std::string> geneName;
+    std::string geneName;
     std::vector<double> sampleExpresion;
     size_t start_pos;
     size_t end_pos;
 
-    Qtl_data(const std::vector<std::string>& geneName_,
+    Qtl_data(const std::string& geneName_,
         const std::vector<double>& sampleExpresion_,
         const size_t& start_pos_,
         const size_t& end_pos_) : 
@@ -65,7 +66,7 @@ std::unordered_map<std::string, std::vector<double>> parse_qtl_file(
 std::unordered_map<std::string, std::tuple<std::string, size_t, size_t>> parse_gene_positions(
     const std::string& filename);
 
-std::unordered_map<std::string, std::vector<Qtl_data>> parse_qtl_gene_file(
+std::unordered_map<std::string, std::vector<stoat_vcf::Qtl_data>> parse_qtl_gene_file(
     const std::string& eqtl_path, 
     const std::string& gene_position_path, 
     const std::vector<std::string>& list_samples);
@@ -85,7 +86,9 @@ std::vector<double> parse_quantitative_pheno(
     const std::string& file_path, 
     const std::vector<std::string>& list_samples);
 
-std::tuple<std::vector<std::string>, htsFile*, bcf_hdr_t*, bcf1_t*> parseHeader(const std::string& file_path);
+std::tuple<htsFile*, bcf_hdr_t*, bcf1_t*> parse_vcf(const std::string& vcf_path);
+
+std::tuple<std::vector<std::string>, htsFile*, bcf_hdr_t*, bcf1_t*> parseHeader(const std::string& vcf_path);
 
 std::unordered_set<std::string> parse_chromosome_reference(const std::string& file_path);
 
@@ -93,7 +96,7 @@ template <typename T>
 void check_match_samples(const std::unordered_map<std::string, T>& map, const std::vector<std::string>& keys);
 
 // Parses the snarl path file and returns a map with snarl as keys and paths as a list of strings.
-std::unordered_map<std::string, std::vector<Snarl_data_t>> parse_snarl_path(const std::string& path_file);
+std::unordered_map<std::string, std::vector<stoat_vcf::Snarl_data_t>> parse_snarl_path(const std::string& path_file);
 
 void check_file(const std::string& file_path);
 

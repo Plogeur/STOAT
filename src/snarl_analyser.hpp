@@ -62,7 +62,7 @@ void write_snarl_line_quantitative(const EdgeBySampleMatrix& edge_matrix,
 /// Similar to write_snarl_line_binary and write_snarl_line_quantitative, get the genotype and write the tsv output
 void write_snarl_line_eqtl(const EdgeBySampleMatrix& edge_matrix, 
     const Snarl_data_t& snarl_data_s,
-    const std::vector<Qtl_data>& eqtl,
+    const std::vector<stoat_vcf::Qtl_data>& eqtl,
     const std::string& chr, 
     const std::vector<std::vector<double>>& covar,
     const double& maf,  
@@ -100,7 +100,7 @@ void chunk_chromosome_and_write_tsv(phenotype_type_t phenotype_type,
      const std::unordered_map<std::string, std::vector<Snarl_data_t>> &chr_to_snarl_data,
      const std::vector<bool>& binary_pheno,
      const std::vector<double>& quantitative_pheno,
-     const std::unordered_map<std::string, std::vector<std::tuple<std::string, std::vector<double>, size_t, size_t>>>& eqtl_map,
+     const std::unordered_map<std::string, std::vector<stoat_vcf::Qtl_data>>& eqtl_map,
      std::vector<std::vector<double>> covar,
      const double& maf,
      const double& table_threshold,
@@ -112,9 +112,6 @@ void chromosome_chuck_make_bed(htsFile* &ptr_vcf, bcf_hdr_t* &hdr, bcf1_t* &rec,
     const std::vector<std::string> &list_samples,
     const std::unordered_map<std::string, std::vector<Snarl_data_t>>& snarl_chr,
     const std::string& output_dir);
-
-
-std::tuple<htsFile*, bcf_hdr_t*, bcf1_t*> parse_vcf(const std::string& vcf_path);
 
 std::vector<size_t> found_gene_snarl(
     const std::vector<Qtl_data>& gene_position, 

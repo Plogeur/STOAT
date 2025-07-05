@@ -23,6 +23,7 @@
 #include <bdsg/overlays/packed_path_position_overlay.hpp>
 #include <handlegraph/handle_graph.hpp>
 #include <handlegraph/path_handle_graph.hpp>
+
 #include "utils.hpp"
 
 using namespace std;

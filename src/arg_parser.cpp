@@ -4,43 +4,6 @@ namespace fs = std::filesystem;
 
 namespace stoat_vcf {
 
-// KinshipMatrix parseKinshipMatrix(const std::string& filename) {
-//     KinshipMatrix km;
-//     std::ifstream file(filename);
-//     std::string line;
-
-//     // Parse header line for IDs
-//     if (std::getline(file, line)) {
-//         std::stringstream ss(line);
-//         std::string token;
-//         // Skip the empty top-left cell
-//         std::getline(ss, token, '\t');
-//         while (std::getline(ss, token, '\t')) {
-//             km.ids.push_back(token);
-//         }
-//     }
-
-//     // Parse matrix rows
-//     while (std::getline(file, line)) {
-//         std::stringstream ss(line);
-//         std::string rowLabel;
-//         std::getline(ss, rowLabel, '\t'); // row label
-//         std::vector<double> row;
-//         std::string value;
-//         while (std::getline(ss, value, '\t')) {
-//             row.push_back(std::stod(value));
-//         }
-//         km.matrix.push_back(row);
-//     }
-
-//     file.close();
-//     return km;
-// }
-
-// const bool KinshipMatrix::empty() const {
-//     return ids.empty() || matrix.empty();
-// }
-
 std::unordered_set<std::string> parse_chromosome_reference(const std::string& file_path) {
     std::unordered_set<std::string> reference;
     ifstream file(file_path);
@@ -231,8 +194,7 @@ void check_match_samples(const std::unordered_map<std::string, T>& map, const st
 }
 
 // dict chr:string : vector{(geneName:string, sample_expression:vector<double>, start_pos:size_t, end_pos:size_t)}
-std::unordered_map<std::string, std::vector<Qtl_data>> 
-    parse_qtl_gene_file(
+std::unordered_map<std::string, std::vector<Qtl_data>> parse_qtl_gene_file(
     const std::string& eqtl_path, 
     const std::string& gene_position_path, 
     const std::vector<std::string>& list_samples) {

@@ -97,7 +97,8 @@ void add_BH_adjusted_column(
 
     // Second pass: rewrite with BH-adjusted values
     infile.open(input_file);
-    std::ofstream outfile(output_dir + "/temp_output.tsv");
+    const std::string output_temp = output_dir + "/temp_output.tsv";
+    std::ofstream outfile(output_temp);
     std::ofstream outfile_significant(output_file_significant);
 
     // Write headers
@@ -143,7 +144,7 @@ void add_BH_adjusted_column(
 
     // Replace original file
     std::remove(input_file.c_str());
-    std::rename("temp_output.tsv", input_file.c_str());
+    std::rename(output_temp.c_str(), input_file.c_str());
 }
 
 } // namespace stoat_vcf

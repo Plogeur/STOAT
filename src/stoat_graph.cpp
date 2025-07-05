@@ -1,5 +1,10 @@
-#include <stoat_graph.hpp>
-
+#include "stoat_graph.hpp"
+#include "snarl_data_t.hpp"
+#include "snarl_analyser.hpp"
+#include "arg_parser.hpp"
+#include "matrix.hpp"
+#include "gaf_creator.hpp"
+#include "post_processing.hpp"
 namespace stoat_graph {
 
 void print_help_graph() {
@@ -19,7 +24,7 @@ void print_help_graph() {
                 << "  -h, --help                         print this help message" << std::endl;
 }
 
-void stoat_graph(int argc, char* argv[]) {
+int stoat_graph(int argc, char* argv[]) {
     std::string graph_name;
     std::string distance_name;
     size_t allele_size_limit = 0;
@@ -106,66 +111,67 @@ void stoat_graph(int argc, char* argv[]) {
     // Check that the inputs are ok
     if (graph_name.empty()) {
         std::cerr << "error [pangwas]: pangwas requires a graph file" << std::endl;
-        EXIT_FAILURE; 
+        return EXIT_FAILURE; 
     }
     if (distance_name.empty()) {
         std::cerr << "error [pangwas]: pangwas requires a distance index file" << std::endl;
-        EXIT_FAILURE; 
+        return EXIT_FAILURE; 
     }
     if (samples_of_interest.empty()) {
         std::cerr << "error [pangwas]: pangwas requires samples of interest" << std::endl;
-        EXIT_FAILURE; 
+        return EXIT_FAILURE; 
     }
 
-    // Tell the IO library about libvg types.
-    if (!pangwas::io::register_libvg_io()) {
-       std::cerr << "error[vg]: Could not register libvg types with libvgio" << std::endl;
-        EXIT_FAILURE;
-    }
+//     // Tell the IO library about libvg types.
+//     if (!pangwas::io::register_libvg_io()) {
+//         std::cerr << "error[vg]: Could not register libvg types with libvgio" << std::endl;
+//         return EXIT_FAILURE;
+//     }
 
-    // Load the graph and make it a PathPositionHandleGraph
-    unique_ptr<handlegraph::PathHandleGraph> path_graph = vg::io::VPKG::load_one<handlegraph::PathHandleGraph>(graph_name);
-    bdsg::PathPositionOverlayHelper overlay_helper;
-    bdsg::PathPositionHandleGraph* graph = overlay_helper.apply(path_graph.get());
+//     // Load the graph and make it a PathPositionHandleGraph
+//     unique_ptr<handlegraph::PathHandleGraph> path_graph = vg::io::VPKG::load_one<handlegraph::PathHandleGraph>(graph_name);
+//     bdsg::PathPositionOverlayHelper overlay_helper;
+//     bdsg::PathPositionHandleGraph* graph = overlay_helper.apply(path_graph.get());
 
-    // Load the distance index
-    bdsg::SnarlDistanceIndex distance_index;
-    distance_index.deserialize(distance_name);
+//     // Load the distance index
+//     bdsg::SnarlDistanceIndex distance_index;
+//     distance_index.deserialize(distance_name);
 
-    // Get the out streams
-    std::ofstream out_associated;
-    if (!associated_filename.empty()) {
-        out_associated.open(associated_filename);
-    }
-    std::ofstream out_unassociated;
-    if (!unassociated_filename.empty()) {
-        out_unassociated.open(unassociated_filename);
-    }
+//     // Get the out streams
+//     std::ofstream out_associated;
+//     if (!associated_filename.empty()) {
+//         out_associated.open(associated_filename);
+//     }
+//     std::ofstream out_unassociated;
+//     if (!unassociated_filename.empty()) {
+//         out_unassociated.open(unassociated_filename);
+//     }
 
-    if (method_name == "paths") {
-        pangwas::PathAssociationFinder af (*graph, 
-                                        distance_index, 
-                                        test_method,
-                                        samples_of_interest, 
-                                        reference_sample, 
-                                        output_format,
-                                        associated_filename.empty() ? std::cout : out_associated,
-                                        unassociated_filename.empty() ? std::cout : out_unassociated,
-                                        allele_size_limit,
-                                        p_value);
-        af.write_associated_snarls();
-    } else {
-        std::cerr << "error [pangwas]: unknown method " << method_name << std::endl;
-        EXIT_FAILURE; 
-    }
+//     if (method_name == "paths") {
+//         pangwas::PathAssociationFinder af (*graph, 
+//                                         distance_index, 
+//                                         test_method,
+//                                         samples_of_interest, 
+//                                         reference_sample, 
+//                                         output_format,
+//                                         associated_filename.empty() ? std::cout : out_associated,
+//                                         unassociated_filename.empty() ? std::cout : out_unassociated,
+//                                         allele_size_limit,
+//                                         p_value);
+//         af.write_associated_snarls();
+//     } else {
+//         std::cerr << "error [pangwas]: unknown method " << method_name << std::endl;
+//         return EXIT_FAILURE; 
+//     }
 
-    //Close streams
-    if (!associated_filename.empty()) {
-        out_associated.close();
-    }
-    if (!unassociated_filename.empty()) {
-        out_unassociated.close();
-    }
+//     //Close streams
+//     if (!associated_filename.empty()) {
+//         out_associated.close();
+//     }
+//     if (!unassociated_filename.empty()) {
+//         out_unassociated.close();
+//     }
+
 }
 
 } // end stoat_graph
