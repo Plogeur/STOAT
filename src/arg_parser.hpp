@@ -42,14 +42,30 @@ namespace stoat_vcf {
 //     const bool empty() const;
 // };
 
+struct Qtl_data {
+    std::vector<std::string> geneName;
+    std::vector<double> sampleExpresion;
+    size_t start_pos;
+    size_t end_pos;
+
+    Qtl_data(const std::vector<std::string>& geneName_,
+        const std::vector<double>& sampleExpresion_,
+        const size_t& start_pos_,
+        const size_t& end_pos_) : 
+        geneName(geneName_), 
+        sampleExpresion(sampleExpresion_),
+        start_pos(start_pos_),
+        end_pos(end_pos_)
+        {}
+};
+
 std::unordered_map<std::string, std::vector<double>> parse_qtl_file(
     const std::string& filename, const std::vector<std::string>& list_samples);
 
 std::unordered_map<std::string, std::tuple<std::string, size_t, size_t>> parse_gene_positions(
     const std::string& filename);
 
-std::unordered_map<std::string, std::vector<std::tuple<std::string, std::vector<double>, size_t, size_t>>> 
-    parse_qtl_gene_file(
+std::unordered_map<std::string, std::vector<Qtl_data>> parse_qtl_gene_file(
     const std::string& eqtl_path, 
     const std::string& gene_position_path, 
     const std::vector<std::string>& list_samples);

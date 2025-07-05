@@ -17,7 +17,7 @@ void chunk_chromosome_and_write_tsv(phenotype_type_t phenotype_type,
     const std::unordered_map<std::string, std::vector<Snarl_data_t>> &chr_to_snarl_data,
     const std::vector<bool>& binary_pheno,
     const std::vector<double>& quantitative_pheno,
-    const std::unordered_map<std::string, std::vector<std::tuple<std::string, std::vector<double>, size_t, size_t>>>& eqtl_map,
+    const std::unordered_map<std::string, std::vector<Qtl_data>>& eqtl_map,
     std::vector<std::vector<double>> covar,
     const double& maf,
     const double& table_threshold, 
@@ -612,7 +612,7 @@ void write_snarl_line_quantitative(const EdgeBySampleMatrix& edge_matrix, const 
 // Identify genes index that will be tested for this snarl by matching position
 // eqtl : <gene_name, gene_expression, start_pos, end_pos>
 std::vector<size_t> found_gene_snarl(
-    const std::vector<std::tuple<std::string, std::vector<double>, size_t, size_t>>& gene_position, 
+    const std::vector<Qtl_data>& gene_position, 
     const size_t& start_pos, 
     const size_t& end_pos,
     const size_t& windows_gene_threshold) {
@@ -622,8 +622,8 @@ std::vector<size_t> found_gene_snarl(
     size_t end_pos_threshold = end_pos + windows_gene_threshold;
 
     for (size_t i = 0; i < gene_position.size(); ++i) {
-        size_t gene_start = std::get<2>(gene_position[i]);
-        size_t gene_end = std::get<3>(gene_position[i]);
+        size_t gene_start = gene_position[i].start_pos;
+        size_t gene_end = gene_position[i].end_pos;
 
         // Check if the gene overlaps with the snarl region
         if (!(gene_end < start_pos_threshold || gene_start > end_pos_threshold)) {
@@ -633,8 +633,9 @@ std::vector<size_t> found_gene_snarl(
     return gene_index;
 }
 
-void write_snarl_line_eqtl(const EdgeBySampleMatrix& edge_matrix, const Snarl_data_t& snarl_data_s,
-    const std::vector<std::tuple<std::string, std::vector<double>, size_t, size_t>>& eqtl,
+void write_snarl_line_eqtl(const EdgeBySampleMatrix& edge_matrix, 
+    const Snarl_data_t& snarl_data_s,
+    const std::vector<Qtl_data>& eqtl,
     const std::string& chr, 
     const std::vector<std::vector<double>>& covar,
     const double& maf, 
@@ -650,8 +651,8 @@ void write_snarl_line_eqtl(const EdgeBySampleMatrix& edge_matrix, const Snarl_da
     
     for (size_t i = 0; i < list_gene_index.size(); ++i) {
         size_t gene_idx = list_gene_index[i];
-        std::string gene_name = std::get<0>(eqtl[gene_idx]);
-        std::vector<double> gene_expression = std::get<1>(eqtl[gene_idx]);
+        std::string gene_name = eqtl[gene_idx].geneName;
+        std::vector<double> gene_expression = eqtl[gene_idx].sampleExpresion;
         retain_indices(gene_expression, index_filtered);
     
         // make a std::string separated by ',' from a vector of std::string

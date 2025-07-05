@@ -231,7 +231,7 @@ void check_match_samples(const std::unordered_map<std::string, T>& map, const st
 }
 
 // dict chr:string : vector{(geneName:string, sample_expression:vector<double>, start_pos:size_t, end_pos:size_t)}
-std::unordered_map<std::string, std::vector<std::tuple<std::string, std::vector<double>, size_t, size_t>>> 
+std::unordered_map<std::string, std::vector<Qtl_data>> 
     parse_qtl_gene_file(
     const std::string& eqtl_path, 
     const std::string& gene_position_path, 
@@ -242,13 +242,14 @@ std::unordered_map<std::string, std::vector<std::tuple<std::string, std::vector<
 
     // dict geneName:string : tuple{chrom:string, start_pos:size_t, end_pos:size_t}
     auto gene_position = parse_gene_positions(gene_position_path);
-    std::unordered_map<std::string, std::vector<std::tuple<std::string, std::vector<double>, size_t, size_t>>> qtl_map;
+    std::unordered_map<std::string, std::vector<Qtl_data>> qtl_map;
 
     for (const auto& [gene, expression_vector] : qtl) {
         auto it = gene_position.find(gene);
         if (it != gene_position.end()) {
             const auto& [chrom, start, end] = it->second;
-            qtl_map[chrom].emplace_back(gene, expression_vector, start, end);
+            Qtl_data qtl_info(gene, expression_vector, start, end);
+            qtl_map[chrom].emplace_back(qtl_info);
         } else {
             std::cerr << "Error: Gene \"" << gene << "\" not found in gene positions." << std::endl;
             exit(1);

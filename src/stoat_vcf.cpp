@@ -235,8 +235,9 @@ void stoat_vcf(int argc, char* argv[]) {
 
     std::vector<bool> binary_vector;
     std::vector<double> quantitative_vector;
-    // TODO : eqtl struct
-    std::unordered_map<std::string, std::vector<std::tuple<std::string, std::vector<double>, size_t, size_t>>> eqtl;
+
+    // dict chr:string : vector{geneName:string, sample_expression:vector<double>, start_pos:size_t, end_pos:size_t}
+    std::unordered_map<std::string, std::vector<Qtl_data>> eqtl;
     std::vector<std::vector<double>> covariate;
 
     if (!covariate_path.empty()) {
@@ -328,16 +329,17 @@ void stoat_vcf(int argc, char* argv[]) {
             phenotype_type = stoat_vcf::EQTL;
         }
 
-        std::string output_tsv = output_dir + (phenotype_type == stoat_vcf::BINARY       ? "/binary_table.tsv" : 
+        std::string output_tsv = output_dir + (phenotype_type == stoat_vcf::BINARY         ? "/binary_table.tsv" : 
                                                 (phenotype_type == stoat_vcf::QUANTITATIVE ? "/quantitative_table.tsv" 
-                                                                                            : "/eqtl_gwas.tsv"));
+                                                                                           : "/eqtl_gwas.tsv"));
+
         stoat_vcf::chunk_chromosome_and_write_tsv(phenotype_type, ptr_vcf, hdr, rec, list_samples, snarls_chr, 
                                                     binary_vector, quantitative_vector, eqtl, covariate, maf, table_threshold, 
                                                     windows_gene_threshold, regression_dir, output_tsv);
 
         std::string output_significative = output_dir + (phenotype_type == stoat_vcf::BINARY       ?  "/top_variant_binary.tsv" : 
                                                         (phenotype_type == stoat_vcf::QUANTITATIVE ? "/top_variant_quantitative.tsv" 
-                                                                                                    : "/top_variant_eqtl.tsv"));
+                                                                                                   : "/top_variant_eqtl.tsv"));
 
         stoat_vcf::add_BH_adjusted_column(output_tsv, output_dir, output_significative, phenotype_type);
 

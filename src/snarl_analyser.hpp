@@ -32,12 +32,12 @@ class SnarlAnalyser {
 public:
     SnarlAnalyser();
     ~SnarlAnalyser()=default;
-    
 
 };
 
 /// Given a snarl_data_s for one snarl, make a genotype matrix and write the tsv output
-void write_snarl_line_binary(const EdgeBySampleMatrix& edge_matrix, const Snarl_data_t& snarl_data_s,
+void write_snarl_line_binary(const EdgeBySampleMatrix& edge_matrix, 
+    const Snarl_data_t& snarl_data_s,
     const std::vector<bool>& binary_phenotype, 
     const std::string& chr,
     const std::vector<std::vector<double>>& covar,
@@ -48,19 +48,21 @@ void write_snarl_line_binary(const EdgeBySampleMatrix& edge_matrix, const Snarl_
     std::ofstream& outf);
 
 /// Similar to write_snarl_line_binary, get the genotypes and write the tsv output
-void write_snarl_line_quantitative(const EdgeBySampleMatrix& edge_matrix, const Snarl_data_t& snarl_data_s,
-                        const std::vector<double>& quantitative_phenotype, 
-                        const std::string &chr,
-                        const std::vector<std::vector<double>>& covar,
-                        const double& maf,  
-                        const double& table_threshold, 
-                        const std::string& output_dir, 
-                        size_t sample_count,
-                        std::ofstream& outf);
+void write_snarl_line_quantitative(const EdgeBySampleMatrix& edge_matrix, 
+    const Snarl_data_t& snarl_data_s,
+    const std::vector<double>& quantitative_phenotype, 
+    const std::string &chr,
+    const std::vector<std::vector<double>>& covar,
+    const double& maf,  
+    const double& table_threshold, 
+    const std::string& output_dir, 
+    size_t sample_count,
+    std::ofstream& outf);
 
 /// Similar to write_snarl_line_binary and write_snarl_line_quantitative, get the genotype and write the tsv output
-void write_snarl_line_eqtl(const EdgeBySampleMatrix& edge_matrix, const Snarl_data_t& snarl_data_s,
-    const std::vector<std::tuple<std::string, std::vector<double>, size_t, size_t>>& eqtl,
+void write_snarl_line_eqtl(const EdgeBySampleMatrix& edge_matrix, 
+    const Snarl_data_t& snarl_data_s,
+    const std::vector<Qtl_data>& eqtl,
     const std::string& chr, 
     const std::vector<std::vector<double>>& covar,
     const double& maf,  
@@ -115,7 +117,7 @@ void chromosome_chuck_make_bed(htsFile* &ptr_vcf, bcf_hdr_t* &hdr, bcf1_t* &rec,
 std::tuple<htsFile*, bcf_hdr_t*, bcf1_t*> parse_vcf(const std::string& vcf_path);
 
 std::vector<size_t> found_gene_snarl(
-    const std::vector<std::tuple<std::string, std::vector<double>, size_t, size_t>>& gene_position, 
+    const std::vector<Qtl_data>& gene_position, 
     const size_t& start_pos, 
     const size_t& end_pos,
     const size_t& windows_gene_threshold);
