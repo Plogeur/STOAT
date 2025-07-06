@@ -18,7 +18,7 @@ static const double kExactTestEpsilon2 = 0.0000000000009094947017729282379150390
 static const double kExactTestBias = 0.00000000000000000000000010339757656912845935892608650874535669572651386260986328125;
 static const boost::math::chi_squared chi_squared_dist(1);
 boost::math::chi_squared_distribution<cpp_dec_float_50> cpp_dec_float_50_dist(1);
-    
+
 // ------------------------ Logistic regression ------------------------
 
 // Standard normal cumulative distribution function
@@ -63,48 +63,55 @@ void logistic_regression(
     const double l2_penalty = 1e-4;
     const double epsilon = 1e-8;
 
-    size_t n_samples = variant_data.size();
-    size_t n_variants = variant_data[0].size();
-    size_t n_covariates = 0;
-    size_t n_features = n_variants + 1; // +1 for intercept
+    size_t num_samples = variant_data.size();
+    size_t num_variants = variant_data[0].size();
+    size_t num_covariates = 0;
+    size_t num_features = num_variants + 1; // +1 for intercept
     
     if (!covariates.empty()) {
-        size_t n_covariates = covariates[0].size();
-        size_t n_features =  n_variants + n_covariates + 1; // +1 for intercept
+        size_t num_covariates = covariates[0].size();
+        size_t num_features =  num_variants + num_covariates + 1; // +1 for intercept
     }
 
-    Eigen::MatrixXd X(n_samples, n_features);
-    Eigen::VectorXd y(n_samples);
-
+    Eigen::MatrixXd X(num_samples, num_features);
+    X.col(0) = Eigen::VectorXd::Ones(num_samples);  // Intercept column
+    Eigen::VectorXd y(num_samples);
+    
     for (size_t i = 0; i < n_samples; ++i) {
-        size_t col = 0;
-        X(i, col++) = 1.0; // intercept
-        for (size_t j = 0; j < n_variants; ++j)
-            X(i, col++) = variant_data[i][j];
-        for (size_t j = 0; j < n_covariates; ++j)
-            X(i, col++) = covariates[i][j];
+        size_t col = 1;
+
+        // Copy variant data
+        for (size_t j = 0; j < num_variants; ++j) {
+            X(i, col++) = df[i][j];
+        }
+
+        for (size_t j = 0; j < num_covariates; ++j) {
+            X(i, col++) = covar[i][j];
+        }
+
+        // Binary phenotype
         y(i) = phenotype[i] ? 1.0 : 0.0;
     }
 
-    Eigen::VectorXd beta = Eigen::VectorXd::Zero(n_features);
+    Eigen::VectorXd beta = Eigen::VectorXd::Zero(num_features);
     Eigen::VectorXd beta_old = beta;
-    Eigen::VectorXd p(n_samples);
-    Eigen::VectorXd weights(n_samples);
+    Eigen::VectorXd p(num_samples);
+    Eigen::VectorXd weights(num_samples);
 
     bool converged = false;
     for (int iter = 0; iter < max_iterations; ++iter) {
         Eigen::VectorXd z = X * beta;
-        for (int i = 0; i < n_samples; ++i) {
+        for (int i = 0; i < num_samples; ++i) {
             p(i) = sigmoid(z(i));
             weights(i) = clamp(p(i) * (1.0 - p(i)), epsilon, 1.0);
         }
 
         Eigen::MatrixXd X_weighted = X;
-        for (int i = 0; i < n_samples; ++i)
+        for (int i = 0; i < num_samples; ++i)
             X_weighted.row(i) *= std::sqrt(weights(i));
 
         Eigen::MatrixXd hessian = X_weighted.transpose() * X_weighted;
-        hessian += l2_penalty * Eigen::MatrixXd::Identity(n_features, n_features);
+        hessian += l2_penalty * Eigen::MatrixXd::Identity(num_features, num_features);
 
         Eigen::VectorXd gradient = X.transpose() * (y - p) - l2_penalty * beta;
 
@@ -125,24 +132,24 @@ void logistic_regression(
 
     // Final weights
     Eigen::VectorXd z_final = X * beta;
-    for (int i = 0; i < n_samples; ++i) {
+    for (int i = 0; i < num_samples; ++i) {
         p(i) = sigmoid(z_final(i));
         weights(i) = clamp(p(i) * (1.0 - p(i)), epsilon, 1.0);
     }
 
     // Covariance matrix
     Eigen::MatrixXd X_weighted = X;
-    for (int i = 0; i < n_samples; ++i)
+    for (int i = 0; i < num_samples; ++i)
         X_weighted.row(i) *= std::sqrt(weights(i));
 
     Eigen::MatrixXd hessian = X_weighted.transpose() * X_weighted;
-    hessian += l2_penalty * Eigen::MatrixXd::Identity(n_features, n_features);
+    hessian += l2_penalty * Eigen::MatrixXd::Identity(num_features, num_features);
     Eigen::MatrixXd cov = hessian.inverse();
     Eigen::VectorXd se = cov.diagonal().array().sqrt();
 
     // --- Wald Test (Normal approximation)
-    std::vector<double> p_values(n_variants);
-    for (size_t i = 0; i < n_variants; ++i) {
+    std::vector<double> p_values(num_variants);
+    for (size_t i = 0; i < num_variants; ++i) {
         size_t idx = 1 + i; // skip intercept
         double z_score = beta(idx) / se(idx);
         p_values[i] = 2.0 * (1.0 - normal_cdf(std::abs(z_score))); // Two-sided
@@ -151,7 +158,7 @@ void logistic_regression(
     // --- McFadden's R²
     double ll_full = calculate_log_likelihood(y, p);
     double p_null_val = clamp(y.mean(), epsilon, 1.0 - epsilon);
-    Eigen::VectorXd p_null = Eigen::VectorXd::Constant(n_samples, p_null_val);
+    Eigen::VectorXd p_null = Eigen::VectorXd::Constant(num_samples, p_null_val);
     double ll_null = calculate_log_likelihood(y, p_null);
     double r2 = clamp(1.0 - (ll_full / ll_null), 0.0, 1.0);
 

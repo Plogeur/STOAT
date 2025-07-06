@@ -29,11 +29,33 @@ using namespace std;
 namespace stoat_vcf {
 
 class SnarlAnalyser {
-public:
-    SnarlAnalyser();
-    ~SnarlAnalyser()=default;
+    public:
+        SnarlAnalyser();
+        virtual ~SnarlAnalyser()=default;
 
 };
+
+class BinaryAnalyser : public SnarlAnalyser {
+    public:
+        BinaryAnalyser();
+        ~BinaryAnalyser()=default;
+
+};
+
+class QuantitativeAnalyser : public SnarlAnalyser {
+    public:
+        QuantitativeAnalyser();
+        ~QuantitativeAnalyser()=default;
+
+};
+
+class EqtlAnalyser : public SnarlAnalyser {
+    public:
+        EqtlAnalyser();
+        ~EqtlAnalyser()=default;
+
+};
+
 
 /// Given a snarl_data_s for one snarl, make a genotype matrix and write the tsv output
 void write_snarl_line_binary(const EdgeBySampleMatrix& edge_matrix, 
