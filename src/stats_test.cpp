@@ -49,22 +49,18 @@ double calculate_log_likelihood(const Eigen::VectorXd& y, const Eigen::VectorXd&
 }
 
 // GLM Implementation with Iteratively Reweighted Least Squares (IRLS)
-void logistic_regression(
-    const std::vector<std::vector<double>>& variant_data,
+std::tuple<std::string, std::string, std::string, std::string> logistic_regression(
+    const std::vector<std::vector<double>>& df,
     const std::vector<bool>& phenotype,
-    const std::vector<std::vector<double>>& covariates,
-    std::string& p_value_str, 
-    std::string& beta_str, 
-    std::string& se_str, 
-    std::string& r2_str) {
+    const std::vector<std::vector<double>>& covariates) {
 
     const int max_iterations = 100;
     const double tolerance = 1e-6;
     const double l2_penalty = 1e-4;
     const double epsilon = 1e-8;
 
-    size_t num_samples = variant_data.size();
-    size_t num_variants = variant_data[0].size();
+    size_t num_samples = df.size();
+    size_t num_variants = df[0].size();
     size_t num_covariates = 0;
     size_t num_features = num_variants + 1; // +1 for intercept
     
@@ -77,7 +73,7 @@ void logistic_regression(
     X.col(0) = Eigen::VectorXd::Ones(num_samples);  // Intercept column
     Eigen::VectorXd y(num_samples);
     
-    for (size_t i = 0; i < n_samples; ++i) {
+    for (size_t i = 0; i < num_samples; ++i) {
         size_t col = 1;
 
         // Copy variant data
@@ -86,7 +82,7 @@ void logistic_regression(
         }
 
         for (size_t j = 0; j < num_covariates; ++j) {
-            X(i, col++) = covar[i][j];
+            X(i, col++) = covariates[i][j];
         }
 
         // Binary phenotype
@@ -116,7 +112,7 @@ void logistic_regression(
         Eigen::VectorXd gradient = X.transpose() * (y - p) - l2_penalty * beta;
 
         Eigen::LDLT<Eigen::MatrixXd> ldlt(hessian);
-        if (ldlt.info() != Eigen::Success) return;
+        if (ldlt.info() != Eigen::Success) return std::make_tuple("NA","NA","NA","NA");
 
         Eigen::VectorXd delta = ldlt.solve(gradient);
         beta += delta;
@@ -128,7 +124,7 @@ void logistic_regression(
         beta_old = beta;
     }
 
-    if (!converged) return;
+    if (!converged) return std::make_tuple("NA", "NA", "NA", "NA");
 
     // Final weights
     Eigen::VectorXd z_final = X * beta;
@@ -162,15 +158,25 @@ void logistic_regression(
     double ll_null = calculate_log_likelihood(y, p_null);
     double r2 = clamp(1.0 - (ll_full / ll_null), 0.0, 1.0);
 
-    std::vector<double> p_values_adjusted = stoat_vcf::adjusted_holm(p_values);
-    size_t min_index = std::distance(p_values_adjusted.begin(), std::min_element(p_values_adjusted.begin(), p_values_adjusted.end()));
-    double min_p_value_adjusted = p_values_adjusted[min_index];
+    double p_value_adjusted = p_values[0];
+    double beta_adjusted = beta[0];
+    double se_adjusted = se[0];
+
+    if (p_values.size() > 1) { // case > 3 column/path
+        std::vector<double> p_values_adjusted = stoat_vcf::adjusted_holm(p_values);
+        size_t min_index = std::distance(p_values_adjusted.begin(), std::min_element(p_values_adjusted.begin(), p_values_adjusted.end()));
+        p_value_adjusted = p_values_adjusted[min_index];
+        beta_adjusted = beta[min_index+1];
+        se_adjusted = se[min_index+1];
+    }
 
     // set precision : 4 digit
-    r2_str = stoat_vcf::set_precision(r2);
-    beta_str = stoat_vcf::set_precision(beta[min_index]);
-    se_str = stoat_vcf::set_precision(se[min_index]);
-    p_value_str = stoat_vcf::set_precision(min_p_value_adjusted);
+    std::string r2_str = stoat_vcf::set_precision(r2);
+    std::string beta_str = stoat_vcf::set_precision(beta_adjusted);
+    std::string se_str = stoat_vcf::set_precision(se_adjusted);
+    std::string p_value_str = stoat_vcf::set_precision(p_value_adjusted);
+
+    return std::make_tuple(r2_str, beta_str, se_str, p_value_str);
 }
 
 // ------------------------ Chi2 test ------------------------
@@ -358,14 +364,10 @@ std::string fastFishersExactTest(size_t m11, size_t m12,
 // ------------------------ Linear regression ------------------------
 
 // Linear regression function OLS with intercept + covariate
-void linear_regression(
+std::tuple<std::string, std::string, std::string, std::string> linear_regression(
     const std::vector<std::vector<double>>& df,
     const std::vector<double>& quantitative_phenotype,
-    const std::vector<std::vector<double>>& covar,
-    std::string& p_value_str, 
-    std::string& beta_str, 
-    std::string& se_str, 
-    std::string& r2_str) {
+    const std::vector<std::vector<double>>& covar) {
 
     size_t num_samples = df.size();
     size_t num_variants = df[0].size();
@@ -431,9 +433,9 @@ void linear_regression(
         p_values.push_back(2 * boost::math::cdf(boost::math::complement(t_dist, std::abs(t_stats[i])))); // two-tailed
     }
 
-    double p_value_adjusted = 0;
-    double beta_adjusted = 0;
-    double se_adjusted = 0;
+    double p_value_adjusted = p_values[0];
+    double beta_adjusted = beta[0];
+    double se_adjusted = se[0];
 
     if (p_values.size() > 1) {
         std::vector<double> p_values_adjusted = stoat_vcf::adjusted_holm(p_values);
@@ -441,18 +443,15 @@ void linear_regression(
         p_value_adjusted = p_values_adjusted[min_index];
         beta_adjusted = beta[min_index+1];
         se_adjusted = se[min_index+1];
-
-    } else {
-        p_value_adjusted = p_values[0];
-        beta_adjusted = beta[0];
-        se_adjusted = se[0];
     }
 
     // set precision : 4 digit
-    r2_str = stoat_vcf::set_precision(r2);
-    beta_str = stoat_vcf::set_precision(beta_adjusted);
-    se_str = stoat_vcf::set_precision(se_adjusted);
-    p_value_str = stoat_vcf::set_precision(p_value_adjusted);
+    std::string r2_str = stoat_vcf::set_precision(r2);
+    std::string beta_str = stoat_vcf::set_precision(beta_adjusted);
+    std::string se_str = stoat_vcf::set_precision(se_adjusted);
+    std::string p_value_str = stoat_vcf::set_precision(p_value_adjusted);
+
+    return std::make_tuple(r2_str, beta_str, se_str, p_value_str);
 }
 
 // Eigen::MatrixXd MatrixtoEigenMatrix(const std::vector<std::vector<double>>& matrix) {

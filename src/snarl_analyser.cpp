@@ -527,11 +527,10 @@ void write_snarl_line_binary(const EdgeBySampleMatrix& edge_matrix,
         // Logistic regression
         const auto& [df, phenotype_filtered, allele_number, allele_paths] = create_quantitative_table(sample_count, snarl_data_s.snarl_paths, binary_phenotype, edge_matrix);
         bool df_filtration = check_MAF_threshold_quantitative(df, maf);
-        std::string p_value = "", beta = "", se = "", r2 = "";
 
         if (!df_filtration) { // filtred variant
             // logistic regression with covariates if not empty
-            logistic_regression(df, phenotype_filtered, covar, p_value, beta, se, r2);
+            auto [p_value, beta, se, r2] = logistic_regression(df, phenotype_filtered, covar);
         
             // Plot regression table
             if (table_threshold != -1 && stoat_vcf::isPValueSignificant(table_threshold, p_value)) {
@@ -594,10 +593,9 @@ void write_snarl_line_quantitative(const EdgeBySampleMatrix& edge_matrix, const 
 
     std::string type_var_str = oss.str();
     std::stringstream data;
-    std::string p_value = "", beta = "", se = "", r2 = "";
     
     if (!df_filtration) { // filtred variant
-        linear_regression(df, phenotype_filtered, covar, p_value, beta, se, r2);
+        auto [p_value, beta, se, r2] = linear_regression(df, phenotype_filtered, covar);
         
         if (table_threshold != -1 && stoat_vcf::isPValueSignificant(table_threshold, p_value)) {
             std::string variant_file_name = regression_dir + "/" + pairToString(snarl_data_s.snarl_ids) + ".tsv";
@@ -666,10 +664,9 @@ void write_snarl_line_eqtl(const EdgeBySampleMatrix& edge_matrix,
 
         std::string type_var_str = oss.str();
         std::stringstream data;
-        std::string p_value = "", beta = "", se = "", r2 = "";
 
         if (!df_filtration) { // filtred variant
-            linear_regression(df, gene_expression, covar, p_value, beta, se, r2); // TODO : se nan problem
+            auto [p_value, beta, se, r2] = linear_regression(df, gene_expression, covar);
 
             if (table_threshold != -1 && stoat_vcf::isPValueSignificant(table_threshold, p_value)) {
                 std::string variant_file_name = regression_dir + "/" + pairToString(snarl_data_s.snarl_ids) + ".tsv";
