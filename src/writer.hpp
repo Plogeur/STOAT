@@ -33,6 +33,9 @@ namespace stoat_vcf{
     void write_quantitative(std::ofstream& outstream, const std::string& chr, const Snarl_data_t& snarl_data_s, const std::string& type_var_str,
                             const std::string& p_value, const std::string& p_value_adjusted, const std::string& r2,
                             const std::string& beta, const std::string& se, size_t allele_number, const std::vector<size_t>& allele_paths);
+
+    void write_fasta(std::ofstream& outstream, const handlegraph::PathPositionHandleGraph& graph, const bdsg::SnarlDistanceIndex& distance_index,
+                         const handlegraph::net_handle_t& snarl, const std::unordered_map<std::string, bool>& samples, const string& reference_name);
     
 
 } //end namespace
