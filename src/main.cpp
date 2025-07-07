@@ -415,10 +415,10 @@ int main(int argc, char* argv[]) {
                 }
             } else if (!quantitative_path.empty()) {
                 // Quantitative
-                snarl_analyzer.reset(new stoat_vcf::QuantitativeSnarlAnalyzer snarl_analyzer(snarls_chr, list_samples, covariate, maf, table_threshold));
+                snarl_analyzer.reset(new stoat_vcf::QuantitativeSnarlAnalyzer(snarls_chr, list_samples, covariate, maf, table_threshold));
             } else if (!eqtl_path.empty()) {
                 // EQTL
-                snarl_analyzer.reset(new stoat_vcf::EQTLSnarlAnalyzer snarl_analyzer(snarls_chr, list_samples, covariate, maf, table_threshold, windows_gene_threshold));
+                snarl_analyzer.reset(new stoat_vcf::EQTLSnarlAnalyzer(snarls_chr, list_samples, covariate, maf, table_threshold, windows_gene_threshold));
             }
 
             std::string output_tsv = output_dir + (phenotype_type == stoat_vcf::BINARY       ? "/binary_table.tsv" : 

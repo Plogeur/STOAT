@@ -35,10 +35,6 @@ public:
 
     ~SnarlAnalyzer()=default;
 
-    void set_edge_matrix(EdgeBySampleMatrix matrix);
-
-    void Make SnarlAnalyzer class Define headers Write analyze_and_write_snarl() functions Make main() make the correct SnarlAnalyzer move writeSignificantTableToTSV to writer.hpp  Combine regression code
-
     /// Go through the vcf by chromosome, parse it to get a matrix of genotypes (either binary, quantitative, or eqtl, depending on the phenotype type),
     /// then write the output (also depending on the phenotype type).
     /// This calls write_header() to write the appropriate output header and analyze_and_write_snarl() for each snarl
@@ -49,7 +45,7 @@ public:
     std::tuple<EdgeBySampleMatrix, htsFile*, bcf_hdr_t*, bcf1_t*> make_edge_matrix(htsFile *ptr_vcf, bcf_hdr_t *hdr, bcf1_t *rec, std::string &chr, size_t &num_paths_ch);
 
     /// For the given snarl, analyze the snarl and write it to outf
-    virtual analyze_and_write_snarl(const std::string& chr, const Snarl_data_t& snarl_data, const std::string& regression_dir, std::ofstream& outf) = 0;
+    virtual void analyze_and_write_snarl(const std::string& chr, const Snarl_data_t& snarl_data, const std::string& regression_dir, std::ofstream& outf) = 0;
 
     /// Write the header of the output tsv file
     /// This should ideally call a write_header() function from writer.hpp to keep things consistent
@@ -83,7 +79,7 @@ public:
     
     BinarySnarlAnalyzer();
 
-    analyze_and_write_snarl(const std::string& chr, const Snarl_data_t& snarl_data, const std::string& regression_dir, std::ofstream& outf);
+    void analyze_and_write_snarl(const std::string& chr, const Snarl_data_t& snarl_data, const std::string& regression_dir, std::ofstream& outf);
 
     void write_header(std::ofstream&outf);
 
@@ -92,7 +88,7 @@ protected:
 
     const std::vector<bool>& binary_phenotype;
 
-}
+};
 
 class BinaryCovarSnarlAnalyzer : public SnarlAnalyzer {
 
@@ -100,7 +96,7 @@ public:
     
     BinaryCovarSnarlAnalyzer();
 
-    analyze_and_write_snarl(const std::string& chr, const Snarl_data_t& snarl_data, const std::string& regression_dir, std::ofstream& outf);
+    void analyze_and_write_snarl(const std::string& chr, const Snarl_data_t& snarl_data, const std::string& regression_dir, std::ofstream& outf);
 
     void write_header(std::ofstream&outf);
 
@@ -109,7 +105,7 @@ protected:
 
     const std::vector<double>& quantitative_phenotype;
 
-}
+};
 
 class QuantiativeSnarlAnalyzer : public SnarlAnalyzer {
 
@@ -117,7 +113,7 @@ public:
     
     QuantitativeAnalyzer();
 
-    analyze_and_write_snarl(const std::string& chr, const Snarl_data_t& snarl_data, const std::string& regression_dir, std::ofstream& outf);
+    void analyze_and_write_snarl(const std::string& chr, const Snarl_data_t& snarl_data, const std::string& regression_dir, std::ofstream& outf) ;
 
     void write_header(std::ofstream&outf);
 
@@ -126,7 +122,7 @@ protected:
 
     const std::vector<double>& quantitative_phenotype;
 
-}
+};
 
 class EQTLSnarlAnalyzer : public SnarlAnalyzer {
 
@@ -147,7 +143,7 @@ protected:
 
     size_t windows_gene_threshold;
 
-}
+};
 
 /// Given a snarl_data_s for one snarl, make a genotype matrix and write the tsv output
 void write_snarl_line_binary(const EdgeBySampleMatrix& edge_matrix, const Snarl_data_t& snarl_data_s,
