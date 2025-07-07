@@ -94,6 +94,7 @@ void EdgeBySampleMatrix::reset(const std::vector<std::string>& newSampleNames, s
 
     matrix_1D.clear();
     row_header.clear();
+    cols_ = cols;
     sampleNames = newSampleNames;
 
     if (rows == 0 || cols == 0) {
@@ -101,7 +102,7 @@ void EdgeBySampleMatrix::reset(const std::vector<std::string>& newSampleNames, s
     }
 
     size_t length_matrix = (rows * cols + 7) / 8;
-    MaxElement = (length_matrix * 8) / cols_; // get the number of element in the matrix
+    MaxElement = (length_matrix * 8) / cols; // get the number of element in the matrix
     row_header.rehash(rows);
     matrix_1D.reserve(length_matrix); // Reserve capacity to avoid frequent reallocations
     matrix_1D.resize(length_matrix, 0); // Initialize with zeros{
