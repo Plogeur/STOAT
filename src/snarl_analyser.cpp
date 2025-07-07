@@ -14,27 +14,23 @@ SnarlAnalyzer::SnarlAnalyzer(const std::unordered_map<std::string, std::vector<S
     chr_to_snarl_data(chr_to_snarl_data), list_samples(list_samples), covariate(covariate), maf(maf), table_threshold(table_threshold), edge_matrix(list_samples,0,0) {};
 
 BinarySnarlAnalyzer::BinarySnarlAnalyzer(const std::unordered_map<std::string, std::vector<Snarl_data_t>>& chr_to_snarl_data, const std::vector<std::string>& list_samples, 
-                             const std::vector<std::vector<double>>& covariate, double maf, double table_threshold, const std::vector<bool> binary_phenotype) :
+                             const std::vector<std::vector<double>>& covariate, double maf, double table_threshold, const std::vector<bool>& binary_phenotype) :
     SnarlAnalyzer(chr_to_snarl_data, list_samples, covariate, maf, table_threshold), binary_phenotype(binary_phenotype) {};
 
 BinaryCovarSnarlAnalyzer::BinaryCovarSnarlAnalyzer(const std::unordered_map<std::string, std::vector<Snarl_data_t>>& chr_to_snarl_data, const std::vector<std::string>& list_samples, 
-                             const std::vector<std::vector<double>>& covariate, double maf, double table_threshold, const std::vector<bool> binary_phenotype) :
+                             const std::vector<std::vector<double>>& covariate, double maf, double table_threshold, const std::vector<bool>& binary_phenotype) :
     SnarlAnalyzer(chr_to_snarl_data, list_samples, covariate, maf, table_threshold), binary_phenotype(binary_phenotype) {};
 
 QuantitativeSnarlAnalyzer::QuantitativeSnarlAnalyzer(const std::unordered_map<std::string, std::vector<Snarl_data_t>>& chr_to_snarl_data, const std::vector<std::string>& list_samples, 
-                             const std::vector<std::vector<double>>& covariate, double maf, double table_threshold, const std::vector<double> quantitative_phenotype) :
+                             const std::vector<std::vector<double>>& covariate, double maf, double table_threshold, const std::vector<double>& quantitative_phenotype) :
     SnarlAnalyzer(chr_to_snarl_data, list_samples, covariate, maf, table_threshold), quantitative_phenotype(quantitative_phenotype) {};
 
-QuantitativeSnarlAnalyzer::QuantitativeSnarlAnalyzer(const std::unordered_map<std::string, std::vector<Snarl_data_t>>& chr_to_snarl_data, const std::vector<std::string>& list_samples, 
+EQTLSnarlAnalyzer::EQTLSnarlAnalyzer(const std::unordered_map<std::string, std::vector<Snarl_data_t>>& chr_to_snarl_data, const std::vector<std::string>& list_samples, 
                              const std::vector<std::vector<double>>& covariate, double maf, double table_threshold, 
-                             const std::unordered_map<std::string, std::vector<std::tuple<std::string, std::vector<double>, size_t, size_t>>> eqtl_map,
+                             const std::unordered_map<std::string, std::vector<std::tuple<std::string, std::vector<double>, size_t, size_t>>>& eqtl_map,
                              size_t windows_gene_threshold) :
     SnarlAnalyzer(chr_to_snarl_data, list_samples, covariate, maf, table_threshold), eqtl_map(eqtl_map) {};
 
-
-void SnarlAnalyzer::SnarlAnalyzer::set_edge_matrix(EdgeBySampleMatrix matrix) {
-    edge_matrix = std::move(matrix);
-}
 
 void BinarySnarlAnalyzer::write_header(std::ofstream& outf) {
     write_binary_header(outf);
@@ -49,11 +45,9 @@ void EQTLSnarlAnalyzer::write_header(std::ofstream& outf) {
     write_eqtl_header(outf);
 }
 
-void SnarlAnalyzer::process_snarls_by_chromosome_chunk(phenotype_type_t phenotype_type,
-    htsFile* &ptr_vcf,
+void SnarlAnalyzer::process_snarls_by_chromosome_chunk(htsFile* &ptr_vcf,
     bcf_hdr_t* &hdr,
     bcf1_t* &rec,
-    const std::vector<std::string> &list_samples,
     const std::string& regression_dir,
     const std::string& output_filename) {
     
@@ -101,7 +95,7 @@ void SnarlAnalyzer::process_snarls_by_chromosome_chunk(phenotype_type_t phenotyp
         // Iterate over each snarl
         for (size_t itr = 0; itr < snarls.size(); ++itr) {
             const Snarl_data_t& snarl_data_s = snarls[itr];
-            analyze_and_write_snarls(chr, snarl_data_s, regression_dir, outf);
+            analyze_and_write_snarl(chr, snarl_data_s, regression_dir, outf);
         }
     }
     // Cleanup
@@ -665,7 +659,7 @@ void BinaryCovarSnarlAnalyzer::analyze_and_write_snarl(const std::string& chr,
         return;
     } else {
         // logistic regression with covariates if not empty
-        logistic_regression(df, phenotype_filtered, covar, p_value, beta, se, r2);
+        logistic_regression(df, phenotype_filtered, covariate, p_value, beta, se, r2);
     }
 
     
@@ -711,11 +705,11 @@ void QuantitativeSnarlAnalyzer::analyze_and_write_snarl(const std::string &chr, 
         return;
     
     // } else if (!kinship.empty()) { // lmm
-    //     // lmm_quantitative(df, gene_expression, covar, p_value, beta, se, r2);
+    //     // lmm_quantitative(df, gene_expression, covariate, p_value, beta, se, r2);
     //     return; // TODO: implement LMM for quantitative phenotype
     
     } else { // linear regression with covariates if not empty
-        linear_regression(df, phenotype_filtered, covar, p_value, beta, se, r2);
+        linear_regression(df, phenotype_filtered, covariate, p_value, beta, se, r2);
     }
     
     if (table_threshold != -1 && stoat_vcf::isPValueSignificant(table_threshold, p_value)) {
@@ -788,7 +782,7 @@ std::vector<size_t> found_gene_snarl(
 void EQTLSnarlAnalyzer::analyze_and_write_snarl(const std::string& chr, const Snarl_data_t& snarl_data_s,
                                                 const std::string& regression_dir, std::ofstream& outf) {
 
-    const auto& eqtl = eqtl_map[chr];
+    const auto& eqtl = eqtl_map.at(chr);
 
     std::vector<size_t> list_gene_index = found_gene_snarl(eqtl, snarl_data_s.start_positions, snarl_data_s.end_positions, windows_gene_threshold);
     const auto& [df, index_filtered, allele_number, allele_paths] = create_eqtl_table(list_samples.size(), snarl_data_s.snarl_paths, edge_matrix);
@@ -822,12 +816,12 @@ void EQTLSnarlAnalyzer::analyze_and_write_snarl(const std::string& chr, const Sn
             // do not analyse this snarl
             return;
     
-        // } else if (covar.size() > 0 && !kinship.empty()) { // lmm
-        //     // lmm_quantitative(df, gene_expression, covar, p_value, beta, se, r2);
+        // } else if (covariate.size() > 0 && !kinship.empty()) { // lmm
+        //     // lmm_quantitative(df, gene_expression, covariate, p_value, beta, se, r2);
         //     return; // TODO: implement LMM for quantitative phenotype
     
         } else { // glm
-            linear_regression(df, gene_expression, covar, p_value, beta, se, r2); // TODO : se nan problem
+            linear_regression(df, gene_expression, covariate, p_value, beta, se, r2); // TODO : se nan problem
         }
     
         if (table_threshold != -1 && stoat_vcf::isPValueSignificant(table_threshold, p_value)) {

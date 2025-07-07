@@ -28,6 +28,7 @@ using namespace std;
 
 namespace stoat_vcf {
 
+//TODO: I think covariance doesn't need to be a member of the general class
 class SnarlAnalyzer {
 public:
     SnarlAnalyzer(const std::unordered_map<std::string, std::vector<Snarl_data_t>>& chr_to_snarl_data, const std::vector<std::string>& list_samples, 
@@ -41,8 +42,8 @@ public:
     void process_snarls_by_chromosome_chunk(htsFile* &ptr_vcf, bcf_hdr_t* &hdr, bcf1_t* &rec,
                                             const std::string& regression_dir, const std::string& output_filename);
 
-    /// Make an EdgeBySampleMatrix representing the genotypes in a vcf and the pointers to the vcf but advanced to the end of the chromosome?
-    std::tuple<EdgeBySampleMatrix, htsFile*, bcf_hdr_t*, bcf1_t*> make_edge_matrix(htsFile *ptr_vcf, bcf_hdr_t *hdr, bcf1_t *rec, std::string &chr, size_t &num_paths_ch);
+    /// Update the EdgeBySampleMatrix representing the genotypes in a vcf and the pointers to the vcf but advanced to the end of the chromosome?
+    std::tuple<htsFile*, bcf_hdr_t*, bcf1_t*> make_edge_matrix(htsFile *ptr_vcf, bcf_hdr_t *hdr, bcf1_t *rec, std::string &chr, size_t &num_paths_ch);
 
     /// For the given snarl, analyze the snarl and write it to outf
     virtual void analyze_and_write_snarl(const std::string& chr, const Snarl_data_t& snarl_data, const std::string& regression_dir, std::ofstream& outf) = 0;
@@ -133,7 +134,7 @@ public:
     
     EQTLSnarlAnalyzer(const std::unordered_map<std::string, std::vector<Snarl_data_t>>& chr_to_snarl_data, const std::vector<std::string>& list_samples, 
                   const std::vector<std::vector<double>>& covariate, double maf, double table_threshold, 
-                  const std::unordered_map<std::string, std::vector<std::tuple<std::string, std::vector<double>, size_t, size_t>>> eqtl_map,
+                  const std::unordered_map<std::string, std::vector<std::tuple<std::string, std::vector<double>, size_t, size_t>>>& eqtl_map,
                   size_t windows_gene_threshold);
 
     void analyze_and_write_snarl(const std::string& chr, const Snarl_data_t& snarl_data, const std::string& regression_dir, std::ofstream& outf);

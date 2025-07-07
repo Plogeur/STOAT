@@ -46,7 +46,7 @@ public:
     size_t getOrAddIndex(const Edge_t& key, const size_t& size_edge_index_dict);
 
     // Clear the memory and re-initialize
-    void reset(const std::vector<std::string>& sampleNames, size_t rows, size_t cols);
+    void reset(const std::vector<std::string>& newSampleNames, size_t rows, size_t cols);
 
 
 protected:
