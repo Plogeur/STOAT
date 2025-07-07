@@ -36,7 +36,6 @@
 #include "subcommand/graph.cpp"
 
 // Global variable
-namespace stoat_command{
 const std::string VERSION = "v0.0.1";
 
 
@@ -66,11 +65,11 @@ int main(int argc, char* argv[]) {
 
     if (subcommand == "vcf") {
 
-        VCFSubcommand::main_vcf(argc, argv);
+        stoat_command::VCFSubcommand::main_vcf(argc, argv);
 
     } else if (subcommand == "graph") {
 
-        GraphSubcommand::main_graph(argc, argv);
+        stoat_command::GraphSubcommand::main_graph(argc, argv);
 
     } else if (subcommand == "version") {
         std::cout << "stoat: gwas analysis tool, version " << VERSION << "\n";
@@ -85,7 +84,6 @@ int main(int argc, char* argv[]) {
     }
 
     return EXIT_SUCCESS;
-}
 }
 
 // DROSO

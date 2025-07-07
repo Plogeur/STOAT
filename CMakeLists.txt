@@ -43,9 +43,9 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 endif()
 find_package( OpenMP REQUIRED )
 
-# Add Executable
-add_executable(${PROJECT_NAME}
-    src/main.cpp
+add_library(${PROJECT_NAME}_objs OBJECT
+    src/subcommand/vcf.cpp
+    src/subcommand/graph.cpp
     src/utils.cpp
     src/arg_parser.cpp
     src/post_processing.cpp
@@ -60,16 +60,16 @@ add_executable(${PROJECT_NAME}
     ${ALGLIB_SOURCES}
 )
 
+
 # Include Directories
-target_include_directories(${PROJECT_NAME} PRIVATE
+target_include_directories(${PROJECT_NAME}_objs PRIVATE
     ${Boost_INCLUDE_DIRS}
     ${HTSLIB_INCLUDE_DIRS}
 )
 
-target_compile_options(${PROJECT_NAME} PRIVATE -w) # fix warning
 
 # Link Libraries
-target_link_libraries(${PROJECT_NAME}
+target_link_libraries(${PROJECT_NAME}_objs
     Boost::boost
     bdsg
     handlegraph
@@ -78,6 +78,14 @@ target_link_libraries(${PROJECT_NAME}
     ${HTSLIB_LIBRARIES}
     OpenMP::OpenMP_CXX
 )
+
+# Add Executable
+add_executable(${PROJECT_NAME} src/main.cpp)
+
+# Link the code
+target_link_libraries(${PROJECT_NAME} ${PROJECT_NAME}_objs)
+
+target_compile_options(${PROJECT_NAME} PRIVATE -w) # fix warning
 
 # Enable testing
 enable_testing()
