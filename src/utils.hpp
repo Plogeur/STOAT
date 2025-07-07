@@ -80,30 +80,6 @@ inline std::ostream& operator<<(std::ostream& out, const sample_hap_t& sample) {
 // Given a path, return its sample name and haplotype 
 sample_hap_t get_sample_and_haplotype(const handlegraph::PathPositionHandleGraph& graph, const handlegraph::path_handle_t& path);
 
-// A struct for holding a range along the path
-struct path_range_t {
-    handlegraph::step_handle_t start;
-    handlegraph::step_handle_t end;
-};
-
-/// Given a snarl, return a vector of path_ranges of that snarl (the boundary nodes).
-/// Since a path can traverse a snarl multiple times, this returns each start-to-end (or end-to-start) range
-/// of step_handle_t's, ordered according to the order of the path.
-/// If the path leaves by the same bound (for example start-> start<- start-> end->), then the range will include
-/// the outermost start->end range.
-/// If get_reference is true, return a reference path and its coordinates.
-/// This will first try to find a path with the sample name, if not empty, then a reference-sense path, then with any path traversing the snarl.
-/// If get_reference is false, try to find coordinates on a path containing the given sample name, or if it fails, with any path.
-/// If get_reference is false and sample_name is empty and get_all_paths is true, return all coordinates for all paths
-std::vector<path_range_t> get_coordinates_of_snarl(const handlegraph::PathPositionHandleGraph& graph, const bdsg::SnarlDistanceIndex& distance_index,
-                                                   const handlegraph::net_handle_t& snarl, bool get_reference, std::string sample_name, bool get_all_paths);
-
-/// The function that gets called by get_coordinates_of_snarl
-/// This either looks for a particular sample, or a reference-sense path, or all paths
-std::vector<path_range_t> get_coordinates_of_snarl_helper(const handlegraph::PathPositionHandleGraph& graph, const bdsg::SnarlDistanceIndex& distance_index,
-                                                          const handlegraph::net_handle_t& snarl, bool get_reference, std::string sample_name, bool get_all_paths);
-
-
 // equality within a given epsilon
 template<typename T>
 bool is_equal(T a, T b, T e = std::numeric_limits<T>::epsilon()) {

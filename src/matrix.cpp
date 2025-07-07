@@ -5,10 +5,6 @@ namespace stoat_vcf {
 // Constructor implementation
 EdgeBySampleMatrix::EdgeBySampleMatrix(const std::vector<std::string>& sampleNames, size_t rows, size_t cols) : cols_(cols), sampleNames(sampleNames) {
 
-    if (rows == 0 || cols == 0) {
-        return;
-    }
-
     size_t length_matrix = (rows * cols + 7) / 8;
     MaxElement = (length_matrix * 8) / cols_; // get the number of element in the matrix
     row_header.rehash(rows);
@@ -88,24 +84,6 @@ void EdgeBySampleMatrix::shrink() {
     size_t new_bytes = (new_bits + 7) / 8; // Compute required bytes (round up)
     matrix_1D.resize(new_bytes); // Resize
     matrix_1D.shrink_to_fit(); // Free unused capacity
-}
-
-void EdgeBySampleMatrix::reset(const std::vector<std::string>& newSampleNames, size_t rows, size_t cols) { 
-
-    matrix_1D.clear();
-    row_header.clear();
-    cols_ = cols;
-    sampleNames = newSampleNames;
-
-    if (rows == 0 || cols == 0) {
-        return;
-    }
-
-    size_t length_matrix = (rows * cols + 7) / 8;
-    MaxElement = (length_matrix * 8) / cols; // get the number of element in the matrix
-    row_header.rehash(rows);
-    matrix_1D.reserve(length_matrix); // Reserve capacity to avoid frequent reallocations
-    matrix_1D.resize(length_matrix, 0); // Initialize with zeros{
 }
 
 } // end namespace stoat_vcf
