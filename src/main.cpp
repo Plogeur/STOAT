@@ -65,11 +65,11 @@ int main(int argc, char* argv[]) {
 
     if (subcommand == "vcf") {
 
-        stoat_command::VCFSubcommand::main_vcf(argc, argv);
+        stoat_command::main_vcf(argc, argv);
 
     } else if (subcommand == "graph") {
 
-        stoat_command::GraphSubcommand::main_graph(argc, argv);
+        stoat_command::main_graph(argc, argv);
 
     } else if (subcommand == "version") {
         std::cout << "stoat: gwas analysis tool, version " << VERSION << "\n";
