@@ -3,18 +3,13 @@
 namespace stoat_vcf {
 
 // Constructor implementation
-EdgeBySampleMatrix::EdgeBySampleMatrix(size_t rows, size_t cols) : cols_(cols) {
+EdgeBySampleMatrix::EdgeBySampleMatrix(const std::vector<std::string>& sampleNames, size_t rows, size_t cols) : cols_(cols), sampleNames(sampleNames) {
 
     size_t length_matrix = (rows * cols + 7) / 8;
     MaxElement = (length_matrix * 8) / cols_; // get the number of element in the matrix
     row_header.rehash(rows);
     matrix_1D.reserve(length_matrix); // Reserve capacity to avoid frequent reallocations
     matrix_1D.resize(length_matrix, 0); // Initialize with zeros
-}
-
-// Getter for matrix
-const std::vector<uint8_t>& EdgeBySampleMatrix::get_matrix() const {
-    return matrix_1D;
 }
 
 // Getter for row header
@@ -27,24 +22,42 @@ std::unordered_map<stoat_vcf::Edge_t, size_t>::const_iterator EdgeBySampleMatrix
     return row_header_end;
 }
 
+// Retrieve the index of `key` if it exists in the dict. Otherwise, add it and return the new index.
+size_t EdgeBySampleMatrix::getOrAddIndex(const Edge_t& key, const size_t& size_edge_index_dict) {
+    auto it = row_header.find(key);
+    if (it != row_header.end()) {
+        return it->second;
+    } else {
+        size_t newIndex = size_edge_index_dict;
+        row_header[key] = newIndex;
+        return newIndex;
+    }
+}
+
+
+// Add True to the matrix if edge is found
+void EdgeBySampleMatrix::push_matrix(const Edge_t& EdgePath, size_t indexColumn) {
+
+    size_t lengthOrderedMap = row_header.size();
+    size_t idxSnarl = getOrAddIndex(EdgePath, lengthOrderedMap);
+    size_t currentRowsNumber = getMaxElement();
+
+    if (lengthOrderedMap > currentRowsNumber - 1) {
+        expandMatrix();
+    }
+
+    set(idxSnarl, indexColumn);
+}
+
+
 // Getter for row header
 void EdgeBySampleMatrix::set_end_dict() {
     row_header_end = row_header.end();
 }
 
-// Getter for row header
-const std::unordered_map<stoat_vcf::Edge_t, size_t>& EdgeBySampleMatrix::get_row_header() const {
-    return row_header;
-}
-
 // Getter row number
 size_t EdgeBySampleMatrix::getMaxElement() const {
     return MaxElement;  // Convert bits back to rows
-}
-
-// Setter for row header
-void EdgeBySampleMatrix::set_row_header(const std::unordered_map<stoat_vcf::Edge_t, size_t>& new_row_header) {
-    row_header = std::move(new_row_header);
 }
 
 void EdgeBySampleMatrix::expandMatrix() {
@@ -74,8 +87,8 @@ void EdgeBySampleMatrix::set(size_t row, size_t col) {
     matrix_1D[byteIndex] |= (1U << bitPosition);
 }
 
-void EdgeBySampleMatrix::shrink(size_t current_rows) {
-    size_t new_bits = current_rows * cols_;
+void EdgeBySampleMatrix::shrink() {
+    size_t new_bits = row_header.size() * cols_;
     size_t new_bytes = (new_bits + 7) / 8; // Compute required bytes (round up)
     matrix_1D.resize(new_bytes); // Resize
     matrix_1D.shrink_to_fit(); // Free unused capacity

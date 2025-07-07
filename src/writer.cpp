@@ -75,7 +75,6 @@ void write_binary(std::ofstream& outstream, const std::string& chr, const Snarl_
 }
 
 
-// TODO: this is the same as write_binary_covar
 void write_quantitative(std::ofstream& outstream, const std::string& chr, const Snarl_data_t& snarl_data_s, const std::string& type_var_str,
                         const std::string& p_value, const std::string& p_value_adjusted, const std::string& r2,
                         const std::string& beta, const std::string& se, size_t allele_number, const std::vector<size_t>& allele_paths) {
