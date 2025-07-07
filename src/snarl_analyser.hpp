@@ -28,31 +28,127 @@ using namespace std;
 
 namespace stoat_vcf {
 
-class SnarlAnalyser {
-    public:
-        SnarlAnalyser();
-        virtual ~SnarlAnalyser()=default;
+//TODO: I think covariance doesn't need to be a member of the general class
+class SnarlAnalyzer {
+public:
+    SnarlAnalyzer(const std::unordered_map<std::string, std::vector<Snarl_data_t>>& chr_to_snarl_data, const std::vector<std::string>& list_samples, 
+                  const std::vector<std::vector<double>>& covariate, double maf, double table_threshold);
+
+    ~SnarlAnalyzer()=default;
+
+    /// Go through the vcf by chromosome, parse it to get a matrix of genotypes (either binary, quantitative, or eqtl, depending on the phenotype type),
+    /// then write the output (also depending on the phenotype type).
+    /// This calls write_header() to write the appropriate output header and analyze_and_write_snarl() for each snarl
+    void process_snarls_by_chromosome_chunk(htsFile* &ptr_vcf, bcf_hdr_t* &hdr, bcf1_t* &rec,
+                                            const std::string& regression_dir, const std::string& output_filename);
+
+    /// Update the EdgeBySampleMatrix representing the genotypes in a vcf and the pointers to the vcf but advanced to the end of the chromosome?
+    std::tuple<htsFile*, bcf_hdr_t*, bcf1_t*> make_edge_matrix(htsFile *ptr_vcf, bcf_hdr_t *hdr, bcf1_t *rec, std::string &chr, size_t &num_paths_ch);
+
+    /// For the given snarl, analyze the snarl and write it to outf
+    virtual void analyze_and_write_snarl(const std::string& chr, const Snarl_data_t& snarl_data, const std::string& regression_dir, std::ofstream& outf) = 0;
+
+    /// Write the header of the output tsv file
+    /// This should ideally call a write_header() function from writer.hpp to keep things consistent
+    virtual void write_header(std::ofstream&outf) = 0;
+
+//////////////// Private data members
+protected:
+    
+    // Map chromosome name to a vector of snarl_data_t
+    const std::unordered_map<std::string, std::vector<Snarl_data_t>>& chr_to_snarl_data;
+
+    // A list of sample names
+    const std::vector<std::string>& list_samples;
+
+    // Covariate matrix
+    const std::vector<std::vector<double>>& covariate;
+
+    // Matrix of edges in each sample/haplotype
+    // This generally is a per-chromosome or per-chunk matrix, so it must be updated for each new chunk being analyzed 
+    EdgeBySampleMatrix edge_matrix;
+
+    double maf; 
+
+    double table_threshold;
 
 };
 
-class BinaryAnalyser : public SnarlAnalyser {
-    public:
-        BinaryAnalyser();
-        ~BinaryAnalyser()=default;
+class BinarySnarlAnalyzer : public SnarlAnalyzer {
+
+public:
+    
+    BinarySnarlAnalyzer(const std::unordered_map<std::string, std::vector<Snarl_data_t>>& chr_to_snarl_data, const std::vector<std::string>& list_samples, 
+                  const std::vector<std::vector<double>>& covariate, double maf, double table_threshold, const std::vector<bool>& binary_phenotype);
+
+    void analyze_and_write_snarl(const std::string& chr, const Snarl_data_t& snarl_data, const std::string& regression_dir, std::ofstream& outf);
+
+    void write_header(std::ofstream&outf);
+
+/////////////////// Private data members
+protected:
+
+    const std::vector<bool>& binary_phenotype;
 
 };
 
-class QuantitativeAnalyser : public SnarlAnalyser {
-    public:
-        QuantitativeAnalyser();
-        ~QuantitativeAnalyser()=default;
+class BinaryCovarSnarlAnalyzer : public SnarlAnalyzer {
+
+public:
+    
+    BinaryCovarSnarlAnalyzer(const std::unordered_map<std::string, std::vector<Snarl_data_t>>& chr_to_snarl_data, const std::vector<std::string>& list_samples, 
+                  const std::vector<std::vector<double>>& covariate, double maf, double table_threshold, const std::vector<bool>& binary_phenotype);
+
+    void analyze_and_write_snarl(const std::string& chr, const Snarl_data_t& snarl_data, const std::string& regression_dir, std::ofstream& outf);
+
+    void write_header(std::ofstream&outf);
+
+/////////////////// Private data members
+protected:
+
+    const std::vector<bool>& binary_phenotype;
 
 };
 
-class EqtlAnalyser : public SnarlAnalyser {
-    public:
-        EqtlAnalyser();
-        ~EqtlAnalyser()=default;
+class QuantitativeSnarlAnalyzer : public SnarlAnalyzer {
+
+public:
+    
+    QuantitativeSnarlAnalyzer(const std::unordered_map<std::string, std::vector<Snarl_data_t>>& chr_to_snarl_data, const std::vector<std::string>& list_samples, 
+                  const std::vector<std::vector<double>>& covariate, double maf, double table_threshold, const std::vector<double>& quantitative_phenotype);
+
+    void analyze_and_write_snarl(const std::string& chr, const Snarl_data_t& snarl_data, const std::string& regression_dir, std::ofstream& outf) ;
+
+    void write_header(std::ofstream&outf);
+
+/////////////////// Private data members
+protected:
+
+    const std::vector<double>& quantitative_phenotype;
+
+};
+
+class EQTLSnarlAnalyzer : public SnarlAnalyzer {
+
+public:
+    
+    EQTLSnarlAnalyzer(const std::unordered_map<std::string, std::vector<Snarl_data_t>>& chr_to_snarl_data, const std::vector<std::string>& list_samples, 
+                  const std::vector<std::vector<double>>& covariate, double maf, double table_threshold, 
+                  const std::unordered_map<std::string, std::vector<std::tuple<std::string, std::vector<double>, size_t, size_t>>>& eqtl_map,
+                  size_t windows_gene_threshold);
+
+    void analyze_and_write_snarl(const std::string& chr, const Snarl_data_t& snarl_data, const std::string& regression_dir, std::ofstream& outf);
+
+    void write_header(std::ofstream&outf);
+
+/////////////////// Private data members
+protected:
+
+    // TODO idk what these are 
+    //Maps something to something else? 
+    const std::unordered_map<std::string, std::vector<std::tuple<std::string, std::vector<double>, size_t, size_t>>> eqtl_map;
+
+    size_t windows_gene_threshold;
 
 };
 
@@ -150,6 +246,7 @@ std::vector<size_t> found_gene_snarl(
 void create_fam(const std::vector<std::pair<std::string, int>> &pheno, 
     const std::string& output_path);
 
+// TODO: I left this in so the bed maker can use it but it is a duplicate
 /// Make an EdgeBySampleMatrix representing the genotypes in a vcf and the pointers to the vcf but advanced to the end of the chromosome?
 std::tuple<EdgeBySampleMatrix, htsFile*, bcf_hdr_t*, bcf1_t*> make_matrix(htsFile *ptr_vcf, bcf_hdr_t *hdr, bcf1_t *rec, const std::vector<std::string>& sample_names, std::string &chr, size_t &num_paths_ch);
 
