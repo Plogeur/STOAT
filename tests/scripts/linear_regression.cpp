@@ -17,28 +17,38 @@ using namespace std;
 using namespace Eigen;
 
 // Linear regression function OLS with intercept
+
+// Linear regression function OLS with intercept + covariate
 void linear_regression(
     const std::vector<std::vector<double>>& df,
-    const std::vector<double>& quantitative_phenotype) {
+    const std::vector<double>& quantitative_phenotype,
+    const std::vector<std::vector<double>>& covar) {
 
     size_t num_samples = df.size();
-    size_t num_features = df[0].size();
+    size_t num_variants = df[0].size();
+    size_t num_covariates = 0;
+    size_t num_features = num_variants + 1; // +1 for intercept
 
-    // Add intercept: X with one additional column for intercept
-    Eigen::MatrixXd X(num_samples, num_features + 1);
+    if (!covar.empty()) {
+        size_t num_covariates = covar[0].size();
+        size_t num_features = num_variants + num_covariates + 1; // +1 for intercept
+    }
+
+    Eigen::MatrixXd X(num_samples, num_features);
     X.col(0) = Eigen::VectorXd::Ones(num_samples);  // Intercept column
-    for (size_t row = 0; row < num_samples; ++row) {
-        for (size_t col = 0; col < num_features; ++col) {
-            X(row, col + 1) = df[row][col];
+    Eigen::VectorXd y(num_samples);
+    
+    for (size_t i = 0; i < num_samples; ++i) {
+        y(i) = quantitative_phenotype[i];
+        size_t col = 1;
+        for (size_t j = 0; j < num_variants; ++j) {
+            X(i, col++) = df[i][j];
+        }
+        for (size_t j = 0; j < num_covariates; ++j) {
+            X(i, col++) = covar[i][j];
         }
     }
-
-    // Response vector
-    Eigen::VectorXd y(num_samples);
-    for (size_t row = 0; row < num_samples; ++row) {
-        y(row) = quantitative_phenotype[row];
-    }
-
+    
     // Coefficients beta
     Eigen::VectorXd beta = (X.transpose() * X).ldlt().solve(X.transpose() * y);
     Eigen::VectorXd y_pred = X * beta;
@@ -59,7 +69,6 @@ void linear_regression(
 
     // change cov_matrix calcul if X.transpose() * X might be ill-conditioned or nearly singular
     if (se.hasNaN()) {
-        cout << "Warning: se is NaN, using alternative calculation." << std::endl;
         Eigen::MatrixXd XtX = X.transpose() * X;
         Eigen::MatrixXd cov_matrix = XtX.ldlt().solve(Eigen::MatrixXd::Identity(X.cols(), X.cols()));
         se = (cov_matrix.diagonal() * mse).array().sqrt().matrix();
@@ -68,9 +77,9 @@ void linear_regression(
     // t-statistics
     Eigen::VectorXd t_stats = beta.array() / se.array();
     boost::math::students_t t_dist(df_res);
-
+ 
     std::vector<double> p_values;
-    for (int i = 0; i < num_features+1; ++i) { // i = 1 avoid const p-value
+    for (int i = 0; i < num_features; ++i) { // i = 1 avoid const p-value
         if (std::isnan(t_stats[i]) || std::isinf(t_stats[i])) {
             p_values.push_back(1.0); // Assign a high p-value for invalid t-statistics
             continue;
@@ -79,25 +88,14 @@ void linear_regression(
         cout << "p_values[" << i << "] : " << p_values[i] << std::endl;
     }
 
-    cout << std::endl;
-    std::vector<double> p_values_2;
-    for (int i = 1; i < num_features+1; ++i) { // i = 1 avoid const p-value
-        if (std::isnan(t_stats[i]) || std::isinf(t_stats[i])) {
-            p_values_2.push_back(1.0); // Assign a high p-value for invalid t-statistics
-            continue;
-        }
-        p_values_2.push_back(2 * boost::math::cdf(boost::math::complement(t_dist, std::abs(t_stats[i])))); // two-tailed
-        cout << "p_values_2[" << i-1 << "] : " << p_values_2[i-1] << std::endl;
-    }
-
     // Print results
     std::cout << std::fixed << std::setprecision(4);
     std::cout << "Coefficients (beta):" << std::endl;
-    for (int i = 0; i < beta.size(); ++i) {
+    for (int i = 0; i < num_features; ++i) {
         std::cout << "beta[" << i << "] = " << beta[i] << std::endl;
     }
     std::cout << "Standard Errors (se):" << std::endl;
-    for (int i = 0; i < se.size(); ++i) {
+    for (int i = 0; i < num_features; ++i) {
         std::cout << "se[" << i << "] = " << se[i] << std::endl;
     }
     std::cout << "R²: " << r2 << std::endl;
@@ -184,6 +182,7 @@ int main(int argc, char* argv[]) {
     std::vector<std::string> sample_ids;
     std::vector<std::vector<double>> features;
     std::vector<double> phenotype;
+    std::vector<std::vector<double>> covar;
 
     try {
         parse_feature_file(feature_file, sample_ids, features);
@@ -192,7 +191,7 @@ int main(int argc, char* argv[]) {
         std::cout << "Parsed " << features.size() << " samples with " << features[0].size() << " features.\n";
         std::cout << "Parsed " << phenotype.size() << " phenotype values.\n";
 
-        linear_regression(features, phenotype);
+        linear_regression(features, phenotype, covar);
     } catch (const std::exception& e) {
         std::cerr << "Error: " << e.what() << "\n";
         return 1;
@@ -207,4 +206,4 @@ int main(int argc, char* argv[]) {
 // MACOS
 // g++ -std=c++17 -I/usr/local/eigen3 -lboost_math_c99 -o linear_regression linear_regression.cpp
 
-// ./linear_regression ../output/regression/48_51.tsv ../data/quantitative/phenotype.tsv
+// ./linear_regression ../../output/regression/48_51.tsv ../data/quantitative/phenotype.tsv

@@ -30,7 +30,11 @@ namespace stoat_vcf {
 
 class SnarlAnalyser {
 public:
-    SnarlAnalyser();
+    // caca change to private
+    std::vector<std::string> sampleNames;
+    EdgeBySampleMatrix matrix;
+
+    SnarlAnalyser(const std::vector<std::string>& sample_names, size_t num_paths_chr);
     ~SnarlAnalyser()=default;
     
 
@@ -38,25 +42,25 @@ public:
 
 /// Given a snarl_data_s for one snarl, make a genotype matrix and write the tsv output
 void write_snarl_line_binary(const EdgeBySampleMatrix& edge_matrix, const Snarl_data_t& snarl_data_s,
-    const std::vector<bool>& binary_phenotype, 
-    const std::string& chr,
-    const std::vector<std::vector<double>>& covar,
-    const double& maf,  
-    const double& table_threshold, 
-    const std::string& output_dir, 
-    size_t sample_count,
-    std::ofstream& outf);
+                            const std::vector<bool>& binary_phenotype, 
+                            const std::string& chr,
+                            const std::vector<std::vector<double>>& covar,
+                            const double& maf,  
+                            const double& table_threshold, 
+                            const std::string& output_dir, 
+                            size_t sample_count,
+                            std::ofstream& outf);
 
 /// Similar to write_snarl_line_binary, get the genotypes and write the tsv output
 void write_snarl_line_quantitative(const EdgeBySampleMatrix& edge_matrix, const Snarl_data_t& snarl_data_s,
-                        const std::vector<double>& quantitative_phenotype, 
-                        const std::string &chr,
-                        const std::vector<std::vector<double>>& covar,
-                        const double& maf,  
-                        const double& table_threshold, 
-                        const std::string& output_dir, 
-                        size_t sample_count,
-                        std::ofstream& outf);
+                                const std::vector<double>& quantitative_phenotype, 
+                                const std::string &chr,
+                                const std::vector<std::vector<double>>& covar,
+                                const double& maf,  
+                                const double& table_threshold, 
+                                const std::string& output_dir, 
+                                const size_t& sample_count,
+                                std::ofstream& outf);
 
 /// Similar to write_snarl_line_binary and write_snarl_line_quantitative, get the genotype and write the tsv output
 void write_snarl_line_eqtl(const EdgeBySampleMatrix& edge_matrix, const Snarl_data_t& snarl_data_s,
@@ -67,7 +71,7 @@ void write_snarl_line_eqtl(const EdgeBySampleMatrix& edge_matrix, const Snarl_da
     const double& table_threshold, 
     const std::string& regression_dir,
     const size_t& windows_gene_threshold, 
-    size_t sample_count,
+    const size_t& sample_count,
     std::ofstream& outf);
 
 /// Given a list of paths in a snarl, return vectors of counts of each sample taking an allele for the two alleles with the highest counts over all samples

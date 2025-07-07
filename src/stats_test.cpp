@@ -363,7 +363,7 @@ void linear_regression(
     size_t num_samples = df.size();
     size_t num_variants = df[0].size();
     size_t num_covariates = 0;
-    size_t num_features = num_samples + 1; // +1 for intercept
+    size_t num_features = num_variants + 1; // +1 for intercept
 
     if (!covar.empty()) {
         size_t num_covariates = covar[0].size();
@@ -408,7 +408,6 @@ void linear_regression(
         Eigen::MatrixXd XtX = X.transpose() * X;
         Eigen::MatrixXd cov_matrix = XtX.ldlt().solve(Eigen::MatrixXd::Identity(X.cols(), X.cols()));
         se = (cov_matrix.diagonal() * mse).array().sqrt().matrix();
-        // std::cerr << "Warning: se is nan" << std::endl;
     }
 
     // t-statistics
