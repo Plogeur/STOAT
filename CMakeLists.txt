@@ -57,6 +57,8 @@ add_library(${PROJECT_NAME}_objs OBJECT
     src/stats_test.cpp
     src/writer.cpp
     src/snarl_analyser.cpp
+    #src/graph_path_association_finder.cpp
+    #src/path_partitioner.cpp
     ${ALGLIB_SOURCES}
 )
 
