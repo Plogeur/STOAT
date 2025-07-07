@@ -1,4 +1,5 @@
 #include "stoat_vcf.hpp"
+
 namespace stoat_vcf {
 
 void print_help_vcf() {
@@ -255,14 +256,13 @@ int stoat_vcf(int argc, char* argv[]) {
         eqtl = stoat_vcf::parse_qtl_gene_file(eqtl_path, gene_position_path, list_samples);
     }
 
-    // stoat_vcf::KinshipMatrix kinship;
-    // if (!kinship_path.empty()) {
-    //     // check_format_kinship(kinship_path);
-    //     kinship = stoat_vcf::parseKinshipMatrix(kinship_path);
-    // }
+    stoat_vcf::KinshipMatrix kinship;
+    if (!kinship_path.empty()) {
+        // check_format_kinship(kinship_path);
+        kinship = stoat_vcf::parseKinshipMatrix(kinship_path);
+    }
 
     // Load or calculate the snarl information
-
     // scope declaration
     // chr : <snarl, paths, pos(start, end), type>
     std::unordered_map<std::string, std::vector<stoat_vcf::Snarl_data_t>> snarls_chr;
