@@ -39,7 +39,7 @@ Manual installation :
 ## Build
 
 ```bash
-git clone --branch stoat_cxx https://github.com/Plogeur/STOAT.git
+git clone --recursive --branch stoat_cxx https://github.com/Plogeur/STOAT.git
 cd stoat_cxx
 
 mkdir build && cd build
