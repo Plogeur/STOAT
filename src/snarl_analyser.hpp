@@ -29,42 +29,62 @@ using namespace std;
 namespace stoat_vcf {
 
 class SnarlAnalyser {
-public:
-    // caca change to private
-    std::vector<std::string> sampleNames;
-    EdgeBySampleMatrix matrix;
-
-    SnarlAnalyser(const std::vector<std::string>& sample_names, size_t num_paths_chr);
-    ~SnarlAnalyser()=default;
-    
+    public:
+        SnarlAnalyser();
+        virtual ~SnarlAnalyser()=default;
 
 };
 
+class BinaryAnalyser : public SnarlAnalyser {
+    public:
+        BinaryAnalyser();
+        ~BinaryAnalyser()=default;
+
+};
+
+class QuantitativeAnalyser : public SnarlAnalyser {
+    public:
+        QuantitativeAnalyser();
+        ~QuantitativeAnalyser()=default;
+
+};
+
+class EqtlAnalyser : public SnarlAnalyser {
+    public:
+        EqtlAnalyser();
+        ~EqtlAnalyser()=default;
+
+};
+
+
 /// Given a snarl_data_s for one snarl, make a genotype matrix and write the tsv output
-void write_snarl_line_binary(const EdgeBySampleMatrix& edge_matrix, const Snarl_data_t& snarl_data_s,
-                            const std::vector<bool>& binary_phenotype, 
-                            const std::string& chr,
-                            const std::vector<std::vector<double>>& covar,
-                            const double& maf,  
-                            const double& table_threshold, 
-                            const std::string& output_dir, 
-                            size_t sample_count,
-                            std::ofstream& outf);
+void write_snarl_line_binary(const EdgeBySampleMatrix& edge_matrix, 
+    const Snarl_data_t& snarl_data_s,
+    const std::vector<bool>& binary_phenotype, 
+    const std::string& chr,
+    const std::vector<std::vector<double>>& covar,
+    const double& maf,  
+    const double& table_threshold, 
+    const std::string& output_dir, 
+    size_t sample_count,
+    std::ofstream& outf);
 
 /// Similar to write_snarl_line_binary, get the genotypes and write the tsv output
-void write_snarl_line_quantitative(const EdgeBySampleMatrix& edge_matrix, const Snarl_data_t& snarl_data_s,
-                                const std::vector<double>& quantitative_phenotype, 
-                                const std::string &chr,
-                                const std::vector<std::vector<double>>& covar,
-                                const double& maf,  
-                                const double& table_threshold, 
-                                const std::string& output_dir, 
-                                const size_t& sample_count,
-                                std::ofstream& outf);
+void write_snarl_line_quantitative(const EdgeBySampleMatrix& edge_matrix, 
+    const Snarl_data_t& snarl_data_s,
+    const std::vector<double>& quantitative_phenotype, 
+    const std::string &chr,
+    const std::vector<std::vector<double>>& covar,
+    const double& maf,  
+    const double& table_threshold, 
+    const std::string& output_dir, 
+    size_t sample_count,
+    std::ofstream& outf);
 
 /// Similar to write_snarl_line_binary and write_snarl_line_quantitative, get the genotype and write the tsv output
-void write_snarl_line_eqtl(const EdgeBySampleMatrix& edge_matrix, const Snarl_data_t& snarl_data_s,
-    const std::vector<std::tuple<std::string, std::vector<double>, size_t, size_t>>& eqtl,
+void write_snarl_line_eqtl(const EdgeBySampleMatrix& edge_matrix, 
+    const Snarl_data_t& snarl_data_s,
+    const std::vector<stoat_vcf::Qtl_data>& eqtl,
     const std::string& chr, 
     const std::vector<std::vector<double>>& covar,
     const double& maf,  
@@ -86,9 +106,12 @@ void create_bim_bed(const std::vector<Snarl_data_t>& snarls, size_t sample_count
 /// Return true if any column exceeds the MAF threshold
 bool check_MAF_threshold_quantitative(const std::vector<std::vector<double>>& df, const double& maf);
 
-/// Return true if any column exceeds the MAF threshold
-bool check_MAF_threshold_binary(const std::vector<size_t>& g0, const std::vector<size_t>& g1, const size_t& totalSum, const size_t& length_column_headers, const double& maf);
+bool check_MAF_threshold_binary(
+    const std::vector<size_t>& g0, const std::vector<size_t>& g1,
+    const size_t& totalSum, const size_t& length_column_headers, 
+    const double& maf);
 
+/// Go through the vcf by chromosome, parse it to get a matrix of genotypes (either binary, quantitative, or eqtl, depending on the phenotype type),
 /// then write the output (also depending on the phenotype type).
 /// window_gene_threshold and eqtl_map are only used for eqtl output 
 void chunk_chromosome_and_write_tsv(phenotype_type_t phenotype_type,
@@ -99,7 +122,7 @@ void chunk_chromosome_and_write_tsv(phenotype_type_t phenotype_type,
      const std::unordered_map<std::string, std::vector<Snarl_data_t>> &chr_to_snarl_data,
      const std::vector<bool>& binary_pheno,
      const std::vector<double>& quantitative_pheno,
-     const std::unordered_map<std::string, std::vector<std::tuple<std::string, std::vector<double>, size_t, size_t>>>& eqtl_map,
+     const std::unordered_map<std::string, std::vector<stoat_vcf::Qtl_data>>& eqtl_map,
      std::vector<std::vector<double>> covar,
      const double& maf,
      const double& table_threshold,
@@ -112,11 +135,8 @@ void chromosome_chuck_make_bed(htsFile* &ptr_vcf, bcf_hdr_t* &hdr, bcf1_t* &rec,
     const std::unordered_map<std::string, std::vector<Snarl_data_t>>& snarl_chr,
     const std::string& output_dir);
 
-
-std::tuple<htsFile*, bcf_hdr_t*, bcf1_t*> parse_vcf(const std::string& vcf_path);
-
 std::vector<size_t> found_gene_snarl(
-    const std::vector<std::tuple<std::string, std::vector<double>, size_t, size_t>>& gene_position, 
+    const std::vector<Qtl_data>& gene_position, 
     const size_t& start_pos, 
     const size_t& end_pos,
     const size_t& windows_gene_threshold);

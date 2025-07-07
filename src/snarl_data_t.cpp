@@ -1,9 +1,5 @@
 #include "snarl_data_t.hpp"
 
-// using handlegraph::step_handle_t;
-// using handlegraph::handle_t;
-// using handlegraph::net_handle_t;
-
 //#define DEBUG_SNARL_DATA_T
 
 namespace stoat_vcf {

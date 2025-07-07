@@ -1,6 +1,9 @@
 cmake_minimum_required(VERSION 3.10)
 project(stoat VERSION 0.1.1 LANGUAGES CXX)
 
+# Locate libomp via Homebrew
+# execute_process(COMMAND brew --prefix libomp OUTPUT_VARIABLE LIBOMP_PREFIX OUTPUT_STRIP_TRAILING_WHITESPACE)
+
 # C++ Standard Settings
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -46,6 +49,8 @@ find_package( OpenMP REQUIRED )
 # Add Executable
 add_executable(${PROJECT_NAME}
     src/main.cpp
+    src/stoat_vcf.cpp
+    src/stoat_graph.cpp
     src/utils.cpp
     src/arg_parser.cpp
     src/post_processing.cpp
@@ -66,6 +71,7 @@ target_include_directories(${PROJECT_NAME} PRIVATE
     ${HTSLIB_INCLUDE_DIRS}
 )
 
+# Apply OpenMP flags to main target
 target_compile_options(${PROJECT_NAME} PRIVATE -w) # fix warning
 
 # Link Libraries
@@ -109,6 +115,7 @@ add_executable(unit_tests
     src/snarl_analyser.cpp
 )
 
+# Apply OpenMP flags to unit tests
 target_compile_options(unit_tests PRIVATE -w) # fix warning
 
 # add src target lib + Catch2 lib 

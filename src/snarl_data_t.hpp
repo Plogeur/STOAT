@@ -23,6 +23,7 @@
 #include <bdsg/overlays/packed_path_position_overlay.hpp>
 #include <handlegraph/handle_graph.hpp>
 #include <handlegraph/path_handle_graph.hpp>
+
 #include "utils.hpp"
 
 using namespace std;
@@ -213,7 +214,10 @@ namespace std {
             size_t h1 = hash<stoat_vcf::Node_traversal_t>()(pair.first);
             size_t h2 = hash<stoat_vcf::Node_traversal_t>()(pair.second);
 
-            // Standard hash combination
+            // Combines two hash values (h1 and h2) into a single hash using bitwise operations.
+            // 0x9e3779b9 is a large prime constant (from the golden ratio) used to improve distribution.
+            // (h1 << 6) and (h1 >> 2) add additional mixing by shifting bits left and right.
+            // This reduces hash collisions by ensuring small changes in input produce different hashes.
             return h1 ^ (h2 + 0x9e3779b9 + (h1 << 6) + (h1 >> 2));
         }
     };

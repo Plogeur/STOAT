@@ -17,9 +17,11 @@
 #include <unordered_map>
 #include <Eigen/Dense>
 #include <Eigen/Core>
+
 #include <boost/math/distributions/fisher_f.hpp>
 #include <boost/math/distributions/students_t.hpp>  // For t-distribution
 #include <boost/math/distributions/chi_squared.hpp>
+#include <boost/multiprecision/cpp_dec_float.hpp>
 #include <boost/math/distributions/normal.hpp>
 
 #include "arg_parser.hpp"
@@ -28,19 +30,106 @@
 #include "utils.hpp"
 
 using namespace std;
+using boost::multiprecision::cpp_dec_float_50;
+
+// ------------------------ Regression class ------------------------
+
+class Stats {
+    public:
+        Stats();
+        virtual ~Stats() = default;
+};
+
+class FisherKhi2 : public Stats {
+    public:
+        FisherKhi2();
+        ~FisherKhi2() = default;
+
+        // // Function to perform the Chi-square test on row size > 2 
+        // std::string chi2_2xN(const std::vector<size_t>& g0, const std::vector<size_t>& g1);
+
+        // // Function to perform the Chi-square test on row size == 2 
+        // std::string chi2_2x2(const size_t& m11, const size_t& m12,
+        //     const size_t& m21, const size_t& m22);
+
+        // // Function to perform Fisher's exact test
+        // std::string fastFishersExactTest(size_t m11, size_t m12,
+        //     size_t m21, size_t m22);
+
+    private:
+        // Constants with maximum usable precision for 'double'
+        static constexpr double kExactTestEpsilon2 = 9.094947017729282e-13;
+        static constexpr double kExactTestBias = 1.0339757656912846e-25;
+
+        // Chi-squared distribution
+        static const boost::math::chi_squared chi_squared_dist;
+        static const boost::math::chi_squared_distribution<cpp_dec_float_50> cpp_dec_float_50_dist;
+};
+
+class LinearRegression : public Stats {
+    public:
+        LinearRegression();
+        ~LinearRegression() = default;
+        
+        // std::tuple<std::string, std::string, std::string, std::string> linear_regression(
+        //     const std::vector<std::vector<double>>& df,
+        //     const std::vector<double>& quantitative_phenotype,
+        //     const std::vector<std::vector<double>>& covar);
+
+};
+
+class LogisticRegression : public Stats {
+    public:
+        LogisticRegression();
+        ~LogisticRegression() = default;
+
+        // double normal_cdf(double z);
+        // inline double sigmoid(double x);
+        // inline double clamp(double x, double lo, double hi);
+        // double calculate_log_likelihood(const Eigen::VectorXd& y, const Eigen::VectorXd& p);
+
+        // // Standard normal cumulative distribution function
+        // double normal_cdf(double z);
+
+        // // Sigmoid function
+        // inline double sigmoid(double x);
+
+        // // Clamp helper
+        // inline double clamp(double x, double lo, double hi);
+
+        // // GLM Implementation with Iteratively Reweighted Least Squares (IRLS)
+        // std::tuple<std::string, std::string, std::string, std::string> logistic_regression(
+        //     const std::vector<std::vector<double>>& variant_data,
+        //     const std::vector<bool>& phenotype,
+        //     const std::vector<std::vector<double>>& covariates);
+
+    private:
+        const int max_iterations = 100;
+        const double tolerance = 1e-6;
+        const double l2_penalty = 1e-4;
+        const double epsilon = 1e-8;
+};
+
+class LMM : public Stats {
+    public:
+        LMM();
+        ~LMM() = default;
+
+        // template <typename T> 
+        // lmm(const std::vector<std::vector<double>>& df,
+        //     const std::vector<T>& phenotype_table,
+        //     const stoat_vcf::KinshipMatrix& kinship,
+        //     const std::vector<std::vector<double>>& covariates);
+};
 
 // ------------------------ Linear regression ------------------------
 
 // Linear regression function OLS with intercept + covariate if not empty
 
-void linear_regression(
+std::tuple<std::string, std::string, std::string, std::string> linear_regression(
     const std::vector<std::vector<double>>& df,
     const std::vector<double>& quantitative_phenotype,
-    const std::vector<std::vector<double>>& covar,
-    std::string& p_value_str, 
-    std::string& beta_str, 
-    std::string& se_str, 
-    std::string& r2_str);
+    const std::vector<std::vector<double>>& covar);
 
 // ------------------------ Logistic regression ------------------------
 
@@ -58,14 +147,10 @@ inline double sigmoid(double x);
 // Clamp helper
 inline double clamp(double x, double lo, double hi);
 
-void logistic_regression(
+std::tuple<std::string, std::string, std::string, std::string> logistic_regression(
     const std::vector<std::vector<double>>& variant_data,
     const std::vector<bool>& phenotype,
-    const std::vector<std::vector<double>>& covariates,
-    std::string& p_value_str, 
-    std::string& beta_str, 
-    std::string& se_str, 
-    std::string& r2_str);
+    const std::vector<std::vector<double>>& covariates);
     
 // ------------------------ Chi2 test ------------------------
 
@@ -88,20 +173,12 @@ std::string fastFishersExactTest(size_t m11, size_t m12,
 //     const std::vector<std::vector<double>>& df,
 //     const std::vector<double>& phenotype_table,
 //     const stoat_vcf::KinshipMatrix& kinship,
-//     const std::vector<std::vector<double>>& covariates,
-//     std::string& p_value_str, 
-//     std::string& beta_str, 
-//     std::string& se_str, 
-//     std::string& r2_str);
+//     const std::vector<std::vector<double>>& covariates);
 
 // void lmm_binary(
 //     const std::vector<std::vector<double>>& df,
 //     const std::vector<bool>& phenotype_binary,
 //     const stoat_vcf::KinshipMatrix& kinship,
-//     const std::vector<std::vector<double>>& covariates,
-//     std::string& p_value_str, 
-//     std::string& beta_str, 
-//     std::string& se_str, 
-//     std::string& r2_str);
+//     const std::vector<std::vector<double>>& covariates);
 
 #endif 

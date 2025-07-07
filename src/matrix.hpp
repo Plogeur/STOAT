@@ -39,15 +39,8 @@ public:
     // Shrink to use the minimum amount of memory possible allowing the current number of rows
     void shrink();
 
-    // TODO: Can this just be has_edge? I don't think it ever gets used as an iterator
-    // Return an iterator to the given snarl in row_header
-    std::unordered_map<stoat_vcf::Edge_t, size_t>::const_iterator find_edge(const stoat_vcf::Edge_t& edge) const;
-
-    // Return row_header_end, an iterator to the end of row_header
-    std::unordered_map<stoat_vcf::Edge_t, size_t>::const_iterator get_end_dict() const;
-
-    // Reset row_header_end to be the end of row_header
-    void set_end_dict();
+    // Return the index of the edge in row_header, std::numeric_limits<size_t>::max() if the edge does not exist
+    size_t find_edge(const stoat_vcf::Edge_t& edge) const;
 
     // Retrieve the index of `edge` if it exists. Otherwise, add it and return the new index.
     size_t getOrAddIndex(const Edge_t& key, const size_t& size_edge_index_dict);
