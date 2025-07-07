@@ -53,11 +53,10 @@ struct Qtl_data {
         const std::vector<double>& sampleExpresion_,
         const size_t& start_pos_,
         const size_t& end_pos_) : 
-        geneName(geneName_), 
-        sampleExpresion(sampleExpresion_),
+        geneName(geneName_),
         start_pos(start_pos_),
         end_pos(end_pos_)
-        {}
+        {sampleExpresion = std::move(sampleExpresion_);}
 };
 
 std::unordered_map<std::string, std::vector<double>> parse_qtl_file(

@@ -45,13 +45,13 @@ public:
     // Retrieve the index of `edge` if it exists. Otherwise, add it and return the new index.
     size_t getOrAddIndex(const Edge_t& key, const size_t& size_edge_index_dict);
 
-
 protected:
     size_t cols_;
     size_t MaxElement;
     std::vector<uint8_t> matrix_1D;
     std::unordered_map<stoat_vcf::Edge_t, size_t> row_header;
     std::unordered_map<stoat_vcf::Edge_t, size_t>::iterator row_header_end;
+
 // TODO: This shouldn't be public
 public:
     std::vector<std::string> sampleNames;

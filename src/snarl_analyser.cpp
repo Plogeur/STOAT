@@ -502,16 +502,17 @@ std::vector<size_t> identify_path(
     return idx_srr_save;
 }
 
-void write_snarl_line_binary(const EdgeBySampleMatrix& edge_matrix, 
-                               const Snarl_data_t& snarl_data_s,
-                               const std::vector<bool>& binary_phenotype, 
-                               const std::string& chr,
-                               const std::vector<std::vector<double>>& covar,
-                               const double& maf,  
-                               const double& table_threshold, 
-                               const std::string& regression_dir, 
-                               const size_t& sample_count,
-                               std::ofstream& outf) {
+void write_snarl_line_binary(
+    const EdgeBySampleMatrix& edge_matrix, 
+    const Snarl_data_t& snarl_data_s,
+    const std::vector<bool>& binary_phenotype, 
+    const std::string& chr,
+    const std::vector<std::vector<double>>& covar,
+    const double& maf,  
+    const double& table_threshold, 
+    const std::string& regression_dir, 
+    const size_t& sample_count,
+    std::ofstream& outf) {
 
     std::ostringstream oss;
     for (size_t i = 0; i < snarl_data_s.type_variants.size(); ++i) {
@@ -568,16 +569,17 @@ void write_snarl_line_binary(const EdgeBySampleMatrix& edge_matrix,
 }
 
 // Quantitative Table Generation
-void write_snarl_line_quantitative(const EdgeBySampleMatrix& edge_matrix, 
-                                   const Snarl_data_t& snarl_data_s,
-                                   const std::vector<double>& quantitative_phenotype, 
-                                   const std::string &chr,
-                                   const std::vector<std::vector<double>>& covar,
-                                   const double& maf, 
-                                   const double& table_threshold, 
-                                   const std::string& regression_dir, 
-                                   const size_t& sample_count,
-                                   std::ofstream& outf) {
+void write_snarl_line_quantitative(
+    const EdgeBySampleMatrix& edge_matrix, 
+    const Snarl_data_t& snarl_data_s,
+    const std::vector<double>& quantitative_phenotype, 
+    const std::string &chr,
+    const std::vector<std::vector<double>>& covar,
+    const double& maf, 
+    const double& table_threshold, 
+    const std::string& regression_dir, 
+    const size_t& sample_count,
+    std::ofstream& outf) {
 
 
     const auto& [df, phenotype_filtered, allele_number, allele_paths] = create_quantitative_table(sample_count, snarl_data_s.snarl_paths, quantitative_phenotype, edge_matrix);

@@ -58,45 +58,51 @@ class EqtlAnalyser : public SnarlAnalyser {
 
 
 /// Given a snarl_data_s for one snarl, make a genotype matrix and write the tsv output
-void write_snarl_line_binary(const EdgeBySampleMatrix& edge_matrix, 
+void write_snarl_line_binary(
+    const EdgeBySampleMatrix& edge_matrix, 
     const Snarl_data_t& snarl_data_s,
     const std::vector<bool>& binary_phenotype, 
     const std::string& chr,
     const std::vector<std::vector<double>>& covar,
     const double& maf,  
     const double& table_threshold, 
-    const std::string& output_dir, 
-    size_t sample_count,
+    const std::string& regression_dir, 
+    const size_t& sample_count,
     std::ofstream& outf);
 
 /// Similar to write_snarl_line_binary, get the genotypes and write the tsv output
-void write_snarl_line_quantitative(const EdgeBySampleMatrix& edge_matrix, 
+void write_snarl_line_quantitative(
+    const EdgeBySampleMatrix& edge_matrix, 
     const Snarl_data_t& snarl_data_s,
     const std::vector<double>& quantitative_phenotype, 
     const std::string &chr,
     const std::vector<std::vector<double>>& covar,
-    const double& maf,  
+    const double& maf, 
     const double& table_threshold, 
-    const std::string& output_dir, 
-    size_t sample_count,
+    const std::string& regression_dir, 
+    const size_t& sample_count,
     std::ofstream& outf);
 
 /// Similar to write_snarl_line_binary and write_snarl_line_quantitative, get the genotype and write the tsv output
-void write_snarl_line_eqtl(const EdgeBySampleMatrix& edge_matrix, 
+void write_snarl_line_eqtl(
+    const EdgeBySampleMatrix& edge_matrix, 
     const Snarl_data_t& snarl_data_s,
-    const std::vector<stoat_vcf::Qtl_data>& eqtl,
+    const std::vector<Qtl_data>& eqtl,
     const std::string& chr, 
     const std::vector<std::vector<double>>& covar,
-    const double& maf,  
+    const double& maf, 
     const double& table_threshold, 
-    const std::string& regression_dir,
+    const std::string& regression_dir, 
     const size_t& windows_gene_threshold, 
-    const size_t& sample_count,
+    size_t sample_count,
     std::ofstream& outf);
 
 /// Given a list of paths in a snarl, return vectors of counts of each sample taking an allele for the two alleles with the highest counts over all samples
 /// Each vector returned corresponds to one allele, each entry in the vector is a sample, the value is a count of the number of times a sample takes the path/allele (probably binary?)
-std::pair<std::vector<size_t>, std::vector<size_t>> create_table_short_path(const std::vector<stoat_vcf::Path_traversal_t>& list_path_snarl, size_t sample_count, const EdgeBySampleMatrix& edge_matrix);
+std::pair<std::vector<size_t>, std::vector<size_t>> create_table_short_path(
+    const std::vector<stoat_vcf::Path_traversal_t>& list_path_snarl, 
+    size_t sample_count, 
+    const EdgeBySampleMatrix& edge_matrix);
 
 /// For each snarl, write a bim file and a bed file (PLINK formats)
 void create_bim_bed(const std::vector<Snarl_data_t>& snarls, size_t sample_count, 
