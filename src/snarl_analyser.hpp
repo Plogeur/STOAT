@@ -77,7 +77,8 @@ class BinarySnarlAnalyzer : public SnarlAnalyzer {
 
 public:
     
-    BinarySnarlAnalyzer();
+    BinarySnarlAnalyzer(const std::unordered_map<std::string, std::vector<Snarl_data_t>>& chr_to_snarl_data, const std::vector<std::string>& list_samples, 
+                  const std::vector<std::vector<double>>& covariate, double maf, double table_threshold, const std::vector<bool>& binary_phenotype);
 
     void analyze_and_write_snarl(const std::string& chr, const Snarl_data_t& snarl_data, const std::string& regression_dir, std::ofstream& outf);
 
@@ -94,7 +95,8 @@ class BinaryCovarSnarlAnalyzer : public SnarlAnalyzer {
 
 public:
     
-    BinaryCovarSnarlAnalyzer();
+    BinaryCovarSnarlAnalyzer(const std::unordered_map<std::string, std::vector<Snarl_data_t>>& chr_to_snarl_data, const std::vector<std::string>& list_samples, 
+                  const std::vector<std::vector<double>>& covariate, double maf, double table_threshold, const std::vector<bool>& binary_phenotype);
 
     void analyze_and_write_snarl(const std::string& chr, const Snarl_data_t& snarl_data, const std::string& regression_dir, std::ofstream& outf);
 
@@ -103,15 +105,16 @@ public:
 /////////////////// Private data members
 protected:
 
-    const std::vector<double>& quantitative_phenotype;
+    const std::vector<bool>& binary_phenotype;
 
 };
 
-class QuantiativeSnarlAnalyzer : public SnarlAnalyzer {
+class QuantitativeSnarlAnalyzer : public SnarlAnalyzer {
 
 public:
     
-    QuantitativeAnalyzer();
+    QuantitativeSnarlAnalyzer(const std::unordered_map<std::string, std::vector<Snarl_data_t>>& chr_to_snarl_data, const std::vector<std::string>& list_samples, 
+                  const std::vector<std::vector<double>>& covariate, double maf, double table_threshold, const std::vector<double>& quantitative_phenotype);
 
     void analyze_and_write_snarl(const std::string& chr, const Snarl_data_t& snarl_data, const std::string& regression_dir, std::ofstream& outf) ;
 
@@ -128,9 +131,12 @@ class EQTLSnarlAnalyzer : public SnarlAnalyzer {
 
 public:
     
-    QuantitativeAnalyzer();
+    EQTLSnarlAnalyzer(const std::unordered_map<std::string, std::vector<Snarl_data_t>>& chr_to_snarl_data, const std::vector<std::string>& list_samples, 
+                  const std::vector<std::vector<double>>& covariate, double maf, double table_threshold, 
+                  const std::unordered_map<std::string, std::vector<std::tuple<std::string, std::vector<double>, size_t, size_t>>> eqtl_map,
+                  size_t windows_gene_threshold);
 
-    analyze_and_write_snarl(const std::string& chr, const Snarl_data_t& snarl_data, const std::string& regression_dir, std::ofstream& outf);
+    void analyze_and_write_snarl(const std::string& chr, const Snarl_data_t& snarl_data, const std::string& regression_dir, std::ofstream& outf);
 
     void write_header(std::ofstream&outf);
 

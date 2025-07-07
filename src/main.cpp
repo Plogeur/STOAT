@@ -402,23 +402,27 @@ int main(int argc, char* argv[]) {
         } else {
 
             std::shared_ptr<stoat_vcf::SnarlAnalyzer> snarl_analyzer;
+            stoat_vcf::phenotype_type_t phenotype_type;
 
             // Decide which type of SnarlAnalyzer we want
             if (!binary_path.empty()) {
                 // binary
                 if (!covariate.empty()){
                     // Normal binary
-                    snarl_analyzer.reset(new stoat_vcf::BinarySnarlAnalyzer(snarls_chr, list_samples, covariate, maf, table_threshold));
+                    snarl_analyzer.reset(new stoat_vcf::BinarySnarlAnalyzer(snarls_chr, list_samples, covariate, maf, table_threshold, binary_vector));
                 } else {
                     // Binary covariate
-                    snarl_analyzer.reset(new stoat_vcf::BinaryCovariateSnarlAnalyzer(snarls_chr, list_samples, covariate, maf, table_threshold));
+                    snarl_analyzer.reset(new stoat_vcf::BinaryCovarSnarlAnalyzer(snarls_chr, list_samples, covariate, maf, table_threshold, binary_vector));
                 }
+                phenotype_type = stoat_vcf::BINARY; 
             } else if (!quantitative_path.empty()) {
                 // Quantitative
-                snarl_analyzer.reset(new stoat_vcf::QuantitativeSnarlAnalyzer(snarls_chr, list_samples, covariate, maf, table_threshold));
+                snarl_analyzer.reset(new stoat_vcf::QuantitativeSnarlAnalyzer(snarls_chr, list_samples, covariate, maf, table_threshold, quantitative_vector));
+                phenotype_type = stoat_vcf::QUANTITATIVE; 
             } else if (!eqtl_path.empty()) {
                 // EQTL
-                snarl_analyzer.reset(new stoat_vcf::EQTLSnarlAnalyzer(snarls_chr, list_samples, covariate, maf, table_threshold, windows_gene_threshold));
+                snarl_analyzer.reset(new stoat_vcf::EQTLSnarlAnalyzer(snarls_chr, list_samples, covariate, maf, table_threshold, eqtl, windows_gene_threshold));
+                phenotype_type = stoat_vcf::EQTL; 
             }
 
             std::string output_tsv = output_dir + (phenotype_type == stoat_vcf::BINARY       ? "/binary_table.tsv" : 

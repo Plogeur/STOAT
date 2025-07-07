@@ -13,7 +13,26 @@ SnarlAnalyzer::SnarlAnalyzer(const std::unordered_map<std::string, std::vector<S
                              const std::vector<std::vector<double>>& covariate, double maf, double table_threshold) :
     chr_to_snarl_data(chr_to_snarl_data), list_samples(list_samples), covariate(covariate), maf(maf), table_threshold(table_threshold), edge_matrix(list_samples,0,0) {};
 
-void SnarlAnalyzer::SnarlAnalyzer::set_edge_matric(EdgeBySampleMatrix matrix) {
+BinarySnarlAnalyzer::BinarySnarlAnalyzer(const std::unordered_map<std::string, std::vector<Snarl_data_t>>& chr_to_snarl_data, const std::vector<std::string>& list_samples, 
+                             const std::vector<std::vector<double>>& covariate, double maf, double table_threshold, const std::vector<bool> binary_phenotype) :
+    SnarlAnalyzer(chr_to_snarl_data, list_samples, covariate, maf, table_threshold), binary_phenotype(binary_phenotype) {};
+
+BinaryCovarSnarlAnalyzer::BinaryCovarSnarlAnalyzer(const std::unordered_map<std::string, std::vector<Snarl_data_t>>& chr_to_snarl_data, const std::vector<std::string>& list_samples, 
+                             const std::vector<std::vector<double>>& covariate, double maf, double table_threshold, const std::vector<bool> binary_phenotype) :
+    SnarlAnalyzer(chr_to_snarl_data, list_samples, covariate, maf, table_threshold), binary_phenotype(binary_phenotype) {};
+
+QuantitativeSnarlAnalyzer::QuantitativeSnarlAnalyzer(const std::unordered_map<std::string, std::vector<Snarl_data_t>>& chr_to_snarl_data, const std::vector<std::string>& list_samples, 
+                             const std::vector<std::vector<double>>& covariate, double maf, double table_threshold, const std::vector<double> quantitative_phenotype) :
+    SnarlAnalyzer(chr_to_snarl_data, list_samples, covariate, maf, table_threshold), quantitative_phenotype(quantitative_phenotype) {};
+
+QuantitativeSnarlAnalyzer::QuantitativeSnarlAnalyzer(const std::unordered_map<std::string, std::vector<Snarl_data_t>>& chr_to_snarl_data, const std::vector<std::string>& list_samples, 
+                             const std::vector<std::vector<double>>& covariate, double maf, double table_threshold, 
+                             const std::unordered_map<std::string, std::vector<std::tuple<std::string, std::vector<double>, size_t, size_t>>> eqtl_map,
+                             size_t windows_gene_threshold) :
+    SnarlAnalyzer(chr_to_snarl_data, list_samples, covariate, maf, table_threshold), eqtl_map(eqtl_map) {};
+
+
+void SnarlAnalyzer::SnarlAnalyzer::set_edge_matrix(EdgeBySampleMatrix matrix) {
     edge_matrix = std::move(matrix);
 }
 
@@ -614,7 +633,7 @@ void BinarySnarlAnalyzer::analyze_and_write_snarl(const std::string& chr,
 
     
 }
-void BinaryCovSnarlAnalyzer::analyze_and_write_snarl(const std::string& chr, 
+void BinaryCovarSnarlAnalyzer::analyze_and_write_snarl(const std::string& chr, 
                                                   const Snarl_data_t& snarl_data_s,
                                                   const std::string& regression_dir, 
                                                   std::ofstream& outf) {
