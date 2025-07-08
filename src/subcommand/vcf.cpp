@@ -71,9 +71,9 @@ int stoat_vcf(int argc, char* argv[]) {
     size_t cycle_threshold = 1;
     size_t children_threshold = 50;
     size_t path_length_threshold = 10000;
-    size_t windows_gene_threshold = 1000000;
-    double table_threshold = -1;
-    double maf = 0.99; // inversed MAF 
+    const size_t& windows_gene_threshold = 1000000;
+    const double& table_threshold = -1;
+    const double& maf_threshold = 0.99; // inversed MAF 
     bool gaf = false;
     bool only_snarl_parsing = false;
     bool show_help = false;
