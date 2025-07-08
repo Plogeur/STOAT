@@ -11,14 +11,10 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(CMAKE_OSX_DEPLOYMENT_TARGET "12.7") # IOS fix
 
-include_directories(/usr/include /usr/local/include)
-link_directories(/usr/include /usr/local/lib)  # libbdsg.dylib
-
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(HTSLIB REQUIRED htslib)
-
 include_directories(${HTSLIB_INCLUDE_DIRS})
-link_directories(${HTSLIB_LIBRARY_DIRS})
+list(APPEND CMAKE_PREFIX_PATH "${HOMEBREW_PREFIX}")
 
 # Find Packages
 find_package(Boost REQUIRED)
@@ -28,7 +24,6 @@ find_package(Eigen3 REQUIRED)
 # SDSL library ("sdsl" target) already exists from libbdsg
 
 # GBWT doesn't have CMake yet so we need to explain how to build it.
-
 # GBWT dependency: OpenMP
 if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     # OpenMP may be installed by Homebrew in a place CMake can't find it by default.
@@ -62,7 +57,6 @@ add_executable(${PROJECT_NAME}
     src/stats_test.cpp
     src/writer.cpp
     src/snarl_analyser.cpp
-    ${ALGLIB_SOURCES}
 )
 
 # Include Directories
@@ -73,6 +67,7 @@ target_include_directories(${PROJECT_NAME} PRIVATE
 
 # Apply OpenMP flags to main target
 target_compile_options(${PROJECT_NAME} PRIVATE -w) # fix warning
+target_compile_options(unit_tests PRIVATE -w)
 
 # Link Libraries
 target_link_libraries(${PROJECT_NAME}
