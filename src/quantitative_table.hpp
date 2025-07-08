@@ -16,7 +16,7 @@
 
 #include "arg_parser.hpp"
 #include "matrix.hpp"
-#include "snarl_analyser.hpp"
+#include "snarl_analyzer.hpp"
 #include "utils.hpp"
 #include "stats_test.hpp"
 

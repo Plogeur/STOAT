@@ -39,6 +39,9 @@ public:
     // Shrink to use the minimum amount of memory possible allowing the current number of rows
     void shrink();
 
+    // Clear the memory and re-initialize
+    void reset(const std::vector<std::string>& newSampleNames, size_t rows, size_t cols);
+    
     // Return the index of the edge in row_header, std::numeric_limits<size_t>::max() if the edge does not exist
     size_t find_edge(const stoat_vcf::Edge_t& edge) const;
 
@@ -50,7 +53,6 @@ protected:
     size_t MaxElement;
     std::vector<uint8_t> matrix_1D;
     std::unordered_map<stoat_vcf::Edge_t, size_t> row_header;
-    std::unordered_map<stoat_vcf::Edge_t, size_t>::iterator row_header_end;
 
 // TODO: This shouldn't be public
 public:

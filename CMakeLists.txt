@@ -56,7 +56,7 @@ add_executable(${PROJECT_NAME}
     src/quantitative_table.cpp
     src/stats_test.cpp
     src/writer.cpp
-    src/snarl_analyser.cpp
+    src/snarl_analyzer.cpp
 )
 
 # Include Directories
@@ -107,7 +107,7 @@ add_executable(unit_tests
     src/quantitative_table.cpp
     src/stats_test.cpp
     src/writer.cpp
-    src/snarl_analyser.cpp
+    src/snarl_analyzer.cpp
 )
 
 # Apply OpenMP flags to unit tests

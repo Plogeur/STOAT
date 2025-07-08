@@ -1,4 +1,4 @@
-#include "snarl_analyser.hpp"
+#include "snarl_analyzer.hpp"
 #include "matrix.hpp"
 #include "binary_table.hpp"
 #include "quantitative_table.hpp"
@@ -9,36 +9,52 @@
 
 namespace stoat_vcf {
 
-void chunk_chromosome_and_write_tsv(phenotype_type_t phenotype_type,
+SnarlAnalyzer::SnarlAnalyzer(const std::unordered_map<std::string, std::vector<Snarl_data_t>>& chr_to_snarl_data, const std::vector<std::string>& list_samples, 
+    const std::vector<std::vector<double>>& covariate, double maf, double table_threshold) :
+chr_to_snarl_data(chr_to_snarl_data), list_samples(list_samples), covariate(covariate), maf(maf), table_threshold(table_threshold), edge_matrix(list_samples,0,0) {};
+
+BinarySnarlAnalyzer::BinarySnarlAnalyzer(const std::unordered_map<std::string, std::vector<Snarl_data_t>>& chr_to_snarl_data, const std::vector<std::string>& list_samples, 
+    double maf, double table_threshold, const std::vector<bool>& binary_phenotype) :
+SnarlAnalyzer(chr_to_snarl_data, list_samples, covariate, maf, table_threshold), binary_phenotype(binary_phenotype) {};
+
+BinaryCovarSnarlAnalyzer::BinaryCovarSnarlAnalyzer(const std::unordered_map<std::string, std::vector<Snarl_data_t>>& chr_to_snarl_data, const std::vector<std::string>& list_samples, 
+    const std::vector<std::vector<double>>& covariate, double maf, double table_threshold, const std::vector<bool>& binary_phenotype) :
+SnarlAnalyzer(chr_to_snarl_data, list_samples, covariate, maf, table_threshold), binary_phenotype(binary_phenotype) {};
+
+QuantitativeCovarSnarlAnalyzer::QuantitativeSnarlAnalyzer(const std::unordered_map<std::string, std::vector<Snarl_data_t>>& chr_to_snarl_data, const std::vector<std::string>& list_samples, 
+    const std::vector<std::vector<double>>& covariate, double maf, double table_threshold, const std::vector<double>& quantitative_phenotype) :
+SnarlAnalyzer(chr_to_snarl_data, list_samples, covariate, maf, table_threshold), quantitative_phenotype(quantitative_phenotype) {};
+
+EQTLCovarSnarlAnalyzer::EQTLSnarlAnalyzer(const std::unordered_map<std::string, std::vector<Snarl_data_t>>& chr_to_snarl_data, const std::vector<std::string>& list_samples, 
+    const std::vector<std::vector<double>>& covariate, double maf, double table_threshold, 
+    const std::unordered_map<std::string, std::vector<std::tuple<std::string, std::vector<double>, size_t, size_t>>>& eqtl_map,
+    size_t windows_gene_threshold) :
+SnarlAnalyzer(chr_to_snarl_data, list_samples, covariate, maf, table_threshold), eqtl_map(eqtl_map) {};
+
+void BinarySnarlAnalyzer::write_header(std::ofstream& outf) {
+    write_binary_header(outf);
+}
+void BinaryCovarSnarlAnalyzer::write_header(std::ofstream& outf) {
+    write_binary_covar_header(outf);
+}
+void QuantitativeSnarlAnalyzer::write_header(std::ofstream& outf) {
+    write_quantitative_header(outf);
+}
+void EQTLSnarlAnalyzer::write_header(std::ofstream& outf) {
+    write_eqtl_header(outf);
+}
+
+void SnarlAnalyzer::process_snarls_by_chromosome_chunk(
     htsFile* &ptr_vcf,
     bcf_hdr_t* &hdr,
     bcf1_t* &rec,
-    const std::vector<std::string> &list_samples,
-    const std::unordered_map<std::string, std::vector<stoat_vcf::Snarl_data_t>> &chr_to_snarl_data,
-    const std::vector<bool>& binary_pheno,
-    const std::vector<double>& quantitative_pheno,
-    const std::unordered_map<std::string, std::vector<stoat_vcf::Qtl_data>>& eqtl_map,
-    std::vector<std::vector<double>> covar,
-    const double& maf,
-    const double& table_threshold, 
-    const size_t& windows_gene_threshold,
     const std::string& regression_dir,
     const std::string& output_filename) {
     
     std::ofstream outf(output_filename, std::ios::binary);
 
-    // Write the header for the relevant file
-    if (phenotype_type == BINARY) {
-        if (covar.size() > 0) {
-            write_binary_covar_header(outf);
-        } else {
-            write_binary_header(outf);
-        }
-    } else if (phenotype_type == QUANTITATIVE) {
-        write_quantitative_header(outf);
-    } else if (phenotype_type == EQTL) {
-        write_eqtl_header(outf);
-    }
+    // Write the header
+    write_header(outf);
 
     // Go through the vcf and get chunks by chromosome. 
     std::cout << "GWAS analysis for chromosome : " << std::endl;
@@ -68,36 +84,98 @@ void chunk_chromosome_and_write_tsv(phenotype_type_t phenotype_type,
         size_t size_chr = chr_to_snarl_data.at(chr).size();
 
         // Make genotype matrix by chromosome    
-        auto matrix_ = make_matrix(ptr_vcf, hdr, rec, list_samples, chr, size_chr);
-        auto& edge_matrix = std::get<0>(matrix_);
-        auto& ptr_vcf_new = std::get<1>(matrix_);
-        auto& hdr_new = std::get<2>(matrix_);
-        auto& rec_new = std::get<3>(matrix_);
+        auto [ptr_vcf_new, hdr_new, rec_new] = make_edge_matrix(ptr_vcf, hdr, rec, chr, size_chr);
         ptr_vcf = ptr_vcf_new;
         hdr = hdr_new;
         rec = rec_new;
-        auto& snarls= chr_to_snarl_data.at(chr);
 
-        const size_t sample_count = list_samples.size();
-        #pragma omp parallel for schedule(static) shared(edge_matrix, snarls, binary_pheno, chr, covar, maf, table_threshold, regression_dir, sample_count, outf)
+        const auto& snarls = chr_to_snarl_data.at(chr);
+
+        #pragma omp parallel for schedule(static)
+
+        // Make the snarl test analysis
         // Iterate over each snarl
-        for (size_t itr = 0; itr < snarls.size(); ++itr) {
-            const Snarl_data_t& snarl_data_s = snarls[itr];
-            // Do the GWAS analysis by snarl
-            if (phenotype_type == BINARY) {
-                write_snarl_line_binary(edge_matrix, snarl_data_s, binary_pheno, chr, covar, maf, table_threshold, regression_dir, sample_count, outf);
-            } else if (phenotype_type == QUANTITATIVE) {
-                write_snarl_line_quantitative(edge_matrix, snarl_data_s, quantitative_pheno, chr, covar, maf, table_threshold, regression_dir, sample_count, outf);
-            } else if (phenotype_type == EQTL) {
-                auto& eqtl = eqtl_map.at(chr);
-                write_snarl_line_eqtl(edge_matrix, snarl_data_s, eqtl, chr, covar, maf, table_threshold, regression_dir, windows_gene_threshold, sample_count, outf);
-            }
+        for (const Snarl_data_t& snarl_data_s : snarls) {
+            analyze_and_write_snarl(snarl_data_s);
         }
     }
+
     // Cleanup
     bcf_destroy(rec);
     bcf_hdr_destroy(hdr);
     bcf_close(ptr_vcf);
+}
+
+std::tuple<htsFile*, bcf_hdr_t*, bcf1_t*> SnarlAnalyzer::make_edge_matrix(htsFile *ptr_vcf, bcf_hdr_t *hdr, bcf1_t *rec, std::string &chr, size_t &num_paths_chr) {
+
+    edge_matrix.reset(list_samples, num_paths_chr*4, list_samples.size() * 2);
+
+    // loop over the VCF file for each line and stop where chr is different
+    do {
+        bcf_unpack(rec, BCF_UN_STR);
+
+        // Check the INFO field for LV (Level Variant) and skip if LV != 0
+        int32_t *lv = nullptr;
+        int n_lv = 0;
+
+        // Extract LV field from INFO skip if variant is lv != 0 to avoid duplication paths/snarl variant analysis
+        if (bcf_get_info_int32(hdr, rec, "LV", &lv, &n_lv) > 0) {
+            if (lv[0] != 0) {
+                free(lv);
+                continue;
+            }
+        }
+        free(lv);
+
+        // Extract genotypes (GT)
+        int ngt = 0;
+        int32_t *gt = nullptr;
+        ngt = bcf_get_genotypes(hdr, rec, &gt, &ngt);
+
+        // Extract AT field from INFO
+        char *at_str = nullptr;
+        int nat = 0;
+        nat = bcf_get_info_string(hdr, rec, "AT", &at_str, &nat);
+        std::vector<std::string> path_list;
+
+        std::string at_value(at_str);  // Convert C-string to C++ std::string
+        free(at_str);  // Free HTSlib-allocated memory
+
+        // Split by comma
+        std::stringstream ss(at_value);
+        std::string item;
+        while (std::getline(ss, item, ',')) {
+            path_list.push_back(item);
+        }
+
+        // Decompose snarl paths [vector std::string] into [vector vector Edge_t]
+        // paths : >123>213<234,>123<234,>123<234<345
+        // list_paths_edge : [[Edge_t(123, 213), Edge_t(213, 234)], [...]]
+        const std::vector<std::vector<stoat_vcf::Edge_t>> list_paths_edge = decompose_path_list_str(path_list);
+
+        for (int i = 0; i < rec->n_sample; ++i) {
+            int idex_path_allele_1 = bcf_gt_allele(gt[i * 2]);
+            int idex_path_allele_2 = bcf_gt_allele(gt[i * 2 + 1]);
+            size_t col_idx = i * 2;
+
+            if (idex_path_allele_1 != -1) { // Handle missing genotypes
+                for (const auto &edge_path_1 : list_paths_edge[idex_path_allele_1]) {
+                    edge_matrix.push_matrix(edge_path_1, col_idx);
+                }
+            }
+
+            if (idex_path_allele_2 != -1) { // Handle missing genotypes
+                for (const auto &edge_path_2 : list_paths_edge[idex_path_allele_2]) {
+                    edge_matrix.push_matrix(edge_path_2, col_idx + 1);
+                }
+            }
+        }
+        free(gt);
+
+    } while ((bcf_read(ptr_vcf, hdr, rec) >= 0) && (chr == bcf_hdr_id2name(hdr, rec->rid)));
+
+    edge_matrix.shrink();
+    return std::make_tuple(ptr_vcf, hdr, rec);
 }
 
 void chromosome_chuck_make_bed(htsFile* &ptr_vcf, bcf_hdr_t* &hdr, bcf1_t* &rec, 
@@ -142,7 +220,7 @@ void chromosome_chuck_make_bed(htsFile* &ptr_vcf, bcf_hdr_t* &hdr, bcf1_t* &rec,
         size_t size_chr = snarl_chr.at(chr).size();
 
         // Make genotype matrix by chromosome    
-        auto [edge_matrix, ptr_vcf_new, hdr_new, rec_new] = make_matrix(ptr_vcf, hdr, rec, list_samples, chr, size_chr);
+        auto [edge_matrix, ptr_vcf_new, hdr_new, rec_new] = make_edge_matrix(ptr_vcf, hdr, rec, list_samples, chr, size_chr);
         ptr_vcf = ptr_vcf_new;
         hdr = hdr_new;
         rec = rec_new;
@@ -385,79 +463,6 @@ const std::vector<std::vector<stoat_vcf::Edge_t>> decompose_path_list_str(const 
     return paths_snarl;
 }
 
-// Function to parse VCF and fill matrix genotypes
-std::tuple<EdgeBySampleMatrix, htsFile*, bcf_hdr_t*, bcf1_t*> make_matrix(htsFile *ptr_vcf, bcf_hdr_t *hdr, bcf1_t *rec, const std::vector<std::string> &sampleNames, std::string &chr, size_t &num_paths_chr) {
-
-    EdgeBySampleMatrix edge_matrix(sampleNames, num_paths_chr*4, sampleNames.size() * 2);
-
-    // loop over the VCF file for each line and stop where chr is different
-    do {
-        bcf_unpack(rec, BCF_UN_STR);
-
-        // Check the INFO field for LV (Level Variant) and skip if LV != 0
-        int32_t *lv = nullptr;
-        int n_lv = 0;
-
-        // Extract LV field from INFO skip if variant is lv != 0 to avoid duplication paths/snarl variant analysis
-        if (bcf_get_info_int32(hdr, rec, "LV", &lv, &n_lv) > 0) {
-            if (lv[0] != 0) {
-                free(lv);
-                continue;
-            }
-        }
-        free(lv);
-
-        // Extract genotypes (GT)
-        int ngt = 0;
-        int32_t *gt = nullptr;
-        ngt = bcf_get_genotypes(hdr, rec, &gt, &ngt);
-
-        // Extract AT field from INFO
-        char *at_str = nullptr;
-        int nat = 0;
-        nat = bcf_get_info_string(hdr, rec, "AT", &at_str, &nat);
-        std::vector<std::string> path_list;
-
-        std::string at_value(at_str);  // Convert C-string to C++ std::string
-        free(at_str);  // Free HTSlib-allocated memory
-
-        // Split by comma
-        std::stringstream ss(at_value);
-        std::string item;
-        while (std::getline(ss, item, ',')) {
-            path_list.push_back(item);
-        }
-
-        // Decompose snarl paths [vector std::string] into [vector vector Edge_t]
-        // paths : >123>213<234,>123<234,>123<234<345
-        // list_paths_edge : [[Edge_t(123, 213), Edge_t(213, 234)], [...]]
-        const std::vector<std::vector<stoat_vcf::Edge_t>> list_paths_edge = decompose_path_list_str(path_list);
-
-        for (int i = 0; i < rec->n_sample; ++i) {
-            int idex_path_allele_1 = bcf_gt_allele(gt[i * 2]);
-            int idex_path_allele_2 = bcf_gt_allele(gt[i * 2 + 1]);
-            size_t col_idx = i * 2;
-
-            if (idex_path_allele_1 != -1) { // Handle missing genotypes
-                for (const auto &edge_path_1 : list_paths_edge[idex_path_allele_1]) {
-                    edge_matrix.push_matrix(edge_path_1, col_idx);
-                }
-            }
-
-            if (idex_path_allele_2 != -1) { // Handle missing genotypes
-                for (const auto &edge_path_2 : list_paths_edge[idex_path_allele_2]) {
-                    edge_matrix.push_matrix(edge_path_2, col_idx + 1);
-                }
-            }
-        }
-        free(gt);
-
-    } while ((bcf_read(ptr_vcf, hdr, rec) >= 0) && (chr == bcf_hdr_id2name(hdr, rec->rid)));
-
-    edge_matrix.shrink();
-    return std::make_tuple(edge_matrix, ptr_vcf, hdr, rec);
-}
-
 // Function to identify the path in the edge matrix
 std::vector<size_t> identify_path(
     const std::vector<Edge_t>& list_edge_path,
@@ -502,63 +507,36 @@ std::vector<size_t> identify_path(
     return idx_srr_save;
 }
 
-void write_snarl_line_binary(
-    const EdgeBySampleMatrix& edge_matrix, 
-    const Snarl_data_t& snarl_data_s,
-    const std::vector<bool>& binary_phenotype, 
-    const std::string& chr,
-    const std::vector<std::vector<double>>& covar,
-    const double& maf,  
-    const double& table_threshold, 
-    const std::string& regression_dir, 
-    const size_t& sample_count,
-    std::ofstream& outf) {
 
-    std::ostringstream oss;
-    for (size_t i = 0; i < snarl_data_s.type_variants.size(); ++i) {
-        if (i != 0) oss << ",";
-        oss << snarl_data_s.type_variants[i];
-    }
+void BinarySnarlAnalyzer::analyze_and_write_snarl(const std::string& chr, 
+                                                  const Snarl_data_t& snarl_data_s,
+                                                  const std::string& regression_dir, 
+                                                  std::ofstream& outf) {
 
-    std::string type_var_str = oss.str();
+        std::ostringstream oss;
 
-    if (!covar.empty()) {
-        // Logistic regression
-        const auto& [df, phenotype_filtered, allele_number, allele_paths] = create_quantitative_table(sample_count, snarl_data_s.snarl_paths, binary_phenotype, edge_matrix);
-        bool df_filtration = check_MAF_threshold_quantitative(df, maf);
-
-        if (!df_filtration) { // filtred variant
-            // logistic regression with covariates if not empty
-            auto [p_value, beta, se, r2] = logistic_regression(df, phenotype_filtered, covar);
-        
-            // Plot regression table
-            if (table_threshold != -1 && stoat_vcf::isPValueSignificant(table_threshold, p_value)) {
-                std::string variant_file_name = regression_dir + "/" + pairToString(snarl_data_s.snarl_ids) + ".tsv";
-                stoat_vcf::writeSignificantTableToTSV(df,stringToVector<std::string>(vectorPathToString(snarl_data_s.snarl_paths)), edge_matrix.sampleNames, variant_file_name);
-            }
-            # pragma omp critical (outf) 
-            {
-                write_binary_covar(outf, chr, snarl_data_s, type_var_str, p_value, "", r2, beta, se, allele_number, allele_paths);
-            }
+        for (size_t i = 0; i < snarl_data_s.type_variants.size(); ++i) {
+            if (i != 0) oss << ",";
+            oss << snarl_data_s.type_variants[i];
         }
 
-    } else {
+        std::string type_var_str = oss.str();
+
         size_t length_column_headers = snarl_data_s.snarl_paths.size();
         std::vector<size_t> g0(length_column_headers, 0);
         std::vector<size_t> g1(length_column_headers, 0);
 
         size_t total_sum = stoat_vcf::create_binary_table(g0, g1, binary_phenotype, snarl_data_s.snarl_paths, length_column_headers, sample_count, edge_matrix);
         bool df_filtration = check_MAF_threshold_binary(g0, g1, total_sum, length_column_headers, maf);
-        
-        std::string fastfisher_p_value = "NA", chi2_p_value = "NA",
-        group_paths = "NA", allele_number_str = "NA", min_row_index_str = "NA",
-        numb_colum_str = "NA", inter_group_str = "NA", average_str = "NA";
 
         // Binary analysis single test
         if (!df_filtration) { // good df
-            stoat_vcf::binary_stat_test(g0, g1, fastfisher_p_value, chi2_p_value, group_paths,
-                allele_number_str, min_row_index_str, numb_colum_str, inter_group_str, average_str);
-        
+            const auto& [group_paths, 
+                allele_number_str, min_row_index_str, numb_colum_str, 
+                inter_group_str, average_str] = stoat_vcf::binary_stat_test(g0, g1);
+
+            const auto& [fastfisher_p_value, chi2_p_value] = fk.fisher_khi2(g0, g1);
+
             # pragma omp critical (outf) 
             {
                 write_binary(outf, chr, snarl_data_s, type_var_str, fastfisher_p_value, chi2_p_value, "", allele_number_str, min_row_index_str,
@@ -568,19 +546,42 @@ void write_snarl_line_binary(
     }
 }
 
-// Quantitative Table Generation
-void write_snarl_line_quantitative(
-    const EdgeBySampleMatrix& edge_matrix, 
+void BinaryCovarSnarlAnalyzer::analyze_and_write_snarl(const std::string& chr, 
     const Snarl_data_t& snarl_data_s,
-    const std::vector<double>& quantitative_phenotype, 
-    const std::string &chr,
-    const std::vector<std::vector<double>>& covar,
-    const double& maf, 
-    const double& table_threshold, 
     const std::string& regression_dir, 
-    const size_t& sample_count,
     std::ofstream& outf) {
 
+    std::ostringstream oss;
+
+    for (size_t i = 0; i < snarl_data_s.type_variants.size(); ++i) {
+        if (i != 0) oss << ",";
+        oss << snarl_data_s.type_variants[i];
+    }
+
+    std::string type_var_str = oss.str();
+
+    const auto& [df, phenotype_filtered, allele_number, allele_paths] = create_quantitative_table(sample_count, snarl_data_s.snarl_paths, binary_phenotype, edge_matrix);
+    bool df_filtration = check_MAF_threshold_quantitative(df, maf);
+
+    if (!df_filtration) { // filtred variant
+        // logistic regression with covariates if not empty
+        const auto& [p_value, beta, se, r2] = lr.logistic_regression(df, phenotype_filtered, covar);
+
+        // Plot regression table
+        if (table_threshold != -1 && stoat_vcf::isPValueSignificant(table_threshold, p_value)) {
+            std::string variant_file_name = regression_dir + "/" + pairToString(snarl_data_s.snarl_ids) + ".tsv";
+            stoat_vcf::writeSignificantTableToTSV(df,stringToVector<std::string>(vectorPathToString(snarl_data_s.snarl_paths)), edge_matrix.sampleNames, variant_file_name);
+        }
+        # pragma omp critical (outf) 
+        {
+            write_binary_covar(outf, chr, snarl_data_s, type_var_str, p_value, "", r2, beta, se, allele_number, allele_paths);
+        }
+    }
+}
+
+// Quantitative Table Generation
+void QuantitativeSnarlAnalyzer::analyze_and_write_snarl(const std::string &chr, const Snarl_data_t& snarl_data_s,
+    const std::string& regression_dir, std::ofstream& outf) {
 
     const auto& [df, phenotype_filtered, allele_number, allele_paths] = create_quantitative_table(sample_count, snarl_data_s.snarl_paths, quantitative_phenotype, edge_matrix);
     bool df_filtration = check_MAF_threshold_quantitative(df, maf);
@@ -596,7 +597,7 @@ void write_snarl_line_quantitative(
     std::stringstream data;
     
     if (!df_filtration) { // filtred variant
-        auto [p_value, beta, se, r2] = linear_regression(df, phenotype_filtered, covar);
+        auto [p_value, beta, se, r2] = lr.linear_regression(df, phenotype_filtered, covar);
         
         if (table_threshold != -1 && stoat_vcf::isPValueSignificant(table_threshold, p_value)) {
             std::string variant_file_name = regression_dir + "/" + pairToString(snarl_data_s.snarl_ids) + ".tsv";
@@ -634,17 +635,7 @@ std::vector<size_t> found_gene_snarl(
     return gene_index;
 }
 
-void write_snarl_line_eqtl(const EdgeBySampleMatrix& edge_matrix, 
-    const Snarl_data_t& snarl_data_s,
-    const std::vector<Qtl_data>& eqtl,
-    const std::string& chr, 
-    const std::vector<std::vector<double>>& covar,
-    const double& maf, 
-    const double& table_threshold, 
-    const std::string& regression_dir, 
-    const size_t& windows_gene_threshold, 
-    size_t sample_count,
-    std::ofstream& outf) {
+void EQTLSnarlAnalyzer::analyze_and_write_snarl(const Snarl_data_t& snarl_data_s) {
 
     std::vector<size_t> list_gene_index = found_gene_snarl(eqtl, snarl_data_s.start_positions, snarl_data_s.end_positions, windows_gene_threshold);
     const auto& [df, index_filtered, allele_number, allele_paths] = create_eqtl_table(sample_count, snarl_data_s.snarl_paths, edge_matrix);
@@ -667,7 +658,7 @@ void write_snarl_line_eqtl(const EdgeBySampleMatrix& edge_matrix,
         std::stringstream data;
 
         if (!df_filtration) { // filtred variant
-            auto [p_value, beta, se, r2] = linear_regression(df, gene_expression, covar);
+            auto [p_value, beta, se, r2] = lr.linear_regression(df, gene_expression, covar);
 
             if (table_threshold != -1 && stoat_vcf::isPValueSignificant(table_threshold, p_value)) {
                 std::string variant_file_name = regression_dir + "/" + pairToString(snarl_data_s.snarl_ids) + ".tsv";
@@ -701,18 +692,22 @@ bool check_MAF_threshold_quantitative(const std::vector<std::vector<double>>& df
 }
 
 bool check_MAF_threshold_binary(
-    const std::vector<size_t>& g0, const std::vector<size_t>& g1,
-    const size_t& totalSum, const size_t& length_column_headers, 
-    const double& maf) {
+    const std::vector<size_t>& g0, 
+    const std::vector<size_t>& g1,
+    size_t totalSum, 
+    size_t length_column_headers, 
+    double maf) {
 
-    // Check MAF threshold
+    if (g0.empty() || g1.empty()) return true;
+
     for (size_t i = 0; i < length_column_headers; ++i) {
-        int columnSum = g0[i] + g1[i];
+        size_t columnSum = g0[i] + g1[i];
         if (static_cast<double>(columnSum) / totalSum >= maf) {
-            return true; // MAF threshold met
+            return true;  // MAF threshold met
         }
     }
-    return false; // No column met MAF threshold
+
+    return false;  // No column met MAF threshold
 }
 
 } // end namespace stoat_vcf

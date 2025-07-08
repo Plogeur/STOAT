@@ -20,7 +20,7 @@
 
 #include "snarl_data_t.hpp"
 #include "utils.hpp"
-#include "snarl_analyser.hpp"
+#include "snarl_analyzer.hpp"
 #include "matrix.hpp"
 #include "binary_table.hpp"
 

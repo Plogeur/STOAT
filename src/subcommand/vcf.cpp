@@ -1,4 +1,34 @@
-#include "stoat_vcf.hpp"
+// This file is part of STOAT 0.0.1, copyright (C) 2024-2025 
+// Authors : Matis Alias-Bagarre, Jean Monlong & Xian-hui Chang.
+//
+// This program is free software: you can redistribute it and/or modify
+// it under the terms of the GNU General Public License as published by
+// the Free Software Foundation, either version 3 of the License, or
+// (at your option) any later version.
+//
+// This program is distributed in the hope that it will be useful,
+// but WITHOUT ANY WARRANTY; without even the implied warranty of
+// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+// GNU General Public License for more details.
+//
+// You should have received a copy of the GNU General Public License
+// along with this program.  If not, see <http://www.gnu.org/licenses/>.
+
+#include <iostream>
+#include <string>
+#include <unordered_map>
+#include <unordered_set>
+#include <chrono>
+#include <cstdlib>
+#include <getopt.h>
+#include <omp.h>
+
+#include "../snarl_data_t.hpp"
+#include "../snarl_analyzer.hpp"
+#include "../arg_parser.hpp"
+#include "../matrix.hpp"
+#include "../gaf_creator.hpp"
+#include "../post_processing.hpp"
 
 namespace stoat_vcf {
 
@@ -319,26 +349,40 @@ int stoat_vcf(int argc, char* argv[]) {
         return EXIT_SUCCESS;
 
     } else {
+
+        std::shared_ptr<stoat_vcf::SnarlAnalyzer> snarl_analyzer;
         stoat_vcf::phenotype_type_t phenotype_type;
+
+        // Decide which type of SnarlAnalyzer we want
         if (!binary_path.empty()) {
-            phenotype_type = stoat_vcf::BINARY;
+            // binary
+            if (!covariate.empty()){
+                // Normal binary
+                snarl_analyzer.reset(new stoat_vcf::BinarySnarlAnalyzer(snarls_chr, list_samples, maf, table_threshold));
+            } else {
+                // Binary covariate
+                snarl_analyzer.reset(new stoat_vcf::BinaryCovarSnarlAnalyzer(snarls_chr, list_samples, covariate, maf, table_threshold));
+            }
+            phenotype_type = stoat_vcf::BINARY; 
         } else if (!quantitative_path.empty()) {
-            phenotype_type = stoat_vcf::QUANTITATIVE;
+            // Quantitative
+            snarl_analyzer.reset(new stoat_vcf::QuantitativeSnarlAnalyzer(snarls_chr, list_samples, covariate, maf, table_threshold));
+            phenotype_type = stoat_vcf::QUANTITATIVE; 
         } else if (!eqtl_path.empty()) {
-            phenotype_type = stoat_vcf::EQTL;
+            // EQTL
+            snarl_analyzer.reset(new stoat_vcf::EQTLSnarlAnalyzer(snarls_chr, list_samples, covariate, maf, table_threshold, eqtl, windows_gene_threshold));
+            phenotype_type = stoat_vcf::EQTL; 
         }
 
-        std::string output_tsv = output_dir + (phenotype_type == stoat_vcf::BINARY         ? "/binary_table.tsv" : 
-                                                (phenotype_type == stoat_vcf::QUANTITATIVE ? "/quantitative_table.tsv" 
+        std::string output_tsv = output_dir + (phenotype_type == stoat_vcf::BINARY       ? "/binary_table.tsv" : 
+                                              (phenotype_type == stoat_vcf::QUANTITATIVE ? "/quantitative_table.tsv" 
                                                                                            : "/eqtl_gwas.tsv"));
 
-        stoat_vcf::chunk_chromosome_and_write_tsv(phenotype_type, ptr_vcf, hdr, rec, list_samples, snarls_chr, 
-                                                    binary_phenotype, quantitative_phenotype, eqtl, covariate, maf, table_threshold, 
-                                                    windows_gene_threshold, regression_dir, output_tsv);
+        snarl_analyzer->process_snarls_by_chromosome_chunk(ptr_vcf, hdr, rec, regression_dir, output_tsv);
 
-        const std::string output_significative = output_dir + (phenotype_type == stoat_vcf::BINARY       ?  "/top_variant_binary.tsv" : 
+        std::string output_significative = output_dir + (phenotype_type == stoat_vcf::BINARY       ?  "/top_variant_binary.tsv" : 
                                                         (phenotype_type == stoat_vcf::QUANTITATIVE ? "/top_variant_quantitative.tsv" 
-                                                                                                   : "/top_variant_eqtl.tsv"));
+                                                                                                  : "/top_variant_eqtl.tsv"));
 
         stoat_vcf::add_BH_adjusted_column(output_tsv, output_dir, output_significative, phenotype_type);
 
@@ -351,6 +395,7 @@ int stoat_vcf(int argc, char* argv[]) {
     auto end_1 = std::chrono::high_resolution_clock::now();
     std::cout << "Snarl analysis : " << std::chrono::duration<double>(end_1 - start_2).count() << " s" << std::endl;
     std::cout << "Time Gwas analysis : " << std::chrono::duration<double>(end_1 - start_1).count() << " s" << std::endl;
+    return EXIT_SUCCESS;
 }
 
 } // end stoat_vcf

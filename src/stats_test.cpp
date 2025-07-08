@@ -14,31 +14,26 @@ using boost::math::chi_squared_distribution;
 #  define S_CAST(type, val) (static_cast<type>(val))
 #endif
 
-static const double kExactTestEpsilon2 = 0.0000000000009094947017729282379150390625;
-static const double kExactTestBias = 0.00000000000000000000000010339757656912845935892608650874535669572651386260986328125;
-static const boost::math::chi_squared chi_squared_dist(1);
-boost::math::chi_squared_distribution<cpp_dec_float_50> cpp_dec_float_50_dist(1);
-
 // ------------------------ Logistic regression ------------------------
 
 // Standard normal cumulative distribution function
-double normal_cdf(double z) {
+double LogisticRegression::normal_cdf(double z) {
     static const boost::math::normal_distribution<> standard_normal(0.0, 1.0);
     return boost::math::cdf(standard_normal, z);
 }
 
 // Sigmoid function
-inline double sigmoid(double x) {
+inline double LogisticRegression::sigmoid(double x) {
     return 1.0 / (1.0 + std::exp(-x));
 }
 
 // Clamp helper
-inline double clamp(double x, double lo, double hi) {
+inline double LogisticRegression::clamp(double x, double lo, double hi) {
     return std::max(lo, std::min(hi, x));
 }
 
 // Log-likelihood
-double calculate_log_likelihood(const Eigen::VectorXd& y, const Eigen::VectorXd& p) {
+double LogisticRegression::calculate_log_likelihood(const Eigen::VectorXd& y, const Eigen::VectorXd& p) {
     double epsilon = 1e-8;
     double ll = 0.0;
     for (int i = 0; i < y.size(); ++i) {
@@ -49,15 +44,10 @@ double calculate_log_likelihood(const Eigen::VectorXd& y, const Eigen::VectorXd&
 }
 
 // GLM Implementation with Iteratively Reweighted Least Squares (IRLS)
-std::tuple<std::string, std::string, std::string, std::string> logistic_regression(
+std::tuple<std::string, std::string, std::string, std::string> LogisticRegression::logistic_regression(
     const std::vector<std::vector<double>>& df,
     const std::vector<bool>& phenotype,
     const std::vector<std::vector<double>>& covariates) {
-
-    const int max_iterations = 100;
-    const double tolerance = 1e-6;
-    const double l2_penalty = 1e-4;
-    const double epsilon = 1e-8;
 
     size_t num_samples = df.size();
     size_t num_variants = df[0].size();
@@ -180,7 +170,7 @@ std::tuple<std::string, std::string, std::string, std::string> logistic_regressi
 }
 
 // ------------------------ Chi2 test ------------------------
-std::string chi2_2x2(const size_t& a, const size_t& b, const size_t& c, const size_t& d) {
+std::string FisherKhi2::chi2_2x2(const size_t& a, const size_t& b, const size_t& c, const size_t& d) {
 
     int64_t row1 = a + b;
     int64_t row2 = c + d;
@@ -213,7 +203,7 @@ std::string chi2_2x2(const size_t& a, const size_t& b, const size_t& c, const si
 }
 
 // Check if the observed matrix is valid (no zero rows/columns)
-std::string chi2_2xN(const std::vector<size_t>& g0, const std::vector<size_t>& g1) {
+std::string FisherKhi2::chi2_2xN(const std::vector<size_t>& g0, const std::vector<size_t>& g1) {
 
     size_t cols = g0.size();
     std::vector<size_t> col_totals(cols);
@@ -263,7 +253,7 @@ std::string chi2_2xN(const std::vector<size_t>& g0, const std::vector<size_t>& g
 // Fisher's exact test for a 2x2 contingency table
 // m11, m12, m21, m22 are the counts in the table
 // Returns the p-value as a std::string with 4 decimal places
-std::string fastFishersExactTest(size_t m11, size_t m12,
+std::string FisherKhi2::fastFishersExactTest(size_t m11, size_t m12,
                                  size_t m21, size_t m22) {
     
     // Check for any full-zero row or column
@@ -361,10 +351,28 @@ std::string fastFishersExactTest(size_t m11, size_t m12,
     return stoat_vcf::set_precision(tprob / (cprob + tprob));
 }
 
+std::pair<std::string, std::string> FisherKhi2::fisher_khi2(const std::vector<size_t>& g0, const std::vector<size_t>& g1) {
+    
+    std::string chi2_p_value, fastfisher_p_value;
+    
+    // Compute  Fisher's exact & Chi-squared test p-value
+    if (g0.size() == 2) {
+        size_t a = g0[0];
+        size_t b = g0[1];
+        size_t c = g1[0];
+        size_t d = g1[1];
+        chi2_p_value = chi2_2x2(a, b, c, d);
+        fastfisher_p_value = fastFishersExactTest(a, b, c, d);
+    } else {
+        chi2_p_value = chi2_2xN(g0, g1);
+    }
+
+    return {chi2_p_value, fastfisher_p_value}
+}
 // ------------------------ Linear regression ------------------------
 
 // Linear regression function OLS with intercept + covariate
-std::tuple<std::string, std::string, std::string, std::string> linear_regression(
+std::tuple<std::string, std::string, std::string, std::string> LinearRegression::linear_regression(
     const std::vector<std::vector<double>>& df,
     const std::vector<double>& quantitative_phenotype,
     const std::vector<std::vector<double>>& covar) {
