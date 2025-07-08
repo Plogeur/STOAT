@@ -48,10 +48,11 @@ void SnarlAnalyzer::process_snarls_by_chromosome_chunk(
     htsFile* &ptr_vcf,
     bcf_hdr_t* &hdr,
     bcf1_t* &rec,
-    const std::string& regression_dir,
+    const std::string& regression_dir_,
     const std::string& output_filename) {
     
-    std::ofstream outf(output_filename, std::ios::binary);
+    regression_dir = regression_dir_;
+    outf(output_filename, std::ios::binary);
 
     // Write the header
     write_header(outf);
@@ -60,7 +61,7 @@ void SnarlAnalyzer::process_snarls_by_chromosome_chunk(
     std::cout << "GWAS analysis for chromosome : " << std::endl;
     while (bcf_read(ptr_vcf, hdr, rec) >= 0) {
 
-        std::string chr = bcf_hdr_id2name(hdr, rec->rid);
+        chr = bcf_hdr_id2name(hdr, rec->rid);
         // Skip chromosomes not in chr_to_snarl_data
         while (chr_to_snarl_data.find(chr) == chr_to_snarl_data.end()) {
             std::cerr << "Warning: Chromosome " << chr << " not found in snarl paths file. Skipping." << std::endl;

@@ -66,11 +66,11 @@ protected:
     // Matrix of edges in each sample/haplotype
     // This generally is a per-chromosome or per-chunk matrix, so it must be updated for each new chunk being analyzed 
     EdgeBySampleMatrix edge_matrix;
-    double maf; 
-    double table_threshold;
+    const double maf; 
+    const double table_threshold;
     std::ofstream outf;
     std::string chr; 
-    std::string regression_dir;
+    const std::string regression_dir;
 };
 
 class BinarySnarlAnalyzer : public SnarlAnalyzer {
