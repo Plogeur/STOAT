@@ -27,7 +27,7 @@ SnarlAnalyzer(chr_to_snarl_data, list_samples, covariate, maf, table_threshold),
 
 EQTLCovarSnarlAnalyzer::EQTLSnarlAnalyzer(const std::unordered_map<std::string, std::vector<Snarl_data_t>>& chr_to_snarl_data, const std::vector<std::string>& list_samples, 
     const std::vector<std::vector<double>>& covariate, double maf, double table_threshold, 
-    const std::unordered_map<std::string, std::vector<std::tuple<std::string, std::vector<double>, size_t, size_t>>>& eqtl_map,
+    const std::unordered_map<std::string, std::vector<stoat_vcf::Qtl_data>>& eqtl_map,
     size_t windows_gene_threshold) :
 SnarlAnalyzer(chr_to_snarl_data, list_samples, covariate, maf, table_threshold), eqtl_map(eqtl_map) {};
 

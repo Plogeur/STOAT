@@ -23,6 +23,7 @@
 #include "binary_table.hpp"
 #include "quantitative_table.hpp"
 #include "utils.hpp"
+#include "stats_test.hpp"
 
 using namespace std;
 
@@ -65,12 +66,14 @@ protected:
 
     // Matrix of edges in each sample/haplotype
     // This generally is a per-chromosome or per-chunk matrix, so it must be updated for each new chunk being analyzed 
-    EdgeBySampleMatrix edge_matrix;
-    const double maf; 
-    const double table_threshold;
-    std::ofstream outf;
-    std::string chr; 
-    const std::string regression_dir;
+    EdgeBySampleMatrix& edge_matrix;
+    const double& maf; 
+    const double& table_threshold;
+    std::ofstream& outf;
+    std::string& chr; 
+    const std::string& regression_dir;
+    const std::unordered_map<std::vector<stoat_vcf::Qtl_data>>& eqtl_map;
+    const size_t& windows_gene_threshold;
 };
 
 class BinarySnarlAnalyzer : public SnarlAnalyzer {
@@ -88,7 +91,7 @@ public:
 protected:
 
     const std::vector<bool>& binary_phenotype;
-
+    FisherKhi2& fk;
 };
 
 class BinaryCovarSnarlAnalyzer : public SnarlAnalyzer {
@@ -106,7 +109,7 @@ public:
 protected:
 
     const std::vector<bool>& binary_phenotype;
-
+    LogisticRegression& lr;
 };
 
 class QuantitativeSnarlAnalyzer : public SnarlAnalyzer {
@@ -124,7 +127,7 @@ public:
 protected:
 
     const std::vector<double>& quantitative_phenotype;
-
+    LinearRegression& lr;
 };
 
 class EQTLSnarlAnalyzer : public SnarlAnalyzer {
@@ -133,7 +136,7 @@ public:
     
     EQTLSnarlAnalyzer(const std::unordered_map<std::string, std::vector<Snarl_data_t>>& chr_to_snarl_data, const std::vector<std::string>& list_samples, 
                   const std::vector<std::vector<double>>& covariate, double maf, double table_threshold, 
-                  const std::unordered_map<std::string, std::vector<std::tuple<std::string, std::vector<double>, size_t, size_t>>>& eqtl_map,
+                  const std::unordered_map<std::string, std::vector<stoat_vcf::Qtl_data>>& eqtl_map,
                   size_t windows_gene_threshold);
 
     void analyze_and_write_snarl(const std::string& chr, const Snarl_data_t& snarl_data, const std::string& regression_dir, std::ofstream& outf);
@@ -144,11 +147,14 @@ public:
 protected:
 
     // TODO idk what these are 
-    //Maps something to something else? 
-    const std::unordered_map<std::string, std::vector<std::tuple<std::string, std::vector<double>, size_t, size_t>>> eqtl_map;
-
-    size_t windows_gene_threshold;
-
+    // Maps something to something else?
+    // Matis ans : eqtl_map is an {chr name : std::vector<stoat_vcf::Qtl_data>}
+    // is organise like that in the first place to optimize edge_matrix / eqtl linking
+    // but now we can just use std::vector<stoat_vcf::Qtl_data> because we already know the chr
+    // that we gonna use
+    const std::vector<stoat_vcf::Qtl_data>& eqtl;
+    const size_t& windows_gene_threshold;
+    LinearRegression& lr;
 };
 
 /// Given a list of paths in a snarl, return vectors of counts of each sample taking an allele for the two alleles with the highest counts over all samples
