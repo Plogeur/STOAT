@@ -73,7 +73,7 @@ protected:
     std::ofstream& outf;
     std::string& chr; 
 };
-
+ 
 class BinarySnarlAnalyzer : public SnarlAnalyzer {
 
 public:
