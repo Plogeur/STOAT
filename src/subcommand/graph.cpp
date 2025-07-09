@@ -23,7 +23,7 @@
 #include <omp.h>
 
 #include "../snarl_data_t.hpp"
-#include "../snarl_analyser.hpp"
+#include "../snarl_analyzer.hpp"
 #include "../arg_parser.hpp"
 #include "../matrix.hpp"
 #include "../gaf_creator.hpp"

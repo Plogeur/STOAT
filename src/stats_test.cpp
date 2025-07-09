@@ -138,15 +138,15 @@ std::tuple<std::string, std::string, std::string, std::string> LogisticRegressio
     for (size_t i = 0; i < num_variants; ++i) {
         size_t idx = 1 + i; // skip intercept
         double z_score = beta(idx) / se(idx);
-        p_values[i] = 2.0 * (1.0 - normal_cdf(std::abs(z_score))); // Two-sided
+        p_values[i] = 2.0 * (1.0 - LogisticRegression::normal_cdf(std::abs(z_score))); // Two-sided
     }
 
     // --- McFadden's R²
-    double ll_full = calculate_log_likelihood(y, p);
-    double p_null_val = clamp(y.mean(), epsilon, 1.0 - epsilon);
+    double ll_full = LogisticRegression::calculate_log_likelihood(y, p);
+    double p_null_val = LogisticRegression::clamp(y.mean(), epsilon, 1.0 - epsilon);
     Eigen::VectorXd p_null = Eigen::VectorXd::Constant(num_samples, p_null_val);
-    double ll_null = calculate_log_likelihood(y, p_null);
-    double r2 = clamp(1.0 - (ll_full / ll_null), 0.0, 1.0);
+    double ll_null = LogisticRegression::calculate_log_likelihood(y, p_null);
+    double r2 = LogisticRegression::clamp(1.0 - (ll_full / ll_null), 0.0, 1.0);
 
     double p_value_adjusted = p_values[0];
     double beta_adjusted = beta[0];
@@ -367,7 +367,7 @@ std::pair<std::string, std::string> FisherKhi2::fisher_khi2(const std::vector<si
         chi2_p_value = chi2_2xN(g0, g1);
     }
 
-    return {chi2_p_value, fastfisher_p_value}
+    return {chi2_p_value, fastfisher_p_value};
 }
 // ------------------------ Linear regression ------------------------
 

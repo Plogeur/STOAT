@@ -3,9 +3,11 @@
 // ------------------------ Binary table & stats ------------------------
 namespace stoat_vcf {
 
-std::tuple<std::string, 
-std::string, std::string, std::string, std::string, 
-std::string> binary_stat_test(const std::vector<size_t>& g0, const std::vector<size_t>& g1) {
+std::tuple<std::string, std::string, 
+std::string, std::string, std::string, 
+std::string> binary_stat_test(
+    const std::vector<size_t>& g0, 
+    const std::vector<size_t>& g1) {
 
     // Compute derived statistics
     int allele_number = 0;

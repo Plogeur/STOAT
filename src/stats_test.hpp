@@ -36,7 +36,7 @@ using boost::multiprecision::cpp_dec_float_50;
 
 class FisherKhi2 {
     public:
-        FisherKhi2();
+        FisherKhi2() = default;
         ~FisherKhi2() = default;
 
         // Function to perform the Chi-square test on row size > 2 
@@ -65,7 +65,7 @@ class FisherKhi2 {
 
 class LinearRegression {
     public:
-        LinearRegression();
+        LinearRegression() = default;
         ~LinearRegression() = default;
 
         std::tuple<std::string, std::string, std::string, std::string> linear_regression(
@@ -76,12 +76,9 @@ class LinearRegression {
 
 class LogisticRegression {
     public:
-        LogisticRegression();
+        LogisticRegression() = default;
         ~LogisticRegression() = default;
 
-        double normal_cdf(double z);
-        inline double sigmoid(double x);
-        inline double clamp(double x, double lo, double hi);
         double calculate_log_likelihood(const Eigen::VectorXd& y, const Eigen::VectorXd& p);
 
         // Standard normal cumulative distribution function
@@ -108,7 +105,7 @@ class LogisticRegression {
 
 class LMM {
     public:
-        LMM();
+        LMM() = default;
         ~LMM() = default;
 
         // template <typename T> 
