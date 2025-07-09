@@ -26,7 +26,7 @@ void write_eqtl(std::ofstream& outstream, const std::string& chr, const Snarl_da
                    const std::string& beta, const std::string& se, size_t allele_number, const std::vector<size_t>& allele_paths) {
     outstream << chr << "\t" 
               << snarl_data_s.start_positions << "\t" 
-              << pairToString(snarl_data_s.snarl_ids) << "\t" 
+              << stoat_vcf::pairToString(snarl_data_s.snarl_ids) << "\t" 
               << type_var_str << "\t" 
               << gene_name << "\t" 
               << p_value  << "\t" 
@@ -44,7 +44,7 @@ void write_binary_covar(std::ofstream& outstream, const std::string& chr, const 
                         const std::string& beta, const std::string& se, size_t allele_number, const std::vector<size_t>& allele_paths) {
     outstream << chr << "\t" 
               << snarl_data_s.start_positions << "\t" 
-              << pairToString(snarl_data_s.snarl_ids) << "\t" 
+              << stoat_vcf::pairToString(snarl_data_s.snarl_ids) << "\t" 
               << type_var_str << "\t" 
               << p_value << "\t" 
               << p_value_adjusted << "\t" 
@@ -53,7 +53,6 @@ void write_binary_covar(std::ofstream& outstream, const std::string& chr, const 
               << se << "\t" 
               << allele_number << "\t" 
               << vectorToString(allele_paths) << endl;
-
 }
 
 void write_binary(std::ofstream& outstream, const std::string& chr, const Snarl_data_t& snarl_data_s, const std::string& type_var_str,
@@ -62,7 +61,7 @@ void write_binary(std::ofstream& outstream, const std::string& chr, const Snarl_
                         const std::string& inter_group_str, const std::string& average_str, const std::string& group_paths) {
     outstream << chr << "\t" 
               << snarl_data_s.start_positions << "\t" 
-              << pairToString(snarl_data_s.snarl_ids) << "\t" 
+              << stoat_vcf::pairToString(snarl_data_s.snarl_ids) << "\t" 
               << type_var_str << "\t" 
               << fastfisher_p_value << "\t" 
               << chi2_p_value << "\t" 
@@ -75,13 +74,12 @@ void write_binary(std::ofstream& outstream, const std::string& chr, const Snarl_
               << group_paths << endl;
 }
 
-
 void write_quantitative(std::ofstream& outstream, const std::string& chr, const Snarl_data_t& snarl_data_s, const std::string& type_var_str,
                         const std::string& p_value, const std::string& p_value_adjusted, const std::string& r2,
                         const std::string& beta, const std::string& se, size_t allele_number, const std::vector<size_t>& allele_paths) {
     outstream << chr << "\t" 
               << snarl_data_s.start_positions << "\t" 
-              << pairToString(snarl_data_s.snarl_ids) << "\t" 
+              << stoat_vcf::pairToString(snarl_data_s.snarl_ids) << "\t" 
               << type_var_str << "\t" 
               << p_value  << "\t" 
               << p_value_adjusted << "\t" 
@@ -92,6 +90,7 @@ void write_quantitative(std::ofstream& outstream, const std::string& chr, const 
               << vectorToString(allele_paths) << "\n";
 
 }
+
 void write_fasta(std::ofstream& outstream, const handlegraph::PathPositionHandleGraph& graph, const bdsg::SnarlDistanceIndex& distance_index,
                         const handlegraph::net_handle_t& snarl, const std::unordered_map<std::string, bool>& samples, const string& reference_name) {
     

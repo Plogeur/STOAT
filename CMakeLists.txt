@@ -1,8 +1,5 @@
 cmake_minimum_required(VERSION 3.10)
-project(stoat VERSION 0.1.1 LANGUAGES CXX)
-
-# Locate libomp via Homebrew
-# execute_process(COMMAND brew --prefix libomp OUTPUT_VARIABLE LIBOMP_PREFIX OUTPUT_STRIP_TRAILING_WHITESPACE)
+project(stoat VERSION 0.1.0 LANGUAGES CXX)
 
 # C++ Standard Settings
 set(CMAKE_CXX_STANDARD 17)
@@ -13,8 +10,9 @@ set(CMAKE_OSX_DEPLOYMENT_TARGET "12.7") # IOS fix
 
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(HTSLIB REQUIRED htslib)
+
 include_directories(${HTSLIB_INCLUDE_DIRS})
-list(APPEND CMAKE_PREFIX_PATH "${HOMEBREW_PREFIX}")
+link_directories(${HTSLIB_LIBRARY_DIRS})
 
 # Find Packages
 find_package(Boost REQUIRED)
@@ -22,8 +20,8 @@ find_package(Eigen3 REQUIRED)
 
 # Copied from https://github.com/vgteam/vg/wiki/Programming-with-the-vg-API
 # SDSL library ("sdsl" target) already exists from libbdsg
-
 # GBWT doesn't have CMake yet so we need to explain how to build it.
+
 # GBWT dependency: OpenMP
 if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     # OpenMP may be installed by Homebrew in a place CMake can't find it by default.
@@ -39,13 +37,11 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     list(APPEND CMAKE_PREFIX_PATH "${HOMEBREW_PREFIX}")
     list(APPEND CMAKE_PREFIX_PATH "${HOMEBREW_PREFIX}/opt/libomp")
 endif()
-find_package( OpenMP REQUIRED )
+find_package(OpenMP REQUIRED)
 
-# Add Executable
-add_executable(${PROJECT_NAME}
-    src/main.cpp
-    src/stoat_vcf.cpp
-    src/stoat_graph.cpp
+add_library(${PROJECT_NAME}_objs OBJECT
+    src/subcommand/vcf.cpp
+    src/subcommand/graph.cpp
     src/utils.cpp
     src/arg_parser.cpp
     src/post_processing.cpp
@@ -57,20 +53,18 @@ add_executable(${PROJECT_NAME}
     src/stats_test.cpp
     src/writer.cpp
     src/snarl_analyzer.cpp
+    src/graph_path_association_finder.cpp
+    src/partitioner.cpp
 )
 
 # Include Directories
-target_include_directories(${PROJECT_NAME} PRIVATE
+target_include_directories(${PROJECT_NAME}_objs PRIVATE
     ${Boost_INCLUDE_DIRS}
     ${HTSLIB_INCLUDE_DIRS}
 )
 
-# Apply OpenMP flags to main target
-target_compile_options(${PROJECT_NAME} PRIVATE -w) # fix warning
-target_compile_options(unit_tests PRIVATE -w)
-
 # Link Libraries
-target_link_libraries(${PROJECT_NAME}
+target_link_libraries(${PROJECT_NAME}_objs
     Boost::boost
     bdsg
     handlegraph
@@ -79,6 +73,14 @@ target_link_libraries(${PROJECT_NAME}
     ${HTSLIB_LIBRARIES}
     OpenMP::OpenMP_CXX
 )
+
+# Add Executable
+add_executable(${PROJECT_NAME} src/main.cpp)
+
+# Link the code
+target_link_libraries(${PROJECT_NAME} ${PROJECT_NAME}_objs)
+
+target_compile_options(${PROJECT_NAME} PRIVATE -w) # fix warning
 
 # Enable testing
 enable_testing()
@@ -110,10 +112,9 @@ add_executable(unit_tests
     src/snarl_analyzer.cpp
 )
 
-# Apply OpenMP flags to unit tests
 target_compile_options(unit_tests PRIVATE -w) # fix warning
 
-# add src target lib + Catch2 lib 
+# add src target lib + Catch2 lib 
 target_link_libraries(unit_tests PRIVATE 
     Catch2::Catch2WithMain     
     Boost::boost

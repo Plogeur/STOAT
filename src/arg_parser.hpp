@@ -38,6 +38,8 @@ struct KinshipMatrix {
                   const std::vector<std::vector<double>>& matrix)
         : ids(ids), matrix(matrix) {}
 
+    void parseKinshipMatrix(const std::string& filename);
+
     const bool empty() const {
         return ids.empty() || matrix.empty();
     } 
