@@ -28,7 +28,7 @@
 
 using namespace std;
 
-namespace stoat_vcf {
+namespace stoat {
 
 std::string format_group_paths(const std::vector<size_t>& g0, const std::vector<size_t>& g1);
 std::string set_precision(const double& value);
@@ -112,6 +112,6 @@ bool is_equal(T a, T b, T e = std::numeric_limits<T>::epsilon()) {
 
 enum phenotype_type_t { BINARY = 1, QUANTITATIVE, EQTL };
 
-} // namespace stoat_vcf
+} // namespace stoat
 
 #endif

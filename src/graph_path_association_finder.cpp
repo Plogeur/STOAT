@@ -74,7 +74,7 @@ void AssociationFinder::test_snarls() const {
                     const auto& [group_paths, 
                         allele_number_str, min_row_index_str, 
                         numb_colum_str, inter_group_str, average_str] = 
-                        stoat_vcf::binary_stat_test(genotype_associated, genotype_unassociated, 
+                        stoat::binary_stat_test(genotype_associated, genotype_unassociated, 
                                 group_paths, allele_number_str, min_row_index_str,
                                     numb_colum_str, inter_group_str, average_str);
                     

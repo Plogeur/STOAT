@@ -18,12 +18,12 @@
 #include <htslib/hts.h>
 
 #include "arg_parser.hpp"
+#include "stats_test.hpp"
 #include "matrix.hpp"
 #include "snarl_data_t.hpp"
 #include "binary_table.hpp"
 #include "quantitative_table.hpp"
 #include "utils.hpp"
-#include "stats_test.hpp"
 
 using namespace std;
 
@@ -32,12 +32,11 @@ namespace stoat_vcf {
 class SnarlAnalyzer {
 public:
     SnarlAnalyzer(
-        const std::unordered_map<std::string, std::vector<Snarl_data_t>>& chr_to_snarl_data, 
+        const std::unordered_map<std::string, std::vector<Snarl_data_t>>& chr_to_snarl_data,
         const std::vector<std::string>& list_samples, 
-        const std::vector<std::vector<double>>& covariate, 
-        const double& maf_threshold, 
-        const double& table_threshold,
-        EdgeBySampleMatrix& edge_matrix_empty);
+        const std::vector<std::vector<double>>& covariate,
+        const double& maf_threshold,
+        const double& table_threshold);
 
     ~SnarlAnalyzer()=default;
 
@@ -47,13 +46,18 @@ public:
     void process_snarls_by_chromosome_chunk(
         htsFile* &ptr_vcf, 
         bcf_hdr_t* &hdr, 
-        bcf1_t* &rec, 
+        bcf1_t* &rec,
         EdgeBySampleMatrix& edge_matrix_empty,
         const std::string& regression_dir,
         const std::string& output_filename);
 
     /// Update the EdgeBySampleMatrix representing the genotypes in a vcf and the pointers to the vcf but advanced to the end of the chromosome?
-    std::tuple<htsFile*, bcf_hdr_t*, bcf1_t*> make_edge_matrix(htsFile *ptr_vcf, bcf_hdr_t *hdr, bcf1_t *rec, std::string &chr, size_t &num_paths_ch);
+    std::tuple<htsFile*, bcf_hdr_t*, bcf1_t*> make_edge_matrix(
+        htsFile *ptr_vcf, 
+        bcf_hdr_t *hdr, 
+        bcf1_t *rec, 
+        std::string &chr, 
+        size_t &num_paths_ch);
 
     /// For the given snarl, analyze the snarl and write it to outf
     virtual void analyze_and_write_snarl(const Snarl_data_t& snarl_data) = 0;
@@ -80,10 +84,10 @@ protected:
     const double& maf_threshold; 
     const double& table_threshold;
     const std::string& regression_dir;
-    std::ofstream& outf;
+    std::ofstream* outf;
     std::string& chr;
 };
- 
+
 class BinarySnarlAnalyzer : public SnarlAnalyzer {
 
 public:
@@ -93,12 +97,11 @@ public:
         const std::vector<std::string>& list_samples, 
         const double& maf_threshold,
         const double& table_threshold,
-        EdgeBySampleMatrix& edge_matrix_empty,
         const std::vector<bool>& binary_phenotype);
 
     void analyze_and_write_snarl(const Snarl_data_t& snarl_data);
 
-    void write_header(std::ofstream& outf);
+    void write_header(std::ofstream&outf);
 
 /////////////////// Private data members
 protected:
@@ -116,8 +119,7 @@ public:
         const std::vector<std::string>& list_samples, 
         const std::vector<std::vector<double>>& covariate, 
         const double& maf_threshold, 
-        const double& table_threshold,
-        EdgeBySampleMatrix& edge_matrix_empty,
+        const double& table_threshold, 
         const std::vector<bool>& binary_phenotype);
 
     void analyze_and_write_snarl(const Snarl_data_t& snarl_data);
@@ -140,8 +142,7 @@ public:
         const std::vector<std::string>& list_samples, 
         const std::vector<std::vector<double>>& covariate, 
         const double& maf_threshold, 
-        const double& table_threshold,
-        EdgeBySampleMatrix& edge_matrix_empty,
+        const double& table_threshold, 
         const std::vector<double>& quantitative_phenotype);
 
     void analyze_and_write_snarl(const Snarl_data_t& snarl_data) ;
@@ -152,7 +153,7 @@ public:
 protected:
 
     const std::vector<double>& quantitative_phenotype;
-    LinearRegression lr;
+    LinearRegression& lr;
 };
 
 class EQTLSnarlAnalyzer : public SnarlAnalyzer {
@@ -164,8 +165,7 @@ public:
         const std::vector<std::string>& list_samples, 
         const std::vector<std::vector<double>>& covariate, 
         const double& maf_threshold, 
-        const double& table_threshold,
-        EdgeBySampleMatrix& edge_matrix_empty, 
+        const double& table_threshold, 
         const std::unordered_map<std::string, std::vector<stoat_vcf::Qtl_data>>& eqtl_map,
         const size_t& windows_gene_threshold);
 
@@ -184,27 +184,22 @@ protected:
     // that we gonna use
     const std::unordered_map<std::string, std::vector<stoat_vcf::Qtl_data>>& eqtl_map;
     const size_t& windows_gene_threshold;
-    LinearRegression lr;
+    LinearRegression& lr;
 };
 
 /// Return true if any column exceeds the MAF threshold
-bool check_MAF_threshold_quantitative(
-    const std::vector<std::vector<double>>& df, 
-    const double& maf_threshold);
+bool check_MAF_threshold_quantitative(const std::vector<std::vector<double>>& df, const double& maf);
 
 bool check_MAF_threshold_binary(
-    const std::vector<size_t>& g0, 
-    const std::vector<size_t>& g1,
-    const size_t& totalSum, 
-    const size_t& length_column_headers, 
-    const double& maf_threshold);
+    const std::vector<size_t>& g0, const std::vector<size_t>& g1,
+    const size_t& totalSum, const size_t& length_column_headers, 
+    const double& maf);
 
 std::vector<size_t> found_gene_snarl(
     const std::vector<Qtl_data>& gene_position, 
     const size_t& start_pos, 
     const size_t& end_pos,
     const size_t& windows_gene_threshold);
-
 
 // Decompose path Path_traversal_t to vector Edge_t
 std::vector<stoat_vcf::Edge_t> decompose_path_to_edges(const Path_traversal_t& s);

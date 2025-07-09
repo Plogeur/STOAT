@@ -19,14 +19,13 @@
 #include <Eigen/Core>
 
 #include <boost/math/distributions/fisher_f.hpp>
-#include <boost/math/distributions/students_t.hpp>  // For t-distribution
+#include <boost/math/distributions/students_t.hpp>
 #include <boost/math/distributions/chi_squared.hpp>
 #include <boost/multiprecision/cpp_dec_float.hpp>
 #include <boost/math/distributions/normal.hpp>
 
 #include "arg_parser.hpp"
 #include "matrix.hpp"
-#include "snarl_analyzer.hpp"
 #include "utils.hpp"
 
 using namespace std;

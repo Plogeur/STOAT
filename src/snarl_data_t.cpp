@@ -681,7 +681,7 @@ std::unordered_map<std::string, std::vector<Snarl_data_t>> loop_over_snarls_writ
             if (bool_return) {
                 out_snarl << chr << "\t" << strat_pos << "\t" << end_pos
                     << "\t" << handlegraph::as_integer(snarl) << "\t" << snarl_id_str << "\t" << vectorPathToString(pretty_paths)
-                    << "\t" << vectorToString(type_variants) << "\t" << str_reference << "\n";
+                    << "\t" << stoat::vectorToString(type_variants) << "\t" << str_reference << "\n";
             } else {
                 // case new chr
                 if (chr != save_chr && !save_chr.empty()) {

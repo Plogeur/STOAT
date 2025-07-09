@@ -102,7 +102,7 @@ std::tuple<std::string, std::string, std::string, std::string> LogisticRegressio
         Eigen::VectorXd gradient = X.transpose() * (y - p) - l2_penalty * beta;
 
         Eigen::LDLT<Eigen::MatrixXd> ldlt(hessian);
-        if (ldlt.info() != Eigen::Success) return std::make_tuple("NA","NA","NA","NA");
+        if (ldlt.info() != Eigen::Success) return std::make_tuple("NA", "NA", "NA", "NA");
 
         Eigen::VectorXd delta = ldlt.solve(gradient);
         beta += delta;
@@ -138,22 +138,22 @@ std::tuple<std::string, std::string, std::string, std::string> LogisticRegressio
     for (size_t i = 0; i < num_variants; ++i) {
         size_t idx = 1 + i; // skip intercept
         double z_score = beta(idx) / se(idx);
-        p_values[i] = 2.0 * (1.0 - LogisticRegression::normal_cdf(std::abs(z_score))); // Two-sided
+        p_values[i] = 2.0 * (1.0 - normal_cdf(std::abs(z_score))); // Two-sided
     }
 
     // --- McFadden's R²
-    double ll_full = LogisticRegression::calculate_log_likelihood(y, p);
-    double p_null_val = LogisticRegression::clamp(y.mean(), epsilon, 1.0 - epsilon);
+    double ll_full = calculate_log_likelihood(y, p);
+    double p_null_val = clamp(y.mean(), epsilon, 1.0 - epsilon);
     Eigen::VectorXd p_null = Eigen::VectorXd::Constant(num_samples, p_null_val);
-    double ll_null = LogisticRegression::calculate_log_likelihood(y, p_null);
-    double r2 = LogisticRegression::clamp(1.0 - (ll_full / ll_null), 0.0, 1.0);
+    double ll_null = calculate_log_likelihood(y, p_null);
+    double r2 = clamp(1.0 - (ll_full / ll_null), 0.0, 1.0);
 
     double p_value_adjusted = p_values[0];
     double beta_adjusted = beta[0];
     double se_adjusted = se[0];
 
     if (p_values.size() > 1) { // case > 3 column/path
-        std::vector<double> p_values_adjusted = stoat_vcf::adjusted_holm(p_values);
+        std::vector<double> p_values_adjusted = stoat::adjusted_holm(p_values);
         size_t min_index = std::distance(p_values_adjusted.begin(), std::min_element(p_values_adjusted.begin(), p_values_adjusted.end()));
         p_value_adjusted = p_values_adjusted[min_index];
         beta_adjusted = beta[min_index+1];
@@ -161,10 +161,10 @@ std::tuple<std::string, std::string, std::string, std::string> LogisticRegressio
     }
 
     // set precision : 4 digit
-    std::string r2_str = stoat_vcf::set_precision(r2);
-    std::string beta_str = stoat_vcf::set_precision(beta_adjusted);
-    std::string se_str = stoat_vcf::set_precision(se_adjusted);
-    std::string p_value_str = stoat_vcf::set_precision(p_value_adjusted);
+    std::string r2_str = stoat::set_precision(r2);
+    std::string beta_str = stoat::set_precision(beta_adjusted);
+    std::string se_str = stoat::set_precision(se_adjusted);
+    std::string p_value_str = stoat::set_precision(p_value_adjusted);
 
     return std::make_tuple(r2_str, beta_str, se_str, p_value_str);
 }
@@ -186,7 +186,7 @@ std::string FisherKhi2::chi2_2x2(const size_t& a, const size_t& b, const size_t&
     double expected_d = (double)(col2) * (row2) / total;
 
     if (expected_a == 0 || expected_b == 0 || expected_c == 0 || expected_d == 0)
-        return stoat_vcf::set_precision(std::numeric_limits<double>::max());
+        return stoat::set_precision(std::numeric_limits<double>::max());
 
     double chi2_stat = 0;
     chi2_stat += std::pow((double)a - expected_a, 2) / expected_a;
@@ -197,9 +197,9 @@ std::string FisherKhi2::chi2_2x2(const size_t& a, const size_t& b, const size_t&
     if (chi2_stat > 85.0) {
         cpp_dec_float_50 chi2_stat_float_50 = chi2_stat;
         cpp_dec_float_50 pval = 1.0 - boost::math::cdf(cpp_dec_float_50_dist, chi2_stat_float_50);
-        return stoat_vcf::set_precision_float_50(pval.convert_to<double>());
+        return stoat::set_precision_float_50(pval.convert_to<double>());
     }
-    return stoat_vcf::set_precision(1.0 - boost::math::cdf(chi_squared_dist, chi2_stat));
+    return stoat::set_precision(1.0 - boost::math::cdf(chi_squared_dist, chi2_stat));
 }
 
 // Check if the observed matrix is valid (no zero rows/columns)
@@ -240,12 +240,12 @@ std::string FisherKhi2::chi2_2xN(const std::vector<size_t>& g0, const std::vecto
         cpp_dec_float_50 chi2_stat_float_50 = chi2;
         boost::math::chi_squared_distribution<cpp_dec_float_50> cpp_dec_float_50_dist_2xN(df);
         cpp_dec_float_50 p_value = 1.0 - boost::math::cdf(cpp_dec_float_50_dist_2xN, chi2_stat_float_50);
-        return stoat_vcf::set_precision_float_50(p_value);
+        return stoat::set_precision_float_50(p_value);
     }
 
     boost::math::chi_squared dist_2xN(df);
     double pvalue = 1.0 - boost::math::cdf(dist_2xN, chi2);
-    return stoat_vcf::set_precision(pvalue);
+    return stoat::set_precision(pvalue);
 }
 
 // ------------------------ Fisher exact test ------------------------
@@ -343,12 +343,12 @@ std::string FisherKhi2::fastFishersExactTest(size_t m11, size_t m12,
         preaddp = tprob;
         tprob += cur_prob;
         if (tprob <= preaddp) {
-            return stoat_vcf::set_precision(preaddp / (cprob + preaddp));
+            return stoat::set_precision(preaddp / (cprob + preaddp));
         }
         } while (cur11 > 0.5);
     }
 
-    return stoat_vcf::set_precision(tprob / (cprob + tprob));
+    return stoat::set_precision(tprob / (cprob + tprob));
 }
 
 std::pair<std::string, std::string> FisherKhi2::fisher_khi2(const std::vector<size_t>& g0, const std::vector<size_t>& g1) {
@@ -445,7 +445,7 @@ std::tuple<std::string, std::string, std::string, std::string> LinearRegression:
     double se_adjusted = se[0];
 
     if (p_values.size() > 1) {
-        std::vector<double> p_values_adjusted = stoat_vcf::adjusted_holm(p_values);
+        std::vector<double> p_values_adjusted = stoat::adjusted_holm(p_values);
         size_t min_index = std::distance(p_values_adjusted.begin(), std::min_element(p_values_adjusted.begin(), p_values_adjusted.end()));
         p_value_adjusted = p_values_adjusted[min_index];
         beta_adjusted = beta[min_index+1];
@@ -453,10 +453,10 @@ std::tuple<std::string, std::string, std::string, std::string> LinearRegression:
     }
 
     // set precision : 4 digit
-    std::string r2_str = stoat_vcf::set_precision(r2);
-    std::string beta_str = stoat_vcf::set_precision(beta_adjusted);
-    std::string se_str = stoat_vcf::set_precision(se_adjusted);
-    std::string p_value_str = stoat_vcf::set_precision(p_value_adjusted);
+    std::string r2_str = stoat::set_precision(r2);
+    std::string beta_str = stoat::set_precision(beta_adjusted);
+    std::string se_str = stoat::set_precision(se_adjusted);
+    std::string p_value_str = stoat::set_precision(p_value_adjusted);
 
     return std::make_tuple(r2_str, beta_str, se_str, p_value_str);
 }

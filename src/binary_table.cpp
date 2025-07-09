@@ -34,7 +34,7 @@ std::string> binary_stat_test(
     
     int average = static_cast<double>(allele_number) / numb_colum; // get 200 instead of 200.00000
 
-    group_paths = stoat_vcf::format_group_paths(g0, g1);
+    group_paths = stoat::format_group_paths(g0, g1);
     allele_number_str = std::to_string(allele_number);
     min_row_index_str = std::to_string(min_row_index);
     numb_colum_str = std::to_string(numb_colum);
