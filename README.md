@@ -31,12 +31,13 @@ Manual installation :
 - vg (optional)
 
 Or you can use the `Dockerfile` : [Dockerfile](https://github.com/Plogeur/STOAT/blob/main/Dockerfile)
+
 Or you can use the `container` : docker://quay.io/matis_alias-bagarre/stoat
 
 ## Build
 
 ```bash
-git clone --branch stoat_cxx https://github.com/Plogeur/STOAT.git
+git clone --recursive --branch stoat_cxx https://github.com/Plogeur/STOAT.git
 cd stoat_cxx
 
 mkdir build && cd build
