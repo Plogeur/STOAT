@@ -1,4 +1,3 @@
-#include "stats_test.cpp"
 #include "snarl_analyzer.hpp"
 #include "matrix.hpp"
 #include "binary_table.hpp"
@@ -146,7 +145,7 @@ void SnarlAnalyzer::process_snarls_by_chromosome_chunk(
         // Make the snarl test analysis
         // Iterate over each snarl
         for (const Snarl_data_t& snarl_data_s : snarls) {
-            analyze_and_write_snarl(snarl_data_s, chr);
+            analyze_and_write_snarl(snarl_data_s, chr, outf);
         }
     }
 
@@ -325,7 +324,7 @@ std::vector<size_t> identify_path(
 }
 
 void BinarySnarlAnalyzer::analyze_and_write_snarl(
-    const Snarl_data_t& snarl_data_s, const std::string& chr) {
+    const Snarl_data_t& snarl_data_s, const std::string& chr, std::ofstream& outf) {
 
     std::ostringstream oss;
 
@@ -347,7 +346,7 @@ void BinarySnarlAnalyzer::analyze_and_write_snarl(
     if (!df_filtration) { // good df
         const auto& [group_paths, 
             allele_number_str, min_row_index_str, numb_colum_str, 
-            inter_group_str, average_str] = stoat::binary_stat_test(g0, g1);
+            inter_group_str, average_str] = stoat_vcf::binary_stat_test(g0, g1);
 
         const auto& [fastfisher_p_value, chi2_p_value] = fk.fisher_khi2(g0, g1);
 
@@ -360,7 +359,7 @@ void BinarySnarlAnalyzer::analyze_and_write_snarl(
 }
 
 void BinaryCovarSnarlAnalyzer::analyze_and_write_snarl( 
-    const Snarl_data_t& snarl_data_s, const std::string& chr) {
+    const Snarl_data_t& snarl_data_s, const std::string& chr, std::ofstream& outf) {
 
     std::ostringstream oss;
 
@@ -392,7 +391,7 @@ void BinaryCovarSnarlAnalyzer::analyze_and_write_snarl(
 
 // Quantitative Table Generation
 void QuantitativeSnarlAnalyzer::analyze_and_write_snarl(
-    const Snarl_data_t& snarl_data_s, const std::string& chr) {
+    const Snarl_data_t& snarl_data_s, const std::string& chr, std::ofstream& outf) {
 
     const auto& [df, phenotype_filtered, allele_number, allele_paths] = create_quantitative_table(list_samples.size(), snarl_data_s.snarl_paths, quantitative_phenotype, edge_matrix);
     bool df_filtration = check_MAF_threshold_quantitative(df, maf_threshold);
@@ -408,7 +407,7 @@ void QuantitativeSnarlAnalyzer::analyze_and_write_snarl(
     std::stringstream data;
     
     if (!df_filtration) { // filtred variant
-        auto [p_value, beta, se, r2] = lr.linear_regression(df, phenotype_filtered, covar);
+        auto [p_value, beta, se, r2] = lr.linear_regression(df, phenotype_filtered, covariate);
         
         if (table_threshold != -1 && stoat::isPValueSignificant(table_threshold, p_value)) {
             std::string variant_file_name = regression_dir + "/" + stoat_vcf::pairToString(snarl_data_s.snarl_ids) + ".tsv";
@@ -447,7 +446,7 @@ std::vector<size_t> found_gene_snarl(
 }
 
 void EQTLSnarlAnalyzer::analyze_and_write_snarl(
-    const Snarl_data_t& snarl_data_s, const std::string& chr) {
+    const Snarl_data_t& snarl_data_s, const std::string& chr, std::ofstream& outf) {
 
     std::vector<size_t> list_gene_index = found_gene_snarl(eqtl_map.at(chr), snarl_data_s.start_positions, snarl_data_s.end_positions, windows_gene_threshold);
     const auto& [df, index_filtered, allele_number, allele_paths] = stoat_vcf::create_eqtl_table(list_samples.size(), snarl_data_s.snarl_paths, edge_matrix);

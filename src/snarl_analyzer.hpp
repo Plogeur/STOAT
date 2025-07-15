@@ -60,7 +60,7 @@ public:
         size_t &num_paths_ch);
 
     /// For the given snarl, analyze the snarl and write it to outf
-    virtual void analyze_and_write_snarl(const Snarl_data_t& snarl_data, const std::string& chr) = 0;
+    virtual void analyze_and_write_snarl(const Snarl_data_t& snarl_data, const std::string& chr, std::ofstream& outf) = 0;
 
     /// Write the header of the output tsv file
     /// This should ideally call a write_header() function from writer.hpp to keep things consistent
@@ -100,7 +100,7 @@ public:
         const std::vector<bool>& binary_phenotype,
         const std::string& regression_dir);
 
-    void analyze_and_write_snarl(const Snarl_data_t& snarl_data, const std::string& chr);
+    void analyze_and_write_snarl(const Snarl_data_t& snarl_data, const std::string& chr, std::ofstream& outf);
 
     void write_header(std::ofstream&outf);
 
@@ -125,7 +125,7 @@ public:
         const std::vector<bool>& binary_phenotype,
         const std::string& regression_dir);
 
-    void analyze_and_write_snarl(const Snarl_data_t& snarl_data, const std::string& chr);
+    void analyze_and_write_snarl(const Snarl_data_t& snarl_data, const std::string& chr, std::ofstream& outf);
 
     void write_header(std::ofstream&outf);
 
@@ -150,7 +150,7 @@ public:
         const std::vector<double>& quantitative_phenotype,
         const std::string& regression_dir);
 
-    void analyze_and_write_snarl(const Snarl_data_t& snarl_data, const std::string& chr) ;
+    void analyze_and_write_snarl(const Snarl_data_t& snarl_data, const std::string& chr, std::ofstream& outf) ;
 
     void write_header(std::ofstream&outf);
 
@@ -172,11 +172,11 @@ public:
         const std::vector<std::vector<double>>& covariate, 
         const double& maf_threshold, 
         const double& table_threshold, 
-        const std::unordered_map<std::string, std::vector<stoat_vcf::Qtl_data>>& eqtl_map,
+        const std::unordered_map<std::string, std::vector<Qtl_data>>& eqtl_map,
         const size_t& windows_gene_threshold,
         const std::string& regression_dir);
 
-    void analyze_and_write_snarl(const Snarl_data_t& snarl_data, const std::string& chr);
+    void analyze_and_write_snarl(const Snarl_data_t& snarl_data, const std::string& chr, std::ofstream& outf);
 
     void write_header(std::ofstream&outf);
 
@@ -185,11 +185,11 @@ protected:
 
     // TODO idk what these are 
     // Maps something to something else?
-    // Matis ans : eqtl_map is an {chr name : std::vector<stoat_vcf::Qtl_data>}
+    // Matis ans : eqtl_map is an {chr name : std::vector<Qtl_data>}
     // is organise like that in the first place to optimize edge_matrix / eqtl linking
-    // but now we can just use std::vector<stoat_vcf::Qtl_data> because we already know the chr
+    // but now we can just use std::vector<Qtl_data> because we already know the chr
     // that we gonna use
-    const std::unordered_map<std::string, std::vector<stoat_vcf::Qtl_data>>& eqtl_map;
+    const std::unordered_map<std::string, std::vector<Qtl_data>>& eqtl_map;
     const size_t& windows_gene_threshold;
     LinearRegression lr;
 };
@@ -209,18 +209,18 @@ std::vector<size_t> found_gene_snarl(
     const size_t& windows_gene_threshold);
 
 // Decompose path Path_traversal_t to vector Edge_t
-std::vector<stoat_vcf::Edge_t> decompose_path_to_edges(const Path_traversal_t& s);
+std::vector<Edge_t> decompose_path_to_edges(const Path_traversal_t& s);
 
 // Decompose a list of paths std::string into a vector of Edge_t
-const std::vector<std::vector<stoat_vcf::Edge_t>> decompose_path_list_str(const std::vector<std::string>& list_paths);
+const std::vector<std::vector<Edge_t>> decompose_path_list_str(const std::vector<std::string>& list_paths);
 
 // Decompose path std::string to vector Edge_t
-std::vector<stoat_vcf::Edge_t> decompose_path_str_to_edge(const std::string& s);
+std::vector<Edge_t> decompose_path_str_to_edge(const std::string& s);
 
 /// Given a path through the snarl, a matrix of edges for each sample/haplotype, and the number of columns (samples/haplotypes),
 /// return the columns for which all edges (rows) in the path are set, i.e. the haplotypes with the given path.
 std::vector<size_t> identify_path(
-    const std::vector<stoat_vcf::Edge_t>& list_edge_path,
+    const std::vector<Edge_t>& list_edge_path,
     const EdgeBySampleMatrix& matrix,
     const size_t num_cols);
 
