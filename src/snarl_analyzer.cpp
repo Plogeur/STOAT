@@ -339,14 +339,14 @@ void BinarySnarlAnalyzer::analyze_and_write_snarl(
     std::vector<size_t> g0(length_column_headers, 0);
     std::vector<size_t> g1(length_column_headers, 0);
 
-    size_t total_sum = stoat_vcf::create_binary_table(g0, g1, binary_phenotype, snarl_data_s.snarl_paths, length_column_headers, list_samples.size(), edge_matrix);
+    size_t total_sum = stoat::create_binary_table(g0, g1, binary_phenotype, snarl_data_s.snarl_paths, length_column_headers, list_samples.size(), edge_matrix);
     bool df_filtration = check_MAF_threshold_binary(g0, g1, total_sum, length_column_headers, maf_threshold);
 
     // Binary analysis single test
     if (!df_filtration) { // good df
         const auto& [group_paths, 
             allele_number_str, min_row_index_str, numb_colum_str, 
-            inter_group_str, average_str] = stoat_vcf::binary_stat_test(g0, g1);
+            inter_group_str, average_str] = stoat::binary_stat_test(g0, g1);
 
         const auto& [fastfisher_p_value, chi2_p_value] = fk.fisher_khi2(g0, g1);
 
@@ -449,7 +449,7 @@ void EQTLSnarlAnalyzer::analyze_and_write_snarl(
     const Snarl_data_t& snarl_data_s, const std::string& chr, std::ofstream& outf) {
 
     std::vector<size_t> list_gene_index = found_gene_snarl(eqtl_map.at(chr), snarl_data_s.start_positions, snarl_data_s.end_positions, windows_gene_threshold);
-    const auto& [df, index_filtered, allele_number, allele_paths] = stoat_vcf::create_eqtl_table(list_samples.size(), snarl_data_s.snarl_paths, edge_matrix);
+    const auto& [df, index_filtered, allele_number, allele_paths] = stoat::create_eqtl_table(list_samples.size(), snarl_data_s.snarl_paths, edge_matrix);
     bool df_filtration = check_MAF_threshold_quantitative(df, maf_threshold);
 
     for (size_t i = 0; i < list_gene_index.size(); ++i) {

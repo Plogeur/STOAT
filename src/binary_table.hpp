@@ -25,7 +25,7 @@
 
 using namespace std;
 
-namespace stoat_vcf {
+namespace stoat {
 
 // ------------------------ Binary table ------------------------
 

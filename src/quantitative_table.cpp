@@ -2,7 +2,7 @@
 
 using namespace std;
 
-namespace stoat_vcf {
+namespace stoat {
 
 // Explicit template instantiations
 template std::tuple<std::vector<std::vector<double>>, std::vector<double>, size_t, std::vector<size_t>>

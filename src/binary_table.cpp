@@ -1,7 +1,7 @@
 #include "binary_table.hpp"
 
 // ------------------------ Binary table & stats ------------------------
-namespace stoat_vcf {
+namespace stoat {
 
 std::tuple<std::string, std::string, 
 std::string, std::string, std::string, 
