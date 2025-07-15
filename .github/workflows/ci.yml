@@ -37,11 +37,8 @@ jobs:
           cd ~/Catch2 && cmake -Bbuild -H. -DBUILD_TESTING=OFF
           cmake --build build/ && sudo cmake --install build/
 
-      - name: Build STOAT C++
+      - name: Build STOAT C++ and run unit tests
         run: |
           mkdir build && cd build
           cmake .. && make -j$(nproc)
-
-      - name: Run unit tests
-        run: |
-          cd build && ./unit_tests
+          ./unit_tests
