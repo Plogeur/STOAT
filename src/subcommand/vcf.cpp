@@ -1,36 +1,7 @@
-// This file is part of STOAT 0.0.1, copyright (C) 2024-2025 
-// Authors : Matis Alias-Bagarre, Jean Monlong & Xian-hui Chang.
-//
-// This program is free software: you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-//
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
-//
-// You should have received a copy of the GNU General Public License
-// along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-#include <iostream>
-#include <string>
-#include <unordered_map>
-#include <unordered_set>
-#include <chrono>
-#include <cstdlib>
-#include <getopt.h>
-#include <omp.h>
+#include "vcf.hpp"
 
-#include "../snarl_data_t.hpp"
-#include "../snarl_analyzer.hpp"
-#include "../arg_parser.hpp"
-#include "../matrix.hpp"
-#include "../gaf_creator.hpp"
-#include "../post_processing.hpp"
-
-namespace stoat_vcf {
+namespace stoat_command {
 
 void print_help_vcf() {
     std::cerr << "Usage: stoat vcf [options]\n\n"
@@ -59,7 +30,7 @@ void print_help_vcf() {
               << "  -h, --help                   Print this help message\n";
 }
 
-int stoat_vcf(int argc, char* argv[]) {
+int main_stoat_vcf(int argc, char* argv[]) {
     
     // Declare variables to hold argument values
     std::string vcf_path, snarl_path, pg_path, dist_path, 
@@ -341,19 +312,19 @@ int stoat_vcf(int argc, char* argv[]) {
         // binary
         if (!covariate.empty()){
             // Binary covariate
-            snarl_analyzer.reset(new stoat_vcf::BinaryCovarSnarlAnalyzer(snarls_chr, list_samples, covariate, maf_threshold, table_threshold, binary_phenotype));
+            snarl_analyzer.reset(new stoat_vcf::BinaryCovarSnarlAnalyzer(snarls_chr, edge_matrix_empty, list_samples, covariate, maf_threshold, table_threshold, binary_phenotype, regression_dir));
         } else {
             // Binary normal
-            snarl_analyzer.reset(new stoat_vcf::BinarySnarlAnalyzer(snarls_chr, list_samples, maf_threshold, table_threshold, binary_phenotype));
+            snarl_analyzer.reset(new stoat_vcf::BinarySnarlAnalyzer(snarls_chr, edge_matrix_empty, list_samples, maf_threshold, table_threshold, binary_phenotype, regression_dir));
         }
         phenotype_type = stoat::BINARY; 
     } else if (!quantitative_path.empty()) {
         // Quantitative
-        snarl_analyzer.reset(new stoat_vcf::QuantitativeSnarlAnalyzer(snarls_chr, list_samples, covariate, maf_threshold, table_threshold, quantitative_phenotype));
+        snarl_analyzer.reset(new stoat_vcf::QuantitativeSnarlAnalyzer(snarls_chr, edge_matrix_empty, list_samples, covariate, maf_threshold, table_threshold, quantitative_phenotype, regression_dir));
         phenotype_type = stoat::QUANTITATIVE; 
     } else if (!eqtl_path.empty()) {
         // EQTL
-        snarl_analyzer.reset(new stoat_vcf::EQTLSnarlAnalyzer(snarls_chr, list_samples, covariate, maf_threshold, table_threshold, eqtl_phenotype, windows_gene_threshold));
+        snarl_analyzer.reset(new stoat_vcf::EQTLSnarlAnalyzer(snarls_chr, edge_matrix_empty, list_samples, covariate, maf_threshold, table_threshold, eqtl_phenotype, windows_gene_threshold, regression_dir));
         phenotype_type = stoat::EQTL; 
     }
 
@@ -361,7 +332,7 @@ int stoat_vcf(int argc, char* argv[]) {
                                             (phenotype_type == stoat::QUANTITATIVE ? "/quantitative_table.tsv" 
                                                                                         : "/eqtl_gwas.tsv"));
 
-    snarl_analyzer->process_snarls_by_chromosome_chunk(ptr_vcf, hdr, rec, edge_matrix_empty, regression_dir, output_tsv);
+    snarl_analyzer->process_snarls_by_chromosome_chunk(ptr_vcf, hdr, rec, output_tsv);
 
     std::string output_significative = output_dir + (phenotype_type == stoat::BINARY       ?  "/top_variant_binary.tsv" : 
                                                     (phenotype_type == stoat::QUANTITATIVE ? "/top_variant_quantitative.tsv" 

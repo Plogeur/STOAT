@@ -23,8 +23,8 @@
 #include <getopt.h>
 #include <omp.h>
 
-#include "stoat_vcf.hpp"
-#include "stoat_graph.hpp"
+#include "subcommand/vcf.hpp"
+#include "subcommand/graph.hpp"
 
 // Global variable
 const std::string VERSION = "v0.0.1";
@@ -55,10 +55,10 @@ int main(int argc, char* argv[]) {
     omp_set_num_threads(1);
 
     if (subcommand == "vcf") {
-        stoat_vcf::stoat_vcf(argc, argv);
+        stoat_command::main_stoat_vcf(argc, argv);
 
     } else if (subcommand == "graph") {
-        stoat_graph::stoat_graph(argc, argv);
+        stoat_command::main_stoat_graph(argc, argv);
 
     } else if (subcommand == "version") {
         std::cout << "stoat: gwas analysis tool, version " << VERSION << "\n";

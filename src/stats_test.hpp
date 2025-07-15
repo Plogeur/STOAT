@@ -35,7 +35,7 @@ using boost::multiprecision::cpp_dec_float_50;
 
 class FisherKhi2 {
     public:
-        FisherKhi2() = default;
+        FisherKhi2(size_t degrees_of_freedom = 2);
         ~FisherKhi2() = default;
 
         // Function to perform the Chi-square test on row size > 2 
@@ -58,8 +58,8 @@ class FisherKhi2 {
         static constexpr double kExactTestBias = 1.0339757656912846e-25;
 
         // Chi-squared distribution
-        static const boost::math::chi_squared chi_squared_dist;
-        static const boost::math::chi_squared_distribution<cpp_dec_float_50> cpp_dec_float_50_dist;
+        const boost::math::chi_squared chi_squared_dist;
+        const boost::math::chi_squared_distribution<cpp_dec_float_50> cpp_dec_float_50_dist;
 };
 
 class LinearRegression {

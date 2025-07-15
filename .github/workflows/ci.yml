@@ -17,6 +17,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+            submodules: recursive
 
       - name: Install dependencies
         run: |
@@ -35,12 +37,8 @@ jobs:
           cd ~/Catch2 && cmake -Bbuild -H. -DBUILD_TESTING=OFF
           cmake --build build/ && sudo cmake --install build/
 
-      - name: Build STOAT C++
+      - name: Build STOAT C++ and run unit tests
         run: |
-          git clone https://github.com/Plogeur/STOAT --branch stoat_cxx ~/STOAT
-          cd ~/STOAT && mkdir build && cd build
+          mkdir build && cd build
           cmake .. && make -j$(nproc)
-
-      - name: Run unit tests
-        run: |
-          cd ~/STOAT/build && ./unit_tests
+          ./unit_tests
