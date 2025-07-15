@@ -40,8 +40,6 @@ endif()
 find_package(OpenMP REQUIRED)
 
 add_library(${PROJECT_NAME}_objs OBJECT
-    src/subcommand/vcf.cpp
-    src/subcommand/graph.cpp
     src/utils.cpp
     src/arg_parser.cpp
     src/post_processing.cpp
@@ -53,8 +51,10 @@ add_library(${PROJECT_NAME}_objs OBJECT
     src/stats_test.cpp
     src/writer.cpp
     src/snarl_analyzer.cpp
-    src/graph_path_association_finder.cpp
-    src/partitioner.cpp
+    src/subcommand/vcf.cpp
+    src/subcommand/graph.cpp
+    #src/graph_path_association_finder.cpp
+    #src/partitioner.cpp
 )
 
 # Include Directories
