@@ -17,6 +17,8 @@ jobs:
     steps:
       - name: Checkout repository
         uses: actions/checkout@v4
+        with:
+            submodules: recursive
 
       - name: Install dependencies
         run: |
@@ -37,8 +39,7 @@ jobs:
 
       - name: Build STOAT C++
         run: |
-          git clone https://github.com/Plogeur/STOAT --branch stoat_cxx ~/STOAT
-          cd ~/STOAT && mkdir build && cd build
+          mkdir build && cd build
           cmake .. && make -j$(nproc)
 
       - name: Run unit tests
