@@ -31,8 +31,8 @@
 
 namespace stoat_command {
 
-const static void print_help_graph();
+void print_help_graph();
 
-const static int main_stoat_graph(int argc, char* argv[]);
+int main_stoat_graph(int argc, char* argv[]);
 
 }

@@ -3,7 +3,7 @@
 
 namespace stoat_command {
 
-const static void print_help_graph() {
+void print_help_graph() {
     std::cerr   << "usage: stoat graph [options]\n\n"
                 << "  -g, --graph FILE                   use this graph (only hash graph works for now) (required)" << endl
                 << "  -d, --distance-index FILE          use this distance index (required)" << endl
@@ -20,7 +20,7 @@ const static void print_help_graph() {
                 << "  -h, --help                         print this help message" << std::endl;
 }
 
-const static int main_stoat_graph(int argc, char* argv[]) {
+int main_stoat_graph(int argc, char* argv[]) {
 
     std::string graph_name;
     std::string distance_name;
