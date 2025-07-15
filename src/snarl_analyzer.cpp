@@ -486,23 +486,10 @@ void EQTLSnarlAnalyzer::analyze_and_write_snarl(
 }
 
 bool check_MAF_threshold_quantitative(const std::vector<std::vector<double>>& df, const double& maf_threshold) {    
-    
-    if ((df.size() < 2)) {return true;}
-
-    double totalSum = 0;
-    // TODO: this doesn't seem to be used
-    //size_t numPaths = df[0].size(); // Get the number of paths from the first element
-    //std::vector<double> table(numPaths, 0); // Initialize vector with the correct size
-
-    // Compute total sum of all elements in the matrix
-    for (const auto& vector : df) {
-        for (size_t i = 0; i < vector.size(); i++) {
-            //table[i] += vector[i];
-            totalSum += vector[i];
-        }
+    if (df.size() < 2) {
+        return true;
     }
-    // TODO: Double check this
-    return totalSum < maf_threshold;
+    return false; 
 }
 
 bool check_MAF_threshold_binary(
