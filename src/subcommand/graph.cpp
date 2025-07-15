@@ -48,7 +48,7 @@ const static void print_help_graph() {
                 << "  -h, --help                         print this help message" << std::endl;
 }
 
-const static int main_graph(int argc, char* argv[]) {
+const static int main_stoat_graph(int argc, char* argv[]) {
 
     std::string graph_name;
     std::string distance_name;

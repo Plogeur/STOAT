@@ -30,7 +30,7 @@
 #include "../gaf_creator.hpp"
 #include "../post_processing.hpp"
 
-namespace stoat_vcf {
+namespace stoat_command {
 
 void print_help_vcf() {
     std::cerr << "Usage: stoat vcf [options]\n\n"
@@ -59,7 +59,7 @@ void print_help_vcf() {
               << "  -h, --help                   Print this help message\n";
 }
 
-int stoat_vcf(int argc, char* argv[]) {
+int main_stoat_vcf(int argc, char* argv[]) {
     
     // Declare variables to hold argument values
     std::string vcf_path, snarl_path, pg_path, dist_path, 
