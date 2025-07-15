@@ -14,8 +14,8 @@ AssociationFinder::AssociationFinder(const handlegraph::PathPositionHandleGraph&
                                      std::string test_method,
                                      size_t total_sample_count,
                                      size_t allele_size_limit,
-                                     std::ofstream& out_associated,
-                                     std::ofstream& out_unassociated) :
+                                     std::ostream& out_associated,
+                                     std::ostream& out_unassociated) :
     graph(graph), 
     distance_index(distance_index), 
     partitioner(std::move(partitioner)),
@@ -42,7 +42,7 @@ void AssociationFinder::test_snarls() const {
         return true;
     });
 
-    stoat_vcf::FisherKhi2 fk();
+    FisherKhi2 fk;
     while (!chains.empty()) {
         handlegraph::net_handle_t chain = chains.back();
         chains.pop_back();
@@ -74,17 +74,18 @@ void AssociationFinder::test_snarls() const {
                     const auto& [group_paths, 
                         allele_number_str, min_row_index_str, 
                         numb_colum_str, inter_group_str, average_str] = 
-                        stoat::binary_stat_test(genotype_associated, genotype_unassociated, 
-                                group_paths, allele_number_str, min_row_index_str,
-                                    numb_colum_str, inter_group_str, average_str);
+                        stoat_vcf::binary_stat_test(genotype_associated, genotype_unassociated);
                     
-                    const auto& [fastfisher_p_value, chi2_p_value] = fk.fisher_khi2(g0, g1);
+                    const auto& [fastfisher_p_value, chi2_p_value] = fk.fisher_khi2(genotype_associated, genotype_unassociated);
 
                     # pragma omp critical (out_associated) 
                     {
                         // TODO idk what to put for chr
                         // Matis ans : why don't you put the actual chr ref if the snarl containt it and something like not_ref if it's not
-                        stoat_vcf::write_binary(out_associated, "?", snarl_data_s, type_var_str, fastfisher_p_value, chi2_p_value, "", allele_number_str, min_row_index_str,
+                        //TODO: Maybe I sould keep the snarls as snarl_data_t's? 
+                        // TODO: get the type properly
+                        stoat_vcf::Snarl_data_t snarl_data_s(snarl, graph, distance_index);
+                        stoat_vcf::write_binary(out_associated, "?", snarl_data_s, "UNKNOWN_TYPE", fastfisher_p_value, chi2_p_value, "", allele_number_str, min_row_index_str,
                                      numb_colum_str, inter_group_str, average_str, group_paths);
                     }
                 }

@@ -125,6 +125,19 @@ std::vector<stoat_vcf::Path_traversal_t> stringToVectorPath(std::string& input) 
 }
 
 // Add a snarl
+Snarl_data_t::Snarl_data_t(bdsg::net_handle_t snarl_, const handlegraph::PathPositionHandleGraph& graph, const bdsg::SnarlDistanceIndex& distance_index) : snarl(snarl_) {
+    snarl_ids = std::make_pair(distance_index.node_id(distance_index.get_node_from_sentinel(distance_index.get_bound(snarl, true, false))),
+                               distance_index.node_id(distance_index.get_node_from_sentinel(distance_index.get_bound(snarl, false, false))));
+
+    // Get the offsets of the start and end nodes along the reference
+    std::vector<path_range_t> ranges = get_coordinates_of_snarl(graph, distance_index, snarl, true, "", false);
+    if (ranges.size() == 0) {
+        start_positions = 0;
+        end_positions = 0;
+    }
+    start_positions = graph.get_position_of_step(ranges.front().start);
+    end_positions = graph.get_position_of_step(ranges.front().end);
+}
 Snarl_data_t::Snarl_data_t(bdsg::net_handle_t snarl_,
     std::pair<size_t, size_t> snarl_ids_,
     std::vector<Path_traversal_t> snarl_paths_,

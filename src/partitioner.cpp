@@ -74,7 +74,7 @@ std::vector<std::set<sample_hap_t>> PathPartitioner::get_walk_sets(const handleg
     for (const auto& sense : senses) {
         graph.for_each_step_of_sense(distance_index.get_handle(distance_index.get_node_from_sentinel(distance_index.get_bound(snarl, false, true)), &graph),
             sense, [&](const handlegraph::step_handle_t& step) {
-            old_sets[sample_to_index[stoat::get_sample_and_haplotype(graph, graph.get_path_handle_of_step(step), samples_of_interest)]] = 1;
+            old_sets[sample_to_index[stoat::get_sample_and_haplotype(graph, graph.get_path_handle_of_step(step))]] = 1;
             old_set_count = 2;
         });
     }
