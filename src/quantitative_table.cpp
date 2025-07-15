@@ -2,28 +2,28 @@
 
 using namespace std;
 
-namespace stoat {
+namespace stoat_vcf {
 
 // Explicit template instantiations
 template std::tuple<std::vector<std::vector<double>>, std::vector<double>, size_t, std::vector<size_t>>
     create_quantitative_table<double>(
         const size_t&,
-        const std::vector<Path_traversal_t>&,
+        const std::vector<stoat_vcf::Path_traversal_t>&,
         const std::vector<double>&,
-        const EdgeBySampleMatrix&);
+        const stoat_vcf::EdgeBySampleMatrix&);
 
 template std::tuple<std::vector<std::vector<double>>, std::vector<bool>, size_t, std::vector<size_t>>
     create_quantitative_table<bool>(
         const size_t&,
-        const std::vector<Path_traversal_t>&,
+        const std::vector<stoat_vcf::Path_traversal_t>&,
         const std::vector<bool>&,
-        const EdgeBySampleMatrix&);
+        const stoat_vcf::EdgeBySampleMatrix&);
 
 std::tuple<std::vector<std::vector<double>>, size_t, 
 std::unordered_set<size_t>, bool, std::vector<size_t>> process_table_quantitative(
         const size_t& number_samples,
-        const std::vector<Path_traversal_t>& column_headers,
-        const EdgeBySampleMatrix& matrix) {
+        const std::vector<stoat_vcf::Path_traversal_t>& column_headers,
+        const stoat_vcf::EdgeBySampleMatrix& matrix) {
 
     size_t allele_number = 0;
     size_t length_column = column_headers.size();
@@ -39,11 +39,11 @@ std::unordered_set<size_t>, bool, std::vector<size_t>> process_table_quantitativ
 
     // Loop over all columns
     for (size_t col_idx = 0; col_idx < length_column; ++col_idx) {
-        const Path_traversal_t& path_snarl = column_headers[col_idx];
-        std::vector<Edge_t> list_edge_path = stoat_vcf::decompose_path_to_edges(path_snarl);
+        const stoat_vcf::Path_traversal_t& path_snarl = column_headers[col_idx];
+        std::vector<stoat_vcf::Edge_t> list_edge_path = stoat_vcf::decompose_path_to_edges(path_snarl);
 
         //Get the indices of all samples that take this path
-        std::vector<size_t> idx_srr_save = stoat_vcf::identify_path(list_edge_path, matrix, number_samples * 2);
+        std::vector<size_t> idx_srr_save = identify_path(list_edge_path, matrix, number_samples * 2);
 
         if (idx_srr_save.empty())
             continue; // Skip if column is empty
@@ -78,9 +78,9 @@ std::unordered_set<size_t>, bool, std::vector<size_t>> process_table_quantitativ
 template<typename T>
 std::tuple<std::vector<std::vector<double>>, std::vector<T>, size_t, std::vector<size_t>> create_quantitative_table(
     const size_t& number_samples,
-    const std::vector<Path_traversal_t>& column_headers,
+    const std::vector<stoat_vcf::Path_traversal_t>& column_headers,
     const std::vector<T>& phenotype,
-    const EdgeBySampleMatrix& matrix) {
+    const stoat_vcf::EdgeBySampleMatrix& matrix) {
 
     const auto& [genotypes, allele_number, index_used, drop_last_col, allele_paths] = 
     process_table_quantitative(number_samples, column_headers, matrix);
@@ -112,8 +112,8 @@ std::tuple<std::vector<std::vector<double>>, std::vector<T>, size_t, std::vector
 
 std::tuple<std::vector<std::vector<double>>, std::unordered_set<size_t>, size_t, std::vector<size_t>> create_eqtl_table(
     const size_t& number_samples,
-    const std::vector<Path_traversal_t>& column_headers,
-    const EdgeBySampleMatrix& matrix) {
+    const std::vector<stoat_vcf::Path_traversal_t>& column_headers,
+    const stoat_vcf::EdgeBySampleMatrix& matrix) {
 
     const auto& [genotypes, allele_number, index_used, drop_last_col, allele_paths] = 
     process_table_quantitative(number_samples, column_headers, matrix);
@@ -139,4 +139,4 @@ std::tuple<std::vector<std::vector<double>>, std::unordered_set<size_t>, size_t,
     return {genotypes_filtered, index_used, allele_number, allele_paths};
 }
 
-} // namespace 
+} // namespace stoat_vcf

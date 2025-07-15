@@ -1,7 +1,7 @@
 #include "binary_table.hpp"
 
 // ------------------------ Binary table & stats ------------------------
-namespace stoat {
+namespace stoat_vcf {
 
 std::tuple<std::string, std::string, 
 std::string, std::string, std::string, 
@@ -49,15 +49,15 @@ std::string> binary_stat_test(
 size_t create_binary_table(
     std::vector<size_t>& g0, std::vector<size_t>& g1,
     const std::vector<bool>& binary_phenotype, 
-    const std::vector<Path_traversal_t>& list_path_snarl, 
+    const std::vector<stoat_vcf::Path_traversal_t>& list_path_snarl, 
     const size_t& number_paths,
     const size_t& number_samples,
-    const EdgeBySampleMatrix& matrix) {
+    const stoat_vcf::EdgeBySampleMatrix& matrix) {
 
     size_t total_sum = 0;
     for (size_t idx_g = 0; idx_g < number_paths; ++idx_g) {
-        const Path_traversal_t& path_snarl = list_path_snarl[idx_g];
-        std::vector<Edge_t> list_edge_path = stoat_vcf::decompose_path_to_edges(path_snarl);
+        const stoat_vcf::Path_traversal_t& path_snarl = list_path_snarl[idx_g];
+        std::vector<stoat_vcf::Edge_t> list_edge_path = stoat_vcf::decompose_path_to_edges(path_snarl);
         std::vector<size_t> idx_srr_save = stoat_vcf::identify_path(list_edge_path, matrix, number_samples * 2);
 
         for (size_t idx : idx_srr_save) {
@@ -73,4 +73,4 @@ size_t create_binary_table(
     return total_sum;
 }
 
-} // end namespace
+} // namespace stoat_vcf

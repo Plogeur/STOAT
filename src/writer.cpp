@@ -2,7 +2,7 @@
 
 //#define DEBUG_WRITER
 
-namespace stoat {
+namespace stoat_vcf {
 
 void write_binary_covar_header(std::ofstream& outstream) {
     outstream << "CHR\tPOS\tSNARL\tTYPE\tP\tP_ADJUSTED\tBETA\tSE\tALLELE_NUM\tALLELE_PATHS" << endl;
@@ -26,7 +26,7 @@ void write_eqtl(std::ofstream& outstream, const std::string& chr, const Snarl_da
                    const std::string& beta, const std::string& se, size_t allele_number, const std::vector<size_t>& allele_paths) {
     outstream << chr << "\t" 
               << snarl_data_s.start_positions << "\t" 
-              << pairToString(snarl_data_s.snarl_ids) << "\t" 
+              << stoat_vcf::pairToString(snarl_data_s.snarl_ids) << "\t" 
               << type_var_str << "\t" 
               << gene_name << "\t" 
               << p_value  << "\t" 
@@ -44,7 +44,7 @@ void write_binary_covar(std::ofstream& outstream, const std::string& chr, const 
                         const std::string& beta, const std::string& se, size_t allele_number, const std::vector<size_t>& allele_paths) {
     outstream << chr << "\t" 
               << snarl_data_s.start_positions << "\t" 
-              << pairToString(snarl_data_s.snarl_ids) << "\t" 
+              << stoat_vcf::pairToString(snarl_data_s.snarl_ids) << "\t" 
               << type_var_str << "\t" 
               << p_value << "\t" 
               << p_value_adjusted << "\t" 
@@ -61,7 +61,7 @@ void write_binary(std::ofstream& outstream, const std::string& chr, const Snarl_
                         const std::string& inter_group_str, const std::string& average_str, const std::string& group_paths) {
     outstream << chr << "\t" 
               << snarl_data_s.start_positions << "\t" 
-              << pairToString(snarl_data_s.snarl_ids) << "\t" 
+              << stoat_vcf::pairToString(snarl_data_s.snarl_ids) << "\t" 
               << type_var_str << "\t" 
               << fastfisher_p_value << "\t" 
               << chi2_p_value << "\t" 
@@ -79,7 +79,7 @@ void write_quantitative(std::ofstream& outstream, const std::string& chr, const 
                         const std::string& beta, const std::string& se, size_t allele_number, const std::vector<size_t>& allele_paths) {
     outstream << chr << "\t" 
               << snarl_data_s.start_positions << "\t" 
-              << pairToString(snarl_data_s.snarl_ids) << "\t" 
+              << stoat_vcf::pairToString(snarl_data_s.snarl_ids) << "\t" 
               << type_var_str << "\t" 
               << p_value  << "\t" 
               << p_value_adjusted << "\t" 

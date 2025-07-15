@@ -310,7 +310,7 @@ std::unordered_map<std::string, std::vector<Snarl_data_t>> parse_snarl_path(cons
         save_chr = chr;
 
         std::pair<size_t, size_t> snarl_ids = stringToPair(snarl_id);
-        std::vector<Path_traversal_t> paths = stringToVectorPath(paths_str);
+        std::vector<stoat_vcf::Path_traversal_t> paths = stringToVectorPath(paths_str);
         Snarl_data_t snarl_path(handlegraph::as_net_handle(std::stoi(snarl)), snarl_ids, paths, start_pos, end_pos, type);
         snarl_paths.push_back(snarl_path);
     }
