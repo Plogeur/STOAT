@@ -42,6 +42,9 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 endif()
 find_package(OpenMP REQUIRED)
 
+# Add libvgio using its cmake build
+add_subdirectory(deps/libvgio)
+
 add_library(${PROJECT_NAME}_objs OBJECT
     src/utils.cpp
     src/arg_parser.cpp
@@ -54,10 +57,15 @@ add_library(${PROJECT_NAME}_objs OBJECT
     src/stats_test.cpp
     src/writer.cpp
     src/snarl_analyzer.cpp
+    src/graph_path_association_finder.cpp
+    src/partitioner.cpp
+    src/io/register_loader_saver_gbz.cpp
+    src/io/register_loader_saver_gbzgraph.cpp
+    src/io/register_loader_saver_hash_graph.cpp
+    src/io/register_loader_saver_packed_graph.cpp
+    src/io/register_io.cpp
     src/subcommand/vcf.cpp
     src/subcommand/graph.cpp
-    #src/graph_path_association_finder.cpp
-    #src/partitioner.cpp
 )
 
 # Include Directories
@@ -69,12 +77,13 @@ target_include_directories(${PROJECT_NAME}_objs PRIVATE
 # Link Libraries
 target_link_libraries(${PROJECT_NAME}_objs
     Boost::boost
-    bdsg
     handlegraph
+    bdsg
     Eigen3::Eigen
     libsdsl.so.3
     ${HTSLIB_LIBRARIES}
     OpenMP::OpenMP_CXX
+    VGio::vgio
 )
 
 # Add Executable
@@ -121,8 +130,8 @@ target_compile_options(unit_tests PRIVATE -w) # fix warning
 target_link_libraries(unit_tests PRIVATE 
     Catch2::Catch2WithMain     
     Boost::boost
-    bdsg
     handlegraph
+    bdsg
     Eigen3::Eigen
     libsdsl.so.3
     ${HTSLIB_LIBRARIES})

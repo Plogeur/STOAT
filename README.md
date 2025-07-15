@@ -28,6 +28,9 @@ Manual installation :
 - eigen3
 - boost
 - Catch2 v3
+- [sdsl-lite](https://github.com/vgteam/sdsl-lite)(vgteam fork)
+- [gbwt](https://github.com/jltsiren/gbwt)
+- [gbwtgraph](https://github.com/jltsiren/gbwtgraph)
 - vg (optional)
 
 ## Docker

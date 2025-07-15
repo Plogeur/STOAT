@@ -34,101 +34,101 @@ int main_stoat_graph(int argc, char* argv[]) {
     std::string associated_filename;
     std::string unassociated_filename;
 
-//     int c = 0;
-//     optind = 1;
-//     while (true) {
-//         static struct option long_options[] =
-//             {
-//                 {"graph", required_argument, 0, 'g'},
-//                 {"distance-index", required_argument, 0, 'd'},
-//                 {"allele-size-limit", required_argument, 0, 'l'},
-//                 {"threads", required_argument, 0, 't'},
-//                 {"test", required_argument, 0, 'T'},
-//                 {"p-value", required_argument, 0, 'p'},
-//                 {"method", required_argument, 0, 'm'},
-//                 {"reference-sample", required_argument, 0, 'r'},
-//                 {"sample-of-interest", required_argument, 0, 's'},
-//                 {"output-format", required_argument, 0, 'o'},
-//                 {"associated-filename", required_argument, 0, 'a'},
-//                 {"unassociated-filename", required_argument, 0, 'u'},
-//                 {"help", no_argument, 0, 'h'},
-//                 {0, 0, 0, 0}
-//             };
+     int c = 0;
+     optind = 1;
+     while (true) {
+         static struct option long_options[] =
+             {
+                 {"graph", required_argument, 0, 'g'},
+                 {"distance-index", required_argument, 0, 'd'},
+                 {"allele-size-limit", required_argument, 0, 'l'},
+                 {"threads", required_argument, 0, 't'},
+                 {"test", required_argument, 0, 'T'},
+                 {"p-value", required_argument, 0, 'p'},
+                 {"method", required_argument, 0, 'm'},
+                 {"reference-sample", required_argument, 0, 'r'},
+                 {"sample-of-interest", required_argument, 0, 's'},
+                 {"output-format", required_argument, 0, 'o'},
+                 {"associated-filename", required_argument, 0, 'a'},
+                 {"unassociated-filename", required_argument, 0, 'u'},
+                 {"help", no_argument, 0, 'h'},
+                 {0, 0, 0, 0}
+             };
 
-//         int option_index = 0;
-//         c = getopt_long(argc, argv, "g:d:l:t:T:p:m:r:s:o:a:u:h",
-//                         long_options, &option_index); 
-//         if (c == -1) {
-//             break;
-//         }
-//         switch (c) {
-//             case 'g':
-//                 graph_name = optarg;
-//                 break;
-//             case 'd':
-//                 distance_name = optarg;
-//                 break;
-//             case 'l':
-//                 allele_size_limit = std::stoi(optarg);
-//                 break;
-//             case 't':
-//                 omp_set_num_threads(std::stoi(optarg));
-//                 break;
-//             case 'T':
-//                 test_method = optarg;
-//                 break;
-//             case 'p':
-//                 p_value = std::stof(optarg);
-//                 break;
-//             case 'm':
-//                 method_name = optarg;
-//                 break;
-//             case 'r':
-//                 reference_sample = optarg;
-//                 break;
-//             case 's':
-//                 samples_of_interest.emplace(optarg);
-//                 break;
-//             case 'o':
-//                 output_format = optarg;
-//                 break;
-//             case 'a':
-//                 associated_filename = optarg;
-//                 break;
-//             case 'u':
-//                 unassociated_filename = optarg;
-//                 break;
-//             case 'h': print_help_graph(); exit(EXIT_SUCCESS); break;
-//             default:
-//                 std::cerr << "Unknown argument. Use -h or --help for usage.\n";
-//                 return EXIT_FAILURE;
-//         }
-//     }
+         int option_index = 0;
+         c = getopt_long(argc, argv, "g:d:l:t:T:p:m:r:s:o:a:u:h",
+                         long_options, &option_index); 
+         if (c == -1) {
+             break;
+         }
+         switch (c) {
+             case 'g':
+                 graph_name = optarg;
+                 break;
+             case 'd':
+                 distance_name = optarg;
+                 break;
+             case 'l':
+                 allele_size_limit = std::stoi(optarg);
+                 break;
+             case 't':
+                 omp_set_num_threads(std::stoi(optarg));
+                 break;
+             case 'T':
+                 test_method = optarg;
+                 break;
+             case 'p':
+                 p_value = std::stof(optarg);
+                 break;
+             case 'm':
+                 method_name = optarg;
+                 break;
+             case 'r':
+                 reference_sample = optarg;
+                 break;
+             case 's':
+                 samples_of_interest.emplace(optarg);
+                 break;
+             case 'o':
+                 output_format = optarg;
+                 break;
+             case 'a':
+                 associated_filename = optarg;
+                 break;
+             case 'u':
+                 unassociated_filename = optarg;
+                 break;
+             case 'h': print_help_graph(); exit(EXIT_SUCCESS); break;
+             default:
+                 std::cerr << "Unknown argument. Use -h or --help for usage.\n";
+                 return EXIT_FAILURE;
+         }
+     }
 
-//     // Check that the inputs are ok
-//     if (graph_name.empty()) {
-//         std::cerr << "error [pangwas]: pangwas requires a graph file" << std::endl;
-//         EXIT_FAILURE; 
-//     }
-//     if (distance_name.empty()) {
-//         std::cerr << "error [pangwas]: pangwas requires a distance index file" << std::endl;
-//         EXIT_FAILURE; 
-//     }
-//     if (samples_of_interest.empty()) {
-//         std::cerr << "error [pangwas]: pangwas requires samples of interest" << std::endl;
-//         EXIT_FAILURE; 
-//     }
+     // Check that the inputs are ok
+     if (graph_name.empty()) {
+         std::cerr << "error [stoat]: stoat graph requires a graph file" << std::endl;
+         EXIT_FAILURE; 
+     }
+     if (distance_name.empty()) {
+         std::cerr << "error [stoat]: stoat graph requires a distance index file" << std::endl;
+         EXIT_FAILURE; 
+     }
+     if (samples_of_interest.empty()) {
+         std::cerr << "error [stoat]: stoat graph requires samples of interest" << std::endl;
+         EXIT_FAILURE; 
+     }
 
-//     // Tell the IO library about libvg types.
-//     if (!pangwas::io::register_libvg_io()) {
-//        std::cerr << "error[vg]: Could not register libvg types with libvgio" << std::endl;
-//         EXIT_FAILURE;
-//     }
+     // Tell the IO library about libvg types.
+     if (!stoat::io::register_libvg_io()) {
+        std::cerr << "error[vg]: Could not register libvg types with libvgio" << std::endl;
+         EXIT_FAILURE;
+     }
 
-//     // Load the graph and make it a PathPositionHandleGraph
-//     unique_ptr<handlegraph::PathHandleGraph> path_graph = vg::io::VPKG::load_one<handlegraph::PathHandleGraph>(graph_name);
-//     bdsg::PathPositionOverlayHelper overlay_helper;
-//     bdsg::PathPositionHandleGraph* graph = overlay_helper.apply(path_graph.get());
+     // Load the graph and make it a PathPositionHandleGraph
+     unique_ptr<handlegraph::PathHandleGraph> path_graph = vg::io::VPKG::load_one<handlegraph::PathHandleGraph>(graph_name);
+     bdsg::PathPositionOverlayHelper overlay_helper;
+     bdsg::PathPositionHandleGraph* graph = overlay_helper.apply(path_graph.get());
 
 //     // Load the distance index
 //     bdsg::SnarlDistanceIndex distance_index;
@@ -145,7 +145,7 @@ int main_stoat_graph(int argc, char* argv[]) {
 //     }
 
 //     if (method_name == "paths") {
-//         pangwas::PathAssociationFinder af (*graph, 
+//         stoat::PathAssociationFinder af (*graph, 
 //                                         distance_index, 
 //                                         test_method,
 //                                         samples_of_interest, 
@@ -157,7 +157,7 @@ int main_stoat_graph(int argc, char* argv[]) {
 //                                         p_value);
 //         af.write_associated_snarls();
 //     } else {
-//         std::cerr << "error [pangwas]: unknown method " << method_name << std::endl;
+//         std::cerr << "error [stoat]: unknown method " << method_name << std::endl;
 //         EXIT_FAILURE; 
 //     }
 
