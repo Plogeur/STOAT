@@ -112,7 +112,7 @@ std::tuple<std::vector<std::vector<double>>, std::unordered_set<size_t>, size_t,
     const std::vector<stoat_vcf::Path_traversal_t>& column_headers,
     const stoat_vcf::EdgeBySampleMatrix& matrix) {
 
-    const auto& [genotypes, allele_number, index_used, drop_last_col, allele_paths] = 
+    const auto& [genotypes, allele_number, index_used, allele_paths] = 
     process_table_quantitative(number_samples, column_headers, matrix);
 
     std::vector<std::vector<double>> genotypes_filtered;
@@ -123,7 +123,7 @@ std::tuple<std::vector<std::vector<double>>, std::unordered_set<size_t>, size_t,
         double row_sum = std::accumulate(row.begin(), row.end(), 0.0);
 
         std::vector<double> normalized_row;
-        size_t max_col = drop_last_col ? row.size() - 1 : row.size();
+        size_t max_col = row.size();
         normalized_row.reserve(max_col);
 
         for (size_t j = 0; j < max_col; ++j) {
