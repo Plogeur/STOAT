@@ -490,16 +490,19 @@ bool check_MAF_threshold_quantitative(const std::vector<std::vector<double>>& df
     if ((df.size() < 2)) {return true;}
 
     double totalSum = 0;
-    size_t numPaths = df[0].size(); // Get the number of paths from the first element
-    std::vector<double> table(numPaths, 0); // Initialize vector with the correct size
+    // TODO: this doesn't seem to be used
+    //size_t numPaths = df[0].size(); // Get the number of paths from the first element
+    //std::vector<double> table(numPaths, 0); // Initialize vector with the correct size
 
     // Compute total sum of all elements in the matrix
     for (const auto& vector : df) {
         for (size_t i = 0; i < vector.size(); i++) {
-            table[i] += vector[i];
+            //table[i] += vector[i];
             totalSum += vector[i];
         }
     }
+    // TODO: Double check this
+    return totalSum < maf_threshold;
 }
 
 bool check_MAF_threshold_binary(
