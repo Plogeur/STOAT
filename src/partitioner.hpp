@@ -7,8 +7,7 @@
 #include "utils.hpp"
 
 using namespace std;
-// TODO: Change the namespace
-namespace stoat_vcf {
+namespace stoat_graph {
 
 /***
     General template class for finding partitions of samples  in a snarl.

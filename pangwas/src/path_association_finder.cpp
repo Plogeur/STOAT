@@ -24,10 +24,10 @@ PathAssociationFinder::PathAssociationFinder(const handlegraph::PathPositionHand
     std::unordered_set<std::string> samples;
 
     graph.for_each_path_matching(nullptr, nullptr, nullptr, [&] (handlegraph::path_handle_t path) {
-        all_sample_haplotypes.emplace(get_sample_and_haplotype(graph, path));
-        if (samples.count(get_sample_name_from_path(graph, path)) == 0) {
+        all_sample_haplotypes.emplace(stoat_vcf::get_sample_and_haplotype(graph, path));
+        if (samples.count(stoat::get_sample_name_from_path(graph, path)) == 0) {
             sample_count++;
-            samples.insert(get_sample_name_from_path(graph, path));
+            samples.insert(stoat::get_sample_name_from_path(graph, path));
         }
         return true;
     });
@@ -122,7 +122,7 @@ std::vector<std::set<sample_hap_t>> PathAssociationFinder::get_walk_sets(const h
     for (const auto& sense : senses) {
         graph.for_each_step_of_sense(distance_index.get_handle(distance_index.get_node_from_sentinel(distance_index.get_bound(snarl, false, true)), &graph),
             sense, [&](const handlegraph::step_handle_t& step) {
-            old_sets[sample_to_index[get_sample_and_haplotype(graph, graph.get_path_handle_of_step(step))]] = 1;
+            old_sets[sample_to_index[stoat_vcf::get_sample_and_haplotype(graph, graph.get_path_handle_of_step(step))]] = 1;
             old_set_count = 2;
         });
     }
@@ -189,7 +189,7 @@ std::vector<std::set<sample_hap_t>> PathAssociationFinder::get_walk_sets(const h
                                       graph.get_id(next_handle), 
                                       graph.get_is_reverse(next_handle));
 
-                    size_t sample_num = sample_to_index[get_sample_and_haplotype(graph, graph.get_path_handle_of_step(step))];
+                    size_t sample_num = sample_to_index[stoat_vcf::get_sample_and_haplotype(graph, graph.get_path_handle_of_step(step))];
 
                     if (next_steps[sample_num].id == 0) {
                         // If this path hasn't been seen before
@@ -321,7 +321,7 @@ std::vector<std::set<sample_hap_t>> PathAssociationFinder::get_start_edge_sets(c
                 if (edge_to_sample_set.count(next_node) == 0) {
                     edge_to_sample_set[next_node] = std::set<sample_hap_t>();
                 }
-                edge_to_sample_set[next_node].emplace(get_sample_and_haplotype(graph, path));
+                edge_to_sample_set[next_node].emplace(stoat_vcf::get_sample_and_haplotype(graph, path));
             }
         });
     }

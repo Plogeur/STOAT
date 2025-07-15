@@ -7,7 +7,8 @@
 #include "partitioner.hpp"
 
 using namespace std;
-namespace stoat_vcf{
+
+namespace stoat_graph{
 
 /***
     General template class for finding associations in a graph.

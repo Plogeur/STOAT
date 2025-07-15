@@ -1,6 +1,6 @@
 #include "utils.hpp"
 
-namespace stoat_vcf {
+namespace stoat {
 
 std::string format_group_paths(const std::vector<size_t>& g0, const std::vector<size_t>& g1) {
 
@@ -372,7 +372,4 @@ std::vector<path_range_t> get_coordinates_of_snarl_helper(const handlegraph::Pat
 
 }
 
-
-
-
-} // namespace stoat_vcf
+} // end namespace stoat

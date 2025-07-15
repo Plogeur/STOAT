@@ -111,11 +111,11 @@ class AssociationFinder {
         /// This will first try to find a path with the sample name, if not empty, then a reference-sense path, then with any path traversing the snarl.
         /// If get_reference is false, try to find coordinates on a path containing the given sample name, or if it fails, with any path. 
         /// If get_reference is false and sample_name is empty and get_all_paths is true, return all coordinates for all paths
-        std::vector<path_range_t> get_coordinates_of_snarl(const handlegraph::net_handle_t& snarl, bool get_reference, std::string sample_name, bool get_all_paths) const;
+        std::vector<stoat::path_range_t> get_coordinates_of_snarl(const handlegraph::net_handle_t& snarl, bool get_reference, std::string sample_name, bool get_all_paths) const;
 
         /// The function that gets called by get_coordinates_of_snarl
         /// This either looks for a particular sample, or a reference-sense path, or all paths
-        std::vector<path_range_t> get_coordinates_of_snarl_helper(const handlegraph::net_handle_t& snarl, bool get_reference, std::string sample_name, bool get_all_paths) const;
+        std::vector<stoat::path_range_t> stoat::get_coordinates_of_snarl(const handlegraph::net_handle_t& snarl, bool get_reference, std::string sample_name, bool get_all_paths) const;
 
 };
 

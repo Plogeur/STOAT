@@ -17,31 +17,22 @@
 #include <iostream>
 #include <string>
 #include <unordered_map>
+#include <unordered_set>
 #include <chrono>
 #include <cstdlib>
 #include <getopt.h>
 #include <omp.h>
 
-// #include <bdsg/overlays/overlay_helper.hpp>
-// #include <handlegraph/path_handle_graph.hpp>
-// #include <bdsg/hash_graph.hpp>
-// #include <vg/io/vpkg.hpp>
-
-// #include "io/register_io.hpp"
-// #include "path_association_finder.hpp"
-// #include "utils.hpp"
-
 #include "../snarl_data_t.hpp"
-#include "../snarl_analyser.hpp"
+#include "../snarl_analyzer.hpp"
 #include "../arg_parser.hpp"
 #include "../matrix.hpp"
 #include "../gaf_creator.hpp"
 #include "../post_processing.hpp"
 
+namespace stoat_vcf {
 
-namespace stoat_command{
-
-const static void print_help_vcf() {
+void print_help_vcf() {
     std::cerr << "Usage: stoat vcf [options]\n\n"
               << "  -p, --pg FILE                Path to the packed graph file (.pg)\n"
               << "  -d, --dist FILE              Path to the packed distance index file (.dist)\n"
@@ -51,25 +42,25 @@ const static void print_help_vcf() {
               << "  -b, --binary FILE            Path to the binary phenotype group file (.txt or .tsv)\n"
               << "  -q, --quantitative FILE      Path to the quantitative phenotype file (.txt or .tsv)\n"
               << "  -e, --eqtl FILE              Path to the Expression Quantitative Trait Loci file (.txt or .tsv)\n"
-              << "  --make-bed                   Create plink format files (.bed, .bim, .fam)\n"
-              << "  --covariate FILE             Path to the covariate file (.txt or .tsv)\n"
-              << "  --covar-name NAME            Covariate column name(s) used for GWAS (comma-separated if multiple)\n"
+              << "  -m, --make-bed                   Create plink format files (.bed, .bim, .fam)\n"
+              << "  -c, --covariate FILE             Path to the covariate file (.txt or .tsv)\n"
+              << "  -C, --covar-name NAME            Covariate column name(s) used for GWAS (comma-separated if multiple)\n"
               << "  -k, --kinship FILE           Path to the kinship matrix file (.txt or .tsv)\n"
               << "  -g, --gaf                    Generate a GAF file from GWAS results\n"
-              << "  --children INT               Max number of children per snarl in decomposition (default: 50)\n"
-              << "  --cycle INT                  Max number of authorized cycles in snarl decomposition (default: 1)\n"
-              << "  --path-length INT            Max number of nodes in paths during snarl decomposition (default: 10,000)\n"
+              << "  -i, --children INT               Max number of children per snarl in decomposition (default: 50)\n"
+              << "  -y, --cycle INT                  Max number of authorized cycles in snarl decomposition (default: 1)\n"
+              << "  -l, --path-length INT            Max number of nodes in paths during snarl decomposition (default: 10,000)\n"
               << "  -G, --gene-position FILE     Path to the gene position file (.txt or .tsv)\n"
               << "  -w, --windows-gene INT       Window length from gene boundaries for snarl inclusion in eQTL (default: 1,000,000)\n"
               << "  -T, --table-threshold FLOAT  P-value threshold for regression table output (default: disabled)\n"
-              << "  --maf FLOAT                  Minimum allele frequency threshold (default: 0.01)\n"
+              << "  -M, --maf FLOAT                  Minimum allele frequency threshold (default: 0.01)\n"
               << "  -t, --thread INT             Number of threads to use (default: 1)\n"
               << "  -o, --output DIR             Output directory name (VCF GWAS mode)\n"
               << "  -h, --help                   Print this help message\n";
 }
 
-const static int main_vcf(int argc, char* argv[]) {
-
+int stoat_vcf(int argc, char* argv[]) {
+    
     // Declare variables to hold argument values
     std::string vcf_path, snarl_path, pg_path, dist_path, 
         chromosome_path, binary_path, quantitative_path, 
@@ -82,7 +73,7 @@ const static int main_vcf(int argc, char* argv[]) {
     size_t path_length_threshold = 10000;
     size_t windows_gene_threshold = 1000000;
     double table_threshold = -1;
-    double maf = 0.99; // inversed MAF 
+    double maf_threshold = 0.99; // inversed MAF 
     bool gaf = false;
     bool only_snarl_parsing = false;
     bool show_help = false;
@@ -177,8 +168,8 @@ const static int main_vcf(int argc, char* argv[]) {
                 }
                 break;
             case 'M':
-                maf = 1 - std::stod(optarg);
-                if (maf < 0 || maf > 1) {
+                maf_threshold = 1 - std::stod(optarg);
+                if (maf_threshold < 0 || maf_threshold > 1) {
                     std::cerr << "Error: MAF must be in [0,1]\n";
                     return EXIT_FAILURE;
                 }
@@ -273,35 +264,34 @@ const static int main_vcf(int argc, char* argv[]) {
 
     //////////////////// Load the phenotypes and covariate matrix from files
 
-    std::vector<bool> binary_vector;
-    std::vector<double> quantitative_vector;
-    // TODO : eqtl struct
-    std::unordered_map<std::string, std::vector<std::tuple<std::string, std::vector<double>, size_t, size_t>>> eqtl;
+    std::vector<bool> binary_phenotype;
+    std::vector<double> quantitative_phenotype;
+
+    // dict chr:string : vector{geneName:string, sample_expression:vector<double>, start_pos:size_t, end_pos:size_t}
+    std::unordered_map<std::string, std::vector<stoat_vcf::Qtl_data>> eqtl_phenotype;
     std::vector<std::vector<double>> covariate;
 
     if (!covariate_path.empty()) {
         covariate = stoat_vcf::parse_covariates(covariate_path, covar_names, list_samples);
+        covariate = stoat_vcf::parse_covariates(covariate_path, covar_names, list_samples);
     }
 
     if (!binary_path.empty()) {
-        binary_vector = stoat_vcf::parse_binary_pheno(binary_path, list_samples);
+        binary_phenotype = stoat_vcf::parse_binary_pheno(binary_path, list_samples);
 
     } else if (!quantitative_path.empty()) {
-        quantitative_vector = stoat_vcf::parse_quantitative_pheno(quantitative_path, list_samples);
+        quantitative_phenotype = stoat_vcf::parse_quantitative_pheno(quantitative_path, list_samples);
 
     } else if (!eqtl_path.empty() && !gene_position_path.empty()) {
-        eqtl = stoat_vcf::parse_qtl_gene_file(eqtl_path, gene_position_path, list_samples);
+        eqtl_phenotype = stoat_vcf::parse_qtl_gene_file(eqtl_path, gene_position_path, list_samples);
     }
 
-    // stoat_vcf::KinshipMatrix kinship;
-    // if (!kinship_path.empty()) {
-    //     // check_format_kinship(kinship_path);
-    //     kinship = stoat_vcf::parseKinshipMatrix(kinship_path);
-    // }
+    stoat_vcf::KinshipMatrix kinship;
+    if (!kinship_path.empty()) {
+        kinship.parseKinshipMatrix(kinship_path);
+    }
 
-
-    //////////////////////////////////// Load or calculate the snarl information
-
+    // Load or calculate the snarl information
     // scope declaration
     // chr : <snarl, paths, pos(start, end), type>
     std::unordered_map<std::string, std::vector<stoat_vcf::Snarl_data_t>> snarls_chr;
@@ -342,62 +332,46 @@ const static int main_vcf(int argc, char* argv[]) {
 
     auto start_2 = std::chrono::high_resolution_clock::now();
 
-    if (make_bed) {
+    std::shared_ptr<stoat_vcf::SnarlAnalyzer> snarl_analyzer;
+    stoat_vcf::EdgeBySampleMatrix edge_matrix_empty(list_samples, 0, 0);
+    stoat::phenotype_type_t phenotype_type;
 
-        std::vector<std::pair<std::string, int>> pheno;
-        for (const auto& sample : list_samples) {
-            pheno.push_back({sample, -9}); // initilize all phenotypes to -9
+    // Decide which type of SnarlAnalyzer we want
+    if (!binary_path.empty()) {
+        // binary
+        if (!covariate.empty()){
+            // Binary covariate
+            snarl_analyzer.reset(new stoat_vcf::BinaryCovarSnarlAnalyzer(snarls_chr, list_samples, covariate, maf_threshold, table_threshold, binary_phenotype));
+        } else {
+            // Binary normal
+            snarl_analyzer.reset(new stoat_vcf::BinarySnarlAnalyzer(snarls_chr, list_samples, maf_threshold, table_threshold, binary_phenotype));
         }
+        phenotype_type = stoat::BINARY; 
+    } else if (!quantitative_path.empty()) {
+        // Quantitative
+        snarl_analyzer.reset(new stoat_vcf::QuantitativeSnarlAnalyzer(snarls_chr, list_samples, covariate, maf_threshold, table_threshold, quantitative_phenotype));
+        phenotype_type = stoat::QUANTITATIVE; 
+    } else if (!eqtl_path.empty()) {
+        // EQTL
+        snarl_analyzer.reset(new stoat_vcf::EQTLSnarlAnalyzer(snarls_chr, list_samples, covariate, maf_threshold, table_threshold, eqtl_phenotype, windows_gene_threshold));
+        phenotype_type = stoat::EQTL; 
+    }
 
-        const std::string output_fam = output_dir + ".fam";
-        stoat_vcf::create_fam(pheno, output_fam);
-        stoat_vcf::chromosome_chuck_make_bed(ptr_vcf, hdr, rec, list_samples, snarls_chr, output_dir);
+    std::string output_tsv = output_dir + (phenotype_type == stoat::BINARY       ? "/binary_table.tsv" : 
+                                            (phenotype_type == stoat::QUANTITATIVE ? "/quantitative_table.tsv" 
+                                                                                        : "/eqtl_gwas.tsv"));
 
-        auto end_1 = std::chrono::high_resolution_clock::now();
-        std::cout << "Time genotype plink files creations : " << std::chrono::duration<double>(end_1 - start_1).count() << " s" << std::endl;
-        return EXIT_SUCCESS;
+    snarl_analyzer->process_snarls_by_chromosome_chunk(ptr_vcf, hdr, rec, edge_matrix_empty, regression_dir, output_tsv);
 
-    } else {
+    std::string output_significative = output_dir + (phenotype_type == stoat::BINARY       ?  "/top_variant_binary.tsv" : 
+                                                    (phenotype_type == stoat::QUANTITATIVE ? "/top_variant_quantitative.tsv" 
+                                                                                                : "/top_variant_eqtl.tsv"));
 
-        std::shared_ptr<stoat_vcf::SnarlAnalyzer> snarl_analyzer;
-        stoat_vcf::phenotype_type_t phenotype_type;
+    stoat_vcf::add_BH_adjusted_column(output_tsv, output_dir, output_significative, phenotype_type);
 
-        // Decide which type of SnarlAnalyzer we want
-        if (!binary_path.empty()) {
-            // binary
-            if (!covariate.empty()){
-                // Normal binary
-                snarl_analyzer.reset(new stoat_vcf::BinarySnarlAnalyzer(snarls_chr, list_samples, covariate, maf, table_threshold, binary_vector));
-            } else {
-                // Binary covariate
-                snarl_analyzer.reset(new stoat_vcf::BinaryCovarSnarlAnalyzer(snarls_chr, list_samples, covariate, maf, table_threshold, binary_vector));
-            }
-            phenotype_type = stoat_vcf::BINARY; 
-        } else if (!quantitative_path.empty()) {
-            // Quantitative
-            snarl_analyzer.reset(new stoat_vcf::QuantitativeSnarlAnalyzer(snarls_chr, list_samples, covariate, maf, table_threshold, quantitative_vector));
-            phenotype_type = stoat_vcf::QUANTITATIVE; 
-        } else if (!eqtl_path.empty()) {
-            // EQTL
-            snarl_analyzer.reset(new stoat_vcf::EQTLSnarlAnalyzer(snarls_chr, list_samples, covariate, maf, table_threshold, eqtl, windows_gene_threshold));
-            phenotype_type = stoat_vcf::EQTL; 
-        }
-
-        std::string output_tsv = output_dir + (phenotype_type == stoat_vcf::BINARY       ? "/binary_table.tsv" : 
-                                              (phenotype_type == stoat_vcf::QUANTITATIVE ? "/quantitative_table.tsv" 
-                                                                                           : "/eqtl_gwas.tsv"));
-        snarl_analyzer->process_snarls_by_chromosome_chunk(ptr_vcf, hdr, rec, regression_dir, output_tsv);
-
-        std::string output_significative = output_dir + (phenotype_type == stoat_vcf::BINARY       ?  "/top_variant_binary.tsv" : 
-                                                        (phenotype_type == stoat_vcf::QUANTITATIVE ? "/top_variant_quantitative.tsv" 
-                                                                                                  : "/top_variant_eqtl.tsv"));
-
-        stoat_vcf::add_BH_adjusted_column(output_tsv, output_dir, output_significative, phenotype_type);
-
-        if (phenotype_type == stoat_vcf::BINARY && gaf) {
-            std::string output_gaf = output_dir + "/binary_table.gaf";
-            stoat_vcf::gaf_creation(output_tsv, snarls_chr, *pg, output_gaf);
-        }
+    if (phenotype_type == stoat::BINARY && gaf) {
+        std::string output_gaf = output_dir + "/binary_table.gaf";
+        stoat_vcf::gaf_creation(output_tsv, snarls_chr, *pg, output_gaf);
     }
 
     auto end_1 = std::chrono::high_resolution_clock::now();
@@ -405,4 +379,5 @@ const static int main_vcf(int argc, char* argv[]) {
     std::cout << "Time Gwas analysis : " << std::chrono::duration<double>(end_1 - start_1).count() << " s" << std::endl;
     return EXIT_SUCCESS;
 }
-}
+
+} // end stoat_vcf

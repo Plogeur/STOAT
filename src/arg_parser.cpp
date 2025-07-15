@@ -4,43 +4,6 @@ namespace fs = std::filesystem;
 
 namespace stoat_vcf {
 
-// KinshipMatrix parseKinshipMatrix(const std::string& filename) {
-//     KinshipMatrix km;
-//     std::ifstream file(filename);
-//     std::string line;
-
-//     // Parse header line for IDs
-//     if (std::getline(file, line)) {
-//         std::stringstream ss(line);
-//         std::string token;
-//         // Skip the empty top-left cell
-//         std::getline(ss, token, '\t');
-//         while (std::getline(ss, token, '\t')) {
-//             km.ids.push_back(token);
-//         }
-//     }
-
-//     // Parse matrix rows
-//     while (std::getline(file, line)) {
-//         std::stringstream ss(line);
-//         std::string rowLabel;
-//         std::getline(ss, rowLabel, '\t'); // row label
-//         std::vector<double> row;
-//         std::string value;
-//         while (std::getline(ss, value, '\t')) {
-//             row.push_back(std::stod(value));
-//         }
-//         km.matrix.push_back(row);
-//     }
-
-//     file.close();
-//     return km;
-// }
-
-// const bool KinshipMatrix::empty() const {
-//     return ids.empty() || matrix.empty();
-// }
-
 std::unordered_set<std::string> parse_chromosome_reference(const std::string& file_path) {
     std::unordered_set<std::string> reference;
     ifstream file(file_path);
@@ -231,8 +194,7 @@ void check_match_samples(const std::unordered_map<std::string, T>& map, const st
 }
 
 // dict chr:string : vector{(geneName:string, sample_expression:vector<double>, start_pos:size_t, end_pos:size_t)}
-std::unordered_map<std::string, std::vector<std::tuple<std::string, std::vector<double>, size_t, size_t>>> 
-    parse_qtl_gene_file(
+std::unordered_map<std::string, std::vector<Qtl_data>> parse_qtl_gene_file(
     const std::string& eqtl_path, 
     const std::string& gene_position_path, 
     const std::vector<std::string>& list_samples) {
@@ -242,13 +204,14 @@ std::unordered_map<std::string, std::vector<std::tuple<std::string, std::vector<
 
     // dict geneName:string : tuple{chrom:string, start_pos:size_t, end_pos:size_t}
     auto gene_position = parse_gene_positions(gene_position_path);
-    std::unordered_map<std::string, std::vector<std::tuple<std::string, std::vector<double>, size_t, size_t>>> qtl_map;
+    std::unordered_map<std::string, std::vector<Qtl_data>> qtl_map;
 
     for (const auto& [gene, expression_vector] : qtl) {
         auto it = gene_position.find(gene);
         if (it != gene_position.end()) {
             const auto& [chrom, start, end] = it->second;
-            qtl_map[chrom].emplace_back(gene, expression_vector, start, end);
+            Qtl_data qtl_info(gene, expression_vector, start, end);
+            qtl_map[chrom].emplace_back(qtl_info);
         } else {
             std::cerr << "Error: Gene \"" << gene << "\" not found in gene positions." << std::endl;
             exit(1);
@@ -559,6 +522,39 @@ void check_file(const std::string& file_path) {
     }
 
     file.close();
+}
+
+void KinshipMatrix::parseKinshipMatrix(const std::string& filename) {
+
+    std::ifstream file(filename);
+    std::string line;
+
+    // Parse header line for IDs
+    if (std::getline(file, line)) {
+        std::stringstream ss(line);
+        std::string token;
+        // Skip the empty top-left cell
+        std::getline(ss, token, '\t');
+        ids.clear();
+        while (std::getline(ss, token, '\t')) {
+            ids.push_back(token);
+        }
+    }
+
+    matrix.clear();
+
+    // Parse matrix rows
+    while (std::getline(file, line)) {
+        std::stringstream ss(line);
+        std::string rowLabel;
+        std::getline(ss, rowLabel, '\t'); // row label
+        std::vector<double> row;
+        std::string value;
+        while (std::getline(ss, value, '\t')) {
+            row.push_back(std::stod(value));
+        }
+        matrix.push_back(row);
+    }
 }
 
 } //end stoat_vcf namespace

@@ -69,11 +69,12 @@ std::vector<std::set<sample_hap_t>> PathPartitioner::get_walk_sets(const handleg
     std::vector<handlegraph::PathSense> senses = {handlegraph::PathSense::GENERIC,
                                                   handlegraph::PathSense::REFERENCE,
                                                   handlegraph::PathSense::HAPLOTYPE};
+    
     //TODO: This could also use steps_of_handle() but it doesn't seem to work 
     for (const auto& sense : senses) {
         graph.for_each_step_of_sense(distance_index.get_handle(distance_index.get_node_from_sentinel(distance_index.get_bound(snarl, false, true)), &graph),
             sense, [&](const handlegraph::step_handle_t& step) {
-            old_sets[sample_to_index[get_sample_and_haplotype(graph, graph.get_path_handle_of_step(step), samples_of_interest)]] = 1;
+            old_sets[sample_to_index[stoat::get_sample_and_haplotype(graph, graph.get_path_handle_of_step(step), samples_of_interest)]] = 1;
             old_set_count = 2;
         });
     }
@@ -138,13 +139,12 @@ std::vector<std::set<sample_hap_t>> PathPartitioner::get_walk_sets(const handleg
                     cerr << "\t\tgoing to " << graph.get_id(next_handle) << endl;
                     #endif
 
-
                     path_edge_t edge (graph.get_position_of_step(step), 
                                       std::numeric_limits<size_t>::max(),
                                       graph.get_id(next_handle), 
                                       graph.get_is_reverse(next_handle));
 
-                    size_t sample_num = sample_to_index[get_sample_and_haplotype(graph, graph.get_path_handle_of_step(step))];
+                    size_t sample_num = sample_to_index[stoat::get_sample_and_haplotype(graph, graph.get_path_handle_of_step(step))];
 
                     if (next_steps[sample_num].id == 0) {
                         // If this path hasn't been seen before
@@ -291,7 +291,7 @@ std::vector<std::set<sample_hap_t>> PathPartitioner::get_start_edge_sets(const h
                 if (edge_to_sample_set.count(next_node) == 0) {
                     edge_to_sample_set[next_node] = std::set<sample_hap_t>();
                 }
-                edge_to_sample_set[next_node].emplace(get_sample_and_haplotype(graph, path));
+                edge_to_sample_set[next_node].emplace(stoat::get_sample_and_haplotype(graph, path));
             }
         });
     }

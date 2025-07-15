@@ -3,16 +3,21 @@
 // ------------------------ Binary table & stats ------------------------
 namespace stoat_vcf {
 
-void binary_stat_test(const std::vector<size_t>& g0, const std::vector<size_t>& g1,
-    std::string& fastfisher_p_value, std::string& chi2_p_value, std::string& group_paths,
-    std::string& allele_number_str, std::string& min_row_index_str, std::string& numb_colum_str, 
-    std::string& inter_group_str, std::string& average_str) {
+std::tuple<std::string, std::string, 
+std::string, std::string, std::string, 
+std::string> binary_stat_test(
+    const std::vector<size_t>& g0, 
+    const std::vector<size_t>& g1) {
 
     // Compute derived statistics
     int allele_number = 0;
     int inter_group = 0;
     int numb_colum = g0.size();
     int min_row_index = INT_MAX;
+
+    std::string
+    group_paths, allele_number_str, min_row_index_str, 
+    numb_colum_str, inter_group_str, average_str;
 
     for (size_t i = 0; i < g0.size(); ++i) {
         int row_sum = static_cast<int>(g0[i] + g1[i]);
@@ -29,23 +34,16 @@ void binary_stat_test(const std::vector<size_t>& g0, const std::vector<size_t>& 
     
     int average = static_cast<double>(allele_number) / numb_colum; // get 200 instead of 200.00000
 
-    // Compute  Fisher's exact & Chi-squared test p-value
-    if (g0.size() == 2) {
-        size_t a = g0[0];
-        size_t b = g0[1];
-        size_t c = g1[0];
-        size_t d = g1[1];
-        chi2_p_value = chi2_2x2(a, b, c, d);
-        fastfisher_p_value = fastFishersExactTest(a, b, c, d);
-    } else {
-        chi2_p_value = chi2_2xN(g0, g1);
-    }
-    group_paths = stoat_vcf::format_group_paths(g0, g1);
+    group_paths = stoat::format_group_paths(g0, g1);
     allele_number_str = std::to_string(allele_number);
     min_row_index_str = std::to_string(min_row_index);
     numb_colum_str = std::to_string(numb_colum);
     inter_group_str = std::to_string(inter_group);
     average_str = std::to_string(average);
+
+    return std::make_tuple(
+        group_paths, allele_number_str, min_row_index_str, 
+        numb_colum_str, inter_group_str, average_str);
 }
 
 size_t create_binary_table(
@@ -73,21 +71,6 @@ size_t create_binary_table(
         }
     }
     return total_sum;
-}
-
-bool check_MAF_threshold(
-    const std::vector<size_t>& g0, const std::vector<size_t>& g1,
-    const size_t& totalSum, const size_t& length_column_headers, 
-    const double& maf) {
-
-    // Check MAF threshold
-    for (size_t i = 0; i < length_column_headers; ++i) {
-        int columnSum = g0[i] + g1[i];
-        if (static_cast<double>(columnSum) / totalSum >= maf) {
-            return true; // MAF threshold met
-        }
-    }
-    return false; // No column met MAF threshold
 }
 
 } // namespace stoat_vcf

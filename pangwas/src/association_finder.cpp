@@ -112,7 +112,7 @@ void AssociationFinder::write_tsv_of_snarl(const handlegraph::net_handle_t& snar
     // Write all coordinates for a single path
     handlegraph::path_handle_t ref_path;
     bool first = true;
-    for (const path_range_t& range : get_coordinates_of_snarl(snarl, true, reference_name, false)) {
+    for (const stoat::path_range_t& range : get_coordinates_of_snarl(snarl, true, reference_name, false)) {
         if (first) {
             first = false;
             ref_path = graph.get_path_handle_of_step(range.start);
@@ -145,14 +145,14 @@ void AssociationFinder::write_fasta_of_snarl(const handlegraph::net_handle_t& sn
     // Get a reference range for the snarl.
     // If the reference goes through the snarl multiple times, get the largest interval
 
-    std::vector<path_range_t> ref_ranges = get_coordinates_of_snarl(snarl, true, reference_name, false);
+    std::vector<stoat::path_range_t> ref_ranges = get_coordinates_of_snarl(snarl, true, reference_name, false);
     std::string ref_coordinates  = "NOREF:?:?";
     int start_offset = std::numeric_limits<int>::max();
     int end_offset = 0;
     //Only get the coordinates for one path
     bool first = true;
     handlegraph::path_handle_t ref_path;
-    for (const path_range_t& ref_range : ref_ranges){
+    for (const stoat::path_range_t& ref_range : ref_ranges){
         if (first) {
             first = false;
             ref_path = graph.get_path_handle_of_step(ref_range.start);
@@ -171,14 +171,14 @@ void AssociationFinder::write_fasta_of_snarl(const handlegraph::net_handle_t& sn
     }
 
     // Now go through each path that goes through the snarl and print the sequence
-    std::vector<path_range_t> path_ranges = get_coordinates_of_snarl(snarl, false, "", true);
-    for (const path_range_t& path_range : path_ranges) {
+    std::vector<stoat::path_range_t> path_ranges = get_coordinates_of_snarl(snarl, false, "", true);
+    for (const stoat::path_range_t& path_range : path_ranges) {
         handlegraph::path_handle_t path = graph.get_path_handle_of_step(path_range.start);
-        if (samples.empty() || samples.count(get_sample_name_from_path(graph, path)) != 0) {
+        if (samples.empty() || samples.count(stoat::get_sample_name_from_path(graph, path)) != 0) {
             //If we aren't checking samples, or if this is a sample we want
 
             // Print to the correct stream, depending on if it is associated or not
-            std::ostream& out = samples_of_interest.count(get_sample_name_from_path(graph, path)) != 0
+            std::ostream& out = samples_of_interest.count(stoat::get_sample_name_from_path(graph, path)) != 0
                               ? out_associated
                               : out_unassociated;
 
@@ -225,7 +225,7 @@ std::vector<AssociationFinder::path_range_t> AssociationFinder::get_coordinates_
     std::vector<AssociationFinder::path_range_t> ranges;
     // If a sample name is given, then always look for that first
     if (!sample_name.empty()) {
-        ranges = get_coordinates_of_snarl_helper(snarl, false, sample_name, false);
+        ranges = stoat::get_coordinates_of_snarl(snarl, false, sample_name, false);
         if (!ranges.empty()) {
             return ranges;
         }
@@ -234,7 +234,7 @@ std::vector<AssociationFinder::path_range_t> AssociationFinder::get_coordinates_
         //If we didn't find the specific path and we are looking for a reference, look for a reference-sense path next
 
         //Try with reference-sense path
-        ranges = get_coordinates_of_snarl_helper(snarl, true, "", false);
+        ranges = stoat::get_coordinates_of_snarl(snarl, true, "", false);
         if (!ranges.empty()) {
             return ranges;
         }
@@ -242,7 +242,7 @@ std::vector<AssociationFinder::path_range_t> AssociationFinder::get_coordinates_
     if (get_all_paths) {
         //If we just want all paths, return that 
 
-        ranges = get_coordinates_of_snarl_helper(snarl, false, "", true);
+        ranges = stoat::get_coordinates_of_snarl(snarl, false, "", true);
         return ranges;
 
     } else {
@@ -271,13 +271,13 @@ std::vector<AssociationFinder::path_range_t> AssociationFinder::get_coordinates_
         if (new_sample_name.empty()) {
             return ranges;
         } else {
-            ranges = get_coordinates_of_snarl_helper(snarl, false, new_sample_name, false);
+            ranges = stoat::get_coordinates_of_snarl(snarl, false, new_sample_name, false);
             return ranges;
         }
 
     }
 }
-std::vector<AssociationFinder::path_range_t> AssociationFinder::get_coordinates_of_snarl_helper(const handlegraph::net_handle_t& snarl, bool get_reference, std::string sample_name, bool get_all_paths) const {
+std::vector<AssociationFinder::path_range_t> AssociationFinder::stoat::get_coordinates_of_snarl(const handlegraph::net_handle_t& snarl, bool get_reference, std::string sample_name, bool get_all_paths) const {
     #ifdef DEBUG_ASSOCIATION_FINDER
    std::cerr << "Get coordinates of " << distance_index.net_handle_as_string(snarl) << std::endl;
     if (get_reference) {
@@ -352,7 +352,7 @@ std::vector<AssociationFinder::path_range_t> AssociationFinder::get_coordinates_
     }
     #endif
 
-    std::vector<path_range_t> ranges;
+    std::vector<stoat::path_range_t> ranges;
 
     if (found_pair) {
         //If we found a path going through the snarl, return the pairs

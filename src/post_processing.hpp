@@ -26,7 +26,7 @@ void add_BH_adjusted_column(
     const std::string& input_file,
     const std::string& output_dir,
     const std::string& output_file_significant,
-    const phenotype_type_t& phenotype_type);
+    const stoat::phenotype_type_t& phenotype_type);
 
 } // namespace stoat_vcf
 

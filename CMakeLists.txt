@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.10)
-project(stoat VERSION 0.1.1 LANGUAGES CXX)
+project(stoat VERSION 0.1.0 LANGUAGES CXX)
 
 # C++ Standard Settings
 set(CMAKE_CXX_STANDARD 17)
@@ -7,9 +7,6 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(CMAKE_OSX_DEPLOYMENT_TARGET "12.7") # IOS fix
-
-include_directories(/usr/include /usr/local/include)
-link_directories(/usr/include /usr/local/lib)  # libbdsg.dylib
 
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(HTSLIB REQUIRED htslib)
@@ -23,7 +20,6 @@ find_package(Eigen3 REQUIRED)
 
 # Copied from https://github.com/vgteam/vg/wiki/Programming-with-the-vg-API
 # SDSL library ("sdsl" target) already exists from libbdsg
-
 # GBWT doesn't have CMake yet so we need to explain how to build it.
 
 # GBWT dependency: OpenMP
@@ -41,7 +37,7 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     list(APPEND CMAKE_PREFIX_PATH "${HOMEBREW_PREFIX}")
     list(APPEND CMAKE_PREFIX_PATH "${HOMEBREW_PREFIX}/opt/libomp")
 endif()
-find_package( OpenMP REQUIRED )
+find_package(OpenMP REQUIRED)
 
 add_library(${PROJECT_NAME}_objs OBJECT
     src/subcommand/vcf.cpp
@@ -56,19 +52,16 @@ add_library(${PROJECT_NAME}_objs OBJECT
     src/quantitative_table.cpp
     src/stats_test.cpp
     src/writer.cpp
-    src/snarl_analyser.cpp
-    #src/graph_path_association_finder.cpp
-    #src/path_partitioner.cpp
-    ${ALGLIB_SOURCES}
+    src/snarl_analyzer.cpp
+    src/graph_path_association_finder.cpp
+    src/partitioner.cpp
 )
-
 
 # Include Directories
 target_include_directories(${PROJECT_NAME}_objs PRIVATE
     ${Boost_INCLUDE_DIRS}
     ${HTSLIB_INCLUDE_DIRS}
 )
-
 
 # Link Libraries
 target_link_libraries(${PROJECT_NAME}_objs
@@ -116,7 +109,7 @@ add_executable(unit_tests
     src/quantitative_table.cpp
     src/stats_test.cpp
     src/writer.cpp
-    src/snarl_analyser.cpp
+    src/snarl_analyzer.cpp
 )
 
 target_compile_options(unit_tests PRIVATE -w) # fix warning

@@ -1,5 +1,5 @@
 // This file is part of STOAT 0.0.1, copyright (C) 2024-2025 
-// Authors : Matis Alias-Bagarre, Jean Monlong & Xian-hui Chang.
+// Authors : Matis Alias-Bagarre, Xian-hui Chang & Jean Monlong.
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -22,17 +22,8 @@
 #include <getopt.h>
 #include <omp.h>
 
-// #include <bdsg/overlays/overlay_helper.hpp>
-// #include <handlegraph/path_handle_graph.hpp>
-// #include <bdsg/hash_graph.hpp>
-// #include <vg/io/vpkg.hpp>
-
-// #include "io/register_io.hpp"
-// #include "path_association_finder.hpp"
-// #include "utils.hpp"
-
 #include "../snarl_data_t.hpp"
-#include "../snarl_analyser.hpp"
+#include "../snarl_analyzer.hpp"
 #include "../arg_parser.hpp"
 #include "../matrix.hpp"
 #include "../gaf_creator.hpp"

@@ -19,7 +19,7 @@
 #include <boost/multiprecision/cpp_dec_float.hpp>
 
 #include "matrix.hpp"
-#include "snarl_analyser.hpp"
+#include "snarl_analyzer.hpp"
 #include "utils.hpp"
 #include "stats_test.hpp"
 
@@ -33,10 +33,9 @@ namespace stoat_vcf {
 std::string format_group_paths(const std::vector<size_t>& g0, const std::vector<size_t>& g1);
 
 // Given two vectors of genotypes representing two groups, fill in the p-values, etc by running the relevant tests
-void binary_stat_test(const std::vector<size_t>& g0, const std::vector<size_t>& g1, 
-    std::string& fastfisher_p_value, std::string& chi2_p_value, std::string& group_paths,
-    std::string& allele_number_str, std::string& min_row_index_str, std::string& numb_colum_str, 
-    std::string& inter_group_str, std::string& average_str);
+std::tuple<std::string, std::string, 
+std::string, std::string, std::string, 
+std::string> binary_stat_test(const std::vector<size_t>& g0, const std::vector<size_t>& g1);
 
 // Given two vectors of genotypes representing two groups (with length number_paths), fill them in with counts of the number of times each path is seen  
 // g0 and g1 can be used in binary_stat_test()
@@ -47,12 +46,6 @@ size_t create_binary_table(
     const size_t& number_paths,
     const size_t& number_samples,
     const stoat_vcf::EdgeBySampleMatrix& matrix);
-
-// Does at least one column meet the MAF threshold?
-bool check_MAF_threshold(
-    const std::vector<size_t>& g0, const std::vector<size_t>& g1,
-    const size_t& totalSum, const size_t& length_column_headers, 
-    const double& maf);
 
 } // namespace stoat_vcf
 

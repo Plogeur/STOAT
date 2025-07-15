@@ -19,8 +19,8 @@ template std::tuple<std::vector<std::vector<double>>, std::vector<bool>, size_t,
         const std::vector<bool>&,
         const stoat_vcf::EdgeBySampleMatrix&);
 
-std::tuple<std::vector<std::vector<double>>, size_t, std::unordered_set<size_t>, bool, std::vector<size_t>>
-    process_table_quantitative(
+std::tuple<std::vector<std::vector<double>>, size_t, 
+std::unordered_set<size_t>, bool, std::vector<size_t>> process_table_quantitative(
         const size_t& number_samples,
         const std::vector<stoat_vcf::Path_traversal_t>& column_headers,
         const stoat_vcf::EdgeBySampleMatrix& matrix) {

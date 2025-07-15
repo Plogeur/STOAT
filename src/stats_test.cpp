@@ -14,31 +14,26 @@ using boost::math::chi_squared_distribution;
 #  define S_CAST(type, val) (static_cast<type>(val))
 #endif
 
-static const double kExactTestEpsilon2 = 0.0000000000009094947017729282379150390625;
-static const double kExactTestBias = 0.00000000000000000000000010339757656912845935892608650874535669572651386260986328125;
-static const boost::math::chi_squared chi_squared_dist(1);
-boost::math::chi_squared_distribution<cpp_dec_float_50> cpp_dec_float_50_dist(1);
-    
 // ------------------------ Logistic regression ------------------------
 
 // Standard normal cumulative distribution function
-double normal_cdf(double z) {
+double LogisticRegression::normal_cdf(double z) {
     static const boost::math::normal_distribution<> standard_normal(0.0, 1.0);
     return boost::math::cdf(standard_normal, z);
 }
 
 // Sigmoid function
-inline double sigmoid(double x) {
+inline double LogisticRegression::sigmoid(double x) {
     return 1.0 / (1.0 + std::exp(-x));
 }
 
 // Clamp helper
-inline double clamp(double x, double lo, double hi) {
+inline double LogisticRegression::clamp(double x, double lo, double hi) {
     return std::max(lo, std::min(hi, x));
 }
 
 // Log-likelihood
-double calculate_log_likelihood(const Eigen::VectorXd& y, const Eigen::VectorXd& p) {
+double LogisticRegression::calculate_log_likelihood(const Eigen::VectorXd& y, const Eigen::VectorXd& p) {
     double epsilon = 1e-8;
     double ll = 0.0;
     for (int i = 0; i < y.size(); ++i) {
@@ -49,67 +44,65 @@ double calculate_log_likelihood(const Eigen::VectorXd& y, const Eigen::VectorXd&
 }
 
 // GLM Implementation with Iteratively Reweighted Least Squares (IRLS)
-void logistic_regression(
-    const std::vector<std::vector<double>>& variant_data,
+std::tuple<std::string, std::string, std::string, std::string> LogisticRegression::logistic_regression(
+    const std::vector<std::vector<double>>& df,
     const std::vector<bool>& phenotype,
-    const std::vector<std::vector<double>>& covariates,
-    std::string& p_value_str, 
-    std::string& beta_str, 
-    std::string& se_str, 
-    std::string& r2_str) {
+    const std::vector<std::vector<double>>& covariates) {
 
-    const int max_iterations = 100;
-    const double tolerance = 1e-6;
-    const double l2_penalty = 1e-4;
-    const double epsilon = 1e-8;
-
-    size_t n_samples = variant_data.size();
-    size_t n_variants = variant_data[0].size();
-    size_t n_covariates = 0;
-    size_t n_features = n_variants + 1; // +1 for intercept
+    size_t num_samples = df.size();
+    size_t num_variants = df[0].size();
+    size_t num_covariates = 0;
+    size_t num_features = num_variants + 1; // +1 for intercept
     
     if (!covariates.empty()) {
-        size_t n_covariates = covariates[0].size();
-        size_t n_features =  n_variants + n_covariates + 1; // +1 for intercept
+        size_t num_covariates = covariates[0].size();
+        size_t num_features =  num_variants + num_covariates + 1; // +1 for intercept
     }
 
-    Eigen::MatrixXd X(n_samples, n_features);
-    Eigen::VectorXd y(n_samples);
+    Eigen::MatrixXd X(num_samples, num_features);
+    X.col(0) = Eigen::VectorXd::Ones(num_samples);  // Intercept column
+    Eigen::VectorXd y(num_samples);
+    
+    for (size_t i = 0; i < num_samples; ++i) {
+        size_t col = 1;
 
-    for (size_t i = 0; i < n_samples; ++i) {
-        size_t col = 0;
-        X(i, col++) = 1.0; // intercept
-        for (size_t j = 0; j < n_variants; ++j)
-            X(i, col++) = variant_data[i][j];
-        for (size_t j = 0; j < n_covariates; ++j)
+        // Copy variant data
+        for (size_t j = 0; j < num_variants; ++j) {
+            X(i, col++) = df[i][j];
+        }
+
+        for (size_t j = 0; j < num_covariates; ++j) {
             X(i, col++) = covariates[i][j];
+        }
+
+        // Binary phenotype
         y(i) = phenotype[i] ? 1.0 : 0.0;
     }
 
-    Eigen::VectorXd beta = Eigen::VectorXd::Zero(n_features);
+    Eigen::VectorXd beta = Eigen::VectorXd::Zero(num_features);
     Eigen::VectorXd beta_old = beta;
-    Eigen::VectorXd p(n_samples);
-    Eigen::VectorXd weights(n_samples);
+    Eigen::VectorXd p(num_samples);
+    Eigen::VectorXd weights(num_samples);
 
     bool converged = false;
     for (int iter = 0; iter < max_iterations; ++iter) {
         Eigen::VectorXd z = X * beta;
-        for (int i = 0; i < n_samples; ++i) {
+        for (int i = 0; i < num_samples; ++i) {
             p(i) = sigmoid(z(i));
             weights(i) = clamp(p(i) * (1.0 - p(i)), epsilon, 1.0);
         }
 
         Eigen::MatrixXd X_weighted = X;
-        for (int i = 0; i < n_samples; ++i)
+        for (int i = 0; i < num_samples; ++i)
             X_weighted.row(i) *= std::sqrt(weights(i));
 
         Eigen::MatrixXd hessian = X_weighted.transpose() * X_weighted;
-        hessian += l2_penalty * Eigen::MatrixXd::Identity(n_features, n_features);
+        hessian += l2_penalty * Eigen::MatrixXd::Identity(num_features, num_features);
 
         Eigen::VectorXd gradient = X.transpose() * (y - p) - l2_penalty * beta;
 
         Eigen::LDLT<Eigen::MatrixXd> ldlt(hessian);
-        if (ldlt.info() != Eigen::Success) return;
+        if (ldlt.info() != Eigen::Success) return std::make_tuple("NA", "NA", "NA", "NA");
 
         Eigen::VectorXd delta = ldlt.solve(gradient);
         beta += delta;
@@ -121,28 +114,28 @@ void logistic_regression(
         beta_old = beta;
     }
 
-    if (!converged) return;
+    if (!converged) return std::make_tuple("NA", "NA", "NA", "NA");
 
     // Final weights
     Eigen::VectorXd z_final = X * beta;
-    for (int i = 0; i < n_samples; ++i) {
+    for (int i = 0; i < num_samples; ++i) {
         p(i) = sigmoid(z_final(i));
         weights(i) = clamp(p(i) * (1.0 - p(i)), epsilon, 1.0);
     }
 
     // Covariance matrix
     Eigen::MatrixXd X_weighted = X;
-    for (int i = 0; i < n_samples; ++i)
+    for (int i = 0; i < num_samples; ++i)
         X_weighted.row(i) *= std::sqrt(weights(i));
 
     Eigen::MatrixXd hessian = X_weighted.transpose() * X_weighted;
-    hessian += l2_penalty * Eigen::MatrixXd::Identity(n_features, n_features);
+    hessian += l2_penalty * Eigen::MatrixXd::Identity(num_features, num_features);
     Eigen::MatrixXd cov = hessian.inverse();
     Eigen::VectorXd se = cov.diagonal().array().sqrt();
 
     // --- Wald Test (Normal approximation)
-    std::vector<double> p_values(n_variants);
-    for (size_t i = 0; i < n_variants; ++i) {
+    std::vector<double> p_values(num_variants);
+    for (size_t i = 0; i < num_variants; ++i) {
         size_t idx = 1 + i; // skip intercept
         double z_score = beta(idx) / se(idx);
         p_values[i] = 2.0 * (1.0 - normal_cdf(std::abs(z_score))); // Two-sided
@@ -151,23 +144,33 @@ void logistic_regression(
     // --- McFadden's R²
     double ll_full = calculate_log_likelihood(y, p);
     double p_null_val = clamp(y.mean(), epsilon, 1.0 - epsilon);
-    Eigen::VectorXd p_null = Eigen::VectorXd::Constant(n_samples, p_null_val);
+    Eigen::VectorXd p_null = Eigen::VectorXd::Constant(num_samples, p_null_val);
     double ll_null = calculate_log_likelihood(y, p_null);
     double r2 = clamp(1.0 - (ll_full / ll_null), 0.0, 1.0);
 
-    std::vector<double> p_values_adjusted = stoat_vcf::adjusted_holm(p_values);
-    size_t min_index = std::distance(p_values_adjusted.begin(), std::min_element(p_values_adjusted.begin(), p_values_adjusted.end()));
-    double min_p_value_adjusted = p_values_adjusted[min_index];
+    double p_value_adjusted = p_values[0];
+    double beta_adjusted = beta[0];
+    double se_adjusted = se[0];
+
+    if (p_values.size() > 1) { // case > 3 column/path
+        std::vector<double> p_values_adjusted = stoat::adjusted_holm(p_values);
+        size_t min_index = std::distance(p_values_adjusted.begin(), std::min_element(p_values_adjusted.begin(), p_values_adjusted.end()));
+        p_value_adjusted = p_values_adjusted[min_index];
+        beta_adjusted = beta[min_index+1];
+        se_adjusted = se[min_index+1];
+    }
 
     // set precision : 4 digit
-    r2_str = stoat_vcf::set_precision(r2);
-    beta_str = stoat_vcf::set_precision(beta[min_index]);
-    se_str = stoat_vcf::set_precision(se[min_index]);
-    p_value_str = stoat_vcf::set_precision(min_p_value_adjusted);
+    std::string r2_str = stoat::set_precision(r2);
+    std::string beta_str = stoat::set_precision(beta_adjusted);
+    std::string se_str = stoat::set_precision(se_adjusted);
+    std::string p_value_str = stoat::set_precision(p_value_adjusted);
+
+    return std::make_tuple(r2_str, beta_str, se_str, p_value_str);
 }
 
 // ------------------------ Chi2 test ------------------------
-std::string chi2_2x2(const size_t& a, const size_t& b, const size_t& c, const size_t& d) {
+std::string FisherKhi2::chi2_2x2(const size_t& a, const size_t& b, const size_t& c, const size_t& d) {
 
     int64_t row1 = a + b;
     int64_t row2 = c + d;
@@ -183,7 +186,7 @@ std::string chi2_2x2(const size_t& a, const size_t& b, const size_t& c, const si
     double expected_d = (double)(col2) * (row2) / total;
 
     if (expected_a == 0 || expected_b == 0 || expected_c == 0 || expected_d == 0)
-        return stoat_vcf::set_precision(std::numeric_limits<double>::max());
+        return stoat::set_precision(std::numeric_limits<double>::max());
 
     double chi2_stat = 0;
     chi2_stat += std::pow((double)a - expected_a, 2) / expected_a;
@@ -194,13 +197,13 @@ std::string chi2_2x2(const size_t& a, const size_t& b, const size_t& c, const si
     if (chi2_stat > 85.0) {
         cpp_dec_float_50 chi2_stat_float_50 = chi2_stat;
         cpp_dec_float_50 pval = 1.0 - boost::math::cdf(cpp_dec_float_50_dist, chi2_stat_float_50);
-        return stoat_vcf::set_precision_float_50(pval.convert_to<double>());
+        return stoat::set_precision_float_50(pval.convert_to<double>());
     }
-    return stoat_vcf::set_precision(1.0 - boost::math::cdf(chi_squared_dist, chi2_stat));
+    return stoat::set_precision(1.0 - boost::math::cdf(chi_squared_dist, chi2_stat));
 }
 
 // Check if the observed matrix is valid (no zero rows/columns)
-std::string chi2_2xN(const std::vector<size_t>& g0, const std::vector<size_t>& g1) {
+std::string FisherKhi2::chi2_2xN(const std::vector<size_t>& g0, const std::vector<size_t>& g1) {
 
     size_t cols = g0.size();
     std::vector<size_t> col_totals(cols);
@@ -237,12 +240,12 @@ std::string chi2_2xN(const std::vector<size_t>& g0, const std::vector<size_t>& g
         cpp_dec_float_50 chi2_stat_float_50 = chi2;
         boost::math::chi_squared_distribution<cpp_dec_float_50> cpp_dec_float_50_dist_2xN(df);
         cpp_dec_float_50 p_value = 1.0 - boost::math::cdf(cpp_dec_float_50_dist_2xN, chi2_stat_float_50);
-        return stoat_vcf::set_precision_float_50(p_value);
+        return stoat::set_precision_float_50(p_value);
     }
 
     boost::math::chi_squared dist_2xN(df);
     double pvalue = 1.0 - boost::math::cdf(dist_2xN, chi2);
-    return stoat_vcf::set_precision(pvalue);
+    return stoat::set_precision(pvalue);
 }
 
 // ------------------------ Fisher exact test ------------------------
@@ -250,7 +253,7 @@ std::string chi2_2xN(const std::vector<size_t>& g0, const std::vector<size_t>& g
 // Fisher's exact test for a 2x2 contingency table
 // m11, m12, m21, m22 are the counts in the table
 // Returns the p-value as a std::string with 4 decimal places
-std::string fastFishersExactTest(size_t m11, size_t m12,
+std::string FisherKhi2::fastFishersExactTest(size_t m11, size_t m12,
                                  size_t m21, size_t m22) {
     
     // Check for any full-zero row or column
@@ -340,30 +343,44 @@ std::string fastFishersExactTest(size_t m11, size_t m12,
         preaddp = tprob;
         tprob += cur_prob;
         if (tprob <= preaddp) {
-            return stoat_vcf::set_precision(preaddp / (cprob + preaddp));
+            return stoat::set_precision(preaddp / (cprob + preaddp));
         }
         } while (cur11 > 0.5);
     }
 
-    return stoat_vcf::set_precision(tprob / (cprob + tprob));
+    return stoat::set_precision(tprob / (cprob + tprob));
 }
 
+std::pair<std::string, std::string> FisherKhi2::fisher_khi2(const std::vector<size_t>& g0, const std::vector<size_t>& g1) {
+    
+    std::string chi2_p_value, fastfisher_p_value;
+    
+    // Compute  Fisher's exact & Chi-squared test p-value
+    if (g0.size() == 2) {
+        size_t a = g0[0];
+        size_t b = g0[1];
+        size_t c = g1[0];
+        size_t d = g1[1];
+        chi2_p_value = chi2_2x2(a, b, c, d);
+        fastfisher_p_value = fastFishersExactTest(a, b, c, d);
+    } else {
+        chi2_p_value = chi2_2xN(g0, g1);
+    }
+
+    return {chi2_p_value, fastfisher_p_value};
+}
 // ------------------------ Linear regression ------------------------
 
 // Linear regression function OLS with intercept + covariate
-void linear_regression(
+std::tuple<std::string, std::string, std::string, std::string> LinearRegression::linear_regression(
     const std::vector<std::vector<double>>& df,
     const std::vector<double>& quantitative_phenotype,
-    const std::vector<std::vector<double>>& covar,
-    std::string& p_value_str, 
-    std::string& beta_str, 
-    std::string& se_str, 
-    std::string& r2_str) {
+    const std::vector<std::vector<double>>& covar) {
 
     size_t num_samples = df.size();
     size_t num_variants = df[0].size();
     size_t num_covariates = 0;
-    size_t num_features = num_samples + 1; // +1 for intercept
+    size_t num_features = num_variants + 1; // +1 for intercept
 
     if (!covar.empty()) {
         size_t num_covariates = covar[0].size();
@@ -408,7 +425,6 @@ void linear_regression(
         Eigen::MatrixXd XtX = X.transpose() * X;
         Eigen::MatrixXd cov_matrix = XtX.ldlt().solve(Eigen::MatrixXd::Identity(X.cols(), X.cols()));
         se = (cov_matrix.diagonal() * mse).array().sqrt().matrix();
-        // std::cerr << "Warning: se is nan" << std::endl;
     }
 
     // t-statistics
@@ -424,28 +440,25 @@ void linear_regression(
         p_values.push_back(2 * boost::math::cdf(boost::math::complement(t_dist, std::abs(t_stats[i])))); // two-tailed
     }
 
-    double p_value_adjusted = 0;
-    double beta_adjusted = 0;
-    double se_adjusted = 0;
+    double p_value_adjusted = p_values[0];
+    double beta_adjusted = beta[0];
+    double se_adjusted = se[0];
 
     if (p_values.size() > 1) {
-        std::vector<double> p_values_adjusted = stoat_vcf::adjusted_holm(p_values);
+        std::vector<double> p_values_adjusted = stoat::adjusted_holm(p_values);
         size_t min_index = std::distance(p_values_adjusted.begin(), std::min_element(p_values_adjusted.begin(), p_values_adjusted.end()));
         p_value_adjusted = p_values_adjusted[min_index];
         beta_adjusted = beta[min_index+1];
         se_adjusted = se[min_index+1];
-
-    } else {
-        p_value_adjusted = p_values[0];
-        beta_adjusted = beta[0];
-        se_adjusted = se[0];
     }
 
     // set precision : 4 digit
-    r2_str = stoat_vcf::set_precision(r2);
-    beta_str = stoat_vcf::set_precision(beta_adjusted);
-    se_str = stoat_vcf::set_precision(se_adjusted);
-    p_value_str = stoat_vcf::set_precision(p_value_adjusted);
+    std::string r2_str = stoat::set_precision(r2);
+    std::string beta_str = stoat::set_precision(beta_adjusted);
+    std::string se_str = stoat::set_precision(se_adjusted);
+    std::string p_value_str = stoat::set_precision(p_value_adjusted);
+
+    return std::make_tuple(r2_str, beta_str, se_str, p_value_str);
 }
 
 // Eigen::MatrixXd MatrixtoEigenMatrix(const std::vector<std::vector<double>>& matrix) {

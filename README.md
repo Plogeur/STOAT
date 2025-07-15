@@ -30,9 +30,11 @@ Manual installation :
 - Catch2 v3
 - vg (optional)
 
-Or you can use the `Dockerfile` : [Dockerfile](https://github.com/Plogeur/STOAT/blob/main/Dockerfile)
+## Docker
 
-Or you can use the `container` : docker://quay.io/matis_alias-bagarre/stoat
+- `Dockerfile` : [Dockerfile](https://github.com/Plogeur/STOAT/blob/main/Dockerfile)
+
+- `Container` : docker://quay.io/matis_alias-bagarre/stoat
 
 ## Build
 

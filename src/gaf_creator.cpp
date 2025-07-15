@@ -2,9 +2,10 @@
 
 namespace stoat_vcf {
 
-std::pair<double, double> calcul_proportion_signi(int number_ind_group0, int number_ind_group1, double p_value) {
+std::pair<double, double> calcul_proportion_signi(size_t number_ind_group0, size_t number_ind_group1, double p_value) {
+
     // Step 1: Calculate initial proportions based on a total of 60
-    int total_ind = number_ind_group0 + number_ind_group1;
+    size_t total_ind = number_ind_group0 + number_ind_group1;
     if (total_ind == 0) {
         return {0, 0};
     }
@@ -13,7 +14,7 @@ std::pair<double, double> calcul_proportion_signi(int number_ind_group0, int num
     double proportion_group1 = 60.0 - proportion_group0;
 
     // Step 2: Calculate the adjustment factor based on a logarithmic scale of p_value
-    constexpr double epsilon = 1e-10;  // Small value to avoid log(0)
+    constexpr double epsilon = 1e-20;  // Small value to avoid log(0)
     double adjustment_factor = -std::log(std::max(p_value, epsilon));
 
     // Step 3: Apply the adjustment to the group with the higher initial proportion
@@ -76,8 +77,8 @@ string add_suffix_to_filename(const std::string& filename, const std::string& su
 }
 
 // TODO : change this to use already implemented function in utils.hpp
-std::vector<int> decompose_snarl(const std::string& snarl) {
-    std::vector<int> snarl_node;
+std::vector<size_t> decompose_snarl(const std::string& snarl) {
+    std::vector<size_t> snarl_node;
     regex re("\\d+");
     sregex_iterator begin(snarl.begin(), snarl.end(), re), end;
     
@@ -88,10 +89,10 @@ std::vector<int> decompose_snarl(const std::string& snarl) {
 }
 
 int calcul_path_length(bdsg::PackedGraph& pg, const std::string& snarl) {
-    std::vector<int> snarl_nodes = decompose_snarl(snarl);
+    std::vector<size_t> snarl_nodes = decompose_snarl(snarl);
     int length_node = 0;
-    
-    for (int node : snarl_nodes) {
+
+    for (size_t node : snarl_nodes) {
         handlegraph::handle_t handle = pg.get_handle(node);
         length_node += pg.get_length(handle);
     }
@@ -134,12 +135,12 @@ void gaf_creation(const std::string& input_file,
 
         const std::string& chr = columns[0];
         std::string snarl_list = columns[2];
-        double pfisher = stoat_vcf::string_to_pvalue(columns[6]);
-        double pchi = stoat_vcf::string_to_pvalue(columns[7]);
+        double pfisher = stoat::string_to_pvalue(columns[6]);
+        double pchi = stoat::string_to_pvalue(columns[7]);
         std::string group_paths = columns[11];
         auto it = snarl_chr.find(chr);
         auto& data = it->second;  
-        const std::vector<std::string>& list_path = stoat_vcf::stringToVector<std::string>(stoat_vcf::vectorPathToString(data[count_line].snarl_paths));
+        const std::vector<std::string>& list_path = stoat::stringToVector<std::string>(stoat_vcf::vectorPathToString(data[count_line].snarl_paths));
 
         // Split group paths by comma
         std::vector<std::string> decomposed_group_paths;

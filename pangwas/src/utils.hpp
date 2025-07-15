@@ -31,7 +31,7 @@ inline std::ostream& operator<<(std::ostream& out, const sample_hap_t& sample) {
 }
 
 // Given a path, return its sample name and haplotype 
-sample_hap_t get_sample_and_haplotype(const handlegraph::PathPositionHandleGraph& graph, const handlegraph::path_handle_t& path);
+sample_hap_t stoat_vcf::get_sample_and_haplotype(const handlegraph::PathPositionHandleGraph& graph, const handlegraph::path_handle_t& path);
 
 // equality within a given epsilon
 template<typename T>
