@@ -108,7 +108,7 @@ public:
 protected:
 
     const std::vector<bool>& binary_phenotype;
-    FisherKhi2& fk;
+    FisherKhi2 fk;
 };
 
 class BinaryCovarSnarlAnalyzer : public SnarlAnalyzer {
@@ -133,7 +133,7 @@ public:
 protected:
 
     const std::vector<bool>& binary_phenotype;
-    LogisticRegression& lr;
+    LogisticRegression lr;
 };
 
 class QuantitativeSnarlAnalyzer : public SnarlAnalyzer {
@@ -158,7 +158,7 @@ public:
 protected:
 
     const std::vector<double>& quantitative_phenotype;
-    LinearRegression& lr;
+    LinearRegression lr;
 };
 
 class EQTLSnarlAnalyzer : public SnarlAnalyzer {
@@ -191,7 +191,7 @@ protected:
     // that we gonna use
     const std::unordered_map<std::string, std::vector<stoat_vcf::Qtl_data>>& eqtl_map;
     const size_t& windows_gene_threshold;
-    LinearRegression& lr;
+    LinearRegression lr;
 };
 
 /// Return true if any column exceeds the MAF threshold
