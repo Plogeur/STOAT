@@ -1,37 +1,9 @@
-// This file is part of STOAT 0.0.1, copyright (C) 2024-2025 
-// Authors : Matis Alias-Bagarre, Xian-hui Chang & Jean Monlong.
-//
-// This program is free software: you can redistribute it and/or modify
-// it under the terms of the GNU General Public License as published by
-// the Free Software Foundation, either version 3 of the License, or
-// (at your option) any later version.
-//
-// This program is distributed in the hope that it will be useful,
-// but WITHOUT ANY WARRANTY; without even the implied warranty of
-// MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
-// GNU General Public License for more details.
-//
-// You should have received a copy of the GNU General Public License
-// along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-#include <iostream>
-#include <string>
-#include <unordered_map>
-#include <chrono>
-#include <cstdlib>
-#include <getopt.h>
-#include <omp.h>
-
-#include "../snarl_data_t.hpp"
-#include "../snarl_analyzer.hpp"
-#include "../arg_parser.hpp"
-#include "../matrix.hpp"
-#include "../gaf_creator.hpp"
-#include "../post_processing.hpp"
+#include "graph.hpp"
 
 namespace stoat_command {
 
-const static void print_help_graph() {
+void print_help_graph() {
     std::cerr   << "usage: stoat graph [options]\n\n"
                 << "  -g, --graph FILE                   use this graph (only hash graph works for now) (required)" << endl
                 << "  -d, --distance-index FILE          use this distance index (required)" << endl
@@ -48,7 +20,7 @@ const static void print_help_graph() {
                 << "  -h, --help                         print this help message" << std::endl;
 }
 
-const static int main_graph(int argc, char* argv[]) {
+int main_stoat_graph(int argc, char* argv[]) {
 
     std::string graph_name;
     std::string distance_name;
