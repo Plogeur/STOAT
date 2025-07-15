@@ -23,8 +23,8 @@
 #include <getopt.h>
 #include <omp.h>
 
-#include "subcommand/vcf.cpp"
-#include "subcommand/graph.cpp"
+#include "subcommand/vcf.hpp"
+#include "subcommand/graph.hpp"
 
 // Global variable
 const std::string VERSION = "v0.0.1";
