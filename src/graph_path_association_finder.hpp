@@ -7,6 +7,7 @@
 #include "partitioner.hpp"
 
 using namespace std;
+using namespace stoat;
 
 namespace stoat_graph{
 
@@ -17,24 +18,6 @@ namespace stoat_graph{
     Inherited classes must implement is_snarl_associated() to test each snarl.
 ***/
 class AssociationFinder {
-
-    protected:
-        // At a minimum, an AssociationFinder must have a graph (with path information for printing reference coordinates),
-        // a distance index, the names of the samples we are interested in, and, optionally, the name of the reference
-        const handlegraph::PathPositionHandleGraph& graph;
-        const bdsg::SnarlDistanceIndex& distance_index; 
-        const std::set<std::string>& samples_of_interest;
-        const std::string test_method;
-        const std::string output_format;
-        size_t total_sample_count;
-        size_t allele_size_limit;
-        std::ostream& out_associated = std::cout;
-        std::ostream& out_unassociated = std::cout;
-
-
-        // object for finding partitions of samples in a snarl
-        std::shared_ptr<Partitioner> partitioner;
-
 
     public:
 
@@ -58,6 +41,23 @@ class AssociationFinder {
         void test_snarls() const;
 
     protected:
+        // At a minimum, an AssociationFinder must have a graph (with path information for printing reference coordinates),
+        // a distance index, the names of the samples we are interested in, and, optionally, the name of the reference
+        const handlegraph::PathPositionHandleGraph& graph;
+        const bdsg::SnarlDistanceIndex& distance_index; 
+        const std::set<std::string>& samples_of_interest;
+        const std::string test_method;
+        const std::string output_format;
+        size_t total_sample_count;
+        size_t allele_size_limit;
+        std::ostream& out_associated = std::cout;
+        std::ostream& out_unassociated = std::cout;
+
+
+        // object for finding partitions of samples in a snarl
+        std::shared_ptr<Partitioner> partitioner;
+
+   protected:
 
        //////////////////////////////// Other helper functions
 

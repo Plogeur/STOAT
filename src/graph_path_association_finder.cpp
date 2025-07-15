@@ -7,15 +7,15 @@
 
 namespace stoat_graph {
 
-AssociationFinder::AssociationFinder(const handlegraph::PathPositionHandleGraph& graph, 
+AssociationFinder::AssociationFinder(const handlegraph::PathPositionHandleGraph& graph,
                                      const bdsg::SnarlDistanceIndex& distance_index,
                                      std::shared_ptr<Partitioner> partitioner,
-                                     const std::set<std::string>& samples_of_interest, 
+                                     const std::set<std::string>& samples_of_interest,
                                      std::string test_method,
                                      size_t total_sample_count,
                                      size_t allele_size_limit,
-                                     std::ofstream& out_associated,
-                                     std::ofstream& out_unassociated) :
+                                     std::ostream& out_associated,
+                                     std::ostream& out_unassociated) :
     graph(graph), 
     distance_index(distance_index), 
     partitioner(std::move(partitioner)),
@@ -32,7 +32,7 @@ void AssociationFinder::test_snarls() const {
     //TODO: Make this general
     // If the file output has a header, write it ?
     // Matis ans : why just do an if binary/quantitative ?
-    stoat_vcf::write_binary_header(out_associated);
+    stoat::write_binary_header(out_associated);
 
     std::vector<handlegraph::net_handle_t> chains;
     chains.reserve(graph.get_node_count()/100);
@@ -42,7 +42,7 @@ void AssociationFinder::test_snarls() const {
         return true;
     });
 
-    stoat_vcf::FisherKhi2 fk();
+    FisherKhi2 fk();
     while (!chains.empty()) {
         handlegraph::net_handle_t chain = chains.back();
         chains.pop_back();
@@ -84,7 +84,7 @@ void AssociationFinder::test_snarls() const {
                     {
                         // TODO idk what to put for chr
                         // Matis ans : why don't you put the actual chr ref if the snarl containt it and something like not_ref if it's not
-                        stoat_vcf::write_binary(out_associated, "?", snarl_data_s, type_var_str, fastfisher_p_value, chi2_p_value, "", allele_number_str, min_row_index_str,
+                        stoat::write_binary(out_associated, "?", snarl_data_s, type_var_str, fastfisher_p_value, chi2_p_value, "", allele_number_str, min_row_index_str,
                                      numb_colum_str, inter_group_str, average_str, group_paths);
                     }
                 }

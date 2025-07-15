@@ -72,7 +72,7 @@ EQTLSnarlAnalyzer::EQTLSnarlAnalyzer(
     const std::vector<std::vector<double>>& covariate, 
     const double& maf_threshold, 
     const double& table_threshold,
-    const std::unordered_map<std::string, std::vector<stoat_vcf::Qtl_data>>& eqtl_map,
+    const std::unordered_map<std::string, std::vector<Qtl_data>>& eqtl_map,
     const size_t& windows_gene_threshold,
     const std::string& regression_dir) :
 
@@ -200,7 +200,7 @@ std::tuple<htsFile*, bcf_hdr_t*, bcf1_t*> SnarlAnalyzer::make_edge_matrix(htsFil
         // Decompose snarl paths [vector std::string] into [vector vector Edge_t]
         // paths : >123>213<234,>123<234,>123<234<345
         // list_paths_edge : [[Edge_t(123, 213), Edge_t(213, 234)], [...]]
-        const std::vector<std::vector<stoat_vcf::Edge_t>> list_paths_edge = decompose_path_list_str(path_list);
+        const std::vector<std::vector<Edge_t>> list_paths_edge = decompose_path_list_str(path_list);
 
         for (int i = 0; i < rec->n_sample; ++i) {
             int idex_path_allele_1 = bcf_gt_allele(gt[i * 2]);
@@ -228,8 +228,8 @@ std::tuple<htsFile*, bcf_hdr_t*, bcf1_t*> SnarlAnalyzer::make_edge_matrix(htsFil
 }
 
 // Decompose path Path_traversal_t to vector Edge_t
-std::vector<stoat_vcf::Edge_t> decompose_path_to_edges(const stoat_vcf::Path_traversal_t& list_paths) {
-    std::vector<stoat_vcf::Edge_t> edges;
+std::vector<Edge_t> decompose_path_to_edges(const Path_traversal_t& list_paths) {
+    std::vector<Edge_t> edges;
     const std::vector<Node_traversal_t>& list_nodes = list_paths.get_paths();
     size_t length_s = list_nodes.size();
     edges.reserve(length_s - 1); // Reserve memory
@@ -242,8 +242,8 @@ std::vector<stoat_vcf::Edge_t> decompose_path_to_edges(const stoat_vcf::Path_tra
 }
 
 // Decompose path std::string to vector Edge_t
-std::vector<stoat_vcf::Edge_t> decompose_path_str_to_edge(const std::string& s) {
-    std::vector<stoat_vcf::Edge_t> edges;
+std::vector<Edge_t> decompose_path_str_to_edge(const std::string& s) {
+    std::vector<Edge_t> edges;
     std::vector<Node_traversal_t> nodes;
 
     size_t i = 0;
@@ -271,8 +271,8 @@ std::vector<stoat_vcf::Edge_t> decompose_path_str_to_edge(const std::string& s) 
 }
 
 // Decompose a list of paths str into a vector of Edge_t
-const std::vector<std::vector<stoat_vcf::Edge_t>> decompose_path_list_str(const std::vector<std::string>& list_paths) {
-    std::vector<std::vector<stoat_vcf::Edge_t>> paths_snarl;
+const std::vector<std::vector<Edge_t>> decompose_path_list_str(const std::vector<std::string>& list_paths) {
+    std::vector<std::vector<Edge_t>> paths_snarl;
     for (const auto& path : list_paths) {
         paths_snarl.push_back(decompose_path_str_to_edge(path));
     }
@@ -282,7 +282,7 @@ const std::vector<std::vector<stoat_vcf::Edge_t>> decompose_path_list_str(const 
 // Function to identify the path in the edge matrix
 std::vector<size_t> identify_path(
     const std::vector<Edge_t>& list_edge_path,
-    const stoat_vcf::EdgeBySampleMatrix& edge_matrix,
+    const EdgeBySampleMatrix& edge_matrix,
     const size_t num_cols) {
 
     std::vector<size_t> rows_to_check;
@@ -379,8 +379,8 @@ void BinaryCovarSnarlAnalyzer::analyze_and_write_snarl(
 
         // Plot regression table
         if (table_threshold != -1 && stoat::isPValueSignificant(table_threshold, p_value)) {
-            std::string variant_file_name = regression_dir + "/" + stoat_vcf::pairToString(snarl_data_s.snarl_ids) + ".tsv";
-            stoat::writeSignificantTableToTSV(df,stoat::stringToVector<std::string>(stoat_vcf::vectorPathToString(snarl_data_s.snarl_paths)), edge_matrix.sampleNames, variant_file_name);
+            std::string variant_file_name = regression_dir + "/" + pairToString(snarl_data_s.snarl_ids) + ".tsv";
+            stoat::writeSignificantTableToTSV(df,stoat::stringToVector<std::string>(vectorPathToString(snarl_data_s.snarl_paths)), edge_matrix.sampleNames, variant_file_name);
         }
         # pragma omp critical (outf) 
         {
@@ -410,8 +410,8 @@ void QuantitativeSnarlAnalyzer::analyze_and_write_snarl(
         auto [p_value, beta, se, r2] = lr.linear_regression(df, phenotype_filtered, covariate);
         
         if (table_threshold != -1 && stoat::isPValueSignificant(table_threshold, p_value)) {
-            std::string variant_file_name = regression_dir + "/" + stoat_vcf::pairToString(snarl_data_s.snarl_ids) + ".tsv";
-            stoat::writeSignificantTableToTSV(df,stoat::stringToVector<std::string>(stoat_vcf::vectorPathToString(snarl_data_s.snarl_paths)), edge_matrix.sampleNames, variant_file_name);
+            std::string variant_file_name = regression_dir + "/" + pairToString(snarl_data_s.snarl_ids) + ".tsv";
+            stoat::writeSignificantTableToTSV(df,stoat::stringToVector<std::string>(vectorPathToString(snarl_data_s.snarl_paths)), edge_matrix.sampleNames, variant_file_name);
         }
         
         #pragma omp critical (outf)
@@ -472,14 +472,14 @@ void EQTLSnarlAnalyzer::analyze_and_write_snarl(
             auto [p_value, beta, se, r2] = lr.linear_regression(df, gene_expression, covariate);
 
             if (table_threshold != -1 && stoat::isPValueSignificant(table_threshold, p_value)) {
-                std::string variant_file_name = regression_dir + "/" + stoat_vcf::pairToString(snarl_data_s.snarl_ids) + ".tsv";
-                stoat::writeSignificantTableToTSV(df,stoat::stringToVector<std::string>(stoat_vcf::vectorPathToString(snarl_data_s.snarl_paths)), edge_matrix.sampleNames, variant_file_name);
+                std::string variant_file_name = regression_dir + "/" + pairToString(snarl_data_s.snarl_ids) + ".tsv";
+                stoat::writeSignificantTableToTSV(df,stoat::stringToVector<std::string>(vectorPathToString(snarl_data_s.snarl_paths)), edge_matrix.sampleNames, variant_file_name);
             }
 
             #pragma omp critical (outf)
 
             {
-                stoat_vcf::write_eqtl(outf, chr, snarl_data_s, type_var_str, gene_name, p_value, "", r2, beta, se, allele_number, allele_paths);
+                write_eqtl(outf, chr, snarl_data_s, type_var_str, gene_name, p_value, "", r2, beta, se, allele_number, allele_paths);
             }
         }
     }
@@ -511,4 +511,4 @@ bool check_MAF_threshold_binary(
     return false;  // No column met MAF threshold
 }
 
-} // end namespace stoat_vcf
+} // end namespace 

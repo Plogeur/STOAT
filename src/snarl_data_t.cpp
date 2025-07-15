@@ -2,7 +2,7 @@
 
 //#define DEBUG_SNARL_DATA_T
 
-namespace stoat_vcf {
+namespace stoat {
 
 // Node_traversal_t
 Node_traversal_t::Node_traversal_t(const size_t &id, const bool &rev)
@@ -84,7 +84,7 @@ std::pair<size_t, size_t> stringToPair(const std::string& str) {
     return {first, second};
 }
 
-std::string vectorPathToString(const std::vector<stoat_vcf::Path_traversal_t>& vec_paths) {
+std::string vectorPathToString(const std::vector<Path_traversal_t>& vec_paths) {
     std::ostringstream oss;
     for (size_t i = 0; i < vec_paths.size(); ++i) {
         if (i > 0) oss << ",";
@@ -93,8 +93,8 @@ std::string vectorPathToString(const std::vector<stoat_vcf::Path_traversal_t>& v
     return oss.str();
 }
 
-std::vector<stoat_vcf::Path_traversal_t> stringToVectorPath(std::string& input) {
-    std::vector<stoat_vcf::Path_traversal_t> vec_paths;
+std::vector<Path_traversal_t> stringToVectorPath(std::string& input) {
+    std::vector<Path_traversal_t> vec_paths;
     std::istringstream iss(input);
     std::string path_str;
 
@@ -449,13 +449,13 @@ std::vector<std::tuple<handlegraph::net_handle_t, std::string, size_t, size_t, b
     return snarls;
 }
 
-std::tuple<std::vector<stoat_vcf::Path_traversal_t>, std::vector<std::string>> fill_pretty_paths(
+std::tuple<std::vector<Path_traversal_t>, std::vector<std::string>> fill_pretty_paths(
     bdsg::SnarlDistanceIndex& stree, 
     bdsg::PackedGraph& pg, 
     std::vector<std::vector<handlegraph::net_handle_t>>& finished_paths) {
     
     // list of paths
-    std::vector<stoat_vcf::Path_traversal_t> pretty_paths;
+    std::vector<Path_traversal_t> pretty_paths;
 
     // seq_net, minimum_distance, maximun_distance, size_path, sum_path
     // Used to calculate the type of variant
@@ -711,6 +711,6 @@ std::unordered_map<std::string, std::vector<Snarl_data_t>> loop_over_snarls_writ
     return {chr_snarl_matrix};
 }
 
-} //end stoat_vcf namespace
+} //end namespace
 
 // vg find -x ../snarl_data/fly.gbz -r 5176878:5176884 -c 10 | vg view -dp - | dot -Tsvg -o ../snarl_data/subgraph.svg

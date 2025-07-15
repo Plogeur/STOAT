@@ -23,6 +23,7 @@
 #include "snarl_data_t.hpp"
 
 using namespace std;
+using namespace stoat;
 
 namespace stoat_vcf {
 
@@ -67,7 +68,7 @@ std::unordered_map<std::string, std::vector<double>> parse_qtl_file(
 std::unordered_map<std::string, std::tuple<std::string, size_t, size_t>> parse_gene_positions(
     const std::string& filename);
 
-std::unordered_map<std::string, std::vector<stoat_vcf::Qtl_data>> parse_qtl_gene_file(
+std::unordered_map<std::string, std::vector<Qtl_data>> parse_qtl_gene_file(
     const std::string& eqtl_path, 
     const std::string& gene_position_path, 
     const std::vector<std::string>& list_samples);
@@ -97,7 +98,7 @@ template <typename T>
 void check_match_samples(const std::unordered_map<std::string, T>& map, const std::vector<std::string>& keys);
 
 // Parses the snarl path file and returns a map with snarl as keys and paths as a list of strings.
-std::unordered_map<std::string, std::vector<stoat_vcf::Snarl_data_t>> parse_snarl_path(const std::string& path_file);
+std::unordered_map<std::string, std::vector<Snarl_data_t>> parse_snarl_path(const std::string& path_file);
 
 void check_file(const std::string& file_path);
 
