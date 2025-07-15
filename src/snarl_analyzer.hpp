@@ -33,10 +33,12 @@ class SnarlAnalyzer {
 public:
     SnarlAnalyzer(
         const std::unordered_map<std::string, std::vector<Snarl_data_t>>& chr_to_snarl_data,
+        EdgeBySampleMatrix& edge_matrix,
         const std::vector<std::string>& list_samples, 
         const std::vector<std::vector<double>>& covariate,
         const double& maf_threshold,
-        const double& table_threshold);
+        const double& table_threshold,
+        const std::string& regression_dir);
 
     ~SnarlAnalyzer()=default;
 
@@ -47,8 +49,6 @@ public:
         htsFile* &ptr_vcf, 
         bcf_hdr_t* &hdr, 
         bcf1_t* &rec,
-        EdgeBySampleMatrix& edge_matrix_empty,
-        const std::string& regression_dir,
         const std::string& output_filename);
 
     /// Update the EdgeBySampleMatrix representing the genotypes in a vcf and the pointers to the vcf but advanced to the end of the chromosome?
@@ -60,7 +60,7 @@ public:
         size_t &num_paths_ch);
 
     /// For the given snarl, analyze the snarl and write it to outf
-    virtual void analyze_and_write_snarl(const Snarl_data_t& snarl_data) = 0;
+    virtual void analyze_and_write_snarl(const Snarl_data_t& snarl_data, const std::string& chr) = 0;
 
     /// Write the header of the output tsv file
     /// This should ideally call a write_header() function from writer.hpp to keep things consistent
@@ -85,7 +85,6 @@ protected:
     const double& table_threshold;
     const std::string& regression_dir;
     std::ofstream* outf;
-    std::string& chr;
 };
 
 class BinarySnarlAnalyzer : public SnarlAnalyzer {
@@ -94,12 +93,14 @@ public:
     
     BinarySnarlAnalyzer(
         const std::unordered_map<std::string, std::vector<Snarl_data_t>>& chr_to_snarl_data,
+        EdgeBySampleMatrix& edge_matrix,
         const std::vector<std::string>& list_samples, 
         const double& maf_threshold,
         const double& table_threshold,
-        const std::vector<bool>& binary_phenotype);
+        const std::vector<bool>& binary_phenotype,
+        const std::string& regression_dir);
 
-    void analyze_and_write_snarl(const Snarl_data_t& snarl_data);
+    void analyze_and_write_snarl(const Snarl_data_t& snarl_data, const std::string& chr);
 
     void write_header(std::ofstream&outf);
 
@@ -116,13 +117,15 @@ public:
     
     BinaryCovarSnarlAnalyzer(
         const std::unordered_map<std::string, std::vector<Snarl_data_t>>& chr_to_snarl_data,
+        EdgeBySampleMatrix& edge_matrix,
         const std::vector<std::string>& list_samples, 
         const std::vector<std::vector<double>>& covariate, 
         const double& maf_threshold, 
         const double& table_threshold, 
-        const std::vector<bool>& binary_phenotype);
+        const std::vector<bool>& binary_phenotype,
+        const std::string& regression_dir);
 
-    void analyze_and_write_snarl(const Snarl_data_t& snarl_data);
+    void analyze_and_write_snarl(const Snarl_data_t& snarl_data, const std::string& chr);
 
     void write_header(std::ofstream&outf);
 
@@ -139,13 +142,15 @@ public:
     
     QuantitativeSnarlAnalyzer(
         const std::unordered_map<std::string, std::vector<Snarl_data_t>>& chr_to_snarl_data, 
+        EdgeBySampleMatrix& edge_matrix,
         const std::vector<std::string>& list_samples, 
         const std::vector<std::vector<double>>& covariate, 
         const double& maf_threshold, 
         const double& table_threshold, 
-        const std::vector<double>& quantitative_phenotype);
+        const std::vector<double>& quantitative_phenotype,
+        const std::string& regression_dir);
 
-    void analyze_and_write_snarl(const Snarl_data_t& snarl_data) ;
+    void analyze_and_write_snarl(const Snarl_data_t& snarl_data, const std::string& chr) ;
 
     void write_header(std::ofstream&outf);
 
@@ -162,14 +167,16 @@ public:
     
     EQTLSnarlAnalyzer(
         const std::unordered_map<std::string, std::vector<Snarl_data_t>>& chr_to_snarl_data, 
+        EdgeBySampleMatrix& edge_matrix,
         const std::vector<std::string>& list_samples, 
         const std::vector<std::vector<double>>& covariate, 
         const double& maf_threshold, 
         const double& table_threshold, 
         const std::unordered_map<std::string, std::vector<stoat_vcf::Qtl_data>>& eqtl_map,
-        const size_t& windows_gene_threshold);
+        const size_t& windows_gene_threshold,
+        const std::string& regression_dir);
 
-    void analyze_and_write_snarl(const Snarl_data_t& snarl_data);
+    void analyze_and_write_snarl(const Snarl_data_t& snarl_data, const std::string& chr);
 
     void write_header(std::ofstream&outf);
 
