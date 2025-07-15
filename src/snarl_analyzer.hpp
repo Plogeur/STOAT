@@ -188,11 +188,15 @@ protected:
 };
 
 /// Return true if any column exceeds the MAF threshold
-bool check_MAF_threshold_quantitative(const std::vector<std::vector<double>>& df, const double& maf);
+bool filtration_quantitative_table(const std::vector<std::vector<double>>& df, const double& maf);
 
-bool check_MAF_threshold_binary(
-    const std::vector<size_t>& g0, const std::vector<size_t>& g1,
-    const size_t& totalSum, const size_t& length_column_headers, 
+size_t remove_empty_columns(
+    std::vector<size_t>& g0, 
+    std::vector<size_t>& g1);
+
+bool filtration_binary_table(
+    std::vector<size_t>& g0, std::vector<size_t>& g1,
+    const size_t& totalSum, const size_t& paths_number, 
     const double& maf);
 
 std::vector<size_t> found_gene_snarl(

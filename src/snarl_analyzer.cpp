@@ -326,12 +326,13 @@ void BinarySnarlAnalyzer::analyze_and_write_snarl(
 
     std::string type_var_str = oss.str();
 
-    size_t length_column_headers = snarl_data_s.snarl_paths.size();
-    std::vector<size_t> g0(length_column_headers, 0);
-    std::vector<size_t> g1(length_column_headers, 0);
+    size_t paths_number = snarl_data_s.snarl_paths.size();
+    std::vector<size_t> g0(paths_number, 0);
+    std::vector<size_t> g1(paths_number, 0);
 
-    size_t total_sum = stoat_vcf::create_binary_table(g0, g1, binary_phenotype, snarl_data_s.snarl_paths, length_column_headers, sample_count, edge_matrix);
-    bool df_filtration = check_MAF_threshold_binary(g0, g1, total_sum, length_column_headers, maf_threshold);
+    size_t total_sum = stoat_vcf::create_binary_table(g0, g1, binary_phenotype, snarl_data_s.snarl_paths, paths_number, sample_count, edge_matrix);
+    paths_number = remove_empty_columns(g0, g1);
+    bool df_filtration = filtration_binary_table(g0, g1, total_sum, paths_number, maf_threshold);
 
     // Binary analysis single test
     if (!df_filtration) { // good df
@@ -362,7 +363,7 @@ void BinaryCovarSnarlAnalyzer::analyze_and_write_snarl(
     std::string type_var_str = oss.str();
 
     const auto& [df, phenotype_filtered, allele_number, allele_paths] = create_quantitative_table(sample_count, snarl_data_s.snarl_paths, binary_phenotype, edge_matrix);
-    bool df_filtration = check_MAF_threshold_quantitative(df, maf_threshold);
+    bool df_filtration = filtration_quantitative_table(df, maf_threshold);
 
     if (!df_filtration) { // filtred variant
         // logistic regression with covariates if not empty
@@ -385,8 +386,8 @@ void QuantitativeSnarlAnalyzer::analyze_and_write_snarl(
     const Snarl_data_t& snarl_data_s) {
 
     const auto& [df, phenotype_filtered, allele_number, allele_paths] = create_quantitative_table(sample_count, snarl_data_s.snarl_paths, quantitative_phenotype, edge_matrix);
-    bool df_filtration = check_MAF_threshold_quantitative(df, maf_threshold);
-    
+    bool df_filtration = filtration_quantitative_table(df, maf_threshold);
+
     // make a std::string separated by ',' from a vector of std::string
     std::ostringstream oss;
     for (size_t i = 0; i < snarl_data_s.type_variants.size(); ++i) {
@@ -441,7 +442,7 @@ void EQTLSnarlAnalyzer::analyze_and_write_snarl(
 
     std::vector<size_t> list_gene_index = found_gene_snarl(eqtl, snarl_data_s.start_positions, snarl_data_s.end_positions, windows_gene_threshold);
     const auto& [df, index_filtered, allele_number, allele_paths] = stoat_vcf::create_eqtl_table(sample_count, snarl_data_s.snarl_paths, edge_matrix);
-    bool df_filtration = check_MAF_threshold_quantitative(df, maf_threshold);
+    bool df_filtration = filtration_quantitative_table(df, maf_threshold);
 
     for (size_t i = 0; i < list_gene_index.size(); ++i) {
         size_t gene_idx = list_gene_index[i];
@@ -476,40 +477,90 @@ void EQTLSnarlAnalyzer::analyze_and_write_snarl(
     }
 }
 
-bool check_MAF_threshold_quantitative(const std::vector<std::vector<double>>& df, const double& maf_threshold) {    
+// Return true when snarl must be filtered and false if not
+bool filtration_quantitative_table(const std::vector<std::vector<double>>& df, const double& maf_threshold) {
     
-    if ((df.size() < 2)) {return true;}
+    if (df.size() < 2) {
+        return false;  // Not enough data → filter out
+    }
 
-    double totalSum = 0;
-    size_t numPaths = df[0].size(); // Get the number of paths from the first element
-    std::vector<double> table(numPaths, 0); // Initialize vector with the correct size
+    size_t numPaths = df[0].size();
+    std::vector<double> table(numPaths, 0.0);
+    double totalSum = 0.0;
 
-    // Compute total sum of all elements in the matrix
-    for (const auto& vector : df) {
-        for (size_t i = 0; i < vector.size(); i++) {
-            table[i] += vector[i];
-            totalSum += vector[i];
+    // Compute column sums and total sum
+    for (const auto& row : df) {
+        for (size_t i = 0; i < numPaths; ++i) {
+            table[i] += row[i];
+            totalSum += row[i];
         }
     }
+
+    if (totalSum == 0.0) {
+        return false;  // All-zero case → filter out
+    }
+
+    int count_above_threshold = 0;
+
+    for (size_t i = 0; i < numPaths; ++i) {
+        double freq = table[i] / totalSum;
+        double maf = std::min(freq, 1.0 - freq);
+        if (maf > maf_threshold) {
+            ++count_above_threshold;
+        }
+    }
+
+    return count_above_threshold >= 2;
 }
 
-bool check_MAF_threshold_binary(
-    const std::vector<size_t>& g0, 
-    const std::vector<size_t>& g1,
-    const size_t& totalSum, 
-    const size_t& length_column_headers, 
-    const double& maf_threshold) {
+size_t remove_empty_columns(
+    std::vector<size_t>& g0, 
+    std::vector<size_t>& g1) {
 
-    if (g0.empty() || g1.empty()) return true;
+    std::vector<size_t> g0_filtered;
+    std::vector<size_t> g1_filtered;
 
-    for (size_t i = 0; i < length_column_headers; ++i) {
-        size_t columnSum = g0[i] + g1[i];
-        if (static_cast<double>(columnSum) / totalSum >= maf_threshold) {
-            return true;  // MAF threshold met
+    for (size_t i = 0; i < g0.size(); ++i) {
+        if (g0[i] + g1[i] != 0) {
+            g0_filtered.push_back(g0[i]);
+            g1_filtered.push_back(g1[i]);
         }
     }
 
-    return false;  // No column met MAF threshold
+    g0 = std::move(g0_filtered);
+    g1 = std::move(g1_filtered);
+
+    return g0.size();
+}
+
+bool filtration_binary_table(
+    std::vector<size_t>& g0, 
+    std::vector<size_t>& g1,
+    const size_t& totalSum, 
+    const size_t& paths_number, 
+    const double& maf_threshold) {
+
+    if (totalSum < 2 || paths_number < 2) {
+        return false; // Empty or invalid input → filter
+    }
+
+    int count_above_threshold = 0;
+
+    for (size_t i = 0; i < paths_number; ++i) {
+        size_t columnSum = g0[i] + g1[i];
+        if (columnSum == 0) {
+            continue; // Skip empty columns
+        }
+
+        double freq1 = static_cast<double>(g1[i]) / columnSum;
+        double maf = std::min(freq1, 1.0 - freq1);
+
+        if (maf > maf_threshold) {
+            ++count_above_threshold;
+        }
+    }
+
+    return count_above_threshold >= 2; // Keep if at least two MAFs > threshold
 }
 
 } // end namespace stoat_vcf

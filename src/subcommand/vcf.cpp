@@ -73,7 +73,7 @@ int stoat_vcf(int argc, char* argv[]) {
     size_t path_length_threshold = 10000;
     size_t windows_gene_threshold = 1000000;
     double table_threshold = -1;
-    double maf_threshold = 0.99; // inversed MAF 
+    double maf_threshold = 0.05;
     bool gaf = false;
     bool only_snarl_parsing = false;
     bool show_help = false;
@@ -168,7 +168,7 @@ int stoat_vcf(int argc, char* argv[]) {
                 }
                 break;
             case 'M':
-                maf_threshold = 1 - std::stod(optarg);
+                maf_threshold = std::stod(optarg);
                 if (maf_threshold < 0 || maf_threshold > 1) {
                     std::cerr << "Error: MAF must be in [0,1]\n";
                     return EXIT_FAILURE;
