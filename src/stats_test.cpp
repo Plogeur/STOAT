@@ -170,7 +170,7 @@ std::tuple<std::string, std::string, std::string, std::string> LogisticRegressio
 }
 
 // ------------------------ Chi2 test ------------------------
-FisherKhi2::FisherKhi2() : chi_squared_dist(degrees_of_freedom), cpp_dec_float_50_dist(degrees_of_freedom) {}
+FisherKhi2::FisherKhi2(size_t degrees_of_freedom) : chi_squared_dist(degrees_of_freedom), cpp_dec_float_50_dist(degrees_of_freedom) {}
 
 std::string FisherKhi2::chi2_2x2(const size_t& a, const size_t& b, const size_t& c, const size_t& d) {
 
