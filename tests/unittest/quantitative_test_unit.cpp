@@ -1,4 +1,4 @@
-#include <catch2/catch_test_macros.hpp>
+#include <catch.hpp>
 
 #include "../../src/quantitative_table.hpp"
 #include "../../src/stats_test.hpp"
