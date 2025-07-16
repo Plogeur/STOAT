@@ -14,28 +14,6 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-#include <iostream>
-#include <string>
-#include <unordered_map>
-#include <chrono>
-#include <cstdlib>
-#include <getopt.h>
-#include <omp.h>
-
-#include <bdsg/snarl_distance_index.hpp>
-#include <bdsg/overlays/overlay_helper.hpp>
-#include <handlegraph/path_handle_graph.hpp>
-#include <vg/io/vpkg.hpp>
-
-
-
-#include "../snarl_data_t.hpp"
-#include "../snarl_analyzer.hpp"
-#include "../arg_parser.hpp"
-#include "../matrix.hpp"
-#include "../gaf_creator.hpp"
-#include "../post_processing.hpp"
-#include "../io/register_io.hpp"
 
 namespace stoat_command {
 

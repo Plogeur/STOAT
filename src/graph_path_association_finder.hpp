@@ -48,7 +48,6 @@ class AssociationFinder {
                           std::shared_ptr<Partitioner> partitioner,
                           const std::set<std::string>& samples_of_interest, 
                           std::string test_method,
-                          size_t total_sample_count,
                           size_t allele_size_limit,
                           std::ostream& out_associated,
                           std::ostream& out_unassociated);

@@ -12,7 +12,6 @@ AssociationFinder::AssociationFinder(const handlegraph::PathPositionHandleGraph&
                                      std::shared_ptr<Partitioner> partitioner,
                                      const std::set<std::string>& samples_of_interest, 
                                      std::string test_method,
-                                     size_t total_sample_count,
                                      size_t allele_size_limit,
                                      std::ostream& out_associated,
                                      std::ostream& out_unassociated) :
@@ -21,7 +20,6 @@ AssociationFinder::AssociationFinder(const handlegraph::PathPositionHandleGraph&
     partitioner(std::move(partitioner)),
     samples_of_interest(samples_of_interest), 
     test_method(std::move(test_method)),
-    total_sample_count(total_sample_count),
     allele_size_limit(allele_size_limit),
     out_associated(out_associated),
     out_unassociated(out_unassociated)
