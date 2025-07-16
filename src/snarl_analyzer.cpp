@@ -99,8 +99,6 @@ void SnarlAnalyzer::process_snarls_by_chromosome_chunk(
     const std::string& output_filename) {
 
     std::ofstream outf(output_filename, std::ios::binary);
-    //TODO: idk what this does but it won't compile
-    //outf_ptr->outf;
 
     // Write the header
     write_header(outf);
