@@ -22,9 +22,8 @@ It will release one days, It will !!!
 
 Manual installation : 
 
-- [htslib](https://www.htslib.org/download/)
-- STOAT requires jansson, Protobuf, and Boost, which can be installed by running  
-  `sudo apt-get install libjansson-dev protobuf-compiler libprotoc-dev libprotobuf-dev libboost-all-dev` 
+- STOAT requires jansson, Protobuf, Boost, and htslib, which can be installed by running  
+  `sudo apt-get install libjansson-dev protobuf-compiler libprotoc-dev libprotobuf-dev libboost-all-dev libhts-dev` 
 - vg (optional)
 
 ## Docker
