@@ -18,7 +18,10 @@ link_directories(${HTSLIB_LIBRARY_DIRS})
 
 # Find Packages
 find_package(Boost REQUIRED)
-find_package(Eigen3 REQUIRED)
+
+#Get eigen3
+include_directories(${deps_DIR}/eigen/Eigen)
+
 
 # libbdsg (full build using its cmake config)
 # Produces libbdsg target, dynamic only.
@@ -137,13 +140,6 @@ target_compile_options(${PROJECT_NAME} PRIVATE -w) # fix warning
 # Enable testing
 enable_testing()
 
-# Find Catch2 v3
-find_package(Catch2 3 REQUIRED)
-list(APPEND CMAKE_MODULE_PATH ${Catch2_CMAKE_DIR})
-
-include(CTest)
-include(Catch)
-
 # Add test executable
 add_executable(unit_tests
     tests/unittest/binary_test_unit.cpp
@@ -166,18 +162,9 @@ add_executable(unit_tests
 
 target_compile_options(unit_tests PRIVATE -w) # fix warning
 
-# add src target lib + Catch2 lib 
 
-#TODO : I think this would work, try later
-#target_link_libraries(unit_tests PRIVATE 
-#    Catch2::Catch2WithMain     
-#    ${PROJECT_NAME}_objs)
 target_link_libraries(unit_tests PRIVATE 
-    Catch2::Catch2WithMain     
-    Boost::boost
-    Eigen3::Eigen
-    libsdsl.so.3
-    ${HTSLIB_LIBRARIES}
-    libbdsg
-    gbwtgraph
-    VGio::vgio)
+    ${PROJECT_NAME}_objs)
+
+
+include_directories(${deps_DIR}/catch2/single_include/catch2 )
