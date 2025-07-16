@@ -22,11 +22,9 @@ It will release one days, It will !!!
 
 Manual installation : 
 
-- jansson `sudo apt-get install libjansson-dev` 
-- Protobuf `sudo apt-get install protobuf-compiler libprotoc-dev libprotobuf-dev`
 - [htslib](https://www.htslib.org/download/)
-- eigen3
-- Boost: Boost can be installed by running `sudo apt-get install libboost-all-dev`
+- STOAT requires jansson, Protobuf, and Boost, which can be installed by running  
+  `sudo apt-get install libjansson-dev protobuf-compiler libprotoc-dev libprotobuf-dev libboost-all-dev` 
 - vg (optional)
 
 ## Docker
