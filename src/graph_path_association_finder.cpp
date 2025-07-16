@@ -49,6 +49,9 @@ void AssociationFinder::test_snarls() const {
 
             //TODO: For now it's fine to check is_eligible here because it's only checking size and we don't want to look at small chains anyway
             if (distance_index.is_snarl(snarl) && snarl_is_eligible(snarl) ) {
+#ifdef DEBUG_ASSOCIATION_FINDER
+                cerr << "Test snarl " << distance_index.net_handle_as_string(snarl) << endl;
+#endif
 
                 // Should we write this?
                 bool write_output = false;
@@ -63,9 +66,24 @@ void AssociationFinder::test_snarls() const {
                 std::vector<std::set<std::string>> sample_partitions = partitioner->partition_samples_in_snarl(graph, distance_index, snarl);
 
                 if (test_method == "exact") {
+#ifdef DEBUG_ASSOCIATION_FINDER
+                        cerr << "\tTRUTH" << endl;
+                        for (const std::string& sample : samples_of_interest) {
+                            cerr << "\t\t" << sample << endl;
+                        }
+#endif
 
                     for (const std::set<std::string>& partition : sample_partitions) {
+#ifdef DEBUG_ASSOCIATION_FINDER
+                        cerr << "\tPARTITION" << endl;
+                        for (const std::string& sample : partition) {
+                            cerr << "\t\t" << sample << endl;
+                        }
+#endif
                         if (partition == samples_of_interest) {
+#ifdef DEBUG_ASSOCIATION_FINDER
+                            cerr << "\tFound exact match" << endl;
+#endif
                             write_output = true;
                             break;
                         }

@@ -205,11 +205,11 @@ int main_stoat_graph(int argc, char *argv[]) {
     std::ofstream out_associated;
     if (!associated_filename.empty()) {
         out_associated.open(associated_filename);
-    }
+    } 
     std::ofstream out_unassociated;
     if (!unassociated_filename.empty()) {
         out_unassociated.open(unassociated_filename);
-    }
+     }
 
 
     // Make the partitioner
@@ -227,8 +227,8 @@ int main_stoat_graph(int argc, char *argv[]) {
                                    samples_of_interest, 
                                    test_method,
                                    allele_size_limit,
-                                   out_associated,
-                                   out_unassociated);
+                                   !associated_filename.empty() ? out_associated : cout,
+                                   !unassociated_filename.empty() ? out_unassociated : cout);
         af.test_snarls();
 
     //Close streams
