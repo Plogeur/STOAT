@@ -8,8 +8,7 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(CMAKE_OSX_DEPLOYMENT_TARGET "12.7") # IOS fix
 
-# This is where libbdsg automatically gets installed
-set(CMAKE_BUILD_RPATH "/usr/local/lib;${CMAKE_BUILD_RPATH}")
+set(deps_DIR "${CMAKE_CURRENT_SOURCE_DIR}/deps")
 
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(HTSLIB REQUIRED htslib)
@@ -21,9 +20,20 @@ link_directories(${HTSLIB_LIBRARY_DIRS})
 find_package(Boost REQUIRED)
 find_package(Eigen3 REQUIRED)
 
+# libbdsg (full build using its cmake config)
+# Produces libbdsg target, dynamic only.
+# Comes along with its own libhandlegraph, which it depends on.
+# Make sure to never build its Python bindings.
+set(BUILD_PYTHON_BINDINGS OFF CACHE BOOL "Build Python bindings for libbdsg" FORCE)
+set(RUN_DOXYGEN OFF CACHE BOOL "Run libbdsg Doxygen" FORCE)
+add_subdirectory(${deps_DIR}/libbdsg)
+
+# Add libvgio using its cmake build
+add_subdirectory(${deps_DIR}/libvgio)
+
 # Copied from https://github.com/vgteam/vg/wiki/Programming-with-the-vg-API
 # SDSL library ("sdsl" target) already exists from libbdsg
-# GBWT doesn't have CMake yet so we need to explain how to build it.
+# GBWT and GBWTgraph don't have CMake yet so we need to explain how to build it.
 
 # GBWT dependency: OpenMP
 if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
@@ -42,8 +52,39 @@ if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
 endif()
 find_package(OpenMP REQUIRED)
 
-# Add libvgio using its cmake build
-add_subdirectory(deps/libvgio)
+# GBWT
+foreach (gbwt_source IN ITEMS algorithms.cpp bwtmerge.cpp cached_gbwt.cpp dynamic_gbwt.cpp fast_locate.cpp files.cpp gbwt.cpp internal.cpp metadata.cpp support.cpp test.cpp utils.cpp variants.cpp)
+    list(APPEND gbwt_libFiles "deps/gbwt/src/${gbwt_source}")
+endforeach()
+if(MSVC)
+    file(GLOB gbwt_headerFiles RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}  "${deps_DIR}/gbwt/include/gbwt/*.h")
+endif()
+set( gbwt_SRCS ${gbwt_libFiles} ${gbwt_headerFiles})
+add_library( gbwt ${gbwt_SRCS} )
+target_include_directories( gbwt PUBLIC "${deps_DIR}/gbwt/include")
+target_link_libraries( gbwt PUBLIC sdsl OpenMP::OpenMP_CXX )
+install(TARGETS gbwt
+        LIBRARY DESTINATION lib
+        ARCHIVE DESTINATION lib
+        PUBLIC_HEADER DESTINATION include)
+
+# GBWTGraph
+foreach (gbwtgraph_source IN ITEMS algorithms.cpp cached_gbwtgraph.cpp gbwtgraph.cpp gbz.cpp gfa.cpp internal.cpp minimizer.cpp path_cover.cpp utils.cpp)
+    list(APPEND gbwtgraph_libFiles "deps/gbwtgraph/src/${gbwtgraph_source}")
+endforeach()
+if(MSVC)
+    file(GLOB gbwtgraph_headerFiles RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}  "${deps_DIR}/gbwtgraph/include/gbwt/*.h")
+endif()
+set( gbwtgraph_SRCS ${gbwtgraph_libFiles} ${gbwtgraph_headerFiles})
+add_library( gbwtgraph ${gbwtgraph_SRCS} )
+target_include_directories( gbwtgraph PUBLIC "${deps_DIR}/gbwtgraph/include")
+target_link_libraries( gbwtgraph PUBLIC gbwt handlegraph_shared )
+install(TARGETS gbwtgraph
+        LIBRARY DESTINATION lib
+        ARCHIVE DESTINATION lib
+        PUBLIC_HEADER DESTINATION include)
+
+
 
 add_library(${PROJECT_NAME}_objs OBJECT
     src/utils.cpp
@@ -77,12 +118,11 @@ target_include_directories(${PROJECT_NAME}_objs PRIVATE
 # Link Libraries
 target_link_libraries(${PROJECT_NAME}_objs
     Boost::boost
-    handlegraph
-    bdsg
     Eigen3::Eigen
     libsdsl.so.3
     ${HTSLIB_LIBRARIES}
-    OpenMP::OpenMP_CXX
+    libbdsg
+    gbwtgraph
     VGio::vgio
 )
 
@@ -127,11 +167,17 @@ add_executable(unit_tests
 target_compile_options(unit_tests PRIVATE -w) # fix warning
 
 # add src target lib + Catch2 lib 
+
+#TODO : I think this would work, try later
+#target_link_libraries(unit_tests PRIVATE 
+#    Catch2::Catch2WithMain     
+#    ${PROJECT_NAME}_objs)
 target_link_libraries(unit_tests PRIVATE 
     Catch2::Catch2WithMain     
     Boost::boost
-    handlegraph
-    bdsg
     Eigen3::Eigen
     libsdsl.so.3
-    ${HTSLIB_LIBRARIES})
+    ${HTSLIB_LIBRARIES}
+    libbdsg
+    gbwtgraph
+    VGio::vgio)

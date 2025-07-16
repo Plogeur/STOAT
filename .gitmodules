@@ -4,3 +4,9 @@
 [submodule "deps/libvgio"]
 	path = deps/libvgio
 	url = https://github.com/vgteam/libvgio.git
+[submodule "deps/libbdsg"]
+	path = deps/libbdsg
+	url = https://github.com/vgteam/libbdsg.git
+[submodule "deps/gbwtgraph"]
+	path = deps/gbwtgraph
+	url = https://github.com/jltsiren/gbwtgraph.git
