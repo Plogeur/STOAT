@@ -23,6 +23,9 @@ find_package(Boost REQUIRED)
 include_directories(${deps_DIR}/eigen/Eigen)
 
 
+# Add libvgio using its cmake build
+add_subdirectory(${deps_DIR}/libvgio)
+
 # libbdsg (full build using its cmake config)
 # Produces libbdsg target, dynamic only.
 # Comes along with its own libhandlegraph, which it depends on.
@@ -31,8 +34,6 @@ set(BUILD_PYTHON_BINDINGS OFF CACHE BOOL "Build Python bindings for libbdsg" FOR
 set(RUN_DOXYGEN OFF CACHE BOOL "Run libbdsg Doxygen" FORCE)
 add_subdirectory(${deps_DIR}/libbdsg)
 
-# Add libvgio using its cmake build
-add_subdirectory(${deps_DIR}/libvgio)
 
 # Copied from https://github.com/vgteam/vg/wiki/Programming-with-the-vg-API
 # SDSL library ("sdsl" target) already exists from libbdsg
@@ -121,7 +122,7 @@ target_include_directories(${PROJECT_NAME}_objs PRIVATE
 # Link Libraries
 target_link_libraries(${PROJECT_NAME}_objs
     Boost::boost
-    Eigen3::Eigen
+    Eigen
     libsdsl.so.3
     ${HTSLIB_LIBRARIES}
     libbdsg
