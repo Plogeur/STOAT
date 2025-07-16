@@ -23,11 +23,9 @@ It will release one days, It will !!!
 Manual installation : 
 
 - jansson 
-- libbdsg
-- htslib
+- [htslib](https://www.htslib.org/download/)
 - eigen3
-- boost
-- Catch2 v3
+- Boost: Boost can be installed by running `sudo apt-get install libboost-all-dev`
 - [sdsl-lite](https://github.com/vgteam/sdsl-lite)(vgteam fork)
 - [gbwt](https://github.com/jltsiren/gbwt)
 - [gbwtgraph](https://github.com/jltsiren/gbwtgraph)
