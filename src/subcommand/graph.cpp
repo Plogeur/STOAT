@@ -1,175 +1,244 @@
-
 #include "graph.hpp"
+#include <iostream>
+#include <string>
+#include <getopt.h>
+#include <omp.h>
 
+#include <bdsg/snarl_distance_index.hpp>
+#include <bdsg/overlays/overlay_helper.hpp>
+#include <handlegraph/path_handle_graph.hpp>
+#include <vg/io/vpkg.hpp>
+
+#include "../graph_path_association_finder.hpp"
+#include "../io/register_io.hpp"
+
+using namespace std;
 namespace stoat_command {
 
 void print_help_graph() {
-    std::cerr   << "usage: stoat graph [options]\n\n"
-                << "  -g, --graph FILE                   use this graph (only hash graph works for now) (required)" << endl
-                << "  -d, --distance-index FILE          use this distance index (required)" << endl
-                << "  -s, --sample-of-interest NAME      the name of the sample with the trait of interest (may repeat)" << endl
-                << "  -o, --output-format NAME           the format of the output (tsv / fasta) [tsv]" << endl
-                << "  -a, --associated-filename FILE     write the records for the associated samples to FILE" << endl
-                << "  -u, --unassociated-filename FILE   write the records for the unassociated samples to FILE" << endl
-                << "  -t, --threads N                    number of threads to use" << endl
-                << "  -T, --test NAME                    which test will be used to determine association (exact / fishers / chi2) [exact]" << endl
-                << "  -p, --p-value-threshold FLOAT      what is the threshold p-value to be considered significant? [0.05]" << endl
-                << "  -m, --method NAME                  what method is used to find associations? (paths) [paths]" << endl
-                << "  -l, --allele-size-limit INT        don't report variants smaller than this [0]" << endl
-                << "  -r, --reference-sample NAME        if there is no reference in the graph, use this sample as the reference" << endl
-                << "  -h, --help                         print this help message" << std::endl;
+    std::cerr << "usage: stoat graph [options]" << endl
+         << endl
+         << "input:" << endl
+         << "  -g, --graph FILE                   use this graph (only hash graph works for now) (required)" << endl
+         << "  -d, --distance-index FILE          use this distance index (required)" << endl
+         << "  -s, --sample-of-interest NAME      the name of the sample with the trait of interest (may repeat)" << endl
+         << "  -S, --samples-file NAME            a file with the names of the sample with the trait of interest, one per line (instead of -s)" << endl
+         << "output:" << endl
+         << "  -o, --output-format NAME           the format of the output (tsv / fasta) [tsv]" << endl
+         << "  -a, --associated-filename FILE     write the records for the associated samples to FILE" << endl
+         << "  -u, --unassociated-filename FILE   write the records for the unassociated samples to FILE" << endl
+         << "options:" << endl
+         << "  -t, --threads N                    number of threads to use" << endl
+         << "  -T, --test NAME                    which test will be used to determine association (exact / fishers / chi2) [exact]" << endl
+         << "  -f, --fpr FLOAT                    for multiple testing (BH procedure), what is the threshold false positive rate? 0.0 for no multiple testing [0.001]" << endl
+         << "  -p, --p-value-threshold FLOAT      what is the threshold p-value to be considered significant? [0.05]" << endl
+         << "                                     when used with multiple testing, discard any p-value above this threshold without doing multiple testing" << endl
+         << "  -m, --method NAME                  what method is used to find associations? (paths) [paths]" << endl
+         << "  -l, --allele-size-limit INT        don't report variants smaller than this [0]" << endl
+         << "  -r, --reference-sample NAME        if there is no reference in the graph, use this sample as the reference" << endl
+         << "  -h, --help                         print this help message" << endl;
+
 }
 
-int main_stoat_graph(int argc, char* argv[]) {
+int main_stoat_graph(int argc, char *argv[]) {
+
+    if (argc <= 1) {
+        print_help_graph();
+        return 1;
+    }
 
     std::string graph_name;
     std::string distance_name;
     size_t allele_size_limit = 0;
+    double fpr = 0.001;
     double p_value = 0.05;
     std::string method_name = "paths";
     std::string test_method = "exact";
     std::string reference_sample;
+    std::string samples_filename;
     std::set<std::string> samples_of_interest;
     std::string output_format= "tsv";
     std::string associated_filename;
     std::string unassociated_filename;
 
-     int c = 0;
-     optind = 1;
-     while (true) {
-         static struct option long_options[] =
-             {
-                 {"graph", required_argument, 0, 'g'},
-                 {"distance-index", required_argument, 0, 'd'},
-                 {"allele-size-limit", required_argument, 0, 'l'},
-                 {"threads", required_argument, 0, 't'},
-                 {"test", required_argument, 0, 'T'},
-                 {"p-value", required_argument, 0, 'p'},
-                 {"method", required_argument, 0, 'm'},
-                 {"reference-sample", required_argument, 0, 'r'},
-                 {"sample-of-interest", required_argument, 0, 's'},
-                 {"output-format", required_argument, 0, 'o'},
-                 {"associated-filename", required_argument, 0, 'a'},
-                 {"unassociated-filename", required_argument, 0, 'u'},
-                 {"help", no_argument, 0, 'h'},
-                 {0, 0, 0, 0}
-             };
+    int c = 0;
+    optind = 1;
+    while (true) {
+        static struct option long_options[] =
+            {
+                {"graph", required_argument, 0, 'g'},
+                {"distance-index", required_argument, 0, 'd'},
+                {"allele-size-limit", required_argument, 0, 'l'},
+                {"threads", required_argument, 0, 't'},
+                {"test", required_argument, 0, 'T'},
+                {"fpr", required_argument, 0, 'f'},
+                {"p-value", required_argument, 0, 'p'},
+                {"method", required_argument, 0, 'm'},
+                {"reference-sample", required_argument, 0, 'r'},
+                {"sample-of-interest", required_argument, 0, 's'},
+                {"samples-file", required_argument, 0, 'S'},
+                {"output-format", required_argument, 0, 'o'},
+                {"associated-filename", required_argument, 0, 'a'},
+                {"unassociated-filename", required_argument, 0, 'u'},
+                {"help", no_argument, 0, 'h'},
+                {0, 0, 0, 0}
+            };
 
-         int option_index = 0;
-         c = getopt_long(argc, argv, "g:d:l:t:T:p:m:r:s:o:a:u:h",
-                         long_options, &option_index); 
-         if (c == -1) {
-             break;
-         }
-         switch (c) {
-             case 'g':
-                 graph_name = optarg;
-                 break;
-             case 'd':
-                 distance_name = optarg;
-                 break;
-             case 'l':
-                 allele_size_limit = std::stoi(optarg);
-                 break;
-             case 't':
-                 omp_set_num_threads(std::stoi(optarg));
-                 break;
-             case 'T':
-                 test_method = optarg;
-                 break;
-             case 'p':
-                 p_value = std::stof(optarg);
-                 break;
-             case 'm':
-                 method_name = optarg;
-                 break;
-             case 'r':
-                 reference_sample = optarg;
-                 break;
-             case 's':
-                 samples_of_interest.emplace(optarg);
-                 break;
-             case 'o':
-                 output_format = optarg;
-                 break;
-             case 'a':
-                 associated_filename = optarg;
-                 break;
-             case 'u':
-                 unassociated_filename = optarg;
-                 break;
-             case 'h': print_help_graph(); exit(EXIT_SUCCESS); break;
-             default:
-                 std::cerr << "Unknown argument. Use -h or --help for usage.\n";
-                 return EXIT_FAILURE;
-         }
-     }
+        int option_index = 0;
+        c = getopt_long(argc, argv, "g:d:l:t:T:f:p:m:r:s:S:o:a:u:h",
+                        long_options, &option_index); 
+        if (c == -1) {
+            break;
+        }
+        switch (c) {
+            case 'g':
+                graph_name = optarg;
+                break;
+            case 'd':
+                distance_name = optarg;
+                break;
+            case 'l':
+                allele_size_limit = std::stoi(optarg);
+                break;
+            case 't':
+                omp_set_num_threads(std::stoi(optarg));
+                break;
+            case 'T':
+                test_method = optarg;
+                break;
+            case 'f':
+                fpr = std::stof(optarg);
+                break;
+            case 'p':
+                p_value = std::stof(optarg);
+                break;
+            case 'm':
+                method_name = optarg;
+                break;
+            case 'r':
+                reference_sample = optarg;
+                break;
+            case 's':
+                samples_of_interest.emplace(optarg);
+                break;
+            case 'S':
+                samples_filename = optarg;
+                break;
+            case 'o':
+                output_format = optarg;
+                break;
+            case 'a':
+                associated_filename = optarg;
+                break;
+            case 'u':
+                unassociated_filename = optarg;
+                break;
+            case 'h':
+                print_help_graph();
+                exit(1);
+                break;
+            default:
+                abort();
+        }
+    }
 
-     // Check that the inputs are ok
-     if (graph_name.empty()) {
-         std::cerr << "error [stoat]: stoat graph requires a graph file" << std::endl;
-         EXIT_FAILURE; 
-     }
-     if (distance_name.empty()) {
-         std::cerr << "error [stoat]: stoat graph requires a distance index file" << std::endl;
-         EXIT_FAILURE; 
-     }
-     if (samples_of_interest.empty()) {
-         std::cerr << "error [stoat]: stoat graph requires samples of interest" << std::endl;
-         EXIT_FAILURE; 
-     }
+    // Check that the inputs are ok
+    if (graph_name.empty()) {
+        std::cerr << "error [stoat graph]: pangwas requires a graph file" << endl;
+        return 1; 
+    }
+    if (distance_name.empty()) {
+        std::cerr << "error [stoat graph]: pangwas requires a distance index file" << endl;
+        return 1; 
+    }
 
-     // Tell the IO library about libvg types.
-     if (!stoat::io::register_libvg_io()) {
-        std::cerr << "error[vg]: Could not register libvg types with libvgio" << std::endl;
-         EXIT_FAILURE;
-     }
+    // Load the samples from a file
+    if (!samples_filename.empty()) {
+        ifstream in_samples;
+        in_samples.open(samples_filename);
+        string line;
+        while (getline(in_samples, line)) {
+            samples_of_interest.emplace(line);
+        }
+        in_samples.close();
+    }
+    if (samples_of_interest.empty()) {
+        std::cerr << "error [stoat graph]: pangwas requires samples of interest" << endl;
+        return 1; 
+    }
 
-     // Load the graph and make it a PathPositionHandleGraph
-     unique_ptr<handlegraph::PathHandleGraph> path_graph = vg::io::VPKG::load_one<handlegraph::PathHandleGraph>(graph_name);
-     bdsg::PathPositionOverlayHelper overlay_helper;
-     bdsg::PathPositionHandleGraph* graph = overlay_helper.apply(path_graph.get());
+    // Tell the IO library about libvg types.
+    if (!stoat::io::register_libvg_io()) {
+        cerr << "error[stoat vgio]: Could not register libvg types with libvgio" << endl;
+        return 1;
+    }
 
-//     // Load the distance index
-//     bdsg::SnarlDistanceIndex distance_index;
-//     distance_index.deserialize(distance_name);
 
-//     // Get the out streams
-//     std::ofstream out_associated;
-//     if (!associated_filename.empty()) {
-//         out_associated.open(associated_filename);
-//     }
-//     std::ofstream out_unassociated;
-//     if (!unassociated_filename.empty()) {
-//         out_unassociated.open(unassociated_filename);
-//     }
+    // Load the graph and make it a PathPositionHandleGraph
+    unique_ptr<handlegraph::PathHandleGraph> path_graph = vg::io::VPKG::load_one<handlegraph::PathHandleGraph>(graph_name);
+    bdsg::PathPositionOverlayHelper overlay_helper;
+    bdsg::PathPositionHandleGraph* graph = overlay_helper.apply(path_graph.get());
 
-//     if (method_name == "paths") {
-//         stoat::PathAssociationFinder af (*graph, 
-//                                         distance_index, 
-//                                         test_method,
-//                                         samples_of_interest, 
-//                                         reference_sample, 
-//                                         output_format,
-//                                         associated_filename.empty() ? std::cout : out_associated,
-//                                         unassociated_filename.empty() ? std::cout : out_unassociated,
-//                                         allele_size_limit,
-//                                         p_value);
-//         af.write_associated_snarls();
-//     } else {
-//         std::cerr << "error [stoat]: unknown method " << method_name << std::endl;
-//         EXIT_FAILURE; 
-//     }
+    // Load the distance index
+    bdsg::SnarlDistanceIndex distance_index;
+    distance_index.deserialize(distance_name);
 
-//     //Close streams
-//     if (!associated_filename.empty()) {
-//         out_associated.close();
-//     }
-//     if (!unassociated_filename.empty()) {
-//         out_unassociated.close();
-//     }
 
-    return EXIT_SUCCESS;
+    //Go through all the paths in the graph and remember what samples there are
+    // Also count the samples for the tester
+    size_t sample_count = 0;
+    std::unordered_set<std::string> samples;
+    /// A set of all samples+haplotypes in the graph
+    std::set<stoat::sample_hap_t> all_sample_haplotypes;
+    
+    graph->for_each_path_matching(nullptr, nullptr, nullptr, [&] (handlegraph::path_handle_t path) {
+        all_sample_haplotypes.emplace(stoat::get_sample_and_haplotype(*graph, path));
+        if (samples.count(stoat::get_sample_name_from_path(*graph, path)) == 0) {
+            sample_count++;
+            samples.insert(stoat::get_sample_name_from_path(*graph, path));
+        }   
+        return true;
+    }); 
+
+
+    // Get the out streams
+    std::ofstream out_associated;
+    if (!associated_filename.empty()) {
+        out_associated.open(associated_filename);
+    }
+    std::ofstream out_unassociated;
+    if (!unassociated_filename.empty()) {
+        out_unassociated.open(unassociated_filename);
+    }
+
+
+    // Make the partitioner
+    std::shared_ptr<stoat_graph::Partitioner> partitioner;
+    if (method_name == "paths") {
+        partitioner.reset(new stoat_graph::PathPartitioner(all_sample_haplotypes));
+    } else {
+        std::cerr << "error [stoat graph]: unknown method " << method_name << endl;
+        return 1; 
+    }
+
+    stoat_graph::AssociationFinder af (*graph, 
+                                   distance_index,
+                                   partitioner,
+                                   samples_of_interest, 
+                                   test_method,
+                                   allele_size_limit,
+                                   out_associated,
+                                   out_unassociated);
+        af.test_snarls();
+
+    //Close streams
+    if (!associated_filename.empty()) {
+        out_associated.close();
+    }
+    if (!unassociated_filename.empty()) {
+        out_unassociated.close();
+    }
+
+    return 0;
 }
-
-}
+} //end namespace

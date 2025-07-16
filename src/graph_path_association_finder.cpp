@@ -40,7 +40,7 @@ void AssociationFinder::test_snarls() const {
         return true;
     });
 
-    FisherKhi2 fk;
+    FisherKhi2 fisher_chi2_tester;
     while (!chains.empty()) {
         handlegraph::net_handle_t chain = chains.back();
         chains.pop_back();
@@ -50,12 +50,34 @@ void AssociationFinder::test_snarls() const {
             //TODO: For now it's fine to check is_eligible here because it's only checking size and we don't want to look at small chains anyway
             if (distance_index.is_snarl(snarl) && snarl_is_eligible(snarl) ) {
 
+                // Should we write this?
+                bool write_output = false;
+
+                // the strings we are going to output
+                string group_paths, allele_number_str, min_row_index_str, 
+                        numb_colum_str, inter_group_str, average_str,
+                        fastfisher_p_value, chi2_p_value = "NA";
+                string variant_type = "UNKNOWN_TYPE";
+
+                // Each set represents a partition of samples that takes the same path through the snarl's netgraph
                 std::vector<std::set<std::string>> sample_partitions = partitioner->partition_samples_in_snarl(graph, distance_index, snarl);
 
                 if (test_method == "exact") {
-                    // TODO add exact test here I supposed
+
+                    for (const std::set<std::string>& partition : sample_partitions) {
+                        if (partition == samples_of_interest) {
+                            write_output = true;
+                            break;
+                        }
+                    }
 
                 } else {
+
+                    // If we are using a real statistical test, then always write the output because the BH correction will need all the p-values
+                    // TODO: This could do what pangwas was doing to keep track of only good p-values instead of writing everything
+                    write_output = true;
+
+                    // Fill in the genotypes. Each item in these vectors is an allele (path/sample partition)
                     std::vector<size_t> genotype_associated(sample_partitions.size(), 0);
                     std::vector<size_t> genotype_unassociated(sample_partitions.size(), 0);
                     for (size_t i = 0 ; i < sample_partitions.size() ; i++) {
@@ -69,21 +91,36 @@ void AssociationFinder::test_snarls() const {
                         }
                     }
 
-                    const auto& [group_paths, 
+                    //Get a bunch of strings that get used for the output
+                    // TODO: This function should probably be part of the output function
+                    auto [group_paths, 
                         allele_number_str, min_row_index_str, 
-                        numb_colum_str, inter_group_str, average_str] = 
-                        stoat_vcf::binary_stat_test(genotype_associated, genotype_unassociated);
-                    
-                    const auto& [fastfisher_p_value, chi2_p_value] = fk.fisher_khi2(genotype_associated, genotype_unassociated);
+                        numb_colum_str, inter_group_str, average_str] = stoat_vcf::binary_stat_test(genotype_associated, genotype_unassociated);
+ 
+                    // Run the statistical test
+                    auto [fastfisher_p_value, chi2_p_value] = fisher_chi2_tester.fisher_khi2(genotype_associated, genotype_unassociated);
 
+                }
+                // TODO idk what to put for chr
+                string chr = "NA"; 
+                // Matis ans : why don't you put the actual chr ref if the snarl containt it and something like not_ref if it's not
+                //TODO: Maybe I sould keep the snarls as snarl_data_t's? 
+                // TODO: get the type properly
+                stoat_vcf::Snarl_data_t snarl_data_s(snarl, graph, distance_index);
+
+                // Get the offsets of the start and end nodes along the reference
+                std::vector<path_range_t> ranges = get_coordinates_of_snarl(graph, distance_index, snarl, true, "", false);
+                if (ranges.size() != 0) {
+                    snarl_data_s.start_positions = graph.get_position_of_step(ranges.front().start);
+                    snarl_data_s.end_positions = graph.get_position_of_step(ranges.front().end);
+
+                    chr = graph.get_path_name(graph.get_path_handle_of_step(ranges.front().start));
+                }
+                
+                if (write_output) {
                     # pragma omp critical (out_associated) 
                     {
-                        // TODO idk what to put for chr
-                        // Matis ans : why don't you put the actual chr ref if the snarl containt it and something like not_ref if it's not
-                        //TODO: Maybe I sould keep the snarls as snarl_data_t's? 
-                        // TODO: get the type properly
-                        stoat_vcf::Snarl_data_t snarl_data_s(snarl, graph, distance_index);
-                        stoat_vcf::write_binary(out_associated, "?", snarl_data_s, "UNKNOWN_TYPE", fastfisher_p_value, chi2_p_value, "", allele_number_str, min_row_index_str,
+                        stoat_vcf::write_binary(out_associated, chr, snarl_data_s, variant_type, fastfisher_p_value, chi2_p_value, "", allele_number_str, min_row_index_str,
                                      numb_colum_str, inter_group_str, average_str, group_paths);
                     }
                 }
@@ -94,7 +131,6 @@ void AssociationFinder::test_snarls() const {
                     chains.emplace_back(child);
                     return true;
                 });
-                
             }
             return true;
         });
