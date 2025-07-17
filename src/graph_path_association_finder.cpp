@@ -126,15 +126,13 @@ void AssociationFinder::test_snarls() const {
                     std::tie(chi2_p_value, fastfisher_p_value) = fisher_chi2_tester.fisher_khi2(genotype_associated, genotype_unassociated);
 
                 }
-                // TODO idk what to put for chr
                 string chr = "NA"; 
-                // Matis ans : why don't you put the actual chr ref if the snarl containt it and something like not_ref if it's not
                 //TODO: Maybe I sould keep the snarls as snarl_data_t's? 
                 // TODO: get the type properly
                 stoat_vcf::Snarl_data_t snarl_data_s(snarl, graph, distance_index);
 
                 // Get the offsets of the start and end nodes along the reference
-                std::vector<path_range_t> ranges = get_coordinates_of_snarl(graph, distance_index, snarl, true, "", false);
+                std::vector<path_range_t> ranges = get_coordinates_of_snarl(graph, distance_index, snarl, true, reference_sample, false);
                 if (ranges.size() != 0) {
                     snarl_data_s.start_positions = graph.get_position_of_step(ranges.front().start);
                     snarl_data_s.end_positions = graph.get_position_of_step(ranges.front().end);
@@ -145,6 +143,7 @@ void AssociationFinder::test_snarls() const {
                 if (write_output) {
                     # pragma omp critical (out_associated) 
                     {
+                        // Leave adjusted p-value blank, to be filled in later
                         stoat_vcf::write_binary(out_associated, chr, snarl_data_s, variant_type, fastfisher_p_value, chi2_p_value, "", allele_number_str, min_row_index_str,
                                      numb_colum_str, inter_group_str, average_str, group_paths);
                     }
