@@ -338,7 +338,7 @@ void BinarySnarlAnalyzer::analyze_and_write_snarl(
     std::vector<size_t> g1(paths_number, 0);
 
     size_t total_sum = stoat_vcf::create_binary_table(g0, g1, binary_phenotype, snarl_data_s.snarl_paths, paths_number, list_samples.size(), edge_matrix);
-    remove_empty_columns(g0, g1);
+    remove_empty_columns_binary_table(g0, g1);
     bool filtration = filtration_binary_table(g0, g1, total_sum, maf_threshold);
 
     // Binary analysis single test
@@ -369,8 +369,10 @@ void BinaryCovarSnarlAnalyzer::analyze_and_write_snarl(
 
     std::string type_var_str = oss.str();
 
-    const auto& [df, phenotype_filtered, allele_number, allele_paths] = create_quantitative_table(list_samples.size(), snarl_data_s.snarl_paths, binary_phenotype, edge_matrix);
+    auto [df, phenotype_filtered, allele_number, allele_paths] = create_quantitative_table(list_samples.size(), snarl_data_s.snarl_paths, binary_phenotype, edge_matrix);
+    remove_empty_columns_quantitative_table(df);
     bool filtration = filtration_quantitative_table(df, maf_threshold);
+    remove_last_columns_quantitative_table(df);
 
     if (!filtration) { // filtred snarl
         // logistic regression with covariates if not empty
@@ -392,8 +394,10 @@ void BinaryCovarSnarlAnalyzer::analyze_and_write_snarl(
 void QuantitativeSnarlAnalyzer::analyze_and_write_snarl(
     const Snarl_data_t& snarl_data_s, const std::string& chr, std::ofstream& outf) {
 
-    const auto& [df, phenotype_filtered, allele_number, allele_paths] = create_quantitative_table(list_samples.size(), snarl_data_s.snarl_paths, quantitative_phenotype, edge_matrix);
+    auto [df, phenotype_filtered, allele_number, allele_paths] = create_quantitative_table(list_samples.size(), snarl_data_s.snarl_paths, quantitative_phenotype, edge_matrix);
+    remove_empty_columns_quantitative_table(df);
     bool filtration = filtration_quantitative_table(df, maf_threshold);
+    remove_last_columns_quantitative_table(df);
 
     // make a std::string separated by ',' from a vector of std::string
     std::ostringstream oss;
@@ -448,8 +452,10 @@ void EQTLSnarlAnalyzer::analyze_and_write_snarl(
     const Snarl_data_t& snarl_data_s, const std::string& chr, std::ofstream& outf) {
 
     std::vector<size_t> list_gene_index = found_gene_snarl(eqtl_map.at(chr), snarl_data_s.start_positions, snarl_data_s.end_positions, windows_gene_threshold);
-    const auto& [df, index_filtered, allele_number, allele_paths] = stoat_vcf::create_eqtl_table(list_samples.size(), snarl_data_s.snarl_paths, edge_matrix);
+    auto [df, index_filtered, allele_number, allele_paths] = stoat_vcf::create_eqtl_table(list_samples.size(), snarl_data_s.snarl_paths, edge_matrix);
+    remove_empty_columns_quantitative_table(df);
     bool filtration = filtration_quantitative_table(df, maf_threshold);
+    remove_last_columns_quantitative_table(df);
 
     for (size_t i = 0; i < list_gene_index.size(); ++i) {
         size_t gene_idx = list_gene_index[i];
@@ -485,7 +491,9 @@ void EQTLSnarlAnalyzer::analyze_and_write_snarl(
 }
 
 // Return true when snarl must be filtered and false if not
-bool filtration_quantitative_table(const std::vector<std::vector<double>>& df, const double& maf_threshold) {
+bool filtration_quantitative_table(
+    const std::vector<std::vector<double>>& df, 
+    const double& maf_threshold) {
     
     if (df.size() < 2) {
         return true;  // Not enough data → filter out
@@ -503,10 +511,6 @@ bool filtration_quantitative_table(const std::vector<std::vector<double>>& df, c
         }
     }
 
-    if (totalSum == 0.0) {
-        return true;  // All-zero case → filter out
-    }
-
     int count_above_threshold = 0;
 
     for (size_t i = 0; i < numPaths; ++i) {
@@ -520,7 +524,56 @@ bool filtration_quantitative_table(const std::vector<std::vector<double>>& df, c
     return count_above_threshold < 2;
 }
 
-void remove_empty_columns(
+void remove_empty_columns_quantitative_table(
+    std::vector<std::vector<double>>& df) {
+
+    if (df.empty()) return;
+
+    size_t num_rows = df.size();
+    size_t num_cols = df[0].size();
+
+    // Identify non-empty columns
+    std::vector<bool> keep_column(num_cols, false);
+
+    for (size_t col = 0; col < num_cols; ++col) {
+        for (size_t row = 0; row < num_rows; ++row) {
+            double val = df[row][col];
+            if (val != 0.0 && !std::isnan(val)) {
+                keep_column[col] = true;
+                break;
+            }
+        }
+    }
+
+    // Create filtered df
+    std::vector<std::vector<double>> df_filtered;
+    df_filtered.reserve(num_rows);
+
+    for (size_t row = 0; row < num_rows; ++row) {
+        std::vector<double> new_row;
+        for (size_t col = 0; col < num_cols; ++col) {
+            if (keep_column[col]) {
+                new_row.push_back(df[row][col]);
+            }
+        }
+        df_filtered.push_back(std::move(new_row));
+    }
+
+    // Replace original df with filtered one
+    df = std::move(df_filtered);
+}
+
+void remove_last_columns_quantitative_table(std::vector<std::vector<double>>& df) {
+    if (df.empty() || df[0].empty()) return;
+
+    for (auto& row : df) {
+        if (!row.empty()) {
+            row.pop_back(); // Remove last column from each row
+        }
+    }
+}
+
+void remove_empty_columns_binary_table(
     std::vector<size_t>& g0, 
     std::vector<size_t>& g1) {
 

@@ -197,9 +197,15 @@ protected:
 /// Return true if any column exceeds the MAF threshold
 bool filtration_quantitative_table(const std::vector<std::vector<double>>& df, const double& maf);
 
-void remove_empty_columns(
+void remove_empty_columns_binary_table(
     std::vector<size_t>& g0, 
     std::vector<size_t>& g1);
+
+void remove_empty_columns_quantitative_table(
+    std::vector<std::vector<double>>& df);
+
+void remove_last_columns_quantitative_table(
+    std::vector<std::vector<double>>& df);
 
 bool filtration_binary_table(
     std::vector<size_t>& g0, std::vector<size_t>& g1,
