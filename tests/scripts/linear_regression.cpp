@@ -12,43 +12,55 @@ void linear_regression(
 
     size_t num_samples = df.size();
     size_t num_variants = df[0].size();
+    size_t num_covariates = 0;
     size_t num_features = num_variants + 1; // +1 for intercept
 
+    if (!covar.empty()) {
+        num_covariates = covar[0].size();
+        num_features = num_variants + num_covariates + 1; // +1 for intercept
+    }
+
     Eigen::MatrixXd X(num_samples, num_features);
+    X.col(0) = Eigen::VectorXd::Ones(num_samples);  // Intercept column
     Eigen::VectorXd y(num_samples);
     
     for (size_t i = 0; i < num_samples; ++i) {
-        X(i, 0) = 1.0; // intercept
         y(i) = quantitative_phenotype[i];
         size_t col = 1;
         for (size_t j = 0; j < num_variants; ++j) {
             X(i, col++) = df[i][j];
         }
+        for (size_t j = 0; j < num_covariates; ++j) {
+            X(i, col++) = covar[i][j];
+        }
     }
-
-    // Coefficients
+    
+    // Coefficients beta
     Eigen::VectorXd beta = (X.transpose() * X).ldlt().solve(X.transpose() * y);
     Eigen::VectorXd y_pred = X * beta;
     Eigen::VectorXd residuals = y - y_pred;
 
     // R²
     double rss = residuals.squaredNorm();
-    double tss = (y.array() - y.mean()).square().sum();
+    double tss = (y.array() - y.mean()).matrix().squaredNorm();
     double r2 = 1 - (rss / tss);
 
-    int df_res = static_cast<int>(num_samples - X.cols()); // residual degrees of freedom
-    df_res = std::max(df_res, 1);
+    int df_res = (num_samples - X.cols() + 1); // residual degrees of freedom
+    df_res = std::max(df_res, 1); // Ensure df_res is at least 1 to avoid division by zero
     double mse = rss / df_res;
 
-    // Covariance matrix and SE
-    Eigen::MatrixXd XtX = X.transpose() * X;
-    Eigen::MatrixXd cov_matrix;
-    Eigen::VectorXd se;
-    cov_matrix = XtX.inverse();
+    // Standard errors
+    Eigen::MatrixXd cov_matrix = (X.transpose() * X).inverse();    
+    Eigen::VectorXd se = (cov_matrix.diagonal() * mse).array().sqrt().matrix();
 
-    se = (cov_matrix.diagonal() * mse).array().sqrt();
+    // change cov_matrix calcul if X.transpose() * X might be ill-conditioned or nearly singular
+    if (se.hasNaN()) {
+        Eigen::MatrixXd XtX = X.transpose() * X;
+        Eigen::MatrixXd cov_matrix = XtX.ldlt().solve(Eigen::MatrixXd::Identity(X.cols(), X.cols()));
+        se = (cov_matrix.diagonal() * mse).array().sqrt().matrix();
+    }
 
-    // t-stats and p-values
+    // t-statistics
     Eigen::VectorXd t_stats = beta.array() / se.array();
     boost::math::students_t t_dist(df_res);
 
@@ -94,7 +106,7 @@ int main() {
     std::vector<std::vector<double>> covariates = {
         {1.0},
         {2.0},
-        {42.0},
+        {1.0},
         {3.0},
         {2.0}
     };

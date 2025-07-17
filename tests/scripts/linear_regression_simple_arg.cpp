@@ -1,8 +1,13 @@
-#include <iostream>
-#include <vector>
-#include <cmath>
+#include <string>
 #include <iomanip>
-#include <chrono> // for benchmarking
+#include <iostream>
+#include <limits>
+#include <vector>
+#include <sstream>
+#include <cmath>
+#include <fstream>
+#include <unordered_map>
+#include <algorithm>
 
 #include <boost/math/distributions/students_t.hpp>
 
@@ -100,11 +105,12 @@ void linear_regression(
     for (int i = 0; i < n; ++i)
         sse += (y[i] - y_hat[i]) * (y[i] - y_hat[i]);
 
-    double df_resid = (n - p) ? 0 : 1; // avoid Degrees of freedom <= 0
+    double df_resid = (n - p > 0) ? n - p : 1;
     double sigma2 = sse / df_resid;
-
+    
     for (int i = 0; i < p; ++i) {
-        double se = std::sqrt(sigma2 * XtX_inv[i][i]);
+        double safe_diagonal = XtX_inv[i][i] > 0 ? XtX_inv[i][i] : 0.0;
+        double se = std::sqrt(sigma2 * safe_diagonal);
         double t_stat = beta[i] / se;
         boost::math::students_t dist(df_resid);
         double pval = 2 * boost::math::cdf(boost::math::complement(dist, std::fabs(t_stat)));
@@ -116,28 +122,102 @@ void linear_regression(
     }
 }
 
-int main() {
+// Function to parse the feature file
+void parse_feature_file(
+    const std::string& feature_filename,
+    std::vector<std::string>& sample_ids,
+    std::vector<std::vector<double>>& features) {
 
-    std::vector<std::vector<double>> X_raw = {
-        {0.5, 0, 0.5},
-        {0, 0.5, 0.5},
-        {1, 0, 0},
-        {0, 1, 0},
-        {0, 0.5, 0}
-    };
+    std::ifstream infile(feature_filename);
+    if (!infile) {
+        throw std::runtime_error("Unable to open feature file");
+    }
 
-    std::vector<double> y = {10.5, 13.0, 15.8, 19.7, 21.5};
+    std::string line;
+    std::getline(infile, line);  // skip header
 
-    std::vector<std::vector<double>> covariates = {
-        {1.0},
-        {2.0},
-        {1.0},
-        {3.0},
-        {2.0}
-    };
+    while (std::getline(infile, line)) {
+        std::stringstream ss(line);
+        std::string token;
 
-    linear_regression(X_raw, y, covariates);
-    return 0;
+        std::string sample_id;
+        std::getline(ss, sample_id, '\t');
+        sample_ids.push_back(sample_id);
+
+        std::vector<double> feature_row;
+        while (std::getline(ss, token, '\t')) {
+            feature_row.push_back(std::stod(token));
+        }
+
+        features.push_back(feature_row);
+    }
 }
 
-// g++ -std=c++11 -O2 -lboost_math_c99 -o ols ols.cpp
+// Function to parse the phenotype file
+void parse_phenotype_file(
+    const std::string& phenotype_filename,
+    const std::vector<std::string>& sample_ids,
+    std::vector<double>& phenotype) {
+
+    std::ifstream infile(phenotype_filename);
+    if (!infile) {
+        throw std::runtime_error("Unable to open phenotype file");
+    }
+
+    std::unordered_map<std::string, double> phenotype_map;
+
+    std::string line;
+    std::getline(infile, line);  // skip header
+
+    while (std::getline(infile, line)) {
+        std::stringstream ss(line);
+        std::string fid, iid, pheno_str;
+        std::getline(ss, fid, '\t');
+        std::getline(ss, iid, '\t');
+        std::getline(ss, pheno_str, '\t');
+
+        phenotype_map[iid] = std::stod(pheno_str);
+    }
+
+    for (const auto& sample : sample_ids) {
+        if (phenotype_map.find(sample) != phenotype_map.end()) {
+            phenotype.push_back(phenotype_map[sample]);
+        } else {
+            throw std::runtime_error("Sample ID not found in phenotype file: " + sample);
+        }
+    }
+}
+
+// Example usage
+int main(int argc, char* argv[]) {
+    if (argc != 3) {
+        std::cerr << "Usage: " << argv[0] << " <feature_file> <phenotype_file>\n";
+        return 1;
+    }
+
+    std::string feature_file = argv[1];
+    std::string phenotype_file = argv[2];
+
+    std::vector<std::string> sample_ids;
+    std::vector<std::vector<double>> features;
+    std::vector<double> phenotype;
+    std::vector<std::vector<double>> covar;
+
+    try {
+        parse_feature_file(feature_file, sample_ids, features);
+        parse_phenotype_file(phenotype_file, sample_ids, phenotype);
+
+        std::cout << "Parsed " << features.size() << " samples with " << features[0].size() << " features.\n";
+        std::cout << "Parsed " << phenotype.size() << " phenotype values.\n";
+
+        linear_regression(features, phenotype, covar);
+    } catch (const std::exception& e) {
+        std::cerr << "Error: " << e.what() << "\n";
+        return 1;
+    }
+
+    return EXIT_SUCCESS;
+}
+
+// g++ -std=c++11 -O2 -lboost_math_c99 -o lr_simple_arg linear_regression_simple_arg.cpp
+// ./lr_simple_arg ../../output/regression/4_6.tsv ../../data/quantitative/phenotype.tsv

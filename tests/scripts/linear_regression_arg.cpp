@@ -201,9 +201,9 @@ int main(int argc, char* argv[]) {
 }
 
 // LINUX
-// g++ -std=c++17 -I/usr/include/eigen3 -lboost_math_c99 -o linear_regression linear_regression.cpp
+// g++ -std=c++17 -I/usr/include/eigen3 -lboost_math_c99 -o lr_arg linear_regression_arg.cpp
 
 // MACOS
-// g++ -std=c++17 -I/usr/local/eigen3 -lboost_math_c99 -o linear_regression linear_regression.cpp
+// g++ -std=c++17 -I/usr/local/eigen3 -lboost_math_c99 -o lr_arg linear_regression_arg.cpp
 
-// ./linear_regression ../../output/regression/48_51.tsv ../data/quantitative/phenotype.tsv
+// ./lr_arg ../../output/regression/4_6.tsv ../../data/quantitative/phenotype.tsv

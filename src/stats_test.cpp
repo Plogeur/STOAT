@@ -385,8 +385,8 @@ std::tuple<std::string, std::string, std::string, std::string> LinearRegression:
     size_t num_features = num_variants + 1; // +1 for intercept
 
     if (!covar.empty()) {
-        size_t num_covariates = covar[0].size();
-        size_t num_features = num_variants + num_covariates + 1; // +1 for intercept
+        num_covariates = covar[0].size();
+        num_features = num_variants + num_covariates + 1; // +1 for intercept
     }
 
     Eigen::MatrixXd X(num_samples, num_features);
