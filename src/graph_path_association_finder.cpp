@@ -59,9 +59,14 @@ void AssociationFinder::test_snarls() const {
                 bool write_output = false;
 
                 // the strings we are going to output
-                string group_paths, allele_number_str, min_row_index_str, 
-                        numb_colum_str, inter_group_str, average_str,
-                        fastfisher_p_value, chi2_p_value = "NA";
+                string group_paths = "NA";
+                string allele_number_str = "NA";
+                string min_row_index_str = "NA";
+                string numb_colum_str = "NA";
+                string inter_group_str = "NA";
+                string average_str = "NA";
+                string fastfisher_p_value = "NA";
+                string chi2_p_value = "NA";
                 string variant_type = "UNKNOWN_TYPE";
 
                 // Each set represents a partition of samples that takes the same path through the snarl's netgraph
@@ -113,12 +118,12 @@ void AssociationFinder::test_snarls() const {
 
                     //Get a bunch of strings that get used for the output
                     // TODO: This function should probably be part of the output function
-                    auto [group_paths, 
+                    std::tie(group_paths, 
                         allele_number_str, min_row_index_str, 
-                        numb_colum_str, inter_group_str, average_str] = stoat_vcf::binary_stat_test(genotype_associated, genotype_unassociated);
+                        numb_colum_str, inter_group_str, average_str) = stoat_vcf::binary_stat_test(genotype_associated, genotype_unassociated);
  
                     // Run the statistical test
-                    auto [fastfisher_p_value, chi2_p_value] = fisher_chi2_tester.fisher_khi2(genotype_associated, genotype_unassociated);
+                    std::tie(fastfisher_p_value, chi2_p_value) = fisher_chi2_tester.fisher_khi2(genotype_associated, genotype_unassociated);
 
                 }
                 // TODO idk what to put for chr
