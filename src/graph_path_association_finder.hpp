@@ -25,6 +25,7 @@ class AssociationFinder {
         const handlegraph::PathPositionHandleGraph& graph;
         const bdsg::SnarlDistanceIndex& distance_index; 
         const std::set<std::string>& samples_of_interest;
+        const std::string reference_sample;
         const std::string test_method;
         const std::string output_format;
         size_t total_sample_count;
@@ -47,6 +48,7 @@ class AssociationFinder {
                           const bdsg::SnarlDistanceIndex& distance_index, 
                           std::shared_ptr<Partitioner> partitioner,
                           const std::set<std::string>& samples_of_interest, 
+                          std::string reference_sample,
                           std::string test_method,
                           size_t allele_size_limit,
                           std::ostream& out_associated,

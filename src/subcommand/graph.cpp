@@ -29,10 +29,10 @@ void print_help_graph() {
          << "  -u, --unassociated-filename FILE   write the records for the unassociated samples to FILE" << endl
          << "options:" << endl
          << "  -t, --threads N                    number of threads to use" << endl
-         << "  -T, --test NAME                    which test will be used to determine association (exact / fishers / chi2) [exact]" << endl
+         << "  -T, --test NAME                    which test will be used to determine association (exact / chi2) [exact]" << endl
          << "  -f, --fpr FLOAT                    for multiple testing (BH procedure), what is the threshold false positive rate? 0.0 for no multiple testing [0.001]" << endl
-         << "  -p, --p-value-threshold FLOAT      what is the threshold p-value to be considered significant? [0.05]" << endl
-         << "                                     when used with multiple testing, discard any p-value above this threshold without doing multiple testing" << endl
+         //<< "  -p, --p-value-threshold FLOAT      what is the threshold p-value to be considered significant? [0.05]" << endl
+         //<< "                                     when used with multiple testing, discard any p-value above this threshold without doing multiple testing" << endl
          << "  -m, --method NAME                  what method is used to find associations? (paths) [paths]" << endl
          << "  -l, --allele-size-limit INT        don't report variants smaller than this [0]" << endl
          << "  -r, --reference-sample NAME        if there is no reference in the graph, use this sample as the reference" << endl
@@ -51,7 +51,7 @@ int main_stoat_graph(int argc, char *argv[]) {
     std::string distance_name;
     size_t allele_size_limit = 0;
     double fpr = 0.001;
-    double p_value = 0.05;
+    //double p_value = 0.05;
     std::string method_name = "paths";
     std::string test_method = "exact";
     std::string reference_sample;
@@ -72,7 +72,7 @@ int main_stoat_graph(int argc, char *argv[]) {
                 {"threads", required_argument, 0, 't'},
                 {"test", required_argument, 0, 'T'},
                 {"fpr", required_argument, 0, 'f'},
-                {"p-value", required_argument, 0, 'p'},
+                //{"p-value", required_argument, 0, 'p'},
                 {"method", required_argument, 0, 'm'},
                 {"reference-sample", required_argument, 0, 'r'},
                 {"sample-of-interest", required_argument, 0, 's'},
@@ -85,7 +85,7 @@ int main_stoat_graph(int argc, char *argv[]) {
             };
 
         int option_index = 0;
-        c = getopt_long(argc, argv, "g:d:l:t:T:f:p:m:r:s:S:o:a:u:h",
+        c = getopt_long(argc, argv, "g:d:l:t:T:f:m:r:s:S:o:a:u:h",
                         long_options, &option_index); 
         if (c == -1) {
             break;
@@ -109,9 +109,9 @@ int main_stoat_graph(int argc, char *argv[]) {
             case 'f':
                 fpr = std::stof(optarg);
                 break;
-            case 'p':
-                p_value = std::stof(optarg);
-                break;
+            //case 'p':
+            //    p_value = std::stof(optarg);
+            //    break;
             case 'm':
                 method_name = optarg;
                 break;
@@ -225,6 +225,7 @@ int main_stoat_graph(int argc, char *argv[]) {
                                    distance_index,
                                    partitioner,
                                    samples_of_interest, 
+                                   reference_sample,
                                    test_method,
                                    allele_size_limit,
                                    !associated_filename.empty() ? out_associated : cout,
