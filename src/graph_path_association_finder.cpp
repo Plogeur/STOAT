@@ -107,7 +107,7 @@ void AssociationFinder::test_snarls() const {
                             } else {
                                 break;
                             }
-                        } else {
+                        } else if (output_format == "fasta") {
                             samples_to_write[*partition.begin()] = false;
                         }
                     }
@@ -141,23 +141,33 @@ void AssociationFinder::test_snarls() const {
                     // Run the statistical test
                     std::tie(chi2_p_value, fastfisher_p_value) = fisher_chi2_tester.fisher_khi2(genotype_associated, genotype_unassociated);
 
-                }
-                string chr = "NA"; 
-                //TODO: Maybe I sould keep the snarls as snarl_data_t's? 
-                // TODO: get the type properly
-                stoat_vcf::Snarl_data_t snarl_data_s(snarl, graph, distance_index);
+                    if (output_format == "fasta") {
+                        // Figure out which samples we want to write
+                        // Since we don't know which partition is actually associated, just write everything to one file
+                        for (const std::set<std::string>& partition : sample_partitions) {
+                            samples_to_write[*partition.begin()] = true;
+                        }
+                    }
 
-                // Get the offsets of the start and end nodes along the reference
-                std::vector<path_range_t> ranges = get_coordinates_of_snarl(graph, distance_index, snarl, true, reference_sample, false);
-                if (ranges.size() != 0) {
-                    snarl_data_s.start_positions = graph.get_position_of_step(ranges.front().start);
-                    snarl_data_s.end_positions = graph.get_position_of_step(ranges.front().end);
-
-                    chr = graph.get_path_name(graph.get_path_handle_of_step(ranges.front().start));
                 }
                 
                 if (write_output) {
                     if (output_format == "tsv") {
+
+                        string chr = "NA"; 
+                        //TODO: Maybe I sould keep the snarls as snarl_data_t's? 
+                        // TODO: get the type properly
+                        stoat_vcf::Snarl_data_t snarl_data_s(snarl, graph, distance_index);
+
+                        // Get the offsets of the start and end nodes along the reference
+                        std::vector<path_range_t> ranges = get_coordinates_of_snarl(graph, distance_index, snarl, true, reference_sample, false);
+                        if (ranges.size() != 0) {
+                            snarl_data_s.start_positions = graph.get_position_of_step(ranges.front().start);
+                            snarl_data_s.end_positions = graph.get_position_of_step(ranges.front().end);
+
+                            chr = graph.get_path_name(graph.get_path_handle_of_step(ranges.front().start));
+                        }
+
                         # pragma omp critical (out_associated) 
                         {
                             // Leave adjusted p-value blank, to be filled in later
@@ -166,14 +176,8 @@ void AssociationFinder::test_snarls() const {
                         }
                     } else if (output_format == "fasta") {
 
-                        // Figure out which samples we want to write
-                        // Since we don't know which partition is actually associated, just write everything to one file
-                        for (const std::set<std::string>& partition : sample_partitions) {
-                            samples_to_write[*partition.begin()] = true;
-                        }
                         # pragma omp critical (out_associated) 
                         {
-                            // Leave adjusted p-value blank, to be filled in later
                             stoat_vcf::write_fasta(out_associated, out_unassociated, graph, distance_index, snarl, samples_to_write, reference_sample);
                         }
                     }
