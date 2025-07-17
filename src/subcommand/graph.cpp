@@ -20,23 +20,23 @@ void print_help_graph() {
          << endl
          << "input:" << endl
          << "  -g, --graph FILE                   use this graph (only hash graph works for now) (required)" << endl
-         << "  -d, --distance-index FILE          use this distance index (required)" << endl
-         << "  -s, --sample-of-interest NAME      the name of the sample with the trait of interest (may repeat)" << endl
-         << "  -S, --samples-file NAME            a file with the names of the sample with the trait of interest, one per line (instead of -s)" << endl
+         << "  -d, --distance-index FILE          Use this distance index (required)" << endl
+         << "  -s, --sample-of-interest NAME      The name of the sample with the trait of interest (may repeat)" << endl
+         << "  -S, --samples-file NAME            A file with the names of the sample with the trait of interest, one per line (instead of -s)" << endl
          << "output:" << endl
-         << "  -o, --output-format NAME           the format of the output (tsv / fasta) [tsv]" << endl
-         << "  -a, --associated-filename FILE     write the records for the associated samples to FILE" << endl
-         << "  -u, --unassociated-filename FILE   write the records for the unassociated samples to FILE" << endl
+         << "  -o, --output DIR                   Output directory name [output]" << endl
+         << "  -O, --output-format NAME           The format of the output (tsv / fasta) [tsv]" << endl
+         << "                                     Output will be written to DIR/binary_table_graph.tsv or DIR/associated.fasta and DIR/unassociated.fasta" << endl
          << "options:" << endl
-         << "  -t, --threads N                    number of threads to use" << endl
-         << "  -T, --test NAME                    which test will be used to determine association (exact / chi2) [exact]" << endl
-         << "  -f, --fpr FLOAT                    for multiple testing (BH procedure), what is the threshold false positive rate? 0.0 for no multiple testing [0.001]" << endl
-         //<< "  -p, --p-value-threshold FLOAT      what is the threshold p-value to be considered significant? [0.05]" << endl
-         //<< "                                     when used with multiple testing, discard any p-value above this threshold without doing multiple testing" << endl
-         << "  -m, --method NAME                  what method is used to find associations? (paths) [paths]" << endl
-         << "  -l, --allele-size-limit INT        don't report variants smaller than this [0]" << endl
-         << "  -r, --reference-sample NAME        if there is no reference in the graph, use this sample as the reference" << endl
-         << "  -h, --help                         print this help message" << endl;
+         << "  -t, --threads N                    Number of threads to use" << endl
+         << "  -T, --test NAME                    Which test will be used to determine association (exact / chi2) [exact]" << endl
+         << "  -f, --fpr FLOAT                    For multiple testing (BH procedure), what is the threshold false positive rate? 0.0 for no multiple testing [0.001]" << endl
+         //<< "  -p, --p-value-threshold FLOAT      What is the threshold p-value to be considered significant? [0.05]" << endl
+         //<< "                                     When used with multiple testing, discard any p-value above this threshold without doing multiple testing" << endl
+         << "  -m, --method NAME                  What method is used to find associations? (paths) [paths]" << endl
+         << "  -l, --allele-size-limit INT        Don't report variants smaller than this [0]" << endl
+         << "  -r, --reference-sample NAME        If there is no reference in the graph, use this sample as the reference" << endl
+         << "  -h, --help                         Print this help message" << endl;
 
 }
 
@@ -58,8 +58,7 @@ int main_stoat_graph(int argc, char *argv[]) {
     std::string samples_filename;
     std::set<std::string> samples_of_interest;
     std::string output_format= "tsv";
-    std::string associated_filename;
-    std::string unassociated_filename;
+    std::string output_dir="output";
 
     int c = 0;
     optind = 1;
@@ -77,15 +76,14 @@ int main_stoat_graph(int argc, char *argv[]) {
                 {"reference-sample", required_argument, 0, 'r'},
                 {"sample-of-interest", required_argument, 0, 's'},
                 {"samples-file", required_argument, 0, 'S'},
-                {"output-format", required_argument, 0, 'o'},
-                {"associated-filename", required_argument, 0, 'a'},
-                {"unassociated-filename", required_argument, 0, 'u'},
+                {"output", required_argument, 0, 'o'},
+                {"output-format", required_argument, 0, 'O'},
                 {"help", no_argument, 0, 'h'},
                 {0, 0, 0, 0}
             };
 
         int option_index = 0;
-        c = getopt_long(argc, argv, "g:d:l:t:T:f:m:r:s:S:o:a:u:h",
+        c = getopt_long(argc, argv, "g:d:l:t:T:f:m:r:s:S:o:O:h",
                         long_options, &option_index); 
         if (c == -1) {
             break;
@@ -125,13 +123,10 @@ int main_stoat_graph(int argc, char *argv[]) {
                 samples_filename = optarg;
                 break;
             case 'o':
+                output_dir = optarg;
+                break;
+            case 'O':
                 output_format = optarg;
-                break;
-            case 'a':
-                associated_filename = optarg;
-                break;
-            case 'u':
-                unassociated_filename = optarg;
                 break;
             case 'h':
                 print_help_graph();
@@ -199,6 +194,13 @@ int main_stoat_graph(int argc, char *argv[]) {
         }   
         return true;
     }); 
+
+    string associated_filename = output_dir + "/" + (output_format == "tsv" ? "binary_table_graph.tsv" 
+                                                                            : "associated.fasta");
+    string unassociated_filename;
+    if (output_format == "fasta") {
+        unassociated_filename= output_dir + "/unassociated.fasta";
+    }
 
 
     // Get the out streams
