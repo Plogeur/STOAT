@@ -3,6 +3,7 @@
 #include <string>
 #include <getopt.h>
 #include <omp.h>
+#include <filesystem>
 
 #include <bdsg/snarl_distance_index.hpp>
 #include <bdsg/overlays/overlay_helper.hpp>
@@ -11,6 +12,7 @@
 
 #include "../graph_path_association_finder.hpp"
 #include "../io/register_io.hpp"
+#include "../post_processing.hpp"
 
 using namespace std;
 namespace stoat_command {
@@ -30,7 +32,6 @@ void print_help_graph() {
          << "options:" << endl
          << "  -t, --threads N                    Number of threads to use" << endl
          << "  -T, --test NAME                    Which test will be used to determine association (exact / chi2) [exact]" << endl
-         << "  -f, --fpr FLOAT                    For multiple testing (BH procedure), what is the threshold false positive rate? 0.0 for no multiple testing [0.001]" << endl
          //<< "  -p, --p-value-threshold FLOAT      What is the threshold p-value to be considered significant? [0.05]" << endl
          //<< "                                     When used with multiple testing, discard any p-value above this threshold without doing multiple testing" << endl
          << "  -m, --method NAME                  What method is used to find associations? (paths) [paths]" << endl
@@ -50,7 +51,6 @@ int main_stoat_graph(int argc, char *argv[]) {
     std::string graph_name;
     std::string distance_name;
     size_t allele_size_limit = 0;
-    double fpr = 0.001;
     //double p_value = 0.05;
     std::string method_name = "paths";
     std::string test_method = "exact";
@@ -70,7 +70,6 @@ int main_stoat_graph(int argc, char *argv[]) {
                 {"allele-size-limit", required_argument, 0, 'l'},
                 {"threads", required_argument, 0, 't'},
                 {"test", required_argument, 0, 'T'},
-                {"fpr", required_argument, 0, 'f'},
                 //{"p-value", required_argument, 0, 'p'},
                 {"method", required_argument, 0, 'm'},
                 {"reference-sample", required_argument, 0, 'r'},
@@ -83,7 +82,7 @@ int main_stoat_graph(int argc, char *argv[]) {
             };
 
         int option_index = 0;
-        c = getopt_long(argc, argv, "g:d:l:t:T:f:m:r:s:S:o:O:h",
+        c = getopt_long(argc, argv, "g:d:l:t:T:m:r:s:S:o:O:h",
                         long_options, &option_index); 
         if (c == -1) {
             break;
@@ -103,9 +102,6 @@ int main_stoat_graph(int argc, char *argv[]) {
                 break;
             case 'T':
                 test_method = optarg;
-                break;
-            case 'f':
-                fpr = std::stof(optarg);
                 break;
             //case 'p':
             //    p_value = std::stof(optarg);
@@ -146,6 +142,9 @@ int main_stoat_graph(int argc, char *argv[]) {
         std::cerr << "error [stoat graph]: pangwas requires a distance index file" << endl;
         return 1; 
     }
+
+    // Make the output directory
+    std::filesystem::create_directory(output_dir);
 
     // Load the samples from a file
     if (!samples_filename.empty()) {
@@ -232,7 +231,7 @@ int main_stoat_graph(int argc, char *argv[]) {
                                    allele_size_limit,
                                    !associated_filename.empty() ? out_associated : cout,
                                    !unassociated_filename.empty() ? out_unassociated : cout);
-        af.test_snarls();
+    af.test_snarls();
 
     //Close streams
     if (!associated_filename.empty()) {
@@ -241,6 +240,12 @@ int main_stoat_graph(int argc, char *argv[]) {
     if (!unassociated_filename.empty()) {
         out_unassociated.close();
     }
+
+    if (output_format == "tsv") {
+        // Add the BH adjusted column
+        stoat_vcf::add_BH_adjusted_column(associated_filename, output_dir, output_dir + "top_variant_binary_graph.tsv", stoat::BINARY);
+    }
+
 
     return 0;
 }
