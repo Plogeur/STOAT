@@ -103,6 +103,10 @@ std::vector<path_range_t> get_coordinates_of_snarl(const handlegraph::PathPositi
 std::vector<path_range_t> get_coordinates_of_snarl_helper(const handlegraph::PathPositionHandleGraph& graph, const bdsg::SnarlDistanceIndex& distance_index,
                                                           const handlegraph::net_handle_t& snarl, bool get_reference, std::string sample_name, bool get_all_paths);
 
+/// Given a path_range_t representing a path going through a snarl (with the start and end step_handle_t's representing the boundary nodes)
+/// Return the path name and range in the path of the snarl, not including the boundary nodes
+std::tuple<std::string, size_t, size_t> get_name_and_offsets_of_snarl_path_range(const handlegraph::PathPositionHandleGraph& graph, 
+                                                                                 const bdsg::SnarlDistanceIndex& distance_index, const path_range_t& range);
 
 // equality within a given epsilon
 template<typename T>

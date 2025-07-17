@@ -164,10 +164,7 @@ void AssociationFinder::test_snarls() const {
                         // Get the offsets of the start and end nodes along the reference
                         std::vector<path_range_t> ranges = get_coordinates_of_snarl(graph, distance_index, snarl, true, reference_sample, false);
                         if (ranges.size() != 0) {
-                            snarl_data_s.start_positions = graph.get_position_of_step(ranges.front().start);
-                            snarl_data_s.end_positions = graph.get_position_of_step(ranges.front().end);
-
-                            chr = graph.get_path_name(graph.get_path_handle_of_step(ranges.front().start));
+                            std::tie(chr, snarl_data_s.start_positions, snarl_data_s.end_positions) = get_name_and_offsets_of_snarl_path_range(graph, distance_index, ranges.front());
                         }
 
                         # pragma omp critical (out_associated) 

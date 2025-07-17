@@ -122,11 +122,13 @@ void write_fasta(std::ostream& outstream_associated, std::ostream& outstream_una
         } else if (graph.get_path_handle_of_step(ref_range.start) != ref_path) {
             continue;
         }
-        ref_coordinates = graph.get_path_name(graph.get_path_handle_of_step(ref_range.start));
+
+        // Get the path name, start offset (of the end of the snarl boundary), and end offset from the range
+        std::tuple<std::string, size_t, size_t> range_coordinates = get_name_and_offsets_of_snarl_path_range(graph, distance_index, ref_range);
+        ref_coordinates = std::get<0>(range_coordinates);
         start_offset = std::min(start_offset,
-                                (int)(graph.get_position_of_step(ref_range.start) +
-                                     distance_index.minimum_length(distance_index.get_net(graph.get_handle_of_step(ref_range.start), &graph))));
-        end_offset = std::max(end_offset, (int)graph.get_position_of_step(ref_range.end));
+                                (int)std::get<1>(range_coordinates));
+        end_offset = std::max(end_offset, (int)std::get<2>(range_coordinates));
     }
     
     if (ref_ranges.size() != 0) {
@@ -142,12 +144,13 @@ void write_fasta(std::ostream& outstream_associated, std::ostream& outstream_una
             //If we aren't checking samples, or if this is a sample we want
             ostream& outstream = samples.at(sample_name) ? outstream_associated : outstream_unassociated;
     
+            std::tuple<std::string, size_t, size_t> range_coordinates = get_name_and_offsets_of_snarl_path_range(graph, distance_index, path_range);
             // Print the header
             outstream << ">" << snarl_name << "|"
                 << ref_coordinates << "|"
-                << graph.get_path_name(path) << ":"
-                << (graph.get_position_of_step(path_range.start) + distance_index.minimum_length(distance_index.get_net(graph.get_handle_of_step(path_range.start), &graph))) << "-"    
-                << graph.get_position_of_step(path_range.end) << endl;
+                << std::get<0>(range_coordinates) << ":"
+                << std::get<1>(range_coordinates) << "-"    
+                << std::get<2>(range_coordinates) << endl;
     
             // Now print the sequence in 80bp chunks.
             // Keep a buffer to print 80 bp at a time
