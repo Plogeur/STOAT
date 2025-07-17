@@ -99,8 +99,6 @@ void SnarlAnalyzer::process_snarls_by_chromosome_chunk(
     const std::string& output_filename) {
 
     std::ofstream outf(output_filename, std::ios::binary);
-    //TODO: idk what this does but it won't compile
-    //outf_ptr->outf;
 
     // Write the header
     write_header(outf);
@@ -340,11 +338,11 @@ void BinarySnarlAnalyzer::analyze_and_write_snarl(
     std::vector<size_t> g1(paths_number, 0);
 
     size_t total_sum = stoat_vcf::create_binary_table(g0, g1, binary_phenotype, snarl_data_s.snarl_paths, paths_number, list_samples.size(), edge_matrix);
-    paths_number = remove_empty_columns(g0, g1);
-    bool df_filtration = filtration_binary_table(g0, g1, total_sum, paths_number, maf_threshold);
+    remove_empty_columns(g0, g1);
+    bool filtration = filtration_binary_table(g0, g1, total_sum, maf_threshold);
 
     // Binary analysis single test
-    if (!df_filtration) { // good df
+    if (!filtration) { // good table
         const auto& [group_paths, 
             allele_number_str, min_row_index_str, numb_colum_str, 
             inter_group_str, average_str] = stoat_vcf::binary_stat_test(g0, g1);
@@ -372,9 +370,9 @@ void BinaryCovarSnarlAnalyzer::analyze_and_write_snarl(
     std::string type_var_str = oss.str();
 
     const auto& [df, phenotype_filtered, allele_number, allele_paths] = create_quantitative_table(list_samples.size(), snarl_data_s.snarl_paths, binary_phenotype, edge_matrix);
-    bool df_filtration = filtration_quantitative_table(df, maf_threshold);
+    bool filtration = filtration_quantitative_table(df, maf_threshold);
 
-    if (!df_filtration) { // filtred variant
+    if (!filtration) { // filtred snarl
         // logistic regression with covariates if not empty
         const auto& [p_value, beta, se, r2] = lr.logistic_regression(df, phenotype_filtered, covariate);
 
@@ -395,7 +393,7 @@ void QuantitativeSnarlAnalyzer::analyze_and_write_snarl(
     const Snarl_data_t& snarl_data_s, const std::string& chr, std::ofstream& outf) {
 
     const auto& [df, phenotype_filtered, allele_number, allele_paths] = create_quantitative_table(list_samples.size(), snarl_data_s.snarl_paths, quantitative_phenotype, edge_matrix);
-    bool df_filtration = filtration_quantitative_table(df, maf_threshold);
+    bool filtration = filtration_quantitative_table(df, maf_threshold);
 
     // make a std::string separated by ',' from a vector of std::string
     std::ostringstream oss;
@@ -407,7 +405,7 @@ void QuantitativeSnarlAnalyzer::analyze_and_write_snarl(
     std::string type_var_str = oss.str();
     std::stringstream data;
     
-    if (!df_filtration) { // filtred variant
+    if (!filtration) { // filtred snarl
         auto [p_value, beta, se, r2] = lr.linear_regression(df, phenotype_filtered, covariate);
         
         if (table_threshold != -1 && stoat::isPValueSignificant(table_threshold, p_value)) {
@@ -451,7 +449,7 @@ void EQTLSnarlAnalyzer::analyze_and_write_snarl(
 
     std::vector<size_t> list_gene_index = found_gene_snarl(eqtl_map.at(chr), snarl_data_s.start_positions, snarl_data_s.end_positions, windows_gene_threshold);
     const auto& [df, index_filtered, allele_number, allele_paths] = stoat_vcf::create_eqtl_table(list_samples.size(), snarl_data_s.snarl_paths, edge_matrix);
-    bool df_filtration = filtration_quantitative_table(df, maf_threshold);
+    bool filtration = filtration_quantitative_table(df, maf_threshold);
 
     for (size_t i = 0; i < list_gene_index.size(); ++i) {
         size_t gene_idx = list_gene_index[i];
@@ -469,7 +467,7 @@ void EQTLSnarlAnalyzer::analyze_and_write_snarl(
         std::string type_var_str = oss.str();
         std::stringstream data;
 
-        if (!df_filtration) { // filtred variant
+        if (!filtration) { // filtred snarl
             auto [p_value, beta, se, r2] = lr.linear_regression(df, gene_expression, covariate);
 
             if (table_threshold != -1 && stoat::isPValueSignificant(table_threshold, p_value)) {
@@ -490,7 +488,7 @@ void EQTLSnarlAnalyzer::analyze_and_write_snarl(
 bool filtration_quantitative_table(const std::vector<std::vector<double>>& df, const double& maf_threshold) {
     
     if (df.size() < 2) {
-        return false;  // Not enough data → filter out
+        return true;  // Not enough data → filter out
     }
 
     size_t numPaths = df[0].size();
@@ -506,7 +504,7 @@ bool filtration_quantitative_table(const std::vector<std::vector<double>>& df, c
     }
 
     if (totalSum == 0.0) {
-        return false;  // All-zero case → filter out
+        return true;  // All-zero case → filter out
     }
 
     int count_above_threshold = 0;
@@ -519,10 +517,10 @@ bool filtration_quantitative_table(const std::vector<std::vector<double>>& df, c
         }
     }
 
-    return count_above_threshold >= 2;
+    return count_above_threshold < 2;
 }
 
-size_t remove_empty_columns(
+void remove_empty_columns(
     std::vector<size_t>& g0, 
     std::vector<size_t>& g1) {
 
@@ -538,28 +536,23 @@ size_t remove_empty_columns(
 
     g0 = std::move(g0_filtered);
     g1 = std::move(g1_filtered);
-
-    return g0.size();
 }
 
+// true : filtration on; false : no filtration
 bool filtration_binary_table(
     std::vector<size_t>& g0, 
     std::vector<size_t>& g1,
     const size_t& totalSum, 
-    const size_t& paths_number, 
     const double& maf_threshold) {
 
-    if (totalSum < 2 || paths_number < 2) {
-        return false; // Empty or invalid input → filter
+    if (totalSum < 2 || g0.size() < 2) {
+        return true; // Empty or invalid input → filter
     }
 
     int count_above_threshold = 0;
 
-    for (size_t i = 0; i < paths_number; ++i) {
+    for (size_t i = 0; i < g0.size(); ++i) {
         size_t columnSum = g0[i] + g1[i];
-        if (columnSum == 0) {
-            continue; // Skip empty columns
-        }
 
         double freq1 = static_cast<double>(g1[i]) / columnSum;
         double maf = std::min(freq1, 1.0 - freq1);
@@ -569,7 +562,7 @@ bool filtration_binary_table(
         }
     }
 
-    return count_above_threshold >= 2; // Keep if at least two MAFs > threshold
+    return count_above_threshold < 2; // Keep if at least two MAFs path > MAF threshold
 }
 
 } // end namespace stoat_vcf

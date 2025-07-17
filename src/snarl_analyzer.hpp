@@ -197,14 +197,13 @@ protected:
 /// Return true if any column exceeds the MAF threshold
 bool filtration_quantitative_table(const std::vector<std::vector<double>>& df, const double& maf);
 
-size_t remove_empty_columns(
+void remove_empty_columns(
     std::vector<size_t>& g0, 
     std::vector<size_t>& g1);
 
 bool filtration_binary_table(
     std::vector<size_t>& g0, std::vector<size_t>& g1,
-    const size_t& totalSum, const size_t& paths_number, 
-    const double& maf);
+    const size_t& totalSum, const double& maf);
 
 std::vector<size_t> found_gene_snarl(
     const std::vector<Qtl_data>& gene_position, 
