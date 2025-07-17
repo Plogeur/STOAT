@@ -91,8 +91,9 @@ void write_quantitative(std::ostream& outstream, const std::string& chr, const S
 
 }
 
-void write_fasta(std::ostream& outstream, const handlegraph::PathPositionHandleGraph& graph, const bdsg::SnarlDistanceIndex& distance_index,
-                        const handlegraph::net_handle_t& snarl, const std::unordered_map<std::string, bool>& samples, const string& reference_name) {
+void write_fasta(std::ostream& outstream_associated, std::ostream& outstream_unassociated, const handlegraph::PathPositionHandleGraph& graph,
+                 const bdsg::SnarlDistanceIndex& distance_index, const handlegraph::net_handle_t& snarl, 
+                 const std::unordered_map<std::string, bool>& samples, const string& reference_name) {
     
     // A handle_t of the start bound facing in
     handlegraph::handle_t start_handle = distance_index.get_handle(distance_index.get_node_from_sentinel(distance_index.get_bound(snarl, false, true)), &graph);
@@ -136,8 +137,10 @@ void write_fasta(std::ostream& outstream, const handlegraph::PathPositionHandleG
     std::vector<stoat::path_range_t> path_ranges = stoat::get_coordinates_of_snarl(graph, distance_index, snarl, false, "", true);
     for (const stoat::path_range_t& path_range : path_ranges) {
         handlegraph::path_handle_t path = graph.get_path_handle_of_step(path_range.start);
-        if (samples.empty() || samples.count(stoat::get_sample_name_from_path(graph, path)) != 0) {
+        string sample_name = stoat::get_sample_name_from_path(graph, path);
+        if (samples.empty() || samples.count(sample_name) != 0) {
             //If we aren't checking samples, or if this is a sample we want
+            ostream& outstream = samples.at(sample_name) ? outstream_associated : outstream_unassociated;
     
             // Print the header
             outstream << ">" << snarl_name << "|"

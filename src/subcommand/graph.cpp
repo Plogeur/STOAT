@@ -135,11 +135,15 @@ int main_stoat_graph(int argc, char *argv[]) {
 
     // Check that the inputs are ok
     if (graph_name.empty()) {
-        std::cerr << "error [stoat graph]: pangwas requires a graph file" << endl;
+        std::cerr << "error [stoat graph]: stoat graph requires a graph file" << endl;
         return 1; 
     }
     if (distance_name.empty()) {
-        std::cerr << "error [stoat graph]: pangwas requires a distance index file" << endl;
+        std::cerr << "error [stoat graph]: stoat graph requires a distance index file" << endl;
+        return 1; 
+    }
+    if (output_format != "tsv" && output_format != "fasta") {
+        cerr << "error [stoat graph]: invalid output format " << output_format << endl;
         return 1; 
     }
 
@@ -157,7 +161,7 @@ int main_stoat_graph(int argc, char *argv[]) {
         in_samples.close();
     }
     if (samples_of_interest.empty()) {
-        std::cerr << "error [stoat graph]: pangwas requires samples of interest" << endl;
+        std::cerr << "error [stoat graph]: stoat graph requires samples of interest" << endl;
         return 1; 
     }
 
@@ -228,6 +232,7 @@ int main_stoat_graph(int argc, char *argv[]) {
                                    samples_of_interest, 
                                    reference_sample,
                                    test_method,
+                                   output_format,
                                    allele_size_limit,
                                    !associated_filename.empty() ? out_associated : cout,
                                    !unassociated_filename.empty() ? out_unassociated : cout);

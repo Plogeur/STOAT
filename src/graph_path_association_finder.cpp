@@ -11,8 +11,9 @@ AssociationFinder::AssociationFinder(const handlegraph::PathPositionHandleGraph&
                                      const bdsg::SnarlDistanceIndex& distance_index,
                                      std::shared_ptr<Partitioner> partitioner,
                                      const std::set<std::string>& samples_of_interest, 
-                                     std::string reference_sample,
-                                     std::string test_method,
+                                     const std::string& reference_sample,
+                                     const std::string& test_method,
+                                     const std::string& output_format,
                                      size_t allele_size_limit,
                                      std::ostream& out_associated,
                                      std::ostream& out_unassociated) :
@@ -20,8 +21,9 @@ AssociationFinder::AssociationFinder(const handlegraph::PathPositionHandleGraph&
     distance_index(distance_index), 
     partitioner(std::move(partitioner)),
     samples_of_interest(samples_of_interest), 
-    reference_sample(std::move(reference_sample)),
-    test_method(std::move(test_method)),
+    reference_sample(reference_sample),
+    test_method(test_method),
+    output_format(output_format),
     allele_size_limit(allele_size_limit),
     out_associated(out_associated),
     out_unassociated(out_unassociated)
@@ -30,9 +32,10 @@ AssociationFinder::AssociationFinder(const handlegraph::PathPositionHandleGraph&
 void AssociationFinder::test_snarls() const {
 
     //TODO: Make this general
-    // If the file output has a header, write it ?
-    // Matis ans : why just do an if binary/quantitative ?
-    stoat_vcf::write_binary_header(out_associated);
+    // If the file output has a header, write it
+    if (output_format == "tsv") {
+        stoat_vcf::write_binary_header(out_associated);
+    }
 
     std::vector<handlegraph::net_handle_t> chains;
     chains.reserve(graph.get_node_count()/100);
@@ -72,27 +75,40 @@ void AssociationFinder::test_snarls() const {
                 // Each set represents a partition of samples that takes the same path through the snarl's netgraph
                 std::vector<std::set<std::string>> sample_partitions = partitioner->partition_samples_in_snarl(graph, distance_index, snarl);
 
+                // If we are writing a fasta, then pick one sample from each partition to write
+                std::unordered_map<std::string, bool> samples_to_write;
+
                 if (test_method == "exact") {
+
 #ifdef DEBUG_ASSOCIATION_FINDER
-                        cerr << "\tTRUTH" << endl;
-                        for (const std::string& sample : samples_of_interest) {
-                            cerr << "\t\t" << sample << endl;
-                        }
-#endif
+                    cerr << "\tTRUTH" << endl;
+                    for (const std::string& sample : samples_of_interest) {
+                        cerr << "\t\t" << sample << endl;
+                    }
 
                     for (const std::set<std::string>& partition : sample_partitions) {
-#ifdef DEBUG_ASSOCIATION_FINDER
                         cerr << "\tPARTITION" << endl;
                         for (const std::string& sample : partition) {
                             cerr << "\t\t" << sample << endl;
                         }
-#endif
                         if (partition == samples_of_interest) {
-#ifdef DEBUG_ASSOCIATION_FINDER
                             cerr << "\tFound exact match" << endl;
+                        }
+                    }
 #endif
+
+
+                    for (const std::set<std::string>& partition : sample_partitions) {
+                        if (partition == samples_of_interest) {
+
                             write_output = true;
-                            break;
+                            if (output_format == "fasta") {
+                                samples_to_write[*partition.begin()] = true;
+                            } else {
+                                break;
+                            }
+                        } else {
+                            samples_to_write[*partition.begin()] = false;
                         }
                     }
 
@@ -141,11 +157,25 @@ void AssociationFinder::test_snarls() const {
                 }
                 
                 if (write_output) {
-                    # pragma omp critical (out_associated) 
-                    {
-                        // Leave adjusted p-value blank, to be filled in later
-                        stoat_vcf::write_binary(out_associated, chr, snarl_data_s, variant_type, fastfisher_p_value, chi2_p_value, "", allele_number_str, min_row_index_str,
-                                     numb_colum_str, inter_group_str, average_str, group_paths);
+                    if (output_format == "tsv") {
+                        # pragma omp critical (out_associated) 
+                        {
+                            // Leave adjusted p-value blank, to be filled in later
+                            stoat_vcf::write_binary(out_associated, chr, snarl_data_s, variant_type, fastfisher_p_value, chi2_p_value, "", allele_number_str, min_row_index_str,
+                                         numb_colum_str, inter_group_str, average_str, group_paths);
+                        }
+                    } else if (output_format == "fasta") {
+
+                        // Figure out which samples we want to write
+                        // Since we don't know which partition is actually associated, just write everything to one file
+                        for (const std::set<std::string>& partition : sample_partitions) {
+                            samples_to_write[*partition.begin()] = true;
+                        }
+                        # pragma omp critical (out_associated) 
+                        {
+                            // Leave adjusted p-value blank, to be filled in later
+                            stoat_vcf::write_fasta(out_associated, out_unassociated, graph, distance_index, snarl, samples_to_write, reference_sample);
+                        }
                     }
                 }
 

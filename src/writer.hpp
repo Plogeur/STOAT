@@ -34,8 +34,11 @@ namespace stoat_vcf{
                             const std::string& p_value, const std::string& p_value_adjusted, const std::string& r2,
                             const std::string& beta, const std::string& se, size_t allele_number, const std::vector<size_t>& allele_paths);
 
-    void write_fasta(std::ostream& outstream, const handlegraph::PathPositionHandleGraph& graph, const bdsg::SnarlDistanceIndex& distance_index,
-                         const handlegraph::net_handle_t& snarl, const std::unordered_map<std::string, bool>& samples, const string& reference_name);
+    // Write the fasta for paths in a snarl. If samples is given, only write the fast for samples present to outstream_associated if the sample maps to true, and
+    // to outstream_unassociated if it maps to false. If samples is not given, write all samples.
+    void write_fasta(std::ostream& outstream_associated, std::ostream& outstream_unassociated, const handlegraph::PathPositionHandleGraph& graph, 
+                     const bdsg::SnarlDistanceIndex& distance_index, const handlegraph::net_handle_t& snarl, 
+                     const std::unordered_map<std::string, bool>& samples, const string& reference_name);
     
 
 } //end namespace
