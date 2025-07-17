@@ -354,7 +354,8 @@ std::string FisherKhi2::fastFishersExactTest(size_t m11, size_t m12,
 
 std::pair<std::string, std::string> FisherKhi2::fisher_khi2(const std::vector<size_t>& g0, const std::vector<size_t>& g1) {
     
-    std::string chi2_p_value, fastfisher_p_value;
+    std::string chi2_p_value = "NA";
+    std::string fastfisher_p_value = "NA";
     
     // Compute  Fisher's exact & Chi-squared test p-value
     if (g0.size() == 2) {
