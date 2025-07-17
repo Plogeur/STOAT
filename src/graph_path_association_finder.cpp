@@ -26,7 +26,8 @@ AssociationFinder::AssociationFinder(const handlegraph::PathPositionHandleGraph&
     output_format(output_format),
     allele_size_limit(allele_size_limit),
     out_associated(out_associated),
-    out_unassociated(out_unassociated)
+    out_unassociated(out_unassociated),
+    check_distances(distance_index.has_distances(distance_index.get_root()))
     {}
 
 void AssociationFinder::test_snarls() const {
@@ -196,7 +197,12 @@ void AssociationFinder::test_snarls() const {
 }
 
 bool AssociationFinder::snarl_is_eligible(const handlegraph::net_handle_t& snarl) const {
-    return distance_index.maximum_length(snarl) >= allele_size_limit;
+    if (!check_distances) {
+        // If the distance index doesn't let us check distances, just return true
+        return true;
+    } else {
+        return distance_index.maximum_length(snarl) >= allele_size_limit;
+    }
 }
 
 }//end pangwas namespace

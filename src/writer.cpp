@@ -112,7 +112,7 @@ void write_fasta(std::ostream& outstream_associated, std::ostream& outstream_una
     std::string ref_coordinates  = "NOREF:?:?";
     int start_offset = std::numeric_limits<int>::max();
     int end_offset = 0;
-    //Only get the coordinates for one path
+    //Only get the coordinates for one path, but the max range through the snarl, in case it loops
     bool first = true;
     handlegraph::path_handle_t ref_path;
     for (const stoat::path_range_t& ref_range : ref_ranges){

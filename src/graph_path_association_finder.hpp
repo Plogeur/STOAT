@@ -32,6 +32,7 @@ class AssociationFinder {
         size_t allele_size_limit;
         std::ostream& out_associated = std::cout;
         std::ostream& out_unassociated = std::cout;
+        bool check_distances;
 
 
         // object for finding partitions of samples in a snarl
