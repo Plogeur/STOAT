@@ -123,7 +123,7 @@ void AssociationFinder::test_snarls() const {
                         numb_colum_str, inter_group_str, average_str) = stoat_vcf::binary_stat_test(genotype_associated, genotype_unassociated);
  
                     // Run the statistical test
-                    std::tie(fastfisher_p_value, chi2_p_value) = fisher_chi2_tester.fisher_khi2(genotype_associated, genotype_unassociated);
+                    std::tie(chi2_p_value, fastfisher_p_value) = fisher_chi2_tester.fisher_khi2(genotype_associated, genotype_unassociated);
 
                 }
                 // TODO idk what to put for chr
