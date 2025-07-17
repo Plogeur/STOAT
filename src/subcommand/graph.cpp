@@ -14,6 +14,14 @@
 #include "../io/register_io.hpp"
 #include "../post_processing.hpp"
 
+
+#define USE_CALLGRIND
+
+#ifdef USE_CALLGRIND
+#include <valgrind/callgrind.h>
+#endif
+
+
 using namespace std;
 namespace stoat_command {
 
@@ -225,6 +233,11 @@ int main_stoat_graph(int argc, char *argv[]) {
         std::cerr << "error [stoat graph]: unknown method " << method_name << endl;
         return 1; 
     }
+
+#ifdef USE_CALLGRIND
+    CALLGRIND_START_INSTRUMENTATION;
+#endif
+
 
     stoat_graph::AssociationFinder af (*graph, 
                                    distance_index,
