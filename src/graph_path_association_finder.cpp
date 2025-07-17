@@ -27,7 +27,7 @@ AssociationFinder::AssociationFinder(const handlegraph::PathPositionHandleGraph&
     allele_size_limit(allele_size_limit),
     out_associated(out_associated),
     out_unassociated(out_unassociated),
-    check_distances(distance_index.has_distances(distance_index.get_root()))
+    check_distances(distance_index.has_distances())
     {}
 
 void AssociationFinder::test_snarls() const {
@@ -102,6 +102,7 @@ void AssociationFinder::test_snarls() const {
                     for (const std::set<std::string>& partition : sample_partitions) {
                         if (partition == samples_of_interest) {
 
+                            // For the exact test, since we already know the result of the test, write only those snarls that pass the test
                             write_output = true;
                             if (output_format == "fasta") {
                                 samples_to_write[*partition.begin()] = true;
