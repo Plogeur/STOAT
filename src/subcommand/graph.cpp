@@ -243,7 +243,7 @@ int main_stoat_graph(int argc, char *argv[]) {
 
     if (output_format == "tsv") {
         // Add the BH adjusted column
-        stoat_vcf::add_BH_adjusted_column(associated_filename, output_dir, output_dir + "top_variant_binary_graph.tsv", stoat::BINARY);
+        stoat_vcf::add_BH_adjusted_column(associated_filename, output_dir, output_dir + "/top_variant_binary_graph.tsv", stoat::BINARY);
     }
 
 
