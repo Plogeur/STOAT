@@ -24,7 +24,7 @@ using namespace std;
 
 namespace stoat_vcf {
 
-std::tuple<std::vector<std::vector<double>>, size_t, std::unordered_set<size_t>, bool, std::vector<size_t>>
+std::tuple<std::vector<std::vector<double>>, size_t, std::unordered_set<size_t>, std::vector<size_t>>
 process_table_quantitative(
     const size_t& number_samples,
     const std::vector<stoat_vcf::Path_traversal_t>& column_headers,

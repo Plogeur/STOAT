@@ -170,7 +170,8 @@ std::tuple<std::string, std::string, std::string, std::string> LogisticRegressio
 }
 
 // ------------------------ Chi2 test ------------------------
-FisherKhi2::FisherKhi2(size_t degrees_of_freedom) : chi_squared_dist(degrees_of_freedom), cpp_dec_float_50_dist(degrees_of_freedom){}
+FisherKhi2::FisherKhi2(size_t degrees_of_freedom) : chi_squared_dist(degrees_of_freedom), cpp_dec_float_50_dist(degrees_of_freedom) {}
+
 std::string FisherKhi2::chi2_2x2(const size_t& a, const size_t& b, const size_t& c, const size_t& d) {
 
     int64_t row1 = a + b;
@@ -384,8 +385,8 @@ std::tuple<std::string, std::string, std::string, std::string> LinearRegression:
     size_t num_features = num_variants + 1; // +1 for intercept
 
     if (!covar.empty()) {
-        size_t num_covariates = covar[0].size();
-        size_t num_features = num_variants + num_covariates + 1; // +1 for intercept
+        num_covariates = covar[0].size();
+        num_features = num_variants + num_covariates + 1; // +1 for intercept
     }
 
     Eigen::MatrixXd X(num_samples, num_features);
