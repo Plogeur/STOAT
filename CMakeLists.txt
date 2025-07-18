@@ -10,6 +10,15 @@ set(CMAKE_OSX_DEPLOYMENT_TARGET "12.7") # IOS fix
 
 set(deps_DIR "${CMAKE_CURRENT_SOURCE_DIR}/deps")
 
+option(OPTIMIZE "Build with optimization" ON)
+
+if (OPTIMIZE)
+# Use all standard-compliant optimizations
+set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O3")
+set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3")
+endif ()
+
+
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(HTSLIB REQUIRED htslib)
 
