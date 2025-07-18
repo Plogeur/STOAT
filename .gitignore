@@ -1,5 +1,5 @@
 .docker/
-.vscode
+.vscode/
 .Rproj.user
 build/*
 data/droso/

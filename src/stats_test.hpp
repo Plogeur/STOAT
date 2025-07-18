@@ -35,7 +35,7 @@ using boost::multiprecision::cpp_dec_float_50;
 
 class FisherKhi2 {
     public:
-        FisherKhi2(size_t degrees_of_freedom = 2);
+        FisherKhi2(size_t degrees_of_freedom = 1);
         ~FisherKhi2() = default;
 
         // Function to perform the Chi-square test on row size > 2 

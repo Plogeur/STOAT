@@ -1,24 +1,10 @@
-#include <boost/math/distributions/fisher_f.hpp>
-#include <boost/math/distributions/students_t.hpp>  // For t-distribution
-#include <string>
-#include <iomanip>
 #include <iostream>
-#include <limits>
 #include <vector>
-#include <sstream>
 #include <cmath>
-#include <fstream>
-#include <unordered_map>
-#include <algorithm>
-
 #include <Eigen/Dense>
+#include <boost/math/distributions/students_t.hpp>
+#include <chrono> // for benchmarking
 
-using namespace std;
-using namespace Eigen;
-
-// Linear regression function OLS with intercept
-
-// Linear regression function OLS with intercept + covariate
 void linear_regression(
     const std::vector<std::vector<double>>& df,
     const std::vector<double>& quantitative_phenotype,
@@ -30,8 +16,8 @@ void linear_regression(
     size_t num_features = num_variants + 1; // +1 for intercept
 
     if (!covar.empty()) {
-        size_t num_covariates = covar[0].size();
-        size_t num_features = num_variants + num_covariates + 1; // +1 for intercept
+        num_covariates = covar[0].size();
+        num_features = num_variants + num_covariates + 1; // +1 for intercept
     }
 
     Eigen::MatrixXd X(num_samples, num_features);
@@ -77,7 +63,7 @@ void linear_regression(
     // t-statistics
     Eigen::VectorXd t_stats = beta.array() / se.array();
     boost::math::students_t t_dist(df_res);
- 
+
     std::vector<double> p_values;
     for (int i = 0; i < num_features; ++i) { // i = 1 avoid const p-value
         if (std::isnan(t_stats[i]) || std::isinf(t_stats[i])) {
@@ -85,7 +71,7 @@ void linear_regression(
             continue;
         }
         p_values.push_back(2 * boost::math::cdf(boost::math::complement(t_dist, std::abs(t_stats[i])))); // two-tailed
-        cout << "p_values[" << i << "] : " << p_values[i] << std::endl;
+        std::cout << "p_values[" << i << "] : " << p_values[i] << std::endl;
     }
 
     // Print results
@@ -103,107 +89,48 @@ void linear_regression(
     std::cout << "Mean Squared Error (MSE): " << mse << std::endl;
 }
 
-// Function to parse the feature file
-void parse_feature_file(
-    const std::string& feature_filename,
-    std::vector<std::string>& sample_ids,
-    std::vector<std::vector<double>>& features) {
+// === MAIN with Example Data ===
+int main() {
 
-    std::ifstream infile(feature_filename);
-    if (!infile) {
-        throw std::runtime_error("Unable to open feature file");
-    }
+    std::vector<std::vector<double>> df = {
+        {0},
+        {1},
+        {0}
+    };
 
-    std::string line;
-    std::getline(infile, line);  // skip header
+    std::vector<double> quantitative_phenotype = {2.0, 4.0, 6.0};
 
-    while (std::getline(infile, line)) {
-        std::stringstream ss(line);
-        std::string token;
+    std::vector<std::vector<double>> covariates = {
+    };
 
-        std::string sample_id;
-        std::getline(ss, sample_id, '\t');
-        sample_ids.push_back(sample_id);
-
-        std::vector<double> feature_row;
-        while (std::getline(ss, token, '\t')) {
-            feature_row.push_back(std::stod(token));
-        }
-
-        features.push_back(feature_row);
-    }
-}
-
-// Function to parse the phenotype file
-void parse_phenotype_file(
-    const std::string& phenotype_filename,
-    const std::vector<std::string>& sample_ids,
-    std::vector<double>& phenotype) {
-
-    std::ifstream infile(phenotype_filename);
-    if (!infile) {
-        throw std::runtime_error("Unable to open phenotype file");
-    }
-
-    std::unordered_map<std::string, double> phenotype_map;
-
-    std::string line;
-    std::getline(infile, line);  // skip header
-
-    while (std::getline(infile, line)) {
-        std::stringstream ss(line);
-        std::string fid, iid, pheno_str;
-        std::getline(ss, fid, '\t');
-        std::getline(ss, iid, '\t');
-        std::getline(ss, pheno_str, '\t');
-
-        phenotype_map[iid] = std::stod(pheno_str);
-    }
-
-    for (const auto& sample : sample_ids) {
-        if (phenotype_map.find(sample) != phenotype_map.end()) {
-            phenotype.push_back(phenotype_map[sample]);
-        } else {
-            throw std::runtime_error("Sample ID not found in phenotype file: " + sample);
-        }
-    }
-}
-
-// Example usage
-int main(int argc, char* argv[]) {
-    if (argc != 3) {
-        std::cerr << "Usage: " << argv[0] << " <feature_file> <phenotype_file>\n";
-        return 1;
-    }
-
-    std::string feature_file = argv[1];
-    std::string phenotype_file = argv[2];
-
-    std::vector<std::string> sample_ids;
-    std::vector<std::vector<double>> features;
-    std::vector<double> phenotype;
-    std::vector<std::vector<double>> covar;
-
-    try {
-        parse_feature_file(feature_file, sample_ids, features);
-        parse_phenotype_file(phenotype_file, sample_ids, phenotype);
-
-        std::cout << "Parsed " << features.size() << " samples with " << features[0].size() << " features.\n";
-        std::cout << "Parsed " << phenotype.size() << " phenotype values.\n";
-
-        linear_regression(features, phenotype, covar);
-    } catch (const std::exception& e) {
-        std::cerr << "Error: " << e.what() << "\n";
-        return 1;
-    }
-
+    linear_regression(df, quantitative_phenotype, covariates);
     return EXIT_SUCCESS;
 }
 
 // LINUX
-// g++ -std=c++17 -I/usr/include/eigen3 -lboost_math_c99 -o linear_regression linear_regression.cpp
+// g++ -std=c++17 -I/usr/include/eigen3 -lboost_math_c99 -o lr linear_regression.cpp
 
 // MACOS
-// g++ -std=c++17 -I/usr/local/eigen3 -lboost_math_c99 -o linear_regression linear_regression.cpp
+// g++ -std=c++17  -I/usr/local/include/eigen3 -lboost_math_c99 -o lr linear_regression.cpp
 
-// ./linear_regression ../../output/regression/48_51.tsv ../data/quantitative/phenotype.tsv
+// ==============================================================================
+// Dep. Variable:                      y   R-squared:                       0.000
+// Model:                            OLS   Adj. R-squared:                 -1.000
+// Method:                 Least Squares   F-statistic:                     0.000
+// Date:                Fri, 18 Jul 2025   Prob (F-statistic):               1.00
+// Time:                        11:15:37   Log-Likelihood:                -5.7281
+// No. Observations:                   3   AIC:                             15.46
+// Df Residuals:                       1   BIC:                             13.65
+// Df Model:                           1                                         
+// Covariance Type:            nonrobust                                         
+// ==============================================================================
+//                  coef    std err          t      P>|t|      [0.025      0.975]
+// ------------------------------------------------------------------------------
+// const          4.0000      2.000      2.000      0.295     -21.412      29.412
+// x1          1.332e-15      3.464   3.85e-16      1.000     -44.016      44.016
+// ==============================================================================
+// Omnibus:                          nan   Durbin-Watson:                   1.000
+// Prob(Omnibus):                    nan   Jarque-Bera (JB):                0.281
+// Skew:                           0.000   Prob(JB):                        0.869
+// Kurtosis:                       1.500   Cond. No.                         2.41
+// ==============================================================================

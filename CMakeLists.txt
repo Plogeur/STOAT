@@ -40,21 +40,26 @@ add_subdirectory(${deps_DIR}/libbdsg)
 # SDSL library ("sdsl" target) already exists from libbdsg
 # GBWT and GBWTgraph don't have CMake yet so we need to explain how to build it.
 
-# GBWT dependency: OpenMP
-if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-# OpenMP may be installed by Homebrew in a place CMake can't find it by default.
-set (HOMEBREW_PREFIX "$ENV{HOMEBREW_PREFIX}")
-if ("${HOMEBREW_PREFIX}" STREQUAL "")
-    # Ask Homebrew if it exists and where it is.
-    execute_process(COMMAND brew --prefix OUTPUT_STRIP_TRAILING_WHITESPACE OUTPUT_VARIABLE HOMEBREW_PREFIX)
+if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+    # Detect Homebrew prefix
+    set(HOMEBREW_PREFIX "$ENV{HOMEBREW_PREFIX}")
+    if ("${HOMEBREW_PREFIX}" STREQUAL "")
+        execute_process(COMMAND brew --prefix OUTPUT_VARIABLE HOMEBREW_PREFIX OUTPUT_STRIP_TRAILING_WHITESPACE)
+    endif()
+    if ("${HOMEBREW_PREFIX}" STREQUAL "")
+        set(HOMEBREW_PREFIX "/opt/homebrew")  # fallback
+    endif()
+
+    # Set OpenMP manually (Apple Clang needs this)
+    set(OpenMP_INCLUDES "${HOMEBREW_PREFIX}/opt/libomp/include")
+    set(OpenMP_LIBRARIES "${HOMEBREW_PREFIX}/opt/libomp/lib/libomp.dylib")
+    set(OpenMP_CXX_FLAGS "-Xpreprocessor -fopenmp -I${OpenMP_INCLUDES}")
+    set(OpenMP_LINK_FLAGS "-L${HOMEBREW_PREFIX}/opt/libomp/lib -lomp")
+
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
+    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${OpenMP_LINK_FLAGS}")
 endif()
-if ("${HOMEBREW_PREFIX}" STREQUAL "")
-    # Default to somewhere.
-    set (HOMEBREW_PREFIX "/opt/homebrew")
-endif()
-list(APPEND CMAKE_PREFIX_PATH "${HOMEBREW_PREFIX}")
-list(APPEND CMAKE_PREFIX_PATH "${HOMEBREW_PREFIX}/opt/libomp")
-endif()
+
 find_package(OpenMP REQUIRED)
 
 # GBWT
