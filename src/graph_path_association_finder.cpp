@@ -79,6 +79,9 @@ void AssociationFinder::test_snarls() const {
                 // If we are writing a fasta, then pick one sample from each partition to write
                 std::unordered_map<std::string, bool> samples_to_write;
 
+                // Do we test nested snarls? Don't test snarls that are already flagged as significant
+                bool test_nested_snarls = true;
+
                 if (test_method == "exact") {
 
 #ifdef DEBUG_ASSOCIATION_FINDER
@@ -104,6 +107,8 @@ void AssociationFinder::test_snarls() const {
 
                             // For the exact test, since we already know the result of the test, write only those snarls that pass the test
                             write_output = true;
+                            // Don't look for nested snarls
+                            test_nested_snarls = false;
                             if (output_format == "fasta") {
                                 samples_to_write[*partition.begin()] = true;
                             } else {
@@ -182,12 +187,14 @@ void AssociationFinder::test_snarls() const {
                     }
                 }
 
-                // Add the child chains to the stack
-                distance_index.for_each_child(snarl, [&] (handlegraph::net_handle_t child) {
+                if (test_nested_snarls) { 
+                    // Add the child chains to the stack
+                    distance_index.for_each_child(snarl, [&] (handlegraph::net_handle_t child) {
 
-                    chains.emplace_back(child);
-                    return true;
-                });
+                        chains.emplace_back(child);
+                        return true;
+                    });
+                }
             }
             return true;
         });
