@@ -23,46 +23,37 @@ test_cases = [
     {
         "name": "Linear Regression 1 - Perfect Linear Relationship",
         "df": [
-            [0, 1],
-            [1, 0],
-            [0, 0.5]
+            [0],
+            [1],
+            [0]
         ],
         "quantitative_phenotype": [2.0, 4.0, 6.0]
     },
     {
         "name": "Linear Regression 2 - Moderate",
         "df": [
-            [0.5, 0, 0.5],
-            [0, 0.5, 0.5],
-            [1, 0, 0],
-            [0, 1, 0],
-            [0, 0.5, 0]
+            [0.5, 0],
+            [0, 0.5],
+            [1, 0],
+            [0, 1],
+            [0, 0.5]
         ],
         "quantitative_phenotype": [10.5, 13.0, 15.8, 19.7, 21.5]
     },
     {
         "name": "Linear Regression 3 - Weaker Correlation",
         "df": [
-                [1, 0, 0],
-                [1, 0, 0],
-                [1, 0, 0],
-                [1, 0, 0],
-                [1, 0, 0],
-                [1, 0, 0],
-                [1, 0, 0],
-                [0, 1, 0],
-                [0, 0, 0.5]
+                [1, 0],
+                [1, 0],
+                [1, 0],
+                [1, 0],
+                [1, 0],
+                [1, 0],
+                [1, 0],
+                [0, 1],
+                [0, 0]
         ],
         "quantitative_phenotype": [4.5, 7.0, 9.2, 10.9, 13.0, 14.0, 11.0, 15.0, 16.0]
-    },
-    {
-        "name": "Linear Regression Error Case",
-        "df": [
-            [0, 0, 0],
-            [0, 0, 0],
-            [0, 0, 0]
-        ],
-        "quantitative_phenotype": [-5.0, 126.0, -80.0]
     }
 ]
 

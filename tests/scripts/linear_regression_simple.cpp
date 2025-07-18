@@ -100,7 +100,7 @@ void linear_regression(
     for (int i = 0; i < n; ++i)
         sse += (y[i] - y_hat[i]) * (y[i] - y_hat[i]);
 
-    double df_resid = (n - p) ? 0 : 1; // avoid Degrees of freedom <= 0
+    double df_resid = (n - p) <= 0 ? n - p : 1; // avoid Degrees of freedom <= 0
     double sigma2 = sse / df_resid;
 
     for (int i = 0; i < p; ++i) {
@@ -119,25 +119,17 @@ void linear_regression(
 int main() {
 
     std::vector<std::vector<double>> X_raw = {
-        {0.5, 0, 0.5},
-        {0, 0.5, 0.5},
-        {1, 0, 0},
-        {0, 1, 0},
-        {0, 0.5, 0}
+        {0},
+        {1},
+        {0}
     };
 
-    std::vector<double> y = {10.5, 13.0, 15.8, 19.7, 21.5};
+    std::vector<double> y = {2.0, 4.0, 6.0};
 
-    std::vector<std::vector<double>> covariates = {
-        {1.0},
-        {2.0},
-        {1.0},
-        {3.0},
-        {2.0}
-    };
+    std::vector<std::vector<double>> covariates = {};
 
     linear_regression(X_raw, y, covariates);
     return 0;
 }
 
-// g++ -std=c++11 -O2 -lboost_math_c99 -o ols ols.cpp
+// g++ -std=c++17 -lboost_math_c99 -o simple_linear linear_regression_simple.cpp

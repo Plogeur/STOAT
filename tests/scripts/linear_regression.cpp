@@ -93,22 +93,14 @@ void linear_regression(
 int main() {
 
     std::vector<std::vector<double>> df = {
-        {0.5, 0, 0.5},
-        {0, 0.5, 0.5},
-        {1, 0, 0},
-        {0, 1, 0},
-        {0, 0.5, 0}
+        {0},
+        {1},
+        {0}
     };
 
-    std::vector<double> quantitative_phenotype = {10.5, 13.0, 15.8, 19.7, 21.5};
-
+    std::vector<double> quantitative_phenotype = {2.0, 4.0, 6.0};
 
     std::vector<std::vector<double>> covariates = {
-        {1.0},
-        {2.0},
-        {1.0},
-        {3.0},
-        {2.0}
     };
 
     linear_regression(df, quantitative_phenotype, covariates);
@@ -119,4 +111,26 @@ int main() {
 // g++ -std=c++17 -I/usr/include/eigen3 -lboost_math_c99 -o lr linear_regression.cpp
 
 // MACOS
-// g++ -std=c++17 -I/usr/local/eigen3 -lboost_math_c99 -o lr linear_regression.cpp
+// g++ -std=c++17  -I/usr/local/include/eigen3 -lboost_math_c99 -o lr linear_regression.cpp
+
+// ==============================================================================
+// Dep. Variable:                      y   R-squared:                       0.000
+// Model:                            OLS   Adj. R-squared:                 -1.000
+// Method:                 Least Squares   F-statistic:                     0.000
+// Date:                Fri, 18 Jul 2025   Prob (F-statistic):               1.00
+// Time:                        11:15:37   Log-Likelihood:                -5.7281
+// No. Observations:                   3   AIC:                             15.46
+// Df Residuals:                       1   BIC:                             13.65
+// Df Model:                           1                                         
+// Covariance Type:            nonrobust                                         
+// ==============================================================================
+//                  coef    std err          t      P>|t|      [0.025      0.975]
+// ------------------------------------------------------------------------------
+// const          4.0000      2.000      2.000      0.295     -21.412      29.412
+// x1          1.332e-15      3.464   3.85e-16      1.000     -44.016      44.016
+// ==============================================================================
+// Omnibus:                          nan   Durbin-Watson:                   1.000
+// Prob(Omnibus):                    nan   Jarque-Bera (JB):                0.281
+// Skew:                           0.000   Prob(JB):                        0.869
+// Kurtosis:                       1.500   Cond. No.                         2.41
+// ==============================================================================
