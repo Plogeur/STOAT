@@ -8,8 +8,15 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 set(CMAKE_EXPORT_COMPILE_COMMANDS ON)
 set(CMAKE_OSX_DEPLOYMENT_TARGET "12.7") # IOS fix
 
-# This is where libbdsg automatically gets installed
-set(CMAKE_BUILD_RPATH "/usr/local/lib;${CMAKE_BUILD_RPATH}")
+set(deps_DIR "${CMAKE_CURRENT_SOURCE_DIR}/deps")
+
+option(OPTIMIZE "Build with optimization" ON)
+
+if (OPTIMIZE)
+# Use all standard-compliant optimizations
+set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O3")
+set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3")
+endif ()
 
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(HTSLIB REQUIRED htslib)
@@ -19,11 +26,27 @@ link_directories(${HTSLIB_LIBRARY_DIRS})
 
 # Find Packages
 find_package(Boost REQUIRED)
-find_package(Eigen3 REQUIRED)
+
+#Get eigen3
+include_directories(${deps_DIR}/eigen)
+
+add_subdirectory(${deps_DIR}/libhandlegraph)
+
+# Add libvgio using its cmake build
+add_subdirectory(${deps_DIR}/libvgio)
+
+# libbdsg (full build using its cmake config)
+# Produces libbdsg target, dynamic only.
+# Comes along with its own libhandlegraph, which it depends on.
+# Make sure to never build its Python bindings.
+set(BUILD_PYTHON_BINDINGS OFF CACHE BOOL "Build Python bindings for libbdsg" FORCE)
+set(RUN_DOXYGEN OFF CACHE BOOL "Run libbdsg Doxygen" FORCE)
+add_subdirectory(${deps_DIR}/libbdsg)
+
 
 # Copied from https://github.com/vgteam/vg/wiki/Programming-with-the-vg-API
 # SDSL library ("sdsl" target) already exists from libbdsg
-# GBWT doesn't have CMake yet so we need to explain how to build it.
+# GBWT and GBWTgraph don't have CMake yet so we need to explain how to build it.
 
 if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
     # Detect Homebrew prefix
@@ -47,39 +70,74 @@ endif()
 
 find_package(OpenMP REQUIRED)
 
+# GBWT
+foreach (gbwt_source IN ITEMS algorithms.cpp bwtmerge.cpp cached_gbwt.cpp dynamic_gbwt.cpp fast_locate.cpp files.cpp gbwt.cpp internal.cpp metadata.cpp support.cpp test.cpp utils.cpp variants.cpp)
+list(APPEND gbwt_libFiles "deps/gbwt/src/${gbwt_source}")
+endforeach()
+if(MSVC)
+file(GLOB gbwt_headerFiles RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}  "${deps_DIR}/gbwt/include/gbwt/*.h")
+endif()
+set( gbwt_SRCS ${gbwt_libFiles} ${gbwt_headerFiles})
+add_library( gbwt ${gbwt_SRCS} )
+target_include_directories( gbwt PUBLIC "${deps_DIR}/gbwt/include")
+target_link_libraries( gbwt PUBLIC sdsl OpenMP::OpenMP_CXX )
+install(TARGETS gbwt
+    LIBRARY DESTINATION lib
+    ARCHIVE DESTINATION lib
+    PUBLIC_HEADER DESTINATION include)
+
+# GBWTGraph
+foreach (gbwtgraph_source IN ITEMS algorithms.cpp cached_gbwtgraph.cpp gbwtgraph.cpp gbz.cpp gfa.cpp internal.cpp minimizer.cpp path_cover.cpp utils.cpp)
+list(APPEND gbwtgraph_libFiles "deps/gbwtgraph/src/${gbwtgraph_source}")
+endforeach()
+if(MSVC)
+file(GLOB gbwtgraph_headerFiles RELATIVE ${CMAKE_CURRENT_SOURCE_DIR}  "${deps_DIR}/gbwtgraph/include/gbwt/*.h")
+endif()
+set( gbwtgraph_SRCS ${gbwtgraph_libFiles} ${gbwtgraph_headerFiles})
+add_library( gbwtgraph ${gbwtgraph_SRCS} )
+target_include_directories( gbwtgraph PUBLIC "${deps_DIR}/gbwtgraph/include")
+target_link_libraries( gbwtgraph PUBLIC gbwt handlegraph_shared )
+install(TARGETS gbwtgraph
+    LIBRARY DESTINATION lib
+    ARCHIVE DESTINATION lib
+    PUBLIC_HEADER DESTINATION include)
+
 add_library(${PROJECT_NAME}_objs OBJECT
-    src/utils.cpp
-    src/arg_parser.cpp
-    src/post_processing.cpp
-    src/gaf_creator.cpp
-    src/snarl_data_t.cpp
-    src/matrix.cpp
-    src/binary_table.cpp
-    src/quantitative_table.cpp
-    src/stats_test.cpp
-    src/writer.cpp
-    src/snarl_analyzer.cpp
-    src/subcommand/vcf.cpp
-    src/subcommand/graph.cpp
-    #src/graph_path_association_finder.cpp
-    #src/partitioner.cpp
+src/utils.cpp
+src/arg_parser.cpp
+src/post_processing.cpp
+src/gaf_creator.cpp
+src/snarl_data_t.cpp
+src/matrix.cpp
+src/binary_table.cpp
+src/quantitative_table.cpp
+src/stats_test.cpp
+src/writer.cpp
+src/snarl_analyzer.cpp
+src/graph_path_association_finder.cpp
+src/partitioner.cpp
+src/io/register_loader_saver_gbz.cpp
+src/io/register_loader_saver_gbzgraph.cpp
+src/io/register_loader_saver_hash_graph.cpp
+src/io/register_loader_saver_packed_graph.cpp
+src/io/register_io.cpp
+src/subcommand/vcf.cpp
+src/subcommand/graph.cpp
 )
 
 # Include Directories
 target_include_directories(${PROJECT_NAME}_objs PRIVATE
-    ${Boost_INCLUDE_DIRS}
-    ${HTSLIB_INCLUDE_DIRS}
+${Boost_INCLUDE_DIRS}
+${HTSLIB_INCLUDE_DIRS}
 )
 
 # Link Libraries
 target_link_libraries(${PROJECT_NAME}_objs
     Boost::boost
-    bdsg
-    handlegraph
-    Eigen3::Eigen
-    libsdsl.so.3
     ${HTSLIB_LIBRARIES}
-    OpenMP::OpenMP_CXX
+    libbdsg
+    gbwtgraph
+    VGio::vgio
 )
 
 # Add Executable
@@ -93,41 +151,54 @@ target_compile_options(${PROJECT_NAME} PRIVATE -w) # fix warning
 # Enable testing
 enable_testing()
 
-# Find Catch2 v3
-find_package(Catch2 3 REQUIRED)
-list(APPEND CMAKE_MODULE_PATH ${Catch2_CMAKE_DIR})
-
-include(CTest)
-include(Catch)
-
 # Add test executable
 add_executable(unit_tests
+    tests/unittest/main_test.cpp
     tests/unittest/binary_test_unit.cpp
     tests/unittest/gaf_creator_unit.cpp
     tests/unittest/snarl_data_t_unit.cpp
     tests/unittest/matrix_unit.cpp
     tests/unittest/quantitative_test_unit.cpp
-
-    src/utils.cpp
-    src/arg_parser.cpp
-    src/gaf_creator.cpp
-    src/snarl_data_t.cpp
-    src/matrix.cpp
-    src/binary_table.cpp
-    src/quantitative_table.cpp
-    src/stats_test.cpp
-    src/writer.cpp
-    src/snarl_analyzer.cpp
+    tests/unittest/path_partitioner_unit.cpp
 )
 
 target_compile_options(unit_tests PRIVATE -w) # fix warning
 
-# add src target lib + Catch2 lib 
+
 target_link_libraries(unit_tests PRIVATE 
-    Catch2::Catch2WithMain     
+    ${PROJECT_NAME}_objs)
+
+
+include_directories(${deps_DIR}/Catch2/single_include/catch2 )
+
+add_test(NAME UnitTests COMMAND unit_tests)
+
+# Add test executable system tests
+add_executable(vcf_simu_test tests/system/vcf_simu_test.cpp)
+
+# add src target lib + Catch2 lib 
+target_link_libraries(vcf_simu_test PRIVATE 
+    Catch2::Catch2WithMain
     Boost::boost
     bdsg
     handlegraph
     Eigen3::Eigen
     libsdsl.so.3
     ${HTSLIB_LIBRARIES})
+
+add_test(NAME VcfSimuTest COMMAND vcf_simu_test)
+
+add_executable(graph_simu_test tests/system/graph_simu_test.cpp)
+
+# add src target lib + Catch2 lib 
+target_link_libraries(graph_simu_test PRIVATE 
+    Catch2::Catch2WithMain
+    Boost::boost
+    bdsg
+    handlegraph
+    Eigen3::Eigen
+    libsdsl.so.3
+    ${HTSLIB_LIBRARIES})
+
+# Register with CTest
+add_test(NAME GraphSimuTest COMMAND graph_simu_test)
