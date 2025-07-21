@@ -266,7 +266,8 @@ int main_stoat_graph(int argc, char *argv[]) {
         out_unassociated.close();
     }
 
-    if (output_format == "tsv") {
+    //TODO: This works because the tsv and bed outputs happen to put the adjusted p-value column in the same place but it isn't pretty
+    if (output_format == "tsv" || output_format == "bed") {
         // Add the BH adjusted column
         stoat_vcf::add_BH_adjusted_column(associated_filename, output_dir, output_dir + "/top_variant_binary_graph.tsv", stoat::BINARY);
     }

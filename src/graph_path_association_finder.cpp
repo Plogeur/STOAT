@@ -186,7 +186,7 @@ void AssociationFinder::test_snarls() const {
                         {
                             // TODO: This depends on the string p-value output
                             stoat_vcf::write_bed(out_associated, graph, distance_index, snarl, reference_sample, 
-                                                 (fastfisher_p_value == "NA" || fastfisher_p_value == "1.0000") ? chi2_p_value : fastfisher_p_value);
+                                                 fastfisher_p_value, chi2_p_value );
                         }
                     } else if (output_format == "fasta") {
 

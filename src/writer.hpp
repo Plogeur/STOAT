@@ -46,7 +46,7 @@ namespace stoat_vcf{
     // TODO: Put this in a wiki page or something
     void write_bed(std::ostream& outstream, const handlegraph::PathPositionHandleGraph& graph, 
                      const bdsg::SnarlDistanceIndex& distance_index, const handlegraph::net_handle_t& snarl, 
-                     const string& reference_name, const string& p_value);
+                     const string& reference_name, const string& p_fisher, const string& p_chi2);
     
 
 } //end namespace

@@ -21,7 +21,7 @@ void write_eqtl_header(std::ostream& outstream) {
 }
 
 void write_bed_header(std::ostream& outstream) {
-    outstream <<  "CHR\tSTART_POS\tEND_POS\tNAME_SNARL\tSCORE(P-VALUE)" << endl;
+    outstream <<  "CHR\tSTART_POS\tEND_POS\tNAME_SNARL\tP_FISHER\tP_CHI2\tP_ADJUSTED" << endl;
 }
 
 
@@ -190,9 +190,9 @@ void write_fasta(std::ostream& outstream_associated, std::ostream& outstream_una
 
 void write_bed(std::ostream& outstream, const handlegraph::PathPositionHandleGraph& graph,
                  const bdsg::SnarlDistanceIndex& distance_index, const handlegraph::net_handle_t& snarl, const string& reference_name,
-                 const string& p_value) {
+                 const string& p_fisher, const string& p_chi2) {
 
-    // Write: CHR\tSTART_POS\tEND_POS\tNAME_SNARL\tSCORE(P-VALUE)
+    // Write: CHR\tSTART_POS\tEND_POS\tNAME_SNARL\tP_FISHER\tP_CHI2\tP_ADJUSTED
 
     // Write all coordinates for a single path
     handlegraph::path_handle_t ref_path;
@@ -210,7 +210,9 @@ void write_bed(std::ostream& outstream, const handlegraph::PathPositionHandleGra
                   << std::get<1>(range_coordinates) << "\t"
                   << std::get<2>(range_coordinates) << "\t"
                   << pairToString(find_snarl_id(distance_index, snarl)) << "\t"
-                  << p_value
+                  << p_fisher << "\t"
+                  << p_chi2 << "\t"
+                  << "NA" //Leave adjusted p value empty
                   << endl;
     }
 }
