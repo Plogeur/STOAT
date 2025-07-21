@@ -157,9 +157,6 @@ parse_graph_tree(const std::string& pg_file, const std::string& dist_file);
 // Matis ans : i don t know how to do it
 std::vector<std::string> calcul_pos_type_variant(const std::vector<std::tuple<size_t, size_t, size_t, size_t, bool>>& list_length_paths);
 
-// Function to find snarl ID
-std::pair<size_t, size_t> find_snarl_id(const bdsg::SnarlDistanceIndex& stree, const handlegraph::net_handle_t& snarl);
-
 // Function to follow edges
 void follow_edges(bdsg::SnarlDistanceIndex& stree,
     std::vector<std::vector<handlegraph::net_handle_t>>& finished_paths,

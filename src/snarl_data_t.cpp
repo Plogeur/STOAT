@@ -262,30 +262,6 @@ std::vector<std::string> calcul_pos_type_variant(const std::vector<std::tuple<si
     return list_type_variant;
 }
 
-std::pair<size_t, size_t> find_snarl_id(const bdsg::SnarlDistanceIndex& stree, const handlegraph::net_handle_t& snarl) {
-    
-    // Get start and end boundary nodes for the snarl
-    auto sstart = stree.get_bound(snarl, false, true);  // False for the left boundary
-    auto send = stree.get_bound(snarl, true, true);     // True for the right boundary
-
-    // Convert the sentinels into nodes
-    auto start_node = stree.get_node_from_sentinel(sstart);
-    auto end_node = stree.get_node_from_sentinel(send);
-
-    // Get the node IDs from bdsg::SnarlDistanceIndex
-    // handlegraph::nid_t
-    auto start_node_id = stree.node_id(start_node);
-    auto end_node_id = stree.node_id(end_node);
-
-    // Convert to size_t
-    size_t start_node_id_size_t = static_cast<size_t>(start_node_id);
-    size_t end_node_id_size_t = static_cast<size_t>(end_node_id);
-
-    // Construct the snarl ID
-    std::pair<size_t, size_t> snarl_id(end_node_id_size_t, start_node_id_size_t);
-
-    return snarl_id;  // Return the generated snarl ID as a std::string
-}
 
 std::tuple<std::unique_ptr<bdsg::SnarlDistanceIndex>, 
             std::unique_ptr<bdsg::PackedGraph>, 

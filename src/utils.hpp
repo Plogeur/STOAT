@@ -108,6 +108,10 @@ std::vector<path_range_t> get_coordinates_of_snarl_helper(const handlegraph::Pat
 std::tuple<std::string, size_t, size_t> get_name_and_offsets_of_snarl_path_range(const handlegraph::PathPositionHandleGraph& graph, 
                                                                                  const bdsg::SnarlDistanceIndex& distance_index, const path_range_t& range);
 
+/// Function to find snarl ID- the start and end ids as a pair of size_t's
+std::pair<size_t, size_t> find_snarl_id(const bdsg::SnarlDistanceIndex& stree, const handlegraph::net_handle_t& snarl);
+
+
 // equality within a given epsilon
 template<typename T>
 bool is_equal(T a, T b, T e = std::numeric_limits<T>::epsilon()) {
