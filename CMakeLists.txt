@@ -11,6 +11,15 @@ set(CMAKE_OSX_DEPLOYMENT_TARGET "12.7") # IOS fix
 # This is where libbdsg automatically gets installed
 set(CMAKE_BUILD_RPATH "/usr/local/lib;${CMAKE_BUILD_RPATH}")
 
+
+option(OPTIMIZE "Build with optimization" ON)
+
+if (OPTIMIZE)
+# Use all standard-compliant optimizations
+set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O3")
+set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3")
+endif ()
+
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(HTSLIB REQUIRED htslib)
 
