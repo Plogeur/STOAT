@@ -36,6 +36,8 @@ void AssociationFinder::test_snarls() const {
     // If the file output has a header, write it
     if (output_format == "tsv") {
         stoat_vcf::write_binary_header(out_associated);
+    } else if (output_format == "bed") 
+        stoat_vcf::write_bed_header(out_associated);{
     }
 
     std::vector<handlegraph::net_handle_t> chains;
@@ -177,6 +179,14 @@ void AssociationFinder::test_snarls() const {
                             // Leave adjusted p-value blank, to be filled in later
                             stoat_vcf::write_binary(out_associated, chr, snarl_data_s, variant_type, fastfisher_p_value, chi2_p_value, "", allele_number_str, min_row_index_str,
                                          numb_colum_str, inter_group_str, average_str, group_paths);
+                        }
+                    } else if (output_format == "bed") {
+
+                        # pragma omp critical (out_associated) 
+                        {
+                            // TODO: This depends on the string p-value output
+                            stoat_vcf::write_bed(out_associated, graph, distance_index, snarl, reference_sample, 
+                                                 (fastfisher_p_value == "NA" || fastfisher_p_value == "1.0000") ? chi2_p_value : fastfisher_p_value);
                         }
                     } else if (output_format == "fasta") {
 

@@ -20,6 +20,10 @@ void write_eqtl_header(std::ostream& outstream) {
     outstream <<  "CHR\tPOS\tSNARL\tTYPE\tGENE\tP\tP_ADJUSTED\tRSQUARE\tBETA\tSE\tALLELE_NUM\tALLELE_PATHS" << endl;
 }
 
+void write_bed_header(std::ostream& outstream) {
+    outstream <<  "CHR\tSTART_POS\tEND_POS\tNAME_SNARL\tSCORE(P-VALUE)" << endl;
+}
+
 
 void write_eqtl(std::ostream& outstream, const std::string& chr, const Snarl_data_t& snarl_data_s, const std::string& type_var_str,
                    const std::string& gene_name, const std::string& p_value, const std::string& p_value_adjusted, const std::string& r2,
@@ -181,6 +185,33 @@ void write_fasta(std::ostream& outstream_associated, std::ostream& outstream_una
                 outstream << sequence_buffer << endl;
             }
         }
+    }
+}
+
+void write_bed(std::ostream& outstream, const handlegraph::PathPositionHandleGraph& graph,
+                 const bdsg::SnarlDistanceIndex& distance_index, const handlegraph::net_handle_t& snarl, const string& reference_name,
+                 const string& p_value) {
+
+    // Write: CHR\tSTART_POS\tEND_POS\tNAME_SNARL\tSCORE(P-VALUE)
+
+    // Write all coordinates for a single path
+    handlegraph::path_handle_t ref_path;
+    bool first = true;
+    for (const path_range_t& range : get_coordinates_of_snarl(graph, distance_index, snarl, true, reference_name, false)) {
+        if (first) {
+            first = false;
+            ref_path = graph.get_path_handle_of_step(range.start);
+        } else if (graph.get_path_handle_of_step(range.start) != ref_path) {
+            continue;
+        }
+        std::tuple<std::string, size_t, size_t> range_coordinates = get_name_and_offsets_of_snarl_path_range(graph, distance_index, range);
+
+        outstream << std::get<0>(range_coordinates) << "\t"
+                  << std::get<1>(range_coordinates) << "\t"
+                  << std::get<2>(range_coordinates) << "\t"
+                  << pairToString(find_snarl_id(distance_index, snarl)) << "\t"
+                  << p_value
+                  << endl;
     }
 }
 
