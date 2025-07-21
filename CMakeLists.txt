@@ -10,7 +10,9 @@ set(CMAKE_OSX_DEPLOYMENT_TARGET "12.7") # IOS fix
 
 set(deps_DIR "${CMAKE_CURRENT_SOURCE_DIR}/deps")
 
-option(OPTIMIZE "Build with optimization" ON)
+option(OPTIMIZE "Build with optimization [default: on]" ON)
+# This is the same flag used by libbdsg and libvgio to specify which version of libhandlegraph should be used
+OPTION(USE_INSTALLED_LIBHANDLEGRAPH "Use the version of libhandlegraph installed on the system, if it exists, instead of the bundled version [default: off]" OFF)
 
 if (OPTIMIZE)
 # Use all standard-compliant optimizations
@@ -30,7 +32,17 @@ find_package(Boost REQUIRED)
 #Get eigen3
 include_directories(${deps_DIR}/eigen)
 
-add_subdirectory(${deps_DIR}/libhandlegraph)
+
+# Produces handlegraph_shared and handlegraph_static targets (as well as handlegraph_objs)
+if (USE_INSTALLED_LIBHANDLEGRAPH)
+    find_package(libhandlegraph)
+endif()
+if (${libhandlegraph_FOUND})
+    message("STOAT using installed libhandlegraph")
+else ()
+    message("STOAT using bundled libhandlegraph")
+    add_subdirectory(${deps_DIR}/libhandlegraph)
+endif ()
 
 # Add libvgio using its cmake build
 add_subdirectory(${deps_DIR}/libvgio)
