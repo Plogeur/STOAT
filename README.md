@@ -181,11 +181,6 @@ Explanation of all options:
 | **P_FISHER**             | P-value calculated using Fisher's exact test (binary analysis).                               |
 | **P_CHI2**               | P-value calculated using the Chi-squared test (binary analysis).                              |
 | **P_ADJUSTED**           | P-value adjusted by BH correction. This is equivalent to the false discovery rate. For binary analysis, only the Chi-squared value is used. |
-| **HAPLOTYPE_COUNT**      | The total number of haplotypes that pass through this snarl.                                  |
-| **MIN_HAPLOTYPE_COUNT**  | Count of the samples going through the allele with the minimum number of samples. (binary analysis).          |
-| **ALLELE_COUNT**         | Total number of alleles present in this snarl. (binary analysis).                                              |
-| **INTER_GROUP**          | Sum of the minimum samples that pass through each path. (binary analysis).                    |
-| **AVERAGE**              | Average number of total samples passing through this snarl, divided by the number of paths. (binary analysis). |
 | **RSQUARED**             | R-squared value, proportion of variance explained by the model (quantitative analysis).       |
 | **SE**                   | Mean Standard error, estimation coefficients of all paths in a snarl (quantitative analysis). |
 | **BETA**                 | Mean Beta coefficients, estimation effect sizes of the prediction of all paths in a snarl (quantitative analysis). |

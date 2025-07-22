@@ -3,47 +3,17 @@
 // ------------------------ Binary table & stats ------------------------
 namespace stoat_vcf {
 
-std::tuple<std::string, std::string, 
-std::string, std::string, std::string, 
-std::string> binary_stat_test(
-    const std::vector<size_t>& g0, 
-    const std::vector<size_t>& g1) {
+std::string format_group_paths(const std::vector<size_t>& g0, const std::vector<size_t>& g1) {
 
-    // Compute derived statistics
-    int haplotype_count = 0;
-    int inter_group = 0;
-    int numb_colum = g0.size();
-    int min_haplotype_count = INT_MAX;
-
-    std::string
-    group_paths, haplotype_count_str, min_haplotype_count_str, 
-    allele_count_str, inter_group_str, average_str;
-
-    for (size_t i = 0; i < g0.size(); ++i) {
-        int row_sum = static_cast<int>(g0[i] + g1[i]);
-        haplotype_count += row_sum;
-        min_haplotype_count = std::min(min_haplotype_count, row_sum);
+    std::string result;
+    size_t numb_col = g0.size();
+    for (size_t index_col = 0; index_col < numb_col; ++index_col) {
+        result += std::to_string(g0[index_col]) + ":" + std::to_string(g1[index_col]);
+        if (index_col < numb_col - 1) {
+            result += ","; // Separate row pairs with ','
+        }
     }
-
-    for (int col=0; col < numb_colum; ++col) {
-        size_t col_min = INT_MAX;
-        col_min = std::min(col_min, g0[col]);
-        col_min = std::min(col_min, g1[col]);
-        inter_group += col_min;
-    }
-    
-    int average = static_cast<double>(haplotype_count) / numb_colum; // get 200 instead of 200.00000
-
-    group_paths = stoat::format_group_paths(g0, g1);
-    haplotype_count_str = std::to_string(haplotype_count);
-    min_haplotype_count_str = std::to_string(min_haplotype_count);
-    allele_count_str = std::to_string(numb_colum);
-    inter_group_str = std::to_string(inter_group);
-    average_str = std::to_string(average);
-
-    return std::make_tuple(
-        group_paths, haplotype_count_str, min_haplotype_count_str, 
-        allele_count_str, inter_group_str, average_str);
+    return result;
 }
 
 size_t create_binary_table(

@@ -24,7 +24,8 @@ using namespace std;
 
 namespace stoat_vcf {
 
-std::tuple<std::vector<std::vector<double>>, size_t, std::unordered_set<size_t>, std::vector<size_t>>
+// Return a tuple of genotypes, index_used, allele_paths
+std::tuple<std::vector<std::vector<double>>, std::unordered_set<size_t>, std::vector<size_t>>
 process_table_quantitative(
     const size_t& number_samples,
     const std::vector<stoat_vcf::Path_traversal_t>& column_headers,
@@ -35,10 +36,9 @@ process_table_quantitative(
 // Return a tuple of 
 // - genotypes_filtered: a matrix where each row is a sample, each column is an allele (from column_headers), counts divided by the sum of each row
 // - phenotype_filtered: the phenotypes for each genotype 
-// - allele_number: the total number of alleles seen (sum of allele_paths)
 // - allele_paths: the number of samples that take each path through the snarl (per column) 
 template <typename T>
-std::tuple<std::vector<std::vector<double>>, std::vector<T>, size_t, std::vector<size_t>>
+std::tuple<std::vector<std::vector<double>>, std::vector<T>, std::vector<size_t>>
 create_quantitative_table(
     const size_t& number_samples,
     const std::vector<stoat_vcf::Path_traversal_t>& column_headers,
@@ -49,9 +49,8 @@ create_quantitative_table(
 // Return a tuple of 
 // - genotypes_filtered: a matrix where each row is a sample, each column is an allele (from column_headers), counts divided by the sum of each row
 // - index_used: row (samples) indices that were filled in
-// - allele_number: the total number of alleles seen (sum of allele_paths)
 // - allele_paths: the number of samples that take each path through the snarl (per column) 
-std::tuple<std::vector<std::vector<double>>, std::unordered_set<size_t>, size_t, std::vector<size_t>>
+std::tuple<std::vector<std::vector<double>>, std::unordered_set<size_t>, std::vector<size_t>>
 create_eqtl_table(
     const size_t& number_samples,
     const std::vector<stoat_vcf::Path_traversal_t>& column_headers,

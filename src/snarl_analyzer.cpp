@@ -343,16 +343,13 @@ void BinarySnarlAnalyzer::analyze_and_write_snarl(
 
     // Binary analysis single test
     if (!filtration) { // good table
-        const auto& [group_paths, 
-            allele_number_str, min_row_index_str, numb_colum_str, 
-            inter_group_str, average_str] = stoat_vcf::binary_stat_test(g0, g1);
+        auto group_paths = format_group_paths(g0, g1);
 
-        const auto& [fastfisher_p_value, chi2_p_value] = fk.fisher_khi2(g0, g1);
+        auto [fastfisher_p_value, chi2_p_value] = fk.fisher_khi2(g0, g1);
 
         # pragma omp critical (outf) 
         {
-            write_binary(outf, chr, snarl_data_s, type_var_str, fastfisher_p_value, chi2_p_value, "", allele_number_str, min_row_index_str,
-                        numb_colum_str, inter_group_str, average_str, group_paths);
+            write_binary(outf, chr, snarl_data_s, type_var_str, fastfisher_p_value, chi2_p_value, "",  group_paths);
         }
     }
 }
@@ -369,7 +366,7 @@ void BinaryCovarSnarlAnalyzer::analyze_and_write_snarl(
 
     std::string type_var_str = oss.str();
 
-    auto [df, phenotype_filtered, allele_number, allele_paths] = create_quantitative_table(list_samples.size(), snarl_data_s.snarl_paths, binary_phenotype, edge_matrix);
+    auto [df, phenotype_filtered, allele_paths] = create_quantitative_table(list_samples.size(), snarl_data_s.snarl_paths, binary_phenotype, edge_matrix);
     remove_empty_columns_quantitative_table(df);
     bool filtration = filtration_quantitative_table(df, maf_threshold);
     remove_last_columns_quantitative_table(df);
@@ -385,7 +382,7 @@ void BinaryCovarSnarlAnalyzer::analyze_and_write_snarl(
         }
         # pragma omp critical (outf) 
         {
-            write_binary_covar(outf, chr, snarl_data_s, type_var_str, p_value, "", r2, beta, se, allele_number, allele_paths);
+            write_binary_covar(outf, chr, snarl_data_s, type_var_str, p_value, "", r2, beta, se, allele_paths);
         }
     }
 }
@@ -394,7 +391,7 @@ void BinaryCovarSnarlAnalyzer::analyze_and_write_snarl(
 void QuantitativeSnarlAnalyzer::analyze_and_write_snarl(
     const Snarl_data_t& snarl_data_s, const std::string& chr, std::ofstream& outf) {
 
-    auto [df, phenotype_filtered, allele_number, allele_paths] = create_quantitative_table(list_samples.size(), snarl_data_s.snarl_paths, quantitative_phenotype, edge_matrix);
+    auto [df, phenotype_filtered, allele_paths] = create_quantitative_table(list_samples.size(), snarl_data_s.snarl_paths, quantitative_phenotype, edge_matrix);
     remove_empty_columns_quantitative_table(df);
     bool filtration = filtration_quantitative_table(df, maf_threshold);
     remove_last_columns_quantitative_table(df);
@@ -419,7 +416,7 @@ void QuantitativeSnarlAnalyzer::analyze_and_write_snarl(
         
         #pragma omp critical (outf)
         {
-            write_quantitative(outf, chr, snarl_data_s, type_var_str, p_value, "", r2, beta, se, allele_number, allele_paths);
+            write_quantitative(outf, chr, snarl_data_s, type_var_str, p_value, "", r2, beta, se, allele_paths);
         }
     }
 }
@@ -452,7 +449,7 @@ void EQTLSnarlAnalyzer::analyze_and_write_snarl(
     const Snarl_data_t& snarl_data_s, const std::string& chr, std::ofstream& outf) {
 
     std::vector<size_t> list_gene_index = found_gene_snarl(eqtl_map.at(chr), snarl_data_s.start_positions, snarl_data_s.end_positions, windows_gene_threshold);
-    auto [df, index_filtered, allele_number, allele_paths] = stoat_vcf::create_eqtl_table(list_samples.size(), snarl_data_s.snarl_paths, edge_matrix);
+    auto [df, index_filtered, allele_paths] = stoat_vcf::create_eqtl_table(list_samples.size(), snarl_data_s.snarl_paths, edge_matrix);
     remove_empty_columns_quantitative_table(df);
     bool filtration = filtration_quantitative_table(df, maf_threshold);
     remove_last_columns_quantitative_table(df);
@@ -484,7 +481,7 @@ void EQTLSnarlAnalyzer::analyze_and_write_snarl(
             #pragma omp critical (outf)
 
             {
-                write_eqtl(outf, chr, snarl_data_s, type_var_str, gene_name, p_value, "", r2, beta, se, allele_number, allele_paths);
+                write_eqtl(outf, chr, snarl_data_s, type_var_str, gene_name, p_value, "", r2, beta, se, allele_paths);
             }
         }
     }
