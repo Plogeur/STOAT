@@ -172,12 +172,14 @@ Explanation of all options:
 | Column Name              | Description                                                                                   |
 |--------------------------|-----------------------------------------------------------------------------------------------|
 | **CHR**                  | Chromosome name where the variation occurs.                                                   |
-| **POS**                  | Position of the snarl within the chromosome.                                                  |
+| **START_POS**            | Start position of the snarl within the chromosome.                                            |
+| **END_POS**              | End position of the snarl within the chromosome.                                              |
 | **SNARL**                | Identifier for the variant, snarl name/id                                                     |
 | **PATH_LENGTHS**         | List of type of genetic variation, SNP == 1, INS & DEL will be referenced by a number >2 or 0, and CPX aka complex (ex : snarl nested) will be add minimum and maximum path size like Min/Max                                               |
 | **REF**                  | Show if at least one paths in this snarl is on the reference (0 : off reference, 1 : on reference) |
 | **P_FISHER**             | P-value calculated using Fisher's exact test (binary analysis).                               |
 | **P_CHI2**               | P-value calculated using the Chi-squared test (binary analysis).                              |
+| **P_ADJUSTED**           | P-value adjusted by BH correction.                                                            |
 | **HAPLOTYPE_COUNT**      | The total number of haplotypes that pass through this snarl.                                  |
 | **MIN_HAPLOTYPE_COUNT**  | Count of the samples going through the allele with the minimum number of samples. (binary analysis).          |
 | **ALLELE_COUNT**         | Total number of alleles present in this snarl. (binary analysis).                                              |
