@@ -175,7 +175,7 @@ Explanation of all options:
 | **START_POS**            | Start position of the snarl/variant within the chromosome.                                            |
 | **END_POS**              | End position of the snarl/variant within the chromosome.                                              |
 | **SNARL**                | Identifier for the variant, snarl name/id                                                     |
-| **PATH_LENGTHS**         | List of type of genetic variation, SNP == 1, INS & DEL will be referenced by a number >2 or 0, and CPX aka complex (ex : snarl nested) will be add minimum and maximum path size like Min/Max                                               |
+| **PATH_LENGTHS**         | Comma separated list of the lengths of each allele. For complex variants (which contain nested variants), there are multiple possible lengths so they are represented as a range (min/max). A SNP will appear as 1,1[,1...]. An INDEL will have one zero-length allele and the other non-zero.   |
 | **REF**                  | Show if at least one paths in this snarl is on the reference (0 : off reference, 1 : on reference) |
 | **P**                    | P-value calculated using linear regression (quantitative analysis).                           |
 | **P_FISHER**             | P-value calculated using Fisher's exact test (binary analysis).                               |
