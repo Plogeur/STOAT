@@ -175,7 +175,7 @@ Explanation of all options:
 | **START_POS**            | Start position of the snarl/variant within the chromosome.                                            |
 | **END_POS**              | End position of the snarl/variant within the chromosome.                                              |
 | **SNARL**                | Identifier for the variant, snarl name/id                                                     |
-| **PATH_LENGTHS**         | Comma separated list of the lengths of each allele. For complex variants (which contain nested variants), there are multiple possible lengths so they are represented as a range (min/max). A SNP will appear as 1,1[,1...]. An INDEL will have one zero-length allele and the other non-zero.   |
+| **ALLELE_LENGTHS**       | Comma separated list of the lengths of each allele. For complex variants (which contain nested variants), there are multiple possible lengths so they are represented as a range (min/max). A SNP will appear as 1,1[,1...]. An INDEL will have one zero-length allele and the other non-zero. For `pangwas graph`, this is an estimate of the length of the snarl  |
 | **REF**                  | Show if at least one paths in this snarl is on the reference (0 : off reference, 1 : on reference) |
 | **P**                    | P-value calculated using linear regression (quantitative analysis).                           |
 | **P_FISHER**             | P-value calculated using Fisher's exact test (binary analysis).                               |
@@ -192,7 +192,7 @@ Explanation of all options:
 Below is an example of the output for a binary phenotype analysis (-b option) :
 
 ```bash
-CHR POS SNARL           PATH_LENGTHS    P_FISHER  P_CHI2  HAPLOTYPE_COUNT  MIN_HAPLOTYPE_COUNT ALLELE_COUNT   INTER_GROUP AVERAGE GROUP_PATHS
+CHR POS SNARL           ALLELE_LENGTHS    P_FISHER  P_CHI2  HAPLOTYPE_COUNT  MIN_HAPLOTYPE_COUNT ALLELE_COUNT   INTER_GROUP AVERAGE GROUP_PATHS
 1   12  5262721_5262719 A,C     0.4635    0.5182  286              2             137            46          143.0   107:97,93:103
 1   15  5262719_5262717 T,3     0.8062    0.8747  286              2             141            34          143.0   53:20,93:75
 1   18  5262717_5262714 2,T     0.2120    0.2363  286              2             134            32          143.0   25:97,78:2
@@ -201,7 +201,7 @@ CHR POS SNARL           PATH_LENGTHS    P_FISHER  P_CHI2  HAPLOTYPE_COUNT  MIN_H
 Below is an example of the output for a quantitative phenotype analysis (-q option) :
 
 ```bash
-CHR	POS	SNARL	        PATH_LENGTHS	      RSQUARED	  BETA	      SE	        P
+CHR	POS	SNARL	        ALLELE_LENGTHS	      RSQUARED	  BETA	      SE	        P
 1	12	5262721_5262719	A,C	        0.8370	    0.1388	    0.6512	    0.4038
 1	15	5262719_5262717	CPX:1/457,3	0.4424	    0.1324	    0.6534	    0.4657
 1	18	5262717_5262714	2,G	        0.6324	    0.1646	    0.6424	    0.4748
@@ -211,7 +211,7 @@ CHR	POS	SNARL	        PATH_LENGTHS	      RSQUARED	  BETA	      SE	        P
 Below is an example of the output for a eqtl phenotype analysis (-e option) :
 
 ```bash
-CHR	POS	SNARL	PATH_LENGTHS	GENE	P	P_ADJUSTED	RSQUARE	BETA	SE	ALLELE_NUM	ALLELE_PATHS
+CHR	POS	SNARL	ALLELE_LENGTHS	GENE	P	P_ADJUSTED	RSQUARE	BETA	SE	ALLELE_NUM	ALLELE_PATHS
 1	100000	rs1_1	A,T	gene_80	0.1592	1.0000	0.0100	4.6556	0.3697	400	192,208
 1	100000	rs1_1	A,T	gene_50	0.1147	1.0000	0.0125	4.3201	0.3456	400	192,208
 1	100000	rs1_1	A,T	gene_90	0.3419	1.0000	0.0046	5.1966	0.3671	400	192,208
