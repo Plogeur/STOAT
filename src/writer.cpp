@@ -9,7 +9,7 @@ void write_binary_covar_header(std::ostream& outstream) {
 }
 
 void write_binary_header(std::ostream& outstream) {
-    outstream << "CHR\tSTART_POS\tEND_POS\tSNARL\tTYPE\tP_FISHER\tP_CHI2\tP_ADJUSTED\tHAPLOTYPE_COUNT\tMIN_ROW_INDEX\tALLELE_COUNT\tINTER_GROUP\tAVERAGE\tGROUP_PATHS" << endl;
+    outstream << "CHR\tSTART_POS\tEND_POS\tSNARL\tTYPE\tP_FISHER\tP_CHI2\tP_ADJUSTED\tHAPLOTYPE_COUNT\tMIN_HAPLOTYPE_COUNT\tALLELE_COUNT\tINTER_GROUP\tAVERAGE\tGROUP_PATHS" << endl;
 }
 
 void write_quantitative_header(std::ostream& outstream) {

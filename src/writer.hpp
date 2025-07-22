@@ -27,7 +27,7 @@ void write_eqtl(std::ostream& outstream, const std::string& chr, const Snarl_dat
 
 void write_binary(std::ostream& outstream, const std::string& chr, const Snarl_data_t& snarl_data_s, const std::string& type_var_str,
                     const std::string& fastfisher_p_value, const std::string& chi2_p_value, const std::string& p_value_adjusted, 
-                    const std::string& haplotype_count_str, const std::string& min_row_index_str, const std::string& allele_count_str,
+                    const std::string& haplotype_count_str, const std::string& min_haplotype_count_str, const std::string& allele_count_str,
                     const std::string& inter_group_str, const std::string& average_str, const std::string& group_paths);
 
 void write_quantitative(std::ostream& outstream, const std::string& chr, const Snarl_data_t& snarl_data_s, const std::string& type_var_str,

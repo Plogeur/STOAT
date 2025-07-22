@@ -10,19 +10,19 @@ std::string> binary_stat_test(
     const std::vector<size_t>& g1) {
 
     // Compute derived statistics
-    int allele_number = 0;
+    int haplotype_count = 0;
     int inter_group = 0;
     int numb_colum = g0.size();
-    int min_row_index = INT_MAX;
+    int min_haplotype_count = INT_MAX;
 
     std::string
-    group_paths, allele_number_str, min_row_index_str, 
-    numb_colum_str, inter_group_str, average_str;
+    group_paths, haplotype_count_str, min_haplotype_count_str, 
+    allele_count_str, inter_group_str, average_str;
 
     for (size_t i = 0; i < g0.size(); ++i) {
         int row_sum = static_cast<int>(g0[i] + g1[i]);
-        allele_number += row_sum;
-        min_row_index = std::min(min_row_index, row_sum);
+        haplotype_count += row_sum;
+        min_haplotype_count = std::min(min_haplotype_count, row_sum);
     }
 
     for (int col=0; col < numb_colum; ++col) {
@@ -32,18 +32,18 @@ std::string> binary_stat_test(
         inter_group += col_min;
     }
     
-    int average = static_cast<double>(allele_number) / numb_colum; // get 200 instead of 200.00000
+    int average = static_cast<double>(haplotype_count) / numb_colum; // get 200 instead of 200.00000
 
     group_paths = stoat::format_group_paths(g0, g1);
-    allele_number_str = std::to_string(allele_number);
-    min_row_index_str = std::to_string(min_row_index);
-    numb_colum_str = std::to_string(numb_colum);
+    haplotype_count_str = std::to_string(haplotype_count);
+    min_haplotype_count_str = std::to_string(min_haplotype_count);
+    allele_count_str = std::to_string(numb_colum);
     inter_group_str = std::to_string(inter_group);
     average_str = std::to_string(average);
 
     return std::make_tuple(
-        group_paths, allele_number_str, min_row_index_str, 
-        numb_colum_str, inter_group_str, average_str);
+        group_paths, haplotype_count_str, min_haplotype_count_str, 
+        allele_count_str, inter_group_str, average_str);
 }
 
 size_t create_binary_table(
