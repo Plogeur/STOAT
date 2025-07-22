@@ -5,19 +5,19 @@
 namespace stoat_vcf {
 
 void write_binary_covar_header(std::ostream& outstream) {
-    outstream << "CHR\tSTART_POS\tEND_POS\tSNARL\tTYPE\tP\tP_ADJUSTED\tBETA\tSE\tALLELE_NUM\tALLELE_PATHS" << endl;
+    outstream << "CHR\tSTART_POS\tEND_POS\tSNARL\tTYPE\tP\tP_ADJUSTED\tBETA\tSE\tHAPLOTYPE_COUNT\tALLELE_PATHS" << endl;
 }
 
 void write_binary_header(std::ostream& outstream) {
-    outstream << "CHR\tSTART_POS\tEND_POS\tSNARL\tTYPE\tP_FISHER\tP_CHI2\tP_ADJUSTED\tALLELE_NUM\tMIN_ROW_INDEX\tNUM_COLUM\tINTER_GROUP\tAVERAGE\tGROUP_PATHS" << endl;
+    outstream << "CHR\tSTART_POS\tEND_POS\tSNARL\tTYPE\tP_FISHER\tP_CHI2\tP_ADJUSTED\tHAPLOTYPE_COUNT\tMIN_ROW_INDEX\tNUM_COLUM\tINTER_GROUP\tAVERAGE\tGROUP_PATHS" << endl;
 }
 
 void write_quantitative_header(std::ostream& outstream) {
-    outstream << "CHR\tSTART_POS\tEND_POS\tSNARL\tTYPE\tP\tP_ADJUSTED\tRSQUARE\tBETA\tSE\tALLELE_NUM\tALLELE_PATHS" << endl;
+    outstream << "CHR\tSTART_POS\tEND_POS\tSNARL\tTYPE\tP\tP_ADJUSTED\tRSQUARE\tBETA\tSE\tHAPLOTYPE_COUNT\tALLELE_PATHS" << endl;
 }
 
 void write_eqtl_header(std::ostream& outstream) {
-    outstream <<  "CHR\tSTART_POS\tEND_POS\tSNARL\tTYPE\tGENE\tP\tP_ADJUSTED\tRSQUARE\tBETA\tSE\tALLELE_NUM\tALLELE_PATHS" << endl;
+    outstream <<  "CHR\tSTART_POS\tEND_POS\tSNARL\tTYPE\tGENE\tP\tP_ADJUSTED\tRSQUARE\tBETA\tSE\tHAPLOTYPE_COUNT\tALLELE_PATHS" << endl;
 }
 
 

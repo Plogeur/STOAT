@@ -169,32 +169,32 @@ Explanation of all options:
 
 ## Output
 
-| Column Name       | Description                                                                                   |
-|-------------------|-----------------------------------------------------------------------------------------------|
-| **CHR**           | Chromosome name where the variation occurs.                                                   |
-| **POS**           | Position of the snarl within the chromosome.                                                  |
-| **SNARL**         | Identifier for the variant, snarl name/id                                                     |
-| **TYPE**          | List of type of genetic variation, SNP == 1, INS & DEL will be referenced by a number >2 or 0, and CPX aka complex (ex : snarl nested) will be add minimum and maximum path size like Min/Max                                               |
-| **REF**           | Show if at least one paths in this snarl is on the reference (0 : out reference, 1 : on reference) |
-| **P_FISHER**      | P-value calculated using Fisher's exact test (binary analysis).                               |
-| **P_CHI2**        | P-value calculated using the Chi-squared test (binary analysis).                              |
-| **ALLELE_NUM**    | Total number of alleles that pass in this snarl.                                              |
-| **MIN_ROW_INDEX** | Minimum group of samples that pass through one path of the snarl. (binary analysis).          |
-| **NUM_COLUM**     | Number of paths in the snarl. (binary analysis).                                              |
-| **INTER_GROUP**   | Sum of the minimum samples that pass through each path. (binary analysis).                    |
-| **AVERAGE**       | Average number of total samples passing through this snarl, divided by the number of paths. (binary analysis). |
-| **P**             | P-value calculated using linear regression (quantitative analysis).                           |
-| **RSQUARED**      | R-squared value, proportion of variance explained by the model (quantitative analysis).       |
-| **SE**            | Mean Standard error, estimatation coefficients of all paths in a snarl (quantitative analysis). |
-| **BETA**          | Mean Beta coefficients, estimatation effect sizes of the prediction of all paths in a snarl (quantitative analysis). |
-| **GROUP_PATHS**   | Encodes the allele distribution across binary phenotype groups for each path in a snarl. Each entry is formatted as `X:Y,X':Y',...` where `X:Y` represents one path, with `X` being the count of samples in group 0 and `Y` in group 1. Commas separate multiple paths within the same snarl. Used in binary statistical analysis to assess associations between path presence and phenotype. (binary analysis). |
+| Column Name         | Description                                                                                   |
+|---------------------|-----------------------------------------------------------------------------------------------|
+| **CHR**             | Chromosome name where the variation occurs.                                                   |
+| **POS**             | Position of the snarl within the chromosome.                                                  |
+| **SNARL**           | Identifier for the variant, snarl name/id                                                     |
+| **TYPE**            | List of type of genetic variation, SNP == 1, INS & DEL will be referenced by a number >2 or 0, and CPX aka complex (ex : snarl nested) will be add minimum and maximum path size like Min/Max                                               |
+| **REF**             | Show if at least one paths in this snarl is on the reference (0 : out reference, 1 : on reference) |
+| **P_FISHER**        | P-value calculated using Fisher's exact test (binary analysis).                               |
+| **P_CHI2**          | P-value calculated using the Chi-squared test (binary analysis).                              |
+| **HAPLOTYPE_COUNT** | Total number of alleles present in this snarl.                                                |
+| **MIN_ROW_INDEX**   | Minimum group of samples that pass through one path of the snarl. (binary analysis).          |
+| **NUM_COLUM**       | Number of paths in the snarl. (binary analysis).                                              |
+| **INTER_GROUP**     | Sum of the minimum samples that pass through each path. (binary analysis).                    |
+| **AVERAGE**         | Average number of total samples passing through this snarl, divided by the number of paths. (binary analysis). |
+| **P**               | P-value calculated using linear regression (quantitative analysis).                           |
+| **RSQUARED**        | R-squared value, proportion of variance explained by the model (quantitative analysis).       |
+| **SE**              | Mean Standard error, estimatation coefficients of all paths in a snarl (quantitative analysis). |
+| **BETA**            | Mean Beta coefficients, estimatation effect sizes of the prediction of all paths in a snarl (quantitative analysis). |
+| **GROUP_PATHS**     | Encodes the allele distribution across binary phenotype groups for each path in a snarl. Each entry is formatted as `X:Y,X':Y',...` where `X:Y` represents one path, with `X` being the count of samples in group 0 and `Y` in group 1. Commas separate multiple paths within the same snarl. Used in binary statistical analysis to assess associations between path presence and phenotype. (binary analysis). |
 
 ### Example of Output:
 
 Below is an example of the output for a binary phenotype analysis (-b option) :
 
 ```bash
-CHR POS SNARL           TYPE    P_FISHER  P_CHI2  ALLELE_NUM  MIN_ROW_INDEX NUM_COLUM   INTER_GROUP AVERAGE GROUP_PATHS
+CHR POS SNARL           TYPE    P_FISHER  P_CHI2  HAPLOTYPE_COUNT  MIN_ROW_INDEX NUM_COLUM   INTER_GROUP AVERAGE GROUP_PATHS
 1   12  5262721_5262719 A,C     0.4635    0.5182  286         2             137         46          143.0   107:97,93:103
 1   15  5262719_5262717 T,3     0.8062    0.8747  286         2             141         34          143.0   53:20,93:75
 1   18  5262717_5262714 2,T     0.2120    0.2363  286         2             134         32          143.0   25:97,78:2
