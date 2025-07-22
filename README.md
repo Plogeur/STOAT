@@ -186,6 +186,7 @@ Explanation of all options:
 | **BETA**                 | Mean Beta coefficients, estimation effect sizes of the prediction of all paths in a snarl (quantitative analysis). |
 | **ALLELE_PATHS**         | For each allele, how many samples take this allele. Comma separated list. (quantitative analysis). |
 | **GROUP_PATHS**          | Encodes the allele distribution across binary phenotype groups for each path in a snarl. Each entry is formatted as `X:Y,X':Y',...` where `X:Y` represents one path, with `X` being the count of samples in group 0 and `Y` in group 1. Commas separate multiple paths within the same snarl. Used in binary statistical analysis to assess associations between path presence and phenotype. (binary analysis). |
+| **DEPTH**                | How deeply nested is the variant? 1 for top-level variant, 2 for nested within a top-level variant, etc. |
 
 ### Example of Output:
 
