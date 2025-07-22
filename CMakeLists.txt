@@ -115,7 +115,6 @@ install(TARGETS gbwtgraph
     PUBLIC_HEADER DESTINATION include)
 
 
-
 add_library(${PROJECT_NAME}_objs OBJECT
 src/utils.cpp
 src/arg_parser.cpp
@@ -184,3 +183,32 @@ target_link_libraries(unit_tests PRIVATE
 
 
 include_directories(${deps_DIR}/Catch2/single_include/catch2 )
+
+
+add_test(NAME UnitTests COMMAND unit_tests)
+
+# Add test executable system tests
+add_executable(vcf_simu_test tests/system/vcf_simu_test.cpp)
+
+# add src target lib + Catch2 lib 
+target_link_libraries(vcf_simu_test PRIVATE 
+    Boost::boost
+    bdsg
+    handlegraph
+    libsdsl.so.3
+    ${HTSLIB_LIBRARIES})
+
+add_test(NAME VcfSimuTest COMMAND vcf_simu_test)
+
+add_executable(graph_simu_test tests/system/graph_simu_test.cpp)
+
+# add src target lib + Catch2 lib 
+target_link_libraries(graph_simu_test PRIVATE 
+    Boost::boost
+    bdsg
+    handlegraph
+    libsdsl.so.3
+    ${HTSLIB_LIBRARIES})
+
+# Register with CTest
+add_test(NAME GraphSimuTest COMMAND graph_simu_test)

@@ -21,7 +21,7 @@ RUN apt-get update && apt-get install -y \
 
 WORKDIR /home
 # Clone the STOAT C++ repository and set it as the working directory
-RUN git clone --recursive https://github.com/Plogeur/STOAT --branch merge-pangwas \
+RUN git clone --recursive https://github.com/Plogeur/STOAT \
     && cd STOAT \ 
     && mkdir build \
     && cd build \

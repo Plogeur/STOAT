@@ -68,36 +68,6 @@ bool isPValueSignificant(const double& pvalue_threshold, const std::string& pval
     return pvalue < pvalue_threshold;
 }
 
-// Write the table to a TSV file
-void writeSignificantTableToTSV(
-    const std::vector<std::vector<double>>& table,
-    const std::vector<std::string>& list_snarl,
-    const std::vector<std::string>& list_samples,
-    const std::string& filename) {
-
-    std::ofstream outFile(filename);
-
-    // Write header
-    outFile << "sample_name";
-    for (const auto& snarl_name : list_snarl) {
-        outFile << "\t" << snarl_name;
-    }
-    outFile << "\n";
-
-    // Write each sample's data
-    size_t itr = 0;
-    for (const auto& allele_vector : table) {
-        outFile << list_samples[itr];
-
-        for (size_t i=0; i < allele_vector.size(); ++i) {
-            outFile << "\t" << allele_vector[i];
-        }
-        outFile << "\n";
-        ++itr;
-    }
-    outFile.close();
-}
-
 // Adjust p-values using Holm-Bonferroni correction
 std::vector<double> adjusted_holm(const std::vector<double>& p_values) {
     int m = p_values.size();
