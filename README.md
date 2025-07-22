@@ -172,23 +172,23 @@ Explanation of all options:
 | Column Name              | Description                                                                                   |
 |--------------------------|-----------------------------------------------------------------------------------------------|
 | **CHR**                  | Chromosome name where the variation occurs.                                                   |
-| **START_POS**            | Start position of the snarl within the chromosome.                                            |
-| **END_POS**              | End position of the snarl within the chromosome.                                              |
+| **START_POS**            | Start position of the snarl/variant within the chromosome.                                            |
+| **END_POS**              | End position of the snarl/variant within the chromosome.                                              |
 | **SNARL**                | Identifier for the variant, snarl name/id                                                     |
 | **PATH_LENGTHS**         | List of type of genetic variation, SNP == 1, INS & DEL will be referenced by a number >2 or 0, and CPX aka complex (ex : snarl nested) will be add minimum and maximum path size like Min/Max                                               |
 | **REF**                  | Show if at least one paths in this snarl is on the reference (0 : off reference, 1 : on reference) |
+| **P**                    | P-value calculated using linear regression (quantitative analysis).                           |
 | **P_FISHER**             | P-value calculated using Fisher's exact test (binary analysis).                               |
 | **P_CHI2**               | P-value calculated using the Chi-squared test (binary analysis).                              |
-| **P_ADJUSTED**           | P-value adjusted by BH correction.                                                            |
+| **P_ADJUSTED**           | P-value adjusted by BH correction. This is equivalent to the false discovery rate. For binary analysis, only the Chi-squared value is used. |
 | **HAPLOTYPE_COUNT**      | The total number of haplotypes that pass through this snarl.                                  |
 | **MIN_HAPLOTYPE_COUNT**  | Count of the samples going through the allele with the minimum number of samples. (binary analysis).          |
 | **ALLELE_COUNT**         | Total number of alleles present in this snarl. (binary analysis).                                              |
 | **INTER_GROUP**          | Sum of the minimum samples that pass through each path. (binary analysis).                    |
 | **AVERAGE**              | Average number of total samples passing through this snarl, divided by the number of paths. (binary analysis). |
-| **P**                    | P-value calculated using linear regression (quantitative analysis).                           |
 | **RSQUARED**             | R-squared value, proportion of variance explained by the model (quantitative analysis).       |
-| **SE**                   | Mean Standard error, estimatation coefficients of all paths in a snarl (quantitative analysis). |
-| **BETA**                 | Mean Beta coefficients, estimatation effect sizes of the prediction of all paths in a snarl (quantitative analysis). |
+| **SE**                   | Mean Standard error, estimation coefficients of all paths in a snarl (quantitative analysis). |
+| **BETA**                 | Mean Beta coefficients, estimation effect sizes of the prediction of all paths in a snarl (quantitative analysis). |
 | **ALLELE_PATHS**         | For each allele, how many samples take this allele. Comma separated list. (quantitative analysis). |
 | **GROUP_PATHS**          | Encodes the allele distribution across binary phenotype groups for each path in a snarl. Each entry is formatted as `X:Y,X':Y',...` where `X:Y` represents one path, with `X` being the count of samples in group 0 and `Y` in group 1. Commas separate multiple paths within the same snarl. Used in binary statistical analysis to assess associations between path presence and phenotype. (binary analysis). |
 
