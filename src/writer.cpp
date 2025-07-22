@@ -9,7 +9,7 @@ void write_binary_covar_header(std::ostream& outstream) {
 }
 
 void write_binary_header(std::ostream& outstream) {
-    outstream << "CHR\tSTART_POS\tEND_POS\tSNARL\tTYPE\tP_FISHER\tP_CHI2\tP_ADJUSTED\tHAPLOTYPE_COUNT\tMIN_ROW_INDEX\tNUM_COLUM\tINTER_GROUP\tAVERAGE\tGROUP_PATHS" << endl;
+    outstream << "CHR\tSTART_POS\tEND_POS\tSNARL\tTYPE\tP_FISHER\tP_CHI2\tP_ADJUSTED\tHAPLOTYPE_COUNT\tMIN_ROW_INDEX\tALLELE_COUNT\tINTER_GROUP\tAVERAGE\tGROUP_PATHS" << endl;
 }
 
 void write_quantitative_header(std::ostream& outstream) {
@@ -24,7 +24,7 @@ void write_eqtl_header(std::ostream& outstream) {
 
 void write_eqtl(std::ostream& outstream, const std::string& chr, const Snarl_data_t& snarl_data_s, const std::string& type_var_str,
                    const std::string& gene_name, const std::string& p_value, const std::string& p_value_adjusted, const std::string& r2,
-                   const std::string& beta, const std::string& se, size_t allele_number, const std::vector<size_t>& allele_paths) {
+                   const std::string& beta, const std::string& se, size_t haplotype_count, const std::vector<size_t>& allele_paths) {
     outstream << chr << "\t" 
               << snarl_data_s.start_positions << "\t" 
               << snarl_data_s.end_positions << "\t" 
@@ -36,14 +36,14 @@ void write_eqtl(std::ostream& outstream, const std::string& chr, const Snarl_dat
               << r2 << "\t" 
               << beta << "\t" 
               << se << "\t" 
-              << allele_number << "\t" 
+              << haplotype_count << "\t" 
               << stoat::vectorToString(allele_paths) << endl;
 
 }
 
 void write_binary_covar(std::ostream& outstream, const std::string& chr, const Snarl_data_t& snarl_data_s, const std::string& type_var_str,
                         const std::string& p_value, const std::string& p_value_adjusted, const std::string& r2,
-                        const std::string& beta, const std::string& se, size_t allele_number, const std::vector<size_t>& allele_paths) {
+                        const std::string& beta, const std::string& se, size_t haplotype_count, const std::vector<size_t>& allele_paths) {
     outstream << chr << "\t" 
               << snarl_data_s.start_positions << "\t" 
               << snarl_data_s.end_positions << "\t" 
@@ -54,13 +54,13 @@ void write_binary_covar(std::ostream& outstream, const std::string& chr, const S
               << r2 << "\t" 
               << beta << "\t" 
               << se << "\t" 
-              << allele_number << "\t" 
+              << haplotype_count << "\t" 
               << stoat::vectorToString(allele_paths) << endl;
 }
 
 void write_binary(std::ostream& outstream, const std::string& chr, const Snarl_data_t& snarl_data_s, const std::string& type_var_str,
                         const std::string& fastfisher_p_value, const std::string& chi2_p_value, const std::string& p_value_adjusted, 
-                        const std::string& allele_number_str, const std::string& min_row_index_str, const std::string& num_colum_str,
+                        const std::string& haplotype_count_str, const std::string& min_row_index_str, const std::string& allele_count_str,
                         const std::string& inter_group_str, const std::string& average_str, const std::string& group_paths) {
     outstream << chr << "\t" 
               << snarl_data_s.start_positions << "\t" 
@@ -70,9 +70,9 @@ void write_binary(std::ostream& outstream, const std::string& chr, const Snarl_d
               << fastfisher_p_value << "\t" 
               << chi2_p_value << "\t" 
               << p_value_adjusted << "\t" 
-              << allele_number_str << "\t" 
+              << haplotype_count_str << "\t" 
               << min_row_index_str << "\t" 
-              << num_colum_str << "\t" 
+              << allele_count_str << "\t" 
               << inter_group_str << "\t" 
               << average_str << "\t" 
               << group_paths << endl;
@@ -80,7 +80,7 @@ void write_binary(std::ostream& outstream, const std::string& chr, const Snarl_d
 
 void write_quantitative(std::ostream& outstream, const std::string& chr, const Snarl_data_t& snarl_data_s, const std::string& type_var_str,
                         const std::string& p_value, const std::string& p_value_adjusted, const std::string& r2,
-                        const std::string& beta, const std::string& se, size_t allele_number, const std::vector<size_t>& allele_paths) {
+                        const std::string& beta, const std::string& se, size_t haplotype_count, const std::vector<size_t>& allele_paths) {
     outstream << chr << "\t" 
               << snarl_data_s.start_positions << "\t" 
               << snarl_data_s.end_positions << "\t" 
@@ -91,7 +91,7 @@ void write_quantitative(std::ostream& outstream, const std::string& chr, const S
               << r2 << "\t" 
               << beta << "\t" 
               << se << "\t" 
-              << allele_number << "\t" 
+              << haplotype_count << "\t" 
               << stoat::vectorToString(allele_paths) << "\n";
 
 }
