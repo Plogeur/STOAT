@@ -16,6 +16,7 @@ RUN apt-get update && apt-get install -y \
     protobuf-compiler \
     libprotoc-dev \
     libprotobuf-dev \
+    valgrind \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /home
