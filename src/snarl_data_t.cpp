@@ -236,17 +236,19 @@ size_t Path::nreversed() const {
 
 // Function to calculate the type of variant
 // tuple<std::string, size_t, size_t, size_t>
-// seq_net, minimum_distance, maximun_distance, size_path, sum_path
+//minimum_distance, maximum_distance, the number of nodes in the path (including boundary nodes), sum_path
 std::vector<std::string> calcul_pos_type_variant(const std::vector<std::tuple<size_t, size_t, size_t, size_t, bool>>& list_length_paths) {
     std::vector<std::string> list_type_variant;
 
     for (const auto& tuple_info : list_length_paths) {
-        size_t path_length = std::get<2>(tuple_info);
-        size_t sum_path = std::get<3>(tuple_info);
+        size_t path_length = std::get<2>(tuple_info); // The number of nodes in the path
+        size_t sum_path = std::get<3>(tuple_info);    // The length of the path, unless it is a complex variant
         bool is_complex = std::get<4>(tuple_info);
 
         if (path_length >= 3) {
+            // If there is at least one node representing this allele
             if (is_complex) { // Case complex
+                // If this is a complex variant (includes nested variants), then return a range of possible lengths
                 std::string complex = std::to_string(std::get<0>(tuple_info)) + "/" + std::to_string(std::get<1>(tuple_info));
                 list_type_variant.push_back(complex);
             } else { // Case multiple nodes (ex : INS+SNP+...)
@@ -256,6 +258,7 @@ std::vector<std::string> calcul_pos_type_variant(const std::vector<std::tuple<si
         } else if (path_length == 2) { // case Deletion
             list_type_variant.push_back("0");
         } else { // Case path_lengths is empty or == 1
+            // This should probably never happen
             std::cerr << "path_lengths is empty" << std::endl;
         }
     }
@@ -562,6 +565,7 @@ std::tuple<std::vector<stoat_vcf::Path_traversal_t>, std::vector<std::string>> f
         }
 
         pretty_paths.push_back(ppath.print());
+        // The number of nodes (may be chains) in the path, including boundary nodes
         size_t size_path = ppath.size();
         seq_net_paths.push_back(std::make_tuple(minimum_distance, maximun_distance, size_path, sum_path, is_complex));
     }
