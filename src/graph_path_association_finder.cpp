@@ -66,7 +66,9 @@ void AssociationFinder::test_snarls() const {
                 string group_paths = "NA";
                 string fastfisher_p_value = "NA";
                 string chi2_p_value = "NA";
-                string variant_type = "UNKNOWN_TYPE";
+                std::stringstream ss;
+                ss << distance_index.minimum_length(snarl) << "/" << distance_index.maximum_length(snarl);
+                string variant_type = ss.str();
 
                 // Each set represents a partition of samples that takes the same path through the snarl's netgraph
                 std::vector<std::set<std::string>> sample_partitions = partitioner->partition_samples_in_snarl(graph, distance_index, snarl);
@@ -135,7 +137,6 @@ void AssociationFinder::test_snarls() const {
                     }
 
                     //Get a bunch of strings that get used for the output
-                    // TODO: This function should probably be part of the output function
                     group_paths = stoat_vcf::format_group_paths(genotype_associated, genotype_unassociated);
  
                     // Run the statistical test
