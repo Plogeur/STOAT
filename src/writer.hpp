@@ -15,7 +15,6 @@ namespace stoat_vcf{
     void write_binary_covar_header(std::ostream& outstream);
     void write_quantitative_header(std::ostream& outstream);
     void write_eqtl_header(std::ostream& outstream);
-    void write_bed_header(std::ostream& outstream);
 
     // Write lines
     void write_binary_covar(std::ostream& outstream, const std::string& chr, const Snarl_data_t& snarl_data_s, const std::string& type_var_str,
@@ -41,13 +40,6 @@ namespace stoat_vcf{
                      const bdsg::SnarlDistanceIndex& distance_index, const handlegraph::net_handle_t& snarl, 
                      const std::unordered_map<std::string, bool>& samples, const string& reference_name);
 
-    // Write a bed line formatted as CHR\tSTART_POS\tEND_POS\tNAME_SNARL\tSCORE(P-VALUE)
-    // The name is really the name of the snarl, and the score is a p-value rather than a score
-    // TODO: Put this in a wiki page or something
-    void write_bed(std::ostream& outstream, const handlegraph::PathPositionHandleGraph& graph, 
-                     const bdsg::SnarlDistanceIndex& distance_index, const handlegraph::net_handle_t& snarl, 
-                     const string& reference_name, const string& p_fisher, const string& p_chi2);
-    
 
 } //end namespace
 

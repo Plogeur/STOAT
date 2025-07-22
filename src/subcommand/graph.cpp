@@ -35,7 +35,7 @@ void print_help_graph() {
          << "  -S, --samples-file NAME            A file with the names of the sample with the trait of interest, one per line (instead of -s)" << endl
          << "output:" << endl
          << "  -o, --output DIR                   Output directory name [output]" << endl
-         << "  -O, --output-format NAME           The format of the output (bed / tsv / fasta) [tsv]" << endl
+         << "  -O, --output-format NAME           The format of the output (tsv / fasta) [tsv]" << endl
          << "                                     Output will be written to DIR/binary_table_graph.tsv or DIR/associated.fasta and DIR/unassociated.fasta" << endl
          << "options:" << endl
          << "  -t, --threads N                    Number of threads to use" << endl
@@ -150,7 +150,7 @@ int main_stoat_graph(int argc, char *argv[]) {
         std::cerr << "error [stoat graph]: stoat graph requires a distance index file" << endl;
         return 1; 
     }
-    if (output_format != "tsv" && output_format != "fasta" && output_format != "bed") {
+    if (output_format != "tsv" && output_format != "fasta") {
         cerr << "error [stoat graph]: invalid output format " << output_format << endl;
         return 1; 
     }
@@ -211,8 +211,6 @@ int main_stoat_graph(int argc, char *argv[]) {
         filename += "binary_table_graph.tsv";
     } else if (output_format == "fasta") {
         filename += "associated.fasta";
-    } else if (output_format == "bed") {
-        filename += "snarls.bed";
     }
     string associated_filename = output_dir + "/" + filename;
     string unassociated_filename;
@@ -266,8 +264,7 @@ int main_stoat_graph(int argc, char *argv[]) {
         out_unassociated.close();
     }
 
-    //TODO: This works because the tsv and bed outputs happen to put the adjusted p-value column in the same place but it isn't pretty
-    if (output_format == "tsv" || output_format == "bed") {
+    if (output_format == "tsv") {
         // Add the BH adjusted column
         stoat_vcf::add_BH_adjusted_column(associated_filename, output_dir, output_dir + "/top_variant_binary_graph.tsv", stoat::BINARY);
     }
