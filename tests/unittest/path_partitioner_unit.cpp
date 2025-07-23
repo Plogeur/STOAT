@@ -21,29 +21,28 @@ TEST_CASE( "Path association finder one node",
 
     bdsg::HashGraph graph;
         
-    handlegraph::handle_t n1 = graph.create_handle("GCAAACAGATT");
+    //handlegraph::handle_t n1 = graph.create_handle("GCAAACAGATT");
 
-    handlegraph::path_handle_t path = graph.create_path_handle("path");
-    graph.append_step(path, n1);
+    //handlegraph::path_handle_t path = graph.create_path_handle("path");
+    //graph.append_step(path, n1);
 
     // vg isn't included so the distance index can only be built from the command line
-    graph.serialize("test.hg");
-    int built = system("vg index -j test.dist test.hg"); 
+    //graph.serialize("../tests/graph_test/one_node.hg");
+    //int built = system("vg index -j ../tests/graph_test/one_node.dist ../tests/graph_test/one_node.hg"); 
     bdsg::SnarlDistanceIndex distance_index;
-    distance_index.deserialize("test.dist");
+    graph.deserialize("../tests/graph_test/one_node.hg");
+    distance_index.deserialize("../tests/graph_test/one_node.dist");
 
     bdsg::PathPositionOverlayHelper overlay_helper;
     auto path_graph = overlay_helper.apply(&graph);
 
-    std::set<sample_hap_t> all_samples ({stoat::get_sample_and_haplotype(*path_graph,path)});
+    std::set<sample_hap_t> all_samples ({stoat::get_sample_and_haplotype(*path_graph,graph.get_path_handle("path"))});
 
     SECTION("Make association finder") {
         // There isn't much to do with one node so just make sure we can run the constructor without crashing
         TestPathPartitioner af(all_samples);
     }
 
-    // Remember to clean up the files made here
-    int removed = system("rm -f test.hg test.dist"); 
 }
 TEST_CASE( "Path association finder nested bubbles",
           "[path_finder][bug]" ) {
@@ -61,53 +60,61 @@ TEST_CASE( "Path association finder nested bubbles",
 
     bdsg::HashGraph graph;
 
-    std::vector<std::string> sequences = { "C", "C", "C", "A", "T", "C", "A", "C", "A", "A"};
+    //std::vector<std::string> sequences = { "C", "C", "C", "A", "T", "C", "A", "C", "A", "A"};
 
-    std::vector<handlegraph::handle_t> nodes;
-    for (auto& seq : sequences) {
-        nodes.emplace_back(graph.create_handle(seq));
-    }
+    //std::vector<handlegraph::handle_t> nodes;
+    //for (auto& seq : sequences) {
+    //    nodes.emplace_back(graph.create_handle(seq));
+    //}
 
-    graph.create_edge(nodes[0], nodes[1]);
-    graph.create_edge(nodes[0], nodes[2]);
-    graph.create_edge(nodes[1], nodes[3]);
-    graph.create_edge(nodes[2], nodes[3]);
-    graph.create_edge(nodes[3], nodes[4]);
-    graph.create_edge(nodes[3], nodes[7]);
-    graph.create_edge(nodes[4], nodes[5]);
-    graph.create_edge(nodes[4], nodes[6]);
-    graph.create_edge(nodes[5], nodes[6]);
-    graph.create_edge(nodes[6], nodes[7]);
-    graph.create_edge(nodes[7], nodes[8]);
-    graph.create_edge(nodes[7], nodes[9]);
-    graph.create_edge(nodes[8], nodes[9]);
+    //graph.create_edge(nodes[0], nodes[1]);
+    //graph.create_edge(nodes[0], nodes[2]);
+    //graph.create_edge(nodes[1], nodes[3]);
+    //graph.create_edge(nodes[2], nodes[3]);
+    //graph.create_edge(nodes[3], nodes[4]);
+    //graph.create_edge(nodes[3], nodes[7]);
+    //graph.create_edge(nodes[4], nodes[5]);
+    //graph.create_edge(nodes[4], nodes[6]);
+    //graph.create_edge(nodes[5], nodes[6]);
+    //graph.create_edge(nodes[6], nodes[7]);
+    //graph.create_edge(nodes[7], nodes[8]);
+    //graph.create_edge(nodes[7], nodes[9]);
+    //graph.create_edge(nodes[8], nodes[9]);
 
-    // TODO one of these should really be the reference but idk how to add reference paths to a graph
-    std::vector<std::vector<std::size_t>> paths_seqs = { {0, 1, 3, 4, 5, 6, 7}, {0, 1, 3, 4, 6, 7}, {0, 2, 3, 7}, {0, 2, 3, 4, 6, 7}};
+    //// TODO one of these should really be the reference but idk how to add reference paths to a graph
+    //std::vector<std::vector<std::size_t>> paths_seqs = { {0, 1, 3, 4, 5, 6, 7}, {0, 1, 3, 4, 6, 7}, {0, 2, 3, 7}, {0, 2, 3, 4, 6, 7}};
+    //std::vector<handlegraph::path_handle_t> paths;
+
+    //for (int path_i = 0 ; path_i < paths_seqs.size() ; path_i++) {
+    //    paths.emplace_back(graph.create_path_handle("path"+std::to_string(path_i)));
+    //    for (size_t node_i : paths_seqs[path_i]) {
+    //        graph.append_step(paths.back(), nodes[node_i]);
+    //    }
+    //}
+
+    //// vg isn't included so the distance index can only be built from the command line
+    //graph.serialize("../tests/graph_test/simple_nested_chain.hg");
+    //int built = system("vg index -j ../tests/graph_test/simple_nested_chain.dist ../tests/graph_test/simple_nested_chain.hg"); 
+
+
+    graph.deserialize("../tests/graph_test/simple_nested_chain.hg");
+    bdsg::SnarlDistanceIndex distance_index;
+    distance_index.deserialize("../tests/graph_test/simple_nested_chain.dist");
+
     std::vector<handlegraph::path_handle_t> paths;
 
-    for (int path_i = 0 ; path_i < paths_seqs.size() ; path_i++) {
-        paths.emplace_back(graph.create_path_handle("path"+std::to_string(path_i)));
-        for (size_t node_i : paths_seqs[path_i]) {
-            graph.append_step(paths.back(), nodes[node_i]);
-        }
+    for (int path_i = 0 ; path_i < 4 ; path_i++) {
+        paths.emplace_back(graph.get_path_handle("path"+std::to_string(path_i)));
     }
-
-    // vg isn't included so the distance index can only be built from the command line
-    graph.serialize("test.hg");
-    int built = system("vg index -j test.dist test.hg"); 
-
-    bdsg::SnarlDistanceIndex distance_index;
-    distance_index.deserialize("test.dist");
 
     bdsg::PathPositionOverlayHelper overlay_helper;
     auto path_graph = overlay_helper.apply(&graph);
 
 
-    handlegraph::net_handle_t snarl1 = distance_index.get_parent(distance_index.get_parent(distance_index.get_net(nodes[1], &graph)));
-    handlegraph::net_handle_t snarl2 = distance_index.get_parent(distance_index.get_parent(distance_index.get_net(nodes[4], &graph)));
-    handlegraph::net_handle_t snarl3 = distance_index.get_parent(distance_index.get_parent(distance_index.get_net(nodes[5], &graph)));
-    handlegraph::net_handle_t snarl4 = distance_index.get_parent(distance_index.get_parent(distance_index.get_net(nodes[8], &graph)));
+    handlegraph::net_handle_t snarl1 = distance_index.get_parent(distance_index.get_parent(distance_index.get_node_net_handle(2)));
+    handlegraph::net_handle_t snarl2 = distance_index.get_parent(distance_index.get_parent(distance_index.get_node_net_handle(5)));
+    handlegraph::net_handle_t snarl3 = distance_index.get_parent(distance_index.get_parent(distance_index.get_node_net_handle(6)));
+    handlegraph::net_handle_t snarl4 = distance_index.get_parent(distance_index.get_parent(distance_index.get_node_net_handle(9)));
     handlegraph::net_handle_t root_chain = distance_index.get_parent(snarl1);
     handlegraph::net_handle_t nested_chain = distance_index.get_parent(snarl3);
 
@@ -181,8 +188,6 @@ TEST_CASE( "Path association finder nested bubbles",
         }
     }
 
-    // Remember to clean up the files made here
-    int removed = system("rm -f test.hg test.dist"); 
 }
 
 TEST_CASE( "Path association finder looping snarl",
@@ -199,46 +204,52 @@ TEST_CASE( "Path association finder looping snarl",
 
     bdsg::HashGraph graph;
 
-    std::vector<std::string> sequences = {"AAAAAAAAAA", "A", "G", "C", "T",  "AAAAAAAAA"};
+    //std::vector<std::string> sequences = {"AAAAAAAAAA", "A", "G", "C", "T",  "AAAAAAAAA"};
 
-    std::vector<handlegraph::handle_t> nodes;
-    for (auto& seq : sequences) {
-        nodes.emplace_back(graph.create_handle(seq));
-    }
+    //std::vector<handlegraph::handle_t> nodes;
+    //for (auto& seq : sequences) {
+    //    nodes.emplace_back(graph.create_handle(seq));
+    //}
 
-    graph.create_edge(nodes[0], nodes[1]);
-    graph.create_edge(nodes[1], nodes[2]);
-    graph.create_edge(nodes[1], nodes[3]);
-    graph.create_edge(nodes[2], nodes[3]);
-    graph.create_edge(nodes[3], nodes[4]);
-    graph.create_edge(nodes[4], nodes[1]);
-    graph.create_edge(nodes[4], nodes[5]);
+    //graph.create_edge(nodes[0], nodes[1]);
+    //graph.create_edge(nodes[1], nodes[2]);
+    //graph.create_edge(nodes[1], nodes[3]);
+    //graph.create_edge(nodes[2], nodes[3]);
+    //graph.create_edge(nodes[3], nodes[4]);
+    //graph.create_edge(nodes[4], nodes[1]);
+    //graph.create_edge(nodes[4], nodes[5]);
 
 
-    // Paths 0 and 2 take the insertion, but paths 1 and 2 take the duplication, and the deletion
-    std::vector<std::vector<std::size_t>> path_seqs = { {0, 1, 2, 3, 4, 5}, {0, 1, 3, 4, 1, 3, 4, 5}, {0, 1, 2, 3, 4, 1, 3, 4, 5}};
-    std::vector<handlegraph::path_handle_t> paths;
+    //// Paths 0 and 2 take the insertion, but paths 1 and 2 take the duplication, and the deletion
+    //std::vector<std::vector<std::size_t>> path_seqs = { {0, 1, 2, 3, 4, 5}, {0, 1, 3, 4, 1, 3, 4, 5}, {0, 1, 2, 3, 4, 1, 3, 4, 5}};
+    //std::vector<handlegraph::path_handle_t> paths;
 
-    for (int path_i = 0 ; path_i < path_seqs.size() ; path_i++) {
-        paths.emplace_back(graph.create_path_handle("path"+std::to_string(path_i)));
-        for (size_t node_i : path_seqs[path_i]) {
-            graph.append_step(paths.back(), nodes[node_i]);
-        }
-    }
+    //for (int path_i = 0 ; path_i < path_seqs.size() ; path_i++) {
+    //    paths.emplace_back(graph.create_path_handle("path"+std::to_string(path_i)));
+    //    for (size_t node_i : path_seqs[path_i]) {
+    //        graph.append_step(paths.back(), nodes[node_i]);
+    //    }
+    //}
 
-    // vg isn't included so the distance index can only be built from the command line
-    graph.serialize("test.hg");
-    int built = system("vg index -j test.dist test.hg"); 
+    //// vg isn't included so the distance index can only be built from the command line
+    //graph.serialize("../tests/graph_test/loop_with_indel.hg");
+    //int built = system("vg index -j ../tests/graph_test/loop_with_indel.dist ../tests/graph_test/loop_with_indel.hg"); 
 
     bdsg::SnarlDistanceIndex distance_index;
-    distance_index.deserialize("test.dist");
+    distance_index.deserialize("../tests/graph_test/loop_with_indel.dist");
 
+    graph.deserialize("../tests/graph_test/loop_with_indel.hg");
     bdsg::PathPositionOverlayHelper overlay_helper;
     auto path_graph = overlay_helper.apply(&graph);
 
+    std::vector<handlegraph::path_handle_t> paths;
+
+    for (int path_i = 0 ; path_i < 3 ; path_i++) {
+        paths.emplace_back(graph.get_path_handle("path"+std::to_string(path_i)));
+    }
 
     // Nested snarl
-    handlegraph::net_handle_t snarl2 = distance_index.get_parent(distance_index.get_parent(distance_index.get_net(nodes[2], &graph)));
+    handlegraph::net_handle_t snarl2 = distance_index.get_parent(distance_index.get_parent(distance_index.get_node_net_handle(3)));
     // Duplication snarl
     handlegraph::net_handle_t snarl1 = distance_index.get_parent(distance_index.get_parent(snarl2));
     handlegraph::net_handle_t root_chain = distance_index.get_parent(snarl1);
@@ -300,44 +311,50 @@ TEST_CASE( "Path association finder bubble with three nodes",
 
     bdsg::HashGraph graph;
 
-    std::vector<std::string> sequences = {"AAAAAAAAAA", "A", "G", "C",  "AAAAAAAAA"};
+    //std::vector<std::string> sequences = {"AAAAAAAAAA", "A", "G", "C",  "AAAAAAAAA"};
 
-    std::vector<handlegraph::handle_t> nodes;
-    for (auto& seq : sequences) {
-        nodes.emplace_back(graph.create_handle(seq));
-    }
+    //std::vector<handlegraph::handle_t> nodes;
+    //for (auto& seq : sequences) {
+    //    nodes.emplace_back(graph.create_handle(seq));
+    //}
 
-    graph.create_edge(nodes[0], nodes[1]);
-    graph.create_edge(nodes[0], nodes[2]);
-    graph.create_edge(nodes[0], nodes[3]);
-    graph.create_edge(nodes[1], nodes[4]);
-    graph.create_edge(nodes[2], nodes[4]);
-    graph.create_edge(nodes[3], nodes[4]);
+    //graph.create_edge(nodes[0], nodes[1]);
+    //graph.create_edge(nodes[0], nodes[2]);
+    //graph.create_edge(nodes[0], nodes[3]);
+    //graph.create_edge(nodes[1], nodes[4]);
+    //graph.create_edge(nodes[2], nodes[4]);
+    //graph.create_edge(nodes[3], nodes[4]);
 
 
-    // Two paths go through node 2, path 2 is associated
-    std::vector<std::vector<std::size_t>> path_seqs = { {0, 1, 4}, {0, 1, 4}, {0, 2, 4}, {0, 3, 4}};
-    std::vector<handlegraph::path_handle_t> paths;
+    //// Two paths go through node 2, path 2 is associated
+    //std::vector<std::vector<std::size_t>> path_seqs = { {0, 1, 4}, {0, 1, 4}, {0, 2, 4}, {0, 3, 4}};
+    //std::vector<handlegraph::path_handle_t> paths;
 
-    for (int path_i = 0 ; path_i < path_seqs.size() ; path_i++) {
-        paths.emplace_back(graph.create_path_handle("path"+std::to_string(path_i)));
-        for (size_t node_i : path_seqs[path_i]) {
-            graph.append_step(paths.back(), nodes[node_i]);
-        }
-    }
+    //for (int path_i = 0 ; path_i < path_seqs.size() ; path_i++) {
+    //    paths.emplace_back(graph.create_path_handle("path"+std::to_string(path_i)));
+    //    for (size_t node_i : path_seqs[path_i]) {
+    //        graph.append_step(paths.back(), nodes[node_i]);
+    //    }
+    //}
 
-    // vg isn't included so the distance index can only be built from the command line
-    graph.serialize("test.hg");
-    int built = system("vg index -j test.dist test.hg"); 
+    //// vg isn't included so the distance index can only be built from the command line
+    //graph.serialize("../tests/graph_test/simple_bubble.hg");
+    //int built = system("vg index -j ../tests/graph_test/simple_bubble.dist ../tests/graph_test/simple_bubble.hg"); 
 
+    graph.deserialize("../tests/graph_test/simple_bubble.hg");
     bdsg::SnarlDistanceIndex distance_index;
-    distance_index.deserialize("test.dist");
+    distance_index.deserialize("../tests/graph_test/simple_bubble.dist");
 
     bdsg::PathPositionOverlayHelper overlay_helper;
     auto path_graph = overlay_helper.apply(&graph);
 
 
-    handlegraph::net_handle_t snarl = distance_index.get_parent(distance_index.get_parent(distance_index.get_net(nodes[2], &graph)));
+    handlegraph::net_handle_t snarl = distance_index.get_parent(distance_index.get_parent(distance_index.get_node_net_handle(3)));
+    std::vector<handlegraph::path_handle_t> paths;
+
+    for (int path_i = 0 ; path_i < 4 ; path_i++) {
+        paths.emplace_back(graph.get_path_handle("path"+std::to_string(path_i)));
+    }
 
 
     // This file is meant to test the base association finder but since it is technically an interface with some implementations,
@@ -373,8 +390,5 @@ TEST_CASE( "Path association finder bubble with three nodes",
                      (set == std::set<stoat::sample_hap_t> ({stoat::get_sample_and_haplotype(*path_graph, paths[3])}))));
         }
     }
-
-    // Remember to clean up the files made here
-    int removed = system("rm -f test.hg test.dist"); 
 }
 }
