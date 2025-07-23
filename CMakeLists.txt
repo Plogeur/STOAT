@@ -193,9 +193,6 @@ add_executable(vcf_simu_test tests/system/vcf_simu_test.cpp)
 # add src target lib + Catch2 lib 
 target_link_libraries(vcf_simu_test PRIVATE 
     Boost::boost
-    bdsg
-    handlegraph
-    libsdsl.so.3
     ${HTSLIB_LIBRARIES})
 
 add_test(NAME VcfSimuTest COMMAND vcf_simu_test)
@@ -205,9 +202,6 @@ add_executable(graph_simu_test tests/system/graph_simu_test.cpp)
 # add src target lib + Catch2 lib 
 target_link_libraries(graph_simu_test PRIVATE 
     Boost::boost
-    bdsg
-    handlegraph
-    libsdsl.so.3
     ${HTSLIB_LIBRARIES})
 
 # Register with CTest
