@@ -22,13 +22,17 @@ It will release one days, It will !!!
 
 Manual installation : 
 
-- jansson 
-- libbdsg
-- htslib
-- eigen3
-- boost
-- Catch2 v3
-- vg (optional)
+STOAT's dependencies (`jansson`, `Protobuf`, `Boost`, `htslib`) can be installed by running
+
+```
+sudo apt-get install libjansson-dev protobuf-compiler libprotoc-dev libprotobuf-dev libboost-all-dev libhts-dev
+```
+
+- [vg](https://github.com/vgteam/vg) (optional)
+
+Note that STOAT uses [`libbdsg`](https://github.com/vgteam/libbdsg) and [`libvgio`](https://github.com/vgteam/libvgio), both of which depend on [`libhandlegraph`](https://github.com/vgteam/libhandlegraph).
+STOAT uses its own copies of each of these libraries but if any of them are already installed on your system, then problems may arise if the versions are incompatible.
+In general, the latest versions of all of these tools should work.
 
 ## Docker
 

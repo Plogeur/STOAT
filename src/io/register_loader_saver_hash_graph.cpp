@@ -11,7 +11,7 @@
 #include <bdsg/hash_graph.hpp>
 
 
-namespace pangwas {
+namespace stoat {
 
 namespace io {
 

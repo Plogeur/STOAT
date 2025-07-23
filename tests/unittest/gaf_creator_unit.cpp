@@ -1,4 +1,4 @@
-#include <catch2/catch_test_macros.hpp>
+#include <catch.hpp>
 #include "../../src/gaf_creator.hpp"
 #include <fstream>
 #include <sstream>

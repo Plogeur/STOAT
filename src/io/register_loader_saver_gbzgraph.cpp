@@ -10,7 +10,7 @@
 #include <gbwtgraph/gbz.h>
 #include "../gbzgraph.hpp"
 
-namespace pangwas {
+namespace stoat {
 
 namespace io {
 

@@ -381,7 +381,7 @@ void BinaryCovarSnarlAnalyzer::analyze_and_write_snarl(
         // Plot regression table
         if (table_threshold != -1 && stoat::isPValueSignificant(table_threshold, p_value)) {
             std::string variant_file_name = regression_dir + "/" + stoat_vcf::pairToString(snarl_data_s.snarl_ids) + ".tsv";
-            stoat::writeSignificantTableToTSV(df,stoat::stringToVector<std::string>(stoat_vcf::vectorPathToString(snarl_data_s.snarl_paths)), edge_matrix.sampleNames, variant_file_name);
+            writeSignificantTableToTSV(df,stoat::stringToVector<std::string>(stoat_vcf::vectorPathToString(snarl_data_s.snarl_paths)), edge_matrix.sampleNames, variant_file_name);
         }
         # pragma omp critical (outf) 
         {
@@ -414,7 +414,7 @@ void QuantitativeSnarlAnalyzer::analyze_and_write_snarl(
         
         if (table_threshold != -1 && stoat::isPValueSignificant(table_threshold, p_value)) {
             std::string variant_file_name = regression_dir + "/" + stoat_vcf::pairToString(snarl_data_s.snarl_ids) + ".tsv";
-            stoat::writeSignificantTableToTSV(df,stoat::stringToVector<std::string>(stoat_vcf::vectorPathToString(snarl_data_s.snarl_paths)), edge_matrix.sampleNames, variant_file_name);
+            writeSignificantTableToTSV(df,stoat::stringToVector<std::string>(stoat_vcf::vectorPathToString(snarl_data_s.snarl_paths)), edge_matrix.sampleNames, variant_file_name);
         }
         
         #pragma omp critical (outf)
@@ -478,13 +478,13 @@ void EQTLSnarlAnalyzer::analyze_and_write_snarl(
 
             if (table_threshold != -1 && stoat::isPValueSignificant(table_threshold, p_value)) {
                 std::string variant_file_name = regression_dir + "/" + stoat_vcf::pairToString(snarl_data_s.snarl_ids) + ".tsv";
-                stoat::writeSignificantTableToTSV(df,stoat::stringToVector<std::string>(stoat_vcf::vectorPathToString(snarl_data_s.snarl_paths)), edge_matrix.sampleNames, variant_file_name);
+                writeSignificantTableToTSV(df,stoat::stringToVector<std::string>(stoat_vcf::vectorPathToString(snarl_data_s.snarl_paths)), edge_matrix.sampleNames, variant_file_name);
             }
 
             #pragma omp critical (outf)
 
             {
-                stoat_vcf::write_eqtl(outf, chr, snarl_data_s, type_var_str, gene_name, p_value, "", r2, beta, se, allele_number, allele_paths);
+                write_eqtl(outf, chr, snarl_data_s, type_var_str, gene_name, p_value, "", r2, beta, se, allele_number, allele_paths);
             }
         }
     }

@@ -9,7 +9,7 @@
 
 #include "bdsg/packed_graph.hpp"
 
-namespace pangwas {
+namespace stoat {
 
 namespace io {
 

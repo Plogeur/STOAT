@@ -37,12 +37,6 @@ std::string set_precision_float_50(const boost::multiprecision::cpp_dec_float_50
 bool is_na(const std::string& s);
 double string_to_pvalue(const std::string& p1);
 
-void writeSignificantTableToTSV(
-    const std::vector<std::vector<double>>& table,
-    const std::vector<std::string>& list_snarl,
-    const std::vector<std::string>& list_samples,
-    const std::string& filename);
-
 bool isPValueSignificant(const double& pvalue_threshold, const std::string& pvalue_str);
 void retain_indices(std::vector<double>& vec, const std::unordered_set<size_t>& indices_to_keep);
 std::vector<double> adjusted_holm(const std::vector<double>& p_values);
@@ -102,6 +96,14 @@ std::vector<path_range_t> get_coordinates_of_snarl(const handlegraph::PathPositi
 /// This either looks for a particular sample, or a reference-sense path, or all paths
 std::vector<path_range_t> get_coordinates_of_snarl_helper(const handlegraph::PathPositionHandleGraph& graph, const bdsg::SnarlDistanceIndex& distance_index,
                                                           const handlegraph::net_handle_t& snarl, bool get_reference, std::string sample_name, bool get_all_paths);
+
+/// Given a path_range_t representing a path going through a snarl (with the start and end step_handle_t's representing the boundary nodes)
+/// Return the path name and range in the path of the snarl, not including the boundary nodes
+std::tuple<std::string, size_t, size_t> get_name_and_offsets_of_snarl_path_range(const handlegraph::PathPositionHandleGraph& graph, 
+                                                                                 const bdsg::SnarlDistanceIndex& distance_index, const path_range_t& range);
+
+/// Function to find snarl ID- the start and end ids as a pair of size_t's
+std::pair<size_t, size_t> find_snarl_id(const bdsg::SnarlDistanceIndex& stree, const handlegraph::net_handle_t& snarl);
 
 
 // equality within a given epsilon

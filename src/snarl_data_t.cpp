@@ -125,6 +125,11 @@ std::vector<stoat_vcf::Path_traversal_t> stringToVectorPath(std::string& input) 
 }
 
 // Add a snarl
+Snarl_data_t::Snarl_data_t(bdsg::net_handle_t snarl_, const handlegraph::PathPositionHandleGraph& graph, const bdsg::SnarlDistanceIndex& distance_index) : 
+    snarl(snarl_), start_positions(0), end_positions(0) {
+    snarl_ids = std::make_pair(distance_index.node_id(distance_index.get_node_from_sentinel(distance_index.get_bound(snarl, true, false))),
+                               distance_index.node_id(distance_index.get_node_from_sentinel(distance_index.get_bound(snarl, false, false))));
+}
 Snarl_data_t::Snarl_data_t(bdsg::net_handle_t snarl_,
     std::pair<size_t, size_t> snarl_ids_,
     std::vector<Path_traversal_t> snarl_paths_,
@@ -257,30 +262,6 @@ std::vector<std::string> calcul_pos_type_variant(const std::vector<std::tuple<si
     return list_type_variant;
 }
 
-std::pair<size_t, size_t> find_snarl_id(const bdsg::SnarlDistanceIndex& stree, const handlegraph::net_handle_t& snarl) {
-    
-    // Get start and end boundary nodes for the snarl
-    auto sstart = stree.get_bound(snarl, false, true);  // False for the left boundary
-    auto send = stree.get_bound(snarl, true, true);     // True for the right boundary
-
-    // Convert the sentinels into nodes
-    auto start_node = stree.get_node_from_sentinel(sstart);
-    auto end_node = stree.get_node_from_sentinel(send);
-
-    // Get the node IDs from bdsg::SnarlDistanceIndex
-    // handlegraph::nid_t
-    auto start_node_id = stree.node_id(start_node);
-    auto end_node_id = stree.node_id(end_node);
-
-    // Convert to size_t
-    size_t start_node_id_size_t = static_cast<size_t>(start_node_id);
-    size_t end_node_id_size_t = static_cast<size_t>(end_node_id);
-
-    // Construct the snarl ID
-    std::pair<size_t, size_t> snarl_id(end_node_id_size_t, start_node_id_size_t);
-
-    return snarl_id;  // Return the generated snarl ID as a std::string
-}
 
 std::tuple<std::unique_ptr<bdsg::SnarlDistanceIndex>, 
             std::unique_ptr<bdsg::PackedGraph>, 

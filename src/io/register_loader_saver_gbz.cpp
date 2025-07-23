@@ -8,7 +8,7 @@
 
 #include <gbwtgraph/gbz.h>
 
-namespace pangwas {
+namespace stoat {
 
 namespace io {
 

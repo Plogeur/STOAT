@@ -27,6 +27,7 @@
 #include "utils.hpp"
 
 using namespace std;
+using namespace stoat;
 
 using handlegraph::step_handle_t;
 using handlegraph::handle_t;
@@ -93,6 +94,7 @@ struct Path_traversal_t {
 struct Snarl_data_t {
     public:
         // Constructor definition
+        Snarl_data_t(bdsg::net_handle_t snarl_, const handlegraph::PathPositionHandleGraph& graph, const bdsg::SnarlDistanceIndex& distance_index);
         Snarl_data_t(net_handle_t snarl_,
                     std::pair<size_t, size_t> snarl_ids_,
                     std::vector<Path_traversal_t> snarl_paths_,
@@ -154,9 +156,6 @@ parse_graph_tree(const std::string& pg_file, const std::string& dist_file);
 // TODO : change sum_path to definition using the length of the path including in the boundary nodes
 // Matis ans : i don t know how to do it
 std::vector<std::string> calcul_pos_type_variant(const std::vector<std::tuple<size_t, size_t, size_t, size_t, bool>>& list_length_paths);
-
-// Function to find snarl ID
-std::pair<size_t, size_t> find_snarl_id(const bdsg::SnarlDistanceIndex& stree, const handlegraph::net_handle_t& snarl);
 
 // Function to follow edges
 void follow_edges(bdsg::SnarlDistanceIndex& stree,

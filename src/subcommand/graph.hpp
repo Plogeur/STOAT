@@ -1,5 +1,5 @@
 // This file is part of STOAT 0.0.1, copyright (C) 2024-2025 
-// Authors : Matis Alias-Bagarre, Xian-hui Chang & Jean Monlong.
+// Authors : Matis Alias-Bagarre, Xian Hui Chang & Jean Monlong.
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -14,20 +14,6 @@
 // You should have received a copy of the GNU General Public License
 // along with this program.  If not, see <http://www.gnu.org/licenses/>.
 
-#include <iostream>
-#include <string>
-#include <unordered_map>
-#include <chrono>
-#include <cstdlib>
-#include <getopt.h>
-#include <omp.h>
-
-#include "../snarl_data_t.hpp"
-#include "../snarl_analyzer.hpp"
-#include "../arg_parser.hpp"
-#include "../matrix.hpp"
-#include "../gaf_creator.hpp"
-#include "../post_processing.hpp"
 
 namespace stoat_command {
 

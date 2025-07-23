@@ -7,6 +7,7 @@
 #include "partitioner.hpp"
 
 using namespace std;
+using namespace stoat;
 
 namespace stoat_graph{
 
@@ -24,12 +25,14 @@ class AssociationFinder {
         const handlegraph::PathPositionHandleGraph& graph;
         const bdsg::SnarlDistanceIndex& distance_index; 
         const std::set<std::string>& samples_of_interest;
-        const std::string test_method;
-        const std::string output_format;
+        const std::string& reference_sample;
+        const std::string& test_method;
+        const std::string& output_format;
         size_t total_sample_count;
         size_t allele_size_limit;
         std::ostream& out_associated = std::cout;
         std::ostream& out_unassociated = std::cout;
+        bool check_distances;
 
 
         // object for finding partitions of samples in a snarl
@@ -46,8 +49,9 @@ class AssociationFinder {
                           const bdsg::SnarlDistanceIndex& distance_index, 
                           std::shared_ptr<Partitioner> partitioner,
                           const std::set<std::string>& samples_of_interest, 
-                          std::string test_method,
-                          size_t total_sample_count,
+                          const std::string& reference_sample,
+                          const std::string& test_method,
+                          const std::string& output_format,
                           size_t allele_size_limit,
                           std::ostream& out_associated,
                           std::ostream& out_unassociated);

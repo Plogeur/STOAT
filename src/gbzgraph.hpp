@@ -11,7 +11,7 @@
 
 #include <gbwtgraph/gbz.h>
 
-namespace pangwas {
+namespace stoat {
 
 /**
  * A PathHandleGraph that owns and is backed by a GBZ.

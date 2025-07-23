@@ -14,7 +14,7 @@
 #include "register_io.hpp"
 
 
-namespace pangwas {
+namespace stoat {
 
 namespace io {
 

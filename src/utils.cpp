@@ -68,36 +68,6 @@ bool isPValueSignificant(const double& pvalue_threshold, const std::string& pval
     return pvalue < pvalue_threshold;
 }
 
-// Write the table to a TSV file
-void writeSignificantTableToTSV(
-    const std::vector<std::vector<double>>& table,
-    const std::vector<std::string>& list_snarl,
-    const std::vector<std::string>& list_samples,
-    const std::string& filename) {
-
-    std::ofstream outFile(filename);
-
-    // Write header
-    outFile << "sample_name";
-    for (const auto& snarl_name : list_snarl) {
-        outFile << "\t" << snarl_name;
-    }
-    outFile << "\n";
-
-    // Write each sample's data
-    size_t itr = 0;
-    for (const auto& allele_vector : table) {
-        outFile << list_samples[itr];
-
-        for (size_t i=0; i < allele_vector.size(); ++i) {
-            outFile << "\t" << allele_vector[i];
-        }
-        outFile << "\n";
-        ++itr;
-    }
-    outFile.close();
-}
-
 // Adjust p-values using Holm-Bonferroni correction
 std::vector<double> adjusted_holm(const std::vector<double>& p_values) {
     int m = p_values.size();
@@ -371,5 +341,40 @@ std::vector<path_range_t> get_coordinates_of_snarl_helper(const handlegraph::Pat
     }
 
 }
+std::tuple<std::string, size_t, size_t> get_name_and_offsets_of_snarl_path_range(const handlegraph::PathPositionHandleGraph& graph, 
+                                                                                 const bdsg::SnarlDistanceIndex& distance_index, 
+                                                                                 const path_range_t& range) {
+    return {graph.get_path_name(graph.get_path_handle_of_step(range.start)),
+            graph.get_position_of_step(range.start) + distance_index.minimum_length(distance_index.get_net(graph.get_handle_of_step(range.start), &graph)),
+            graph.get_position_of_step(range.end)};
+}
+
+
+std::pair<size_t, size_t> find_snarl_id(const bdsg::SnarlDistanceIndex& stree, const handlegraph::net_handle_t& snarl) {
+
+    // Get start and end boundary nodes for the snarl
+    auto sstart = stree.get_bound(snarl, false, true);  // False for the left boundary
+    auto send = stree.get_bound(snarl, true, true);     // True for the right boundary
+
+    // Convert the sentinels into nodes
+    auto start_node = stree.get_node_from_sentinel(sstart);
+    auto end_node = stree.get_node_from_sentinel(send);
+
+    // Get the node IDs from bdsg::SnarlDistanceIndex
+    // handlegraph::nid_t
+    auto start_node_id = stree.node_id(start_node);
+    auto end_node_id = stree.node_id(end_node);
+
+    // Convert to size_t
+    size_t start_node_id_size_t = static_cast<size_t>(start_node_id);
+    size_t end_node_id_size_t = static_cast<size_t>(end_node_id);
+
+    // Construct the snarl ID
+    std::pair<size_t, size_t> snarl_id(end_node_id_size_t, start_node_id_size_t);
+
+    return snarl_id;  // Return the generated snarl ID as a std::string
+}
+
+
 
 } // end namespace stoat

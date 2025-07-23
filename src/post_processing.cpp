@@ -54,9 +54,9 @@ void add_BH_adjusted_column(
     size_t adjusted_col_index;
 
     if (phenotype_type ==stoat::BINARY || phenotype_type ==stoat::EQTL) {
-        adjusted_col_index = 6;
+        adjusted_col_index = 7;
     } else if (phenotype_type ==stoat::QUANTITATIVE) {
-        adjusted_col_index = 5;
+        adjusted_col_index = 6;
     }
 
     // Read the header line

@@ -4,28 +4,30 @@
 
 namespace stoat_vcf {
 
-void write_binary_covar_header(std::ofstream& outstream) {
-    outstream << "CHR\tPOS\tSNARL\tTYPE\tP\tP_ADJUSTED\tBETA\tSE\tALLELE_NUM\tALLELE_PATHS" << endl;
+void write_binary_covar_header(std::ostream& outstream) {
+    outstream << "CHR\tSTART_POS\tEND_POS\tSNARL\tTYPE\tP\tP_ADJUSTED\tBETA\tSE\tALLELE_NUM\tALLELE_PATHS" << endl;
 }
 
-void write_binary_header(std::ofstream& outstream) {
-    outstream << "CHR\tPOS\tSNARL\tTYPE\tP_FISHER\tP_CHI2\tP_ADJUSTED\tALLELE_NUM\tMIN_ROW_INDEX\tNUM_COLUM\tINTER_GROUP\tAVERAGE\tGROUP_PATHS" << endl;
+void write_binary_header(std::ostream& outstream) {
+    outstream << "CHR\tSTART_POS\tEND_POS\tSNARL\tTYPE\tP_FISHER\tP_CHI2\tP_ADJUSTED\tALLELE_NUM\tMIN_ROW_INDEX\tNUM_COLUM\tINTER_GROUP\tAVERAGE\tGROUP_PATHS" << endl;
 }
 
-void write_quantitative_header(std::ofstream& outstream) {
-    outstream << "CHR\tPOS\tSNARL\tTYPE\tP\tP_ADJUSTED\tRSQUARE\tBETA\tSE\tALLELE_NUM\tALLELE_PATHS" << endl;
+void write_quantitative_header(std::ostream& outstream) {
+    outstream << "CHR\tSTART_POS\tEND_POS\tSNARL\tTYPE\tP\tP_ADJUSTED\tRSQUARE\tBETA\tSE\tALLELE_NUM\tALLELE_PATHS" << endl;
 }
 
-void write_eqtl_header(std::ofstream& outstream) {
-    outstream <<  "CHR\tPOS\tSNARL\tTYPE\tGENE\tP\tP_ADJUSTED\tRSQUARE\tBETA\tSE\tALLELE_NUM\tALLELE_PATHS" << endl;
+void write_eqtl_header(std::ostream& outstream) {
+    outstream <<  "CHR\tSTART_POS\tEND_POS\tSNARL\tTYPE\tGENE\tP\tP_ADJUSTED\tRSQUARE\tBETA\tSE\tALLELE_NUM\tALLELE_PATHS" << endl;
 }
 
 
-void write_eqtl(std::ofstream& outstream, const std::string& chr, const Snarl_data_t& snarl_data_s, const std::string& type_var_str,
+
+void write_eqtl(std::ostream& outstream, const std::string& chr, const Snarl_data_t& snarl_data_s, const std::string& type_var_str,
                    const std::string& gene_name, const std::string& p_value, const std::string& p_value_adjusted, const std::string& r2,
                    const std::string& beta, const std::string& se, size_t allele_number, const std::vector<size_t>& allele_paths) {
     outstream << chr << "\t" 
               << snarl_data_s.start_positions << "\t" 
+              << snarl_data_s.end_positions << "\t" 
               << stoat_vcf::pairToString(snarl_data_s.snarl_ids) << "\t" 
               << type_var_str << "\t" 
               << gene_name << "\t" 
@@ -39,11 +41,12 @@ void write_eqtl(std::ofstream& outstream, const std::string& chr, const Snarl_da
 
 }
 
-void write_binary_covar(std::ofstream& outstream, const std::string& chr, const Snarl_data_t& snarl_data_s, const std::string& type_var_str,
+void write_binary_covar(std::ostream& outstream, const std::string& chr, const Snarl_data_t& snarl_data_s, const std::string& type_var_str,
                         const std::string& p_value, const std::string& p_value_adjusted, const std::string& r2,
                         const std::string& beta, const std::string& se, size_t allele_number, const std::vector<size_t>& allele_paths) {
     outstream << chr << "\t" 
               << snarl_data_s.start_positions << "\t" 
+              << snarl_data_s.end_positions << "\t" 
               << stoat_vcf::pairToString(snarl_data_s.snarl_ids) << "\t" 
               << type_var_str << "\t" 
               << p_value << "\t" 
@@ -55,12 +58,13 @@ void write_binary_covar(std::ofstream& outstream, const std::string& chr, const 
               << stoat::vectorToString(allele_paths) << endl;
 }
 
-void write_binary(std::ofstream& outstream, const std::string& chr, const Snarl_data_t& snarl_data_s, const std::string& type_var_str,
+void write_binary(std::ostream& outstream, const std::string& chr, const Snarl_data_t& snarl_data_s, const std::string& type_var_str,
                         const std::string& fastfisher_p_value, const std::string& chi2_p_value, const std::string& p_value_adjusted, 
                         const std::string& allele_number_str, const std::string& min_row_index_str, const std::string& num_colum_str,
                         const std::string& inter_group_str, const std::string& average_str, const std::string& group_paths) {
     outstream << chr << "\t" 
               << snarl_data_s.start_positions << "\t" 
+              << snarl_data_s.end_positions << "\t" 
               << stoat_vcf::pairToString(snarl_data_s.snarl_ids) << "\t" 
               << type_var_str << "\t" 
               << fastfisher_p_value << "\t" 
@@ -74,11 +78,12 @@ void write_binary(std::ofstream& outstream, const std::string& chr, const Snarl_
               << group_paths << endl;
 }
 
-void write_quantitative(std::ofstream& outstream, const std::string& chr, const Snarl_data_t& snarl_data_s, const std::string& type_var_str,
+void write_quantitative(std::ostream& outstream, const std::string& chr, const Snarl_data_t& snarl_data_s, const std::string& type_var_str,
                         const std::string& p_value, const std::string& p_value_adjusted, const std::string& r2,
                         const std::string& beta, const std::string& se, size_t allele_number, const std::vector<size_t>& allele_paths) {
     outstream << chr << "\t" 
               << snarl_data_s.start_positions << "\t" 
+              << snarl_data_s.end_positions << "\t" 
               << stoat_vcf::pairToString(snarl_data_s.snarl_ids) << "\t" 
               << type_var_str << "\t" 
               << p_value  << "\t" 
@@ -91,8 +96,9 @@ void write_quantitative(std::ofstream& outstream, const std::string& chr, const 
 
 }
 
-void write_fasta(std::ofstream& outstream, const handlegraph::PathPositionHandleGraph& graph, const bdsg::SnarlDistanceIndex& distance_index,
-                        const handlegraph::net_handle_t& snarl, const std::unordered_map<std::string, bool>& samples, const string& reference_name) {
+void write_fasta(std::ostream& outstream_associated, std::ostream& outstream_unassociated, const handlegraph::PathPositionHandleGraph& graph,
+                 const bdsg::SnarlDistanceIndex& distance_index, const handlegraph::net_handle_t& snarl, 
+                 const std::unordered_map<std::string, bool>& samples, const string& reference_name) {
     
     // A handle_t of the start bound facing in
     handlegraph::handle_t start_handle = distance_index.get_handle(distance_index.get_node_from_sentinel(distance_index.get_bound(snarl, false, true)), &graph);
@@ -111,7 +117,7 @@ void write_fasta(std::ofstream& outstream, const handlegraph::PathPositionHandle
     std::string ref_coordinates  = "NOREF:?:?";
     int start_offset = std::numeric_limits<int>::max();
     int end_offset = 0;
-    //Only get the coordinates for one path
+    //Only get the coordinates for one path, but the max range through the snarl, in case it loops
     bool first = true;
     handlegraph::path_handle_t ref_path;
     for (const stoat::path_range_t& ref_range : ref_ranges){
@@ -121,11 +127,13 @@ void write_fasta(std::ofstream& outstream, const handlegraph::PathPositionHandle
         } else if (graph.get_path_handle_of_step(ref_range.start) != ref_path) {
             continue;
         }
-        ref_coordinates = graph.get_path_name(graph.get_path_handle_of_step(ref_range.start));
+
+        // Get the path name, start offset (of the end of the snarl boundary), and end offset from the range
+        std::tuple<std::string, size_t, size_t> range_coordinates = get_name_and_offsets_of_snarl_path_range(graph, distance_index, ref_range);
+        ref_coordinates = std::get<0>(range_coordinates);
         start_offset = std::min(start_offset,
-                                (int)(graph.get_position_of_step(ref_range.start) +
-                                     distance_index.minimum_length(distance_index.get_net(graph.get_handle_of_step(ref_range.start), &graph))));
-        end_offset = std::max(end_offset, (int)graph.get_position_of_step(ref_range.end));
+                                (int)std::get<1>(range_coordinates));
+        end_offset = std::max(end_offset, (int)std::get<2>(range_coordinates));
     }
     
     if (ref_ranges.size() != 0) {
@@ -136,15 +144,18 @@ void write_fasta(std::ofstream& outstream, const handlegraph::PathPositionHandle
     std::vector<stoat::path_range_t> path_ranges = stoat::get_coordinates_of_snarl(graph, distance_index, snarl, false, "", true);
     for (const stoat::path_range_t& path_range : path_ranges) {
         handlegraph::path_handle_t path = graph.get_path_handle_of_step(path_range.start);
-        if (samples.empty() || samples.count(stoat::get_sample_name_from_path(graph, path)) != 0) {
+        string sample_name = stoat::get_sample_name_from_path(graph, path);
+        if (samples.empty() || samples.count(sample_name) != 0) {
             //If we aren't checking samples, or if this is a sample we want
+            ostream& outstream = samples.at(sample_name) ? outstream_associated : outstream_unassociated;
     
+            std::tuple<std::string, size_t, size_t> range_coordinates = get_name_and_offsets_of_snarl_path_range(graph, distance_index, path_range);
             // Print the header
             outstream << ">" << snarl_name << "|"
                 << ref_coordinates << "|"
-                << graph.get_path_name(path) << ":"
-                << (graph.get_position_of_step(path_range.start) + distance_index.minimum_length(distance_index.get_net(graph.get_handle_of_step(path_range.start), &graph))) << "-"    
-                << graph.get_position_of_step(path_range.end) << endl;
+                << std::get<0>(range_coordinates) << ":"
+                << std::get<1>(range_coordinates) << "-"    
+                << std::get<2>(range_coordinates) << endl;
     
             // Now print the sequence in 80bp chunks.
             // Keep a buffer to print 80 bp at a time
@@ -176,6 +187,36 @@ void write_fasta(std::ofstream& outstream, const handlegraph::PathPositionHandle
             }
         }
     }
+}
+
+// Write the table to a TSV file
+void writeSignificantTableToTSV(
+    const std::vector<std::vector<double>>& table,
+    const std::vector<std::string>& list_snarl,
+    const std::vector<std::string>& list_samples,
+    const std::string& filename) {
+
+    std::ofstream outFile(filename);
+
+    // Write header
+    outFile << "sample_name";
+    for (const auto& snarl_name : list_snarl) {
+        outFile << "\t" << snarl_name;
+    }
+    outFile << "\n";
+
+    // Write each sample's data
+    size_t itr = 0;
+    for (const auto& allele_vector : table) {
+        outFile << list_samples[itr];
+
+        for (size_t i=0; i < allele_vector.size(); ++i) {
+            outFile << "\t" << allele_vector[i];
+        }
+        outFile << "\n";
+        ++itr;
+    }
+    outFile.close();
 }
 
 }//end namespace

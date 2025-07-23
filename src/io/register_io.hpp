@@ -1,5 +1,5 @@
-#ifndef PANGWAS_IO_REGISTER_IO_HPP_INCLUDED
-#define PANGWAS_IO_REGISTER_IO_HPP_INCLUDED
+#ifndef STOAT_IO_REGISTER_IO_HPP_INCLUDED
+#define STOAT_IO_REGISTER_IO_HPP_INCLUDED
 
 /**
  * \file register_io.hpp
@@ -7,7 +7,7 @@
  * Copied from vg
  */
 
-namespace pangwas {
+namespace stoat {
 
 namespace io {
 
