@@ -28,7 +28,11 @@ ADD https://api.github.com/repos/Plogeur/STOAT/git/refs/heads/main version.json
 # Clone the STOAT C++ repository and set it as the working directory
 RUN git clone --recursive https://github.com/Plogeur/STOAT \
     && cd STOAT \ 
+    && git checkout stoat_cxx \
+    && git submodule update --init --recursive \
     && mkdir build \
     && cd build \
     && cmake .. \
     && make -j$(nproc)
+
+ENV PATH=$PATH:/home/STOAT/bin/
