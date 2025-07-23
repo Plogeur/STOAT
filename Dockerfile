@@ -20,6 +20,11 @@ RUN apt-get update && apt-get install -y \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /home
+
+# Make sure that this gets rerun if the repo is updated
+# From https://stackoverflow.com/questions/36996046/how-to-prevent-dockerfile-caching-git-clone
+ADD https://api.github.com/repos/Plogeur/STOAT/git/refs/heads/main version.json
+
 # Clone the STOAT C++ repository and set it as the working directory
 RUN git clone --recursive https://github.com/Plogeur/STOAT \
     && cd STOAT \ 
