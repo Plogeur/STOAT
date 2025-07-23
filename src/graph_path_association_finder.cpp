@@ -182,6 +182,7 @@ void AssociationFinder::test_snarls() const {
                                 stoat_vcf::write_fasta(out_associated, out_unassociated, graph, distance_index, snarl, samples_to_write, reference_sample);
                             }
                         }
+                    }
                 }
 
                 if (test_nested_snarls) { 
