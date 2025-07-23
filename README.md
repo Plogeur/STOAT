@@ -22,10 +22,10 @@ It will release one days, It will !!!
 
 Manual installation : 
 
-STOAT's dependencies (`jansson`, `Protobuf`, `Boost`, `htslib`) can be installed by running
+STOAT's dependencies (`jansson`, `Protobuf`, `Boost`, `htslib`, `valgrind`) can be installed by running
 
 ```
-sudo apt-get install libjansson-dev protobuf-compiler libprotoc-dev libprotobuf-dev libboost-all-dev libhts-dev
+sudo apt-get install build-essential cmake pkg-config libjansson-dev protobuf-compiler libprotoc-dev libprotobuf-dev libboost-all-dev libhts-dev valgrind
 ```
 
 - [vg](https://github.com/vgteam/vg) (optional)
@@ -44,14 +44,33 @@ In general, the latest versions of all of these tools should work.
 
 ```bash
 git clone --recursive --branch stoat_cxx https://github.com/Plogeur/STOAT.git
-cd stoat_cxx
+cd STOAT
 
 mkdir build && cd build
 cmake .. && make -j 4
+```
 
-# ./stoat
-# ./unit_tests
-```  
+This will create a binary file `stoat` in `STOAT/bin`. 
+It can be run from the main `STOAT` directory with:
+
+```
+./bin/stoat
+```
+
+The `bin` directory can be added to your `PATH` variable to allow `stoat` to be run from any directory.
+From the `STOAT` directory, run:
+
+```
+echo 'export PATH="${PATH}:'"$(pwd)"'/bin"' >>~/.bashrc
+```
+
+Then close your terminal and open it again, or run
+
+```
+source ~/.bashrc
+```
+
+
 
 STOAT is a specialized tool developed for conducting Genome-Wide Association Studies (GWAS) with a unique focus on snarl structures within pangenome graphs. Unlike traditional GWAS tools that analyze linear genome variants, STOAT processes VCF files to extract and analyze snarl regions—complex structural variations that capture nested and overlapping variant patterns within a pangenome. This approach allows for a more nuanced understanding of genetic variations in diverse populations and complex traits.
 
