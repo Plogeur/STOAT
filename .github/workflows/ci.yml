@@ -43,4 +43,4 @@ jobs:
         run: |
           mkdir build && cd build
           cmake .. && make -j$(nproc)
-          ./unit_tests
+          ../bin/unit_tests
