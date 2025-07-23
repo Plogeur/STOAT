@@ -99,7 +99,8 @@ struct Snarl_data_t {
                     std::pair<size_t, size_t> snarl_ids_,
                     std::vector<Path_traversal_t> snarl_paths_,
                     const size_t start_positions_, const size_t end_positions_,
-                    std::vector<std::string> type_variants_);  // Assuming path_nodes correspond to type_variants
+                    std::vector<std::string> type_variants_,
+                    size_t depth);  // Assuming path_nodes correspond to type_variants
 
         std::vector<std::string> type_variants;
         std::vector<Path_traversal_t> snarl_paths;
@@ -107,6 +108,7 @@ struct Snarl_data_t {
         std::pair<size_t, size_t> snarl_ids;
         size_t start_positions;
         size_t end_positions;
+        size_t depth;
 };
 
 // Converter

@@ -229,7 +229,7 @@ std::unordered_map<std::string, std::vector<Qtl_data>> parse_qtl_gene_file(
 // Function to parse the snarl path file
 std::unordered_map<std::string, std::vector<Snarl_data_t>> parse_snarl_path(const std::string& file_path) {
 
-    std::string line, chr, snarl, snarl_id, start_pos_str, end_pos_str, path_list, type_var;
+    std::string line, chr, snarl, snarl_id, start_pos_str, end_pos_str, path_list, type_var, ref, depth;
     unordered_map<string, std::vector<Snarl_data_t>> chr_snarl_matrix;
     std::vector<Snarl_data_t> snarl_paths;
     std::ifstream file(file_path);
@@ -249,7 +249,7 @@ std::unordered_map<std::string, std::vector<Snarl_data_t>> parse_snarl_path(cons
     }
 
     // Expected header
-    std::vector<std::string> expected_header = {"CHR", "START_POS", "END_POS", "SNARL", "PATHS", "TYPE", "REF"};
+    std::vector<std::string> expected_header = {"CHR", "START_POS", "END_POS", "SNARL", "PATHS", "TYPE", "REF", "DEPTH"};
 
     if (header_fields != expected_header) {
         // Build detailed error message
@@ -279,6 +279,8 @@ std::unordered_map<std::string, std::vector<Snarl_data_t>> parse_snarl_path(cons
         std::getline(ss, snarl_id, '\t');   // snarl_id column
         std::getline(ss, path_list, '\t'); // paths column
         std::getline(ss, type_var, '\t');   // type_var column
+        std::getline(ss, ref, '\t');   // ref column
+        std::getline(ss, depth, '\t');   // depth column
 
         std::istringstream path_stream(path_list);
         std::istringstream type_stream(type_var);
@@ -311,7 +313,7 @@ std::unordered_map<std::string, std::vector<Snarl_data_t>> parse_snarl_path(cons
 
         std::pair<size_t, size_t> snarl_ids = stringToPair(snarl_id);
         std::vector<stoat_vcf::Path_traversal_t> paths = stringToVectorPath(paths_str);
-        Snarl_data_t snarl_path(handlegraph::as_net_handle(std::stoi(snarl)), snarl_ids, paths, start_pos, end_pos, type);
+        Snarl_data_t snarl_path(handlegraph::as_net_handle(std::stoi(snarl)), snarl_ids, paths, start_pos, end_pos, type, std::stoi(depth));
         snarl_paths.push_back(snarl_path);
     }
     // last chr adding

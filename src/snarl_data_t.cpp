@@ -126,7 +126,7 @@ std::vector<stoat_vcf::Path_traversal_t> stringToVectorPath(std::string& input) 
 
 // Add a snarl
 Snarl_data_t::Snarl_data_t(bdsg::net_handle_t snarl_, const handlegraph::PathPositionHandleGraph& graph, const bdsg::SnarlDistanceIndex& distance_index) : 
-    snarl(snarl_), start_positions(0), end_positions(0) {
+    snarl(snarl_), start_positions(0), end_positions(0), depth(distance_index.get_depth(snarl_)) {
     snarl_ids = std::make_pair(distance_index.node_id(distance_index.get_node_from_sentinel(distance_index.get_bound(snarl, true, false))),
                                distance_index.node_id(distance_index.get_node_from_sentinel(distance_index.get_bound(snarl, false, false))));
 }
@@ -134,13 +134,15 @@ Snarl_data_t::Snarl_data_t(bdsg::net_handle_t snarl_,
     std::pair<size_t, size_t> snarl_ids_,
     std::vector<Path_traversal_t> snarl_paths_,
     const size_t start_positions_, const size_t end_positions_,
-    std::vector<std::string> type_variants_) :
+    std::vector<std::string> type_variants_,
+    size_t depth) :
     snarl(snarl_),
     snarl_ids(snarl_ids_),
     snarl_paths(std::move(snarl_paths_)),
     start_positions(start_positions_),
     end_positions(end_positions_),
-    type_variants(std::move(type_variants_)) {}
+    type_variants(std::move(type_variants_)),
+    depth(depth) {}
 
 Path::Path() {}
 
@@ -236,17 +238,19 @@ size_t Path::nreversed() const {
 
 // Function to calculate the type of variant
 // tuple<std::string, size_t, size_t, size_t>
-// seq_net, minimum_distance, maximun_distance, size_path, sum_path
+//minimum_distance, maximum_distance, the number of nodes in the path (including boundary nodes), sum_path
 std::vector<std::string> calcul_pos_type_variant(const std::vector<std::tuple<size_t, size_t, size_t, size_t, bool>>& list_length_paths) {
     std::vector<std::string> list_type_variant;
 
     for (const auto& tuple_info : list_length_paths) {
-        size_t path_length = std::get<2>(tuple_info);
-        size_t sum_path = std::get<3>(tuple_info);
+        size_t path_length = std::get<2>(tuple_info); // The number of nodes in the path
+        size_t sum_path = std::get<3>(tuple_info);    // The length of the path, unless it is a complex variant
         bool is_complex = std::get<4>(tuple_info);
 
         if (path_length >= 3) {
+            // If there is at least one node representing this allele
             if (is_complex) { // Case complex
+                // If this is a complex variant (includes nested variants), then return a range of possible lengths
                 std::string complex = std::to_string(std::get<0>(tuple_info)) + "/" + std::to_string(std::get<1>(tuple_info));
                 list_type_variant.push_back(complex);
             } else { // Case multiple nodes (ex : INS+SNP+...)
@@ -256,6 +260,7 @@ std::vector<std::string> calcul_pos_type_variant(const std::vector<std::tuple<si
         } else if (path_length == 2) { // case Deletion
             list_type_variant.push_back("0");
         } else { // Case path_lengths is empty or == 1
+            // This should probably never happen
             std::cerr << "path_lengths is empty" << std::endl;
         }
     }
@@ -562,6 +567,7 @@ std::tuple<std::vector<stoat_vcf::Path_traversal_t>, std::vector<std::string>> f
         }
 
         pretty_paths.push_back(ppath.print());
+        // The number of nodes (may be chains) in the path, including boundary nodes
         size_t size_path = ppath.size();
         seq_net_paths.push_back(std::make_tuple(minimum_distance, maximun_distance, size_path, sum_path, is_complex));
     }
@@ -584,7 +590,7 @@ std::unordered_map<std::string, std::vector<Snarl_data_t>> loop_over_snarls_writ
 
     ofstream out_snarl(output_file);
     if (bool_return) {
-        out_snarl << "CHR\tSTART_POS\tEND_POS\tSNARL\tPATHS\tTYPE\tREF\n";
+        out_snarl << "CHR\tSTART_POS\tEND_POS\tSNARL\tPATHS\tTYPE\tREF\tDEPTH\n";
     }
 
     ofstream out_fail(output_snarl_not_analyse);
@@ -659,10 +665,12 @@ std::unordered_map<std::string, std::vector<Snarl_data_t>> loop_over_snarls_writ
             paths_number_analysis += pretty_paths_size;
             std::string str_reference = std::get<4>(snarl_path_pos) == true ? "1" : "0"; // 1 : on reference, 0 : out reference
 
+            size_t depth = stree.get_depth(snarl);
+
             if (bool_return) {
                 out_snarl << chr << "\t" << strat_pos << "\t" << end_pos
                     << "\t" << handlegraph::as_integer(snarl) << "\t" << snarl_id_str << "\t" << vectorPathToString(pretty_paths)
-                    << "\t" << stoat::vectorToString(type_variants) << "\t" << str_reference << "\n";
+                    << "\t" << stoat::vectorToString(type_variants) << "\t" << str_reference << "\t" << depth << "\n";
             } else {
                 // case new chr
                 if (chr != save_chr && !save_chr.empty()) {
@@ -670,7 +678,7 @@ std::unordered_map<std::string, std::vector<Snarl_data_t>> loop_over_snarls_writ
                     snarl_paths.clear();
                 }
                 save_chr = chr;
-                Snarl_data_t snarl_path(snarl, snarl_id, pretty_paths, strat_pos, end_pos, type_variants);
+                Snarl_data_t snarl_path(snarl, snarl_id, pretty_paths, strat_pos, end_pos, type_variants, depth);
                 snarl_paths.push_back(snarl_path);
             }
         }

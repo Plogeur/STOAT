@@ -10,6 +10,9 @@ set(CMAKE_OSX_DEPLOYMENT_TARGET "12.7") # IOS fix
 
 set(deps_DIR "${CMAKE_CURRENT_SOURCE_DIR}/deps")
 
+# Put the executables in a bin directory
+set(EXECUTABLE_OUTPUT_PATH ${CMAKE_CURRENT_SOURCE_DIR}/bin)
+
 option(OPTIMIZE "Build with optimization [default: on]" ON)
 # This is the same flag used by libbdsg and libvgio to specify which version of libhandlegraph should be used
 OPTION(USE_INSTALLED_LIBHANDLEGRAPH "Use the version of libhandlegraph installed on the system, if it exists, instead of the bundled version [default: off]" OFF)

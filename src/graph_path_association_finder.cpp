@@ -64,14 +64,12 @@ void AssociationFinder::test_snarls() const {
 
                 // the strings we are going to output
                 string group_paths = "NA";
-                string allele_number_str = "NA";
-                string min_row_index_str = "NA";
-                string numb_colum_str = "NA";
-                string inter_group_str = "NA";
-                string average_str = "NA";
                 string fastfisher_p_value = "NA";
                 string chi2_p_value = "NA";
-                string variant_type = "UNKNOWN_TYPE";
+                // Get the path lengths, except since we don't know the lengths of the alleles, it's just the min and max length of the snarl
+                std::stringstream ss;
+                ss << distance_index.minimum_length(snarl) << "/" << distance_index.maximum_length(snarl);
+                string path_lengths = ss.str();
 
                 // Each set represents a partition of samples that takes the same path through the snarl's netgraph
                 std::vector<std::set<std::string>> sample_partitions = partitioner->partition_samples_in_snarl(graph, distance_index, snarl);
@@ -141,9 +139,9 @@ void AssociationFinder::test_snarls() const {
 
                         //Get a bunch of strings that get used for the output
                         // TODO: This function should probably be part of the output function
-                        std::tie(group_paths, 
-                            allele_number_str, min_row_index_str, 
-                            numb_colum_str, inter_group_str, average_str) = stoat_vcf::binary_stat_test(genotype_associated, genotype_unassociated);
+
+                        //Get a bunch of strings that get used for the output
+                        group_paths = stoat_vcf::format_group_paths(genotype_associated, genotype_unassociated);
  
                         // Run the statistical test
                         std::tie(chi2_p_value, fastfisher_p_value) = fisher_chi2_tester.fisher_khi2(genotype_associated, genotype_unassociated);
@@ -157,7 +155,7 @@ void AssociationFinder::test_snarls() const {
                         }
 
                     }
-                    
+                
                     if (write_output) {
                         if (output_format == "tsv") {
 
@@ -175,8 +173,7 @@ void AssociationFinder::test_snarls() const {
                             # pragma omp critical (out_associated) 
                             {
                                 // Leave adjusted p-value blank, to be filled in later
-                                stoat_vcf::write_binary(out_associated, chr, snarl_data_s, variant_type, fastfisher_p_value, chi2_p_value, "", allele_number_str, min_row_index_str,
-                                             numb_colum_str, inter_group_str, average_str, group_paths);
+                                stoat_vcf::write_binary(out_associated, chr, snarl_data_s, path_lengths, fastfisher_p_value, chi2_p_value, "",  group_paths);
                             }
                         } else if (output_format == "fasta") {
 

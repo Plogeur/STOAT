@@ -4,27 +4,79 @@
 
 namespace stoat_vcf {
 
-void write_binary_covar_header(std::ostream& outstream) {
-    outstream << "CHR\tSTART_POS\tEND_POS\tSNARL\tTYPE\tP\tP_ADJUSTED\tBETA\tSE\tALLELE_NUM\tALLELE_PATHS" << endl;
-}
 
 void write_binary_header(std::ostream& outstream) {
-    outstream << "CHR\tSTART_POS\tEND_POS\tSNARL\tTYPE\tP_FISHER\tP_CHI2\tP_ADJUSTED\tALLELE_NUM\tMIN_ROW_INDEX\tNUM_COLUM\tINTER_GROUP\tAVERAGE\tGROUP_PATHS" << endl;
+    outstream << "#CHR\tSTART_POS\tEND_POS\tSNARL\tPATH_LENGTHS\tP_FISHER\tP_CHI2\tP_ADJUSTED\tGROUP_PATHS\tDEPTH" << endl;
+}
+
+void write_binary_covar_header(std::ostream& outstream) {
+    outstream << "#CHR\tSTART_POS\tEND_POS\tSNARL\tPATH_LENGTHS\tP\tP_ADJUSTED\tBETA\tSE\tALLELE_PATHS\tDEPTH" << endl;
 }
 
 void write_quantitative_header(std::ostream& outstream) {
-    outstream << "CHR\tSTART_POS\tEND_POS\tSNARL\tTYPE\tP\tP_ADJUSTED\tRSQUARE\tBETA\tSE\tALLELE_NUM\tALLELE_PATHS" << endl;
+    outstream << "#CHR\tSTART_POS\tEND_POS\tSNARL\tPATH_LENGTHS\tP\tP_ADJUSTED\tRSQUARE\tBETA\tSE\tALLELE_PATHS\tDEPTH" << endl;
 }
 
 void write_eqtl_header(std::ostream& outstream) {
-    outstream <<  "CHR\tSTART_POS\tEND_POS\tSNARL\tTYPE\tGENE\tP\tP_ADJUSTED\tRSQUARE\tBETA\tSE\tALLELE_NUM\tALLELE_PATHS" << endl;
+    outstream <<  "#CHR\tSTART_POS\tEND_POS\tSNARL\tPATH_LENGTHS\tGENE\tP\tP_ADJUSTED\tRSQUARE\tBETA\tSE\tALLELE_PATHS\tDEPTH" << endl;
 }
 
 
 
+void write_binary(std::ostream& outstream, const std::string& chr, const Snarl_data_t& snarl_data_s, const std::string& type_var_str,
+                        const std::string& fastfisher_p_value, const std::string& chi2_p_value, const std::string& p_value_adjusted, 
+                         const std::string& group_paths) {
+    outstream << chr << "\t" 
+              << snarl_data_s.start_positions << "\t" 
+              << snarl_data_s.end_positions << "\t" 
+              << stoat_vcf::pairToString(snarl_data_s.snarl_ids) << "\t" 
+              << type_var_str << "\t" 
+              << fastfisher_p_value << "\t" 
+              << chi2_p_value << "\t" 
+              << p_value_adjusted << "\t" 
+              << group_paths << "\t"
+              << snarl_data_s.depth << endl;
+}
+
+void write_binary_covar(std::ostream& outstream, const std::string& chr, const Snarl_data_t& snarl_data_s, const std::string& type_var_str,
+                        const std::string& p_value, const std::string& p_value_adjusted, const std::string& r2,
+                        const std::string& beta, const std::string& se, const std::vector<size_t>& allele_paths) {
+    outstream << chr << "\t" 
+              << snarl_data_s.start_positions << "\t" 
+              << snarl_data_s.end_positions << "\t" 
+              << stoat_vcf::pairToString(snarl_data_s.snarl_ids) << "\t" 
+              << type_var_str << "\t" 
+              << p_value << "\t" 
+              << p_value_adjusted << "\t" 
+              << r2 << "\t" 
+              << beta << "\t" 
+              << se << "\t" 
+              << stoat::vectorToString(allele_paths) << "\t"
+              << snarl_data_s.depth << endl;
+}
+
+
+void write_quantitative(std::ostream& outstream, const std::string& chr, const Snarl_data_t& snarl_data_s, const std::string& type_var_str,
+                        const std::string& p_value, const std::string& p_value_adjusted, const std::string& r2,
+                        const std::string& beta, const std::string& se, const std::vector<size_t>& allele_paths) {
+    outstream << chr << "\t" 
+              << snarl_data_s.start_positions << "\t" 
+              << snarl_data_s.end_positions << "\t" 
+              << stoat_vcf::pairToString(snarl_data_s.snarl_ids) << "\t" 
+              << type_var_str << "\t" 
+              << p_value  << "\t" 
+              << p_value_adjusted << "\t" 
+              << r2 << "\t" 
+              << beta << "\t" 
+              << se << "\t" 
+              << stoat::vectorToString(allele_paths) << "\t"
+              << snarl_data_s.depth << "\n";
+
+}
+
 void write_eqtl(std::ostream& outstream, const std::string& chr, const Snarl_data_t& snarl_data_s, const std::string& type_var_str,
                    const std::string& gene_name, const std::string& p_value, const std::string& p_value_adjusted, const std::string& r2,
-                   const std::string& beta, const std::string& se, size_t allele_number, const std::vector<size_t>& allele_paths) {
+                   const std::string& beta, const std::string& se, const std::vector<size_t>& allele_paths) {
     outstream << chr << "\t" 
               << snarl_data_s.start_positions << "\t" 
               << snarl_data_s.end_positions << "\t" 
@@ -36,63 +88,8 @@ void write_eqtl(std::ostream& outstream, const std::string& chr, const Snarl_dat
               << r2 << "\t" 
               << beta << "\t" 
               << se << "\t" 
-              << allele_number << "\t" 
-              << stoat::vectorToString(allele_paths) << endl;
-
-}
-
-void write_binary_covar(std::ostream& outstream, const std::string& chr, const Snarl_data_t& snarl_data_s, const std::string& type_var_str,
-                        const std::string& p_value, const std::string& p_value_adjusted, const std::string& r2,
-                        const std::string& beta, const std::string& se, size_t allele_number, const std::vector<size_t>& allele_paths) {
-    outstream << chr << "\t" 
-              << snarl_data_s.start_positions << "\t" 
-              << snarl_data_s.end_positions << "\t" 
-              << stoat_vcf::pairToString(snarl_data_s.snarl_ids) << "\t" 
-              << type_var_str << "\t" 
-              << p_value << "\t" 
-              << p_value_adjusted << "\t" 
-              << r2 << "\t" 
-              << beta << "\t" 
-              << se << "\t" 
-              << allele_number << "\t" 
-              << stoat::vectorToString(allele_paths) << endl;
-}
-
-void write_binary(std::ostream& outstream, const std::string& chr, const Snarl_data_t& snarl_data_s, const std::string& type_var_str,
-                        const std::string& fastfisher_p_value, const std::string& chi2_p_value, const std::string& p_value_adjusted, 
-                        const std::string& allele_number_str, const std::string& min_row_index_str, const std::string& num_colum_str,
-                        const std::string& inter_group_str, const std::string& average_str, const std::string& group_paths) {
-    outstream << chr << "\t" 
-              << snarl_data_s.start_positions << "\t" 
-              << snarl_data_s.end_positions << "\t" 
-              << stoat_vcf::pairToString(snarl_data_s.snarl_ids) << "\t" 
-              << type_var_str << "\t" 
-              << fastfisher_p_value << "\t" 
-              << chi2_p_value << "\t" 
-              << p_value_adjusted << "\t" 
-              << allele_number_str << "\t" 
-              << min_row_index_str << "\t" 
-              << num_colum_str << "\t" 
-              << inter_group_str << "\t" 
-              << average_str << "\t" 
-              << group_paths << endl;
-}
-
-void write_quantitative(std::ostream& outstream, const std::string& chr, const Snarl_data_t& snarl_data_s, const std::string& type_var_str,
-                        const std::string& p_value, const std::string& p_value_adjusted, const std::string& r2,
-                        const std::string& beta, const std::string& se, size_t allele_number, const std::vector<size_t>& allele_paths) {
-    outstream << chr << "\t" 
-              << snarl_data_s.start_positions << "\t" 
-              << snarl_data_s.end_positions << "\t" 
-              << stoat_vcf::pairToString(snarl_data_s.snarl_ids) << "\t" 
-              << type_var_str << "\t" 
-              << p_value  << "\t" 
-              << p_value_adjusted << "\t" 
-              << r2 << "\t" 
-              << beta << "\t" 
-              << se << "\t" 
-              << allele_number << "\t" 
-              << stoat::vectorToString(allele_paths) << "\n";
+              << stoat::vectorToString(allele_paths) << "\t"
+              << snarl_data_s.depth << endl;
 
 }
 
