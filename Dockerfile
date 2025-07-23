@@ -19,6 +19,14 @@ RUN apt-get update && apt-get install -y \
     valgrind \
     && rm -rf /var/lib/apt/lists/*
 
+WORKDIR /bin
+
+RUN wget https://github.com/vgteam/vg/releases/download/v1.67.0/vg \
+    && chmod +x vg
+
+ENV PATH=$PATH:/bin/
+
+
 WORKDIR /home
 
 # Make sure that this gets rerun if the repo is updated
