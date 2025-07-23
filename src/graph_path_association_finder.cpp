@@ -76,13 +76,8 @@ void AssociationFinder::test_snarls() const {
                 // Each set represents a partition of samples that takes the same path through the snarl's netgraph
                 std::vector<std::set<std::string>> sample_partitions = partitioner->partition_samples_in_snarl(graph, distance_index, snarl);
 
-                // If we are writing a fasta, then pick one sample from each partition to write
-                std::unordered_map<std::string, bool> samples_to_write;
-
                 // Do we test nested snarls? Don't test snarls that are already flagged as significant
                 bool test_nested_snarls = true;
-
-                if (test_method == "exact") {
 
 #ifdef DEBUG_ASSOCIATION_FINDER
                     cerr << "\tTRUTH" << endl;
@@ -95,94 +90,100 @@ void AssociationFinder::test_snarls() const {
                         for (const std::string& sample : partition) {
                             cerr << "\t\t" << sample << endl;
                         }
-                        if (partition == samples_of_interest) {
-                            cerr << "\tFound exact match" << endl;
-                        }
                     }
 #endif
 
+                if (sample_partitions.size() > 1) {
 
-                    for (const std::set<std::string>& partition : sample_partitions) {
-                        if (partition == samples_of_interest) {
+                    // If we are writing a fasta, then pick one sample from each partition to write
+                    std::unordered_map<std::string, bool> samples_to_write;
 
-                            // For the exact test, since we already know the result of the test, write only those snarls that pass the test
-                            write_output = true;
-                            // Don't look for nested snarls
-                            test_nested_snarls = false;
-                            if (output_format == "fasta") {
+                    if (test_method == "exact") {
+
+
+
+                        for (const std::set<std::string>& partition : sample_partitions) {
+                            if (partition == samples_of_interest) {
+
+                                // For the exact test, since we already know the result of the test, write only those snarls that pass the test
+                                write_output = true;
+                                // Don't look for nested snarls
+                                test_nested_snarls = false;
+                                if (output_format == "fasta") {
+                                    samples_to_write[*partition.begin()] = true;
+                                } else {
+                                    break;
+                                }
+                            } else if (output_format == "fasta") {
+                                samples_to_write[*partition.begin()] = false;
+                            }
+                        }
+
+                    } else {
+
+                        // If we are using a real statistical test, then always write the output because the BH correction will need all the p-values
+                        // TODO: This could do what pangwas was doing to keep track of only good p-values instead of writing everything
+                        write_output = true;
+
+                        // Fill in the genotypes. Each item in these vectors is an allele (path/sample partition)
+                        std::vector<size_t> genotype_associated(sample_partitions.size(), 0);
+                        std::vector<size_t> genotype_unassociated(sample_partitions.size(), 0);
+                        for (size_t i = 0 ; i < sample_partitions.size() ; i++) {
+                            const std::set<std::string> sample_set = sample_partitions[i];
+                            for (const std::string sample : sample_set) {
+                                if (samples_of_interest.count(sample) != 0) {
+                                    genotype_associated[i]++;
+                                } else {
+                                    genotype_unassociated[i]++;
+                                }
+                            }
+                        }
+
+                        //Get a bunch of strings that get used for the output
+                        // TODO: This function should probably be part of the output function
+                        std::tie(group_paths, 
+                            allele_number_str, min_row_index_str, 
+                            numb_colum_str, inter_group_str, average_str) = stoat_vcf::binary_stat_test(genotype_associated, genotype_unassociated);
+ 
+                        // Run the statistical test
+                        std::tie(chi2_p_value, fastfisher_p_value) = fisher_chi2_tester.fisher_khi2(genotype_associated, genotype_unassociated);
+
+                        if (output_format == "fasta") {
+                            // Figure out which samples we want to write
+                            // Since we don't know which partition is actually associated, just write everything to one file
+                            for (const std::set<std::string>& partition : sample_partitions) {
                                 samples_to_write[*partition.begin()] = true;
-                            } else {
-                                break;
+                            }
+                        }
+
+                    }
+                    
+                    if (write_output) {
+                        if (output_format == "tsv") {
+
+                            string chr = "NA"; 
+                            //TODO: Maybe I sould keep the snarls as snarl_data_t's? 
+                            // TODO: get the type properly
+                            stoat_vcf::Snarl_data_t snarl_data_s(snarl, graph, distance_index);
+
+                            // Get the offsets of the start and end nodes along the reference
+                            std::vector<path_range_t> ranges = get_coordinates_of_snarl(graph, distance_index, snarl, true, reference_sample, false);
+                            if (ranges.size() != 0) {
+                                std::tie(chr, snarl_data_s.start_positions, snarl_data_s.end_positions) = get_name_and_offsets_of_snarl_path_range(graph, distance_index, ranges.front());
+                            }
+
+                            # pragma omp critical (out_associated) 
+                            {
+                                // Leave adjusted p-value blank, to be filled in later
+                                stoat_vcf::write_binary(out_associated, chr, snarl_data_s, variant_type, fastfisher_p_value, chi2_p_value, "", allele_number_str, min_row_index_str,
+                                             numb_colum_str, inter_group_str, average_str, group_paths);
                             }
                         } else if (output_format == "fasta") {
-                            samples_to_write[*partition.begin()] = false;
-                        }
-                    }
 
-                } else {
-
-                    // If we are using a real statistical test, then always write the output because the BH correction will need all the p-values
-                    // TODO: This could do what pangwas was doing to keep track of only good p-values instead of writing everything
-                    write_output = true;
-
-                    // Fill in the genotypes. Each item in these vectors is an allele (path/sample partition)
-                    std::vector<size_t> genotype_associated(sample_partitions.size(), 0);
-                    std::vector<size_t> genotype_unassociated(sample_partitions.size(), 0);
-                    for (size_t i = 0 ; i < sample_partitions.size() ; i++) {
-                        const std::set<std::string> sample_set = sample_partitions[i];
-                        for (const std::string sample : sample_set) {
-                            if (samples_of_interest.count(sample) != 0) {
-                                genotype_associated[i]++;
-                            } else {
-                                genotype_unassociated[i]++;
+                            # pragma omp critical (out_associated) 
+                            {
+                                stoat_vcf::write_fasta(out_associated, out_unassociated, graph, distance_index, snarl, samples_to_write, reference_sample);
                             }
-                        }
-                    }
-
-                    //Get a bunch of strings that get used for the output
-                    // TODO: This function should probably be part of the output function
-                    std::tie(group_paths, 
-                        allele_number_str, min_row_index_str, 
-                        numb_colum_str, inter_group_str, average_str) = stoat_vcf::binary_stat_test(genotype_associated, genotype_unassociated);
- 
-                    // Run the statistical test
-                    std::tie(chi2_p_value, fastfisher_p_value) = fisher_chi2_tester.fisher_khi2(genotype_associated, genotype_unassociated);
-
-                    if (output_format == "fasta") {
-                        // Figure out which samples we want to write
-                        // Since we don't know which partition is actually associated, just write everything to one file
-                        for (const std::set<std::string>& partition : sample_partitions) {
-                            samples_to_write[*partition.begin()] = true;
-                        }
-                    }
-
-                }
-                
-                if (write_output) {
-                    if (output_format == "tsv") {
-
-                        string chr = "NA"; 
-                        //TODO: Maybe I sould keep the snarls as snarl_data_t's? 
-                        // TODO: get the type properly
-                        stoat_vcf::Snarl_data_t snarl_data_s(snarl, graph, distance_index);
-
-                        // Get the offsets of the start and end nodes along the reference
-                        std::vector<path_range_t> ranges = get_coordinates_of_snarl(graph, distance_index, snarl, true, reference_sample, false);
-                        if (ranges.size() != 0) {
-                            std::tie(chr, snarl_data_s.start_positions, snarl_data_s.end_positions) = get_name_and_offsets_of_snarl_path_range(graph, distance_index, ranges.front());
-                        }
-
-                        # pragma omp critical (out_associated) 
-                        {
-                            // Leave adjusted p-value blank, to be filled in later
-                            stoat_vcf::write_binary(out_associated, chr, snarl_data_s, variant_type, fastfisher_p_value, chi2_p_value, "", allele_number_str, min_row_index_str,
-                                         numb_colum_str, inter_group_str, average_str, group_paths);
-                        }
-                    } else if (output_format == "fasta") {
-
-                        # pragma omp critical (out_associated) 
-                        {
-                            stoat_vcf::write_fasta(out_associated, out_unassociated, graph, distance_index, snarl, samples_to_write, reference_sample);
                         }
                     }
                 }
