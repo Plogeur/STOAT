@@ -10,7 +10,7 @@ using namespace std;
 namespace stoat_command {
 
 void print_help_bh_correct() {
-    std::cerr << "usage: stoat bh_correct [options] " << endl
+    std::cerr << "usage: stoat BHcorrect [options] " << endl
          << endl
          << "options:" << endl
          << "  -t, --tsv FILE                  The TSV file to be processed" << endl
@@ -79,23 +79,23 @@ int main_stoat_bh_correct(int argc, char *argv[]) {
     }
 
     if (tsv_name.empty()) {
-        cerr << "error [stoat bh-correct]: stoat bh-correct requires an input tsv" << endl;
+        cerr << "error [stoat BHcorrect]: stoat BHcorrect requires an input tsv" << endl;
         return 1;
     }
     if (top_variant.empty()) {
-        cerr << "error [stoat bh-correct]: stoat bh-correct requires a top variant file" << endl;
+        cerr << "error [stoat BHcorrect]: stoat BHcorrect requires a top variant file" << endl;
         return 1;
     }
     if (output_dir.empty()) {
-        cerr << "error [stoat bh-correct]: stoat bh-correct requires an output directory" << endl;
+        cerr << "error [stoat BHcorrect]: stoat BHcorrect requires an output directory" << endl;
         return 1;
     }
     if (p_index == std::numeric_limits<size_t>::max()) {
-        cerr << "error [stoat bh-correct]: stoat bh-correct requires a p-value column" << endl;
+        cerr << "error [stoat BHcorrect]: stoat BHcorrect requires a p-value column" << endl;
         return 1;
     }
     if (adjusted_p_index == std::numeric_limits<size_t>::max()) {
-        cerr << "error [stoat bh-correct]: stoat bh-correct requires an adjusted p-value column" << endl;
+        cerr << "error [stoat BHcorrect]: stoat BHcorrect requires an adjusted p-value column" << endl;
         return 1;
     }
     // Add the BH adjusted column

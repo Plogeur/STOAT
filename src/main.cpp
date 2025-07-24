@@ -39,7 +39,7 @@ void print_help() {
                 << "  -- version       version information\n"
                 << endl
                 << "post-processing:" << endl
-                << "  -- bh-correct    apply the Benjamini-Hochberg procedure for multiple testing to a tsv file" << endl
+                << "  -- BHcorrect    apply the Benjamini-Hochberg procedure for multiple testing to a tsv file" << endl
                 << "                   (this already done by `stoat vcf` and `stoat graph` by default)" << endl;     
 }
 
@@ -65,7 +65,7 @@ int main(int argc, char* argv[]) {
     } else if (subcommand == "graph") {
         stoat_command::main_stoat_graph(argc, argv);
 
-    } else if (subcommand == "bh-correct") {
+    } else if (subcommand == "BHcorrect") {
         stoat_command::main_stoat_bh_correct(argc, argv);
 
     } else if (subcommand == "version") {
