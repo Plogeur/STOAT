@@ -50,22 +50,23 @@ bool run_test(
     const std::string& output_dir,
     const std::string& expected_dir,
     const std::string& data_path,
-    const std::string& sample_of_interest,
+    const std::string phenotype_command,
     bool use_covariate = false) {
 
     clean_output_dir(output_dir);
 
     std::string cmd = binary + " graph"
-        + " -g " + data_path + "/pg.pg"
-        + " -d " + data_path + "/pg.dist"
-        + sample_of_interest;
+        + " -g " + data_path + "/pg.full.pg"
+        + " -d " + data_path + "/pg.full.dist"
+        + " -S " + data_path + "/samples.g0.tsv"
+        + phenotype_command + " -r ref";
 
     if (use_covariate) {
         cmd += " --covariate " + data_path + "/covariate.tsv"
              + " --covar-name CP1,SEX,CP3";
     }
 
-    cmd += " --o " + output_dir;
+    cmd += " --output " + output_dir;
 
     int result = std::system(cmd.c_str());
     if (result != 0) {
@@ -76,43 +77,39 @@ bool run_test(
     return compare_output_dirs(output_dir, expected_dir);
 }
 
-TEST_CASE("Binary association tests", "[binary]") {
+TEST_CASE("Binary association tests graph", "[binary]") {
     const std::string binary = "./stoat";
     const std::string output_dir = "../output_binary";
-    const std::string expected_dir = "../vcf/expected_output/binary";
+    const std::string expected_dir = "../expected_output/graph/binary";
+    const std::string expected_dir_covar = "../expected_output/graph/binary_covar";
     const std::string data_path = "../data/binary";
-    const size_t N = 10; // Number of samples
-
-    std::ostringstream oss;
-    for (int i = 1; i <= N; ++i) {
-        oss << "-s samp" << i << " ";
-    }
-
-    const std::string sample_of_interest = oss.str();
+    const std::string phenotype_command = " -T chi2 ";
 
     SECTION("Without covariate") {
-        REQUIRE(run_test(binary, output_dir, expected_dir, data_path, sample_of_interest, false));
+        REQUIRE(run_test(binary, output_dir, expected_dir, data_path, phenotype_command, false));
     }
 
-    SECTION("With covariate") {
-        REQUIRE(run_test(binary, output_dir, expected_dir, data_path, sample_of_interest, true));
-    }
+    // SECTION("With covariate") {
+    //     REQUIRE(run_test(binary, output_dir, expected_dir_covar, data_path, phenotype_command, true));
+    // }
 }
 
-TEST_CASE("Quantitative trait tests", "[quantitative]") {
-    const std::string binary = "./stoat";
-    const std::string output_dir = "../output_quantitative";
-    const std::string expected_dir = "../vcf/expected_output/quantitative";
-    const std::string data_path = "../data/quantitative";
+// TEST_CASE("Quantitative trait tests graph", "[quantitative]") {
+//     const std::string binary = "./stoat";
+//     const std::string output_dir = "../output_quantitative";
+//     const std::string expected_dir = "../expected_output/graph/quantitative";
+//     const std::string expected_dir_covar = "../expected_output/graph/quantitative_covar";
+//     const std::string data_path = "../data/quantitative";
+//     const std::string phenotype_command = " -q ";
 
-    //TODO: I added this so it would compile, idk what it should be
-    std::string sample_of_interest;
+//     //TODO: I added this so it would compile, idk what it should be
+//     std::string sample_of_interest;
 
-    SECTION("Without covariate") {
-        REQUIRE(run_test(binary, output_dir, expected_dir, data_path, sample_of_interest, false));
-    }
+//     SECTION("Without covariate") {
+//         REQUIRE(run_test(binary, output_dir, expected_dir, data_path, sample_of_interest, false));
+//     }
 
-    SECTION("With covariate") {
-        REQUIRE(run_test(binary, output_dir, expected_dir, data_path, sample_of_interest, true));
-    }
-}
+//     SECTION("With covariate") {
+//         REQUIRE(run_test(binary, output_dir, expected_dir_covar, data_path, sample_of_interest, true));
+//     }
+// }

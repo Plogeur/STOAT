@@ -478,7 +478,6 @@ std::tuple<std::vector<stoat_vcf::Path_traversal_t>, std::vector<std::string>> f
                 
                 if (!(chain_2node && child_count == 2)) {
                     ppath.addNode("*", true);
-                    is_complex = true;
                 } else {
                     size_node[i] = sum_node;
                 }
