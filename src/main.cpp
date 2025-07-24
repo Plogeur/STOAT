@@ -27,7 +27,7 @@
 #include "subcommand/graph.hpp"
 
 // Global variable
-const std::string VERSION = "v0.0.1";
+const std::string VERSION = "v0.0.2";
 
 void print_help() {
     std::cerr   << "stoat: gwas analysis tool, version " << VERSION << "\n"

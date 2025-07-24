@@ -82,12 +82,15 @@ EQTLSnarlAnalyzer::EQTLSnarlAnalyzer(
 void BinarySnarlAnalyzer::write_header(std::ofstream& outf) {
     write_binary_header(outf);
 }
+
 void BinaryCovarSnarlAnalyzer::write_header(std::ofstream& outf) {
     write_binary_covar_header(outf);
 }
+
 void QuantitativeSnarlAnalyzer::write_header(std::ofstream& outf) {
     write_quantitative_header(outf);
 }
+
 void EQTLSnarlAnalyzer::write_header(std::ofstream& outf) {
     write_eqtl_header(outf);
 }

@@ -4,24 +4,21 @@
 
 namespace stoat_vcf {
 
-
 void write_binary_header(std::ostream& outstream) {
-    outstream << "#CHR\tSTART_POS\tEND_POS\tSNARL\tPATH_LENGTHS\tP_FISHER\tP_CHI2\tP_ADJUSTED\tGROUP_PATHS\tDEPTH" << endl;
+    outstream << "#CHR\tSTART_POS\tEND_POS\tSNARL\tPATH_LENGTHS\tP_FISHER\tP_CHI2\tP_ADJUSTED\tGROUP_PATHS\tDEPTH" << std::endl;
 }
 
 void write_binary_covar_header(std::ostream& outstream) {
-    outstream << "#CHR\tSTART_POS\tEND_POS\tSNARL\tPATH_LENGTHS\tP\tP_ADJUSTED\tBETA\tSE\tALLELE_PATHS\tDEPTH" << endl;
+    outstream << "#CHR\tSTART_POS\tEND_POS\tSNARL\tPATH_LENGTHS\tP\tP_ADJUSTED\tBETA\tSE\tALLELE_PATHS\tDEPTH" << std::endl;
 }
 
 void write_quantitative_header(std::ostream& outstream) {
-    outstream << "#CHR\tSTART_POS\tEND_POS\tSNARL\tPATH_LENGTHS\tP\tP_ADJUSTED\tRSQUARE\tBETA\tSE\tALLELE_PATHS\tDEPTH" << endl;
+    outstream << "#CHR\tSTART_POS\tEND_POS\tSNARL\tPATH_LENGTHS\tP\tP_ADJUSTED\tRSQUARE\tBETA\tSE\tALLELE_PATHS\tDEPTH" << std::endl;
 }
 
 void write_eqtl_header(std::ostream& outstream) {
-    outstream <<  "#CHR\tSTART_POS\tEND_POS\tSNARL\tPATH_LENGTHS\tGENE\tP\tP_ADJUSTED\tRSQUARE\tBETA\tSE\tALLELE_PATHS\tDEPTH" << endl;
+    outstream <<  "#CHR\tSTART_POS\tEND_POS\tSNARL\tPATH_LENGTHS\tGENE\tP\tP_ADJUSTED\tRSQUARE\tBETA\tSE\tALLELE_PATHS\tDEPTH" << std::endl;
 }
-
-
 
 void write_binary(std::ostream& outstream, const std::string& chr, const Snarl_data_t& snarl_data_s, const std::string& type_var_str,
                         const std::string& fastfisher_p_value, const std::string& chi2_p_value, const std::string& p_value_adjusted, 

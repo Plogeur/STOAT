@@ -121,14 +121,14 @@ std::vector<Path_traversal_t> stringToVectorPath(std::string& str);
 class Path {
 private:
     std::vector<std::string> nodes;
-    std::vector<char> orients;
+    std::vector<bool> orients;
 
 public:
     // Constructor
     Path();
 
     // Add a node with known orientation
-    void addNode(const std::string& node, char orient);
+    void addNode(const std::string& node, bool orient);
 
     // Add a node handle and extract information using the std::string representation
     bool addNodeHandle(const handlegraph::net_handle_t& node_h, const bdsg::SnarlDistanceIndex& stree);
@@ -146,6 +146,8 @@ public:
     size_t nreversed() const;
 };
 
+void write_snarl_data(std::ostream& outstream);
+
 // Load the distance index and graph and return unique_ptrs to them
 std::tuple<std::unique_ptr<bdsg::SnarlDistanceIndex>, 
            std::unique_ptr<bdsg::PackedGraph>, 
@@ -157,7 +159,7 @@ parse_graph_tree(const std::string& pg_file, const std::string& dist_file);
 // Given a vector of <size node 2, min length of the snarl, max length of the snarl, path length, sum_path, is_complex)
 // TODO : change sum_path to definition using the length of the path including in the boundary nodes
 // Matis ans : i don t know how to do it
-std::vector<std::string> calcul_pos_type_variant(const std::vector<std::tuple<size_t, size_t, size_t, size_t, bool>>& list_length_paths);
+std::vector<std::string> calcul_pos_type_variant(const std::vector<std::tuple<size_t, size_t, size_t>>& list_length_paths);
 
 // Function to follow edges
 void follow_edges(bdsg::SnarlDistanceIndex& stree,

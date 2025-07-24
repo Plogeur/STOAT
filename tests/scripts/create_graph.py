@@ -217,7 +217,7 @@ def create_loop_graph(filename="loop.hg") :
     print("loop graph created")
 
 def create_loop_plus_graph(filename="loop_plus.hg") :
-    
+
     gr = HashGraph()
     seqs = ["TTTT", "AAAA", "T", "G", "AT", "C", "A", "AAAA", "TTTT"]
     nodes = [gr.create_handle(s) for s in seqs]
@@ -423,7 +423,7 @@ def create_inversion_graph(filename="inversion.hg"):
     gr.create_edge(nodes[3], nodes[4])
     gr.create_edge(nodes[2], gr.flip(nodes[3])) # begin 3 -> end 4
     gr.create_edge(nodes[1], nodes[5]) # DEL
-    gr.create_edge(gr.flip(nodes[3]), nodes[4]) # begin 4 -> begin 5    
+    gr.create_edge(gr.flip(nodes[3]), nodes[4]) # begin 4 -> begin 5
     gr.create_edge(nodes[4], nodes[5])
     gr.create_edge(nodes[5], nodes[6])
 
@@ -473,7 +473,7 @@ def create_jean_graph(filename="jean.hg"):
     gr.create_edge(nodes[3], nodes[4])
     gr.create_edge(nodes[3], nodes[2]) # begin 4 -> end 3
     gr.create_edge(nodes[1], nodes[5]) # DEL
-    gr.create_edge(gr.flip(nodes[3]), nodes[4]) # begin 4 -> begin 5 
+    gr.create_edge(gr.flip(nodes[3]), nodes[4]) # begin 4 -> begin 5
     gr.create_edge(nodes[4], gr.flip(nodes[4])) # loop 5 end -> 5 end
     gr.create_edge(nodes[4], nodes[5])
     gr.create_edge(nodes[5], nodes[6])
@@ -486,6 +486,65 @@ def create_jean_graph(filename="jean.hg"):
     vg_process(filename)
     vg_view(filename, 7)
     print("jean graph created")
+
+def create_multicomponent_chain_graph(filename="multicomponent_chain.hg"):
+    gr = HashGraph()
+    seqs = ["TTTT", "AAAA", "T", "C", "CCCC", "TA", "CT", "TAG", "T", "C", "AAAA", "TTTT"]
+    nodes = [gr.create_handle(s) for s in seqs]
+
+    gr.create_edge(nodes[0], nodes[1])
+    gr.create_edge(nodes[1], nodes[10])
+    gr.create_edge(nodes[1], nodes[2])
+    gr.create_edge(nodes[1], nodes[3])
+    gr.create_edge(nodes[2], nodes[4])
+    gr.create_edge(nodes[3], nodes[4])
+    gr.create_edge(nodes[4], nodes[5])
+    gr.create_edge(nodes[5], gr.flip(nodes[6])) # end 4 -> end 5
+    gr.create_edge(nodes[6], nodes[7])
+    gr.create_edge(nodes[7], nodes[8])
+    gr.create_edge(nodes[7], nodes[9])
+    gr.create_edge(nodes[8], nodes[10])
+    gr.create_edge(nodes[9], nodes[10])
+    gr.create_edge(nodes[10], nodes[11])
+
+    path1 = gr.create_path_handle("ref")
+    for idx in [0, 1, 10, 11]:
+        gr.append_step(path1, nodes[idx])
+
+    gr.serialize(filename)
+    vg_process(filename)
+    vg_view(filename, 12)
+    print("multicomponent_chain graph created")
+
+def create_looping_chain_graph(filename="looping_chain.hg"):
+    gr = HashGraph()
+    seqs = ["TTTT", "AAAA", "TAG", "T", "C", "CAT", "AATT", "AT", "A", "T", "TA", "AAAA", "TTTT"]
+    nodes = [gr.create_handle(s) for s in seqs]
+
+    gr.create_edge(nodes[0], nodes[1])
+    gr.create_edge(nodes[1], nodes[2])
+    gr.create_edge(nodes[2], nodes[3])
+    gr.create_edge(nodes[2], nodes[4])
+    gr.create_edge(nodes[3], nodes[5])
+    gr.create_edge(nodes[4], nodes[5])
+    gr.create_edge(nodes[5], nodes[6])
+    gr.create_edge(nodes[6], nodes[7])
+    gr.create_edge(nodes[7], nodes[8])
+    gr.create_edge(nodes[7], nodes[9])
+    gr.create_edge(nodes[8], nodes[10])
+    gr.create_edge(nodes[9], nodes[10])
+    gr.create_edge(nodes[10], nodes[11])
+    gr.create_edge(gr.flip(nodes[11]), gr.flip(nodes[1])) # looping chain
+    gr.create_edge(nodes[11], nodes[12])
+
+    path1 = gr.create_path_handle("ref")
+    for idx in [0, 1, 2, 3, 5, 6, 7, 8, 10, 11, 12]:
+        gr.append_step(path1, nodes[idx])
+
+    gr.serialize(filename)
+    vg_process(filename)
+    vg_view(filename, 13)
+    print("looping_chain graph created")
 
 # Example call to generate all
 if __name__ == "__main__":
@@ -518,7 +577,10 @@ if __name__ == "__main__":
     create_inversion_graph(wrap_filename("inversion.hg"))
     create_nested_plus_graph(wrap_filename("nested_plus.hg"))
     create_jean_graph(wrap_filename("jean.hg"))
-# python3 create_graph.py
+    create_multicomponent_chain_graph(wrap_filename("multicomponent_chain.hg"))
+    create_looping_chain_graph(wrap_filename("looping_chain.hg"))
+
+# python3 scripts/create_graph.py
 
 # vg convert simple_snp.hg > simple_snp.pg
 # vg index simple_snp.pg -j simple_snp.dist
