@@ -55,7 +55,7 @@ int main_stoat_bh_correct(int argc, char *argv[]) {
         }
         switch (c) {
             case 't':
-                tsv_name = std::stoi(optarg);
+                tsv_name = optarg;
                 break;
             case 'p':
                 p_index = std::stoi(optarg);
