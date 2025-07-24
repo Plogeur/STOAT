@@ -139,6 +139,7 @@ src/io/register_loader_saver_packed_graph.cpp
 src/io/register_io.cpp
 src/subcommand/vcf.cpp
 src/subcommand/graph.cpp
+src/subcommand/bh_correct.cpp
 )
 
 # Include Directories
