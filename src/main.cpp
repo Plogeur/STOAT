@@ -25,6 +25,7 @@
 
 #include "subcommand/vcf.hpp"
 #include "subcommand/graph.hpp"
+#include "subcommand/bh_correct.hpp"
 
 // Global variable
 const std::string VERSION = "v0.0.1";
@@ -33,9 +34,13 @@ void print_help() {
     std::cerr   << "stoat: gwas analysis tool, version " << VERSION << "\n"
                 << "usage: stoat <command> [options]\n\n"    
                 << "main usage:\n"
-                << "  -- vcf       gwas analysis base on vcf pangenome calling\n"
-                << "  -- graph     gwas analysis base on pangenome graph\n"
-                << "  -- version   version information\n";                      
+                << "  -- vcf           gwas analysis base on vcf pangenome calling\n"
+                << "  -- graph         gwas analysis base on pangenome graph\n"
+                << "  -- version       version information\n"
+                << endl
+                << "post-processing:" << endl
+                << "  -- bh-correct    apply the Benjamini-Hochberg procedure for multiple testing to a tsv file" << endl
+                << "                   (this already done by `stoat vcf` and `stoat graph` by default)" << endl;     
 }
 
 int main(int argc, char* argv[]) {
@@ -59,6 +64,9 @@ int main(int argc, char* argv[]) {
 
     } else if (subcommand == "graph") {
         stoat_command::main_stoat_graph(argc, argv);
+
+    } else if (subcommand == "bh-correct") {
+        stoat_command::main_stoat_bh_correct(argc, argv);
 
     } else if (subcommand == "version") {
         std::cout << "stoat: gwas analysis tool, version " << VERSION << "\n";
