@@ -160,18 +160,27 @@ std::vector<path_range_t> get_coordinates_of_snarl(const handlegraph::PathPositi
     std::vector<path_range_t> ranges;
     // If a sample name is given, then always look for that first
     if (!sample_name.empty()) {
-        ranges = get_coordinates_of_snarl_helper(graph, distance_index, snarl, false, sample_name, false);
-        if (!ranges.empty()) {
-            return ranges;
+        // If this snarl isn't on the path we want, go up the snarl tree until we find something
+        handlegraph::net_handle_t ancestor_snarl = snarl;
+        while (!distance_index.is_root(ancestor_snarl)) {
+            ranges = get_coordinates_of_snarl_helper(graph, distance_index, ancestor_snarl, false, sample_name, false);
+            if (!ranges.empty()) {
+                return ranges;
+            }
+            ancestor_snarl = distance_index.get_parent(distance_index.get_parent(snarl));
         }
     }
     if (get_reference) {
         //If we didn't find the specific path and we are looking for a reference, look for a reference-sense path next
 
         //Try with reference-sense path
-        ranges = get_coordinates_of_snarl_helper(graph, distance_index, snarl, true, "", false);
-        if (!ranges.empty()) {
-            return ranges;
+        handlegraph::net_handle_t ancestor_snarl = snarl;
+        while (!distance_index.is_root(ancestor_snarl)) {
+            ranges = get_coordinates_of_snarl_helper(graph, distance_index, snarl, true, "", false);
+            if (!ranges.empty()) {
+                return ranges;
+            }
+            ancestor_snarl = distance_index.get_parent(distance_index.get_parent(snarl));
         }
     }
     if (get_all_paths) {
