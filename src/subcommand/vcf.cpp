@@ -1,4 +1,3 @@
-
 #include "vcf.hpp"
 
 namespace stoat_command {
@@ -13,19 +12,20 @@ void print_help_vcf() {
               << "  -b, --binary FILE            Path to the binary phenotype group file (.txt or .tsv)\n"
               << "  -q, --quantitative FILE      Path to the quantitative phenotype file (.txt or .tsv)\n"
               << "  -e, --eqtl FILE              Path to the Expression Quantitative Trait Loci file (.txt or .tsv)\n"
-              << "  -m, --make-bed                   Create plink format files (.bed, .bim, .fam)\n"
-              << "  -c, --covariate FILE             Path to the covariate file (.txt or .tsv)\n"
-              << "  -C, --covar-name NAME            Covariate column name(s) used for GWAS (comma-separated if multiple)\n"
+              << "  -m, --make-bed               Create plink format files (.bed, .bim, .fam)\n"
+              << "  -c, --covariate FILE         Path to the covariate file (.txt or .tsv)\n"
+              << "  -C, --covar-name NAME        Covariate column name(s) used for GWAS (comma-separated if multiple)\n"
               << "  -k, --kinship FILE           Path to the kinship matrix file (.txt or .tsv)\n"
               << "  -g, --gaf                    Generate a GAF file from GWAS results\n"
-              << "  -i, --children INT               Max number of children per snarl in decomposition (default: 50)\n"
-              << "  -y, --cycle INT                  Max number of authorized cycles in snarl decomposition (default: 1)\n"
-              << "  -l, --path-length INT            Max number of nodes in paths during snarl decomposition (default: 10,000)\n"
+              << "  -i, --children INT           Max number of children per snarl in decomposition (default: 50)\n"
+              << "  -y, --cycle INT              Max number of authorized cycles in snarl decomposition (default: 1)\n"
+              << "  -l, --path-length INT        Max number of nodes in paths during snarl decomposition (default: 10,000)\n"
               << "  -G, --gene-position FILE     Path to the gene position file (.txt or .tsv)\n"
               << "  -w, --windows-gene INT       Window length from gene boundaries for snarl inclusion in eQTL (default: 1,000,000)\n"
               << "  -T, --table-threshold FLOAT  P-value threshold for regression table output (default: disabled)\n"
-              << "  -M, --maf FLOAT                  Minimum allele frequency threshold (default: 0.01)\n"
+              << "  -M, --maf FLOAT              Minimum allele frequency threshold (default: 0.01)\n"
               << "  -t, --thread INT             Number of threads to use (default: 1)\n"
+              << "  -V, --verbose INT            Verbosity level (0=error, 1=warn, 2=info, 3=debug, 4=trace)\n"
               << "  -o, --output DIR             Output directory name (VCF GWAS mode)\n"
               << "  -h, --help                   Print this help message\n";
 }
@@ -38,6 +38,7 @@ int main_stoat_vcf(int argc, char* argv[]) {
         eqtl_path, covariate_path, gene_position_path, 
         kinship_path, output_dir;
 
+    LogLevel verbosity = LogLevel::Info;  // default level info
     size_t phenotype = 0;
     size_t cycle_threshold = 1;
     size_t children_threshold = 50;
@@ -77,12 +78,13 @@ int main_stoat_vcf(int argc, char* argv[]) {
         {"table-threshold", required_argument, 0, 'T'},
         {"maf", required_argument, 0, 'M'},
         {"thread", required_argument, 0, 't'},
+        {"verbose", required_argument, 0, 'V'},
         {"output", required_argument, 0, 'o'},
         {"help", no_argument, 0, 'h'},
         {0, 0, 0, 0}
     };
 
-    while ((c = getopt_long(argc, argv, "v:s:p:d:r:b:q:e:m:c:C:k:g:i:y:l:G:w:T:M:t:o:h", long_options, nullptr)) != -1) {
+    while ((c = getopt_long(argc, argv, "v:s:p:d:r:b:q:e:m:c:C:k:g:i:y:l:G:w:T:M:t:V:o:h", long_options, nullptr)) != -1) {
         switch (c) {
             case 'v': vcf_path = optarg; stoat_vcf::check_file(vcf_path); break;
             case 's': snarl_path = optarg; stoat_vcf::check_file(snarl_path); break;
@@ -151,6 +153,15 @@ int main_stoat_vcf(int argc, char* argv[]) {
                     return EXIT_FAILURE;
                 }
                 omp_set_num_threads(std::stoi(optarg));
+                break;
+            case 'V': 
+                int level = std::stoi(optarg);
+                if (level < 0 || level > 4) {
+                    std::cerr << "Invalid verbosity level. Use 0=Error, 1=Warn, 2=Info, 3=Debug, 4=Trace\n";
+                    return EXIT_FAILURE;
+                }
+                verbosity = static_cast<LogLevel>(level);
+                Logger::set_level(verbosity);
                 break;
             case 'o': output_dir = optarg; break;
             case 'h': print_help_vcf(); exit(EXIT_SUCCESS); break;

@@ -5,12 +5,6 @@
     <a href="https://github.com/vgteam/libbdsg/releases/tag/v0.3"><img src="https://img.shields.io/badge/bdsg-0.3-green.svg"></a>
 </p>
 
-<!-- 
-It will release one days, It will !!!
-[![GitHub release (latest by date)](https://img.shields.io/github/v/release/jmonlong/sveval)](https://github.com/jmonlong/sveval/releases/latest)
-[![Docker Repository on Quay](https://quay.io/repository/jmonlong/sveval/status "Docker Repository on Quay")](https://quay.io/repository/jmonlong/sveval) 
--->
-
 <img src="pictures/logo.png" width="150">
 
 ## Project Overview
@@ -69,8 +63,6 @@ Then close your terminal and open it again, or run
 ```
 source ~/.bashrc
 ```
-
-
 
 STOAT is a specialized tool developed for conducting Genome-Wide Association Studies (GWAS) with a unique focus on snarl structures within pangenome graphs. Unlike traditional GWAS tools that analyze linear genome variants, STOAT processes VCF files to extract and analyze snarl regions—complex structural variations that capture nested and overlapping variant patterns within a pangenome. This approach allows for a more nuanced understanding of genetic variations in diverse populations and complex traits.
 
@@ -182,6 +174,7 @@ Explanation of all options:
 -T, --table-threshold FLOAT  P-value threshold for regression table output (default: disabled)
 --maf FLOAT                  Minimum allele frequency threshold (default: 0.01)
 -t, --thread INT             Number of threads to use (default: 1)
+-V, --verbose INT            Verbosity level (0=error, 1=warn, 2=info, 3=debug, 4=trace)\n"
 -o, --output DIR             Output directory name (VCF GWAS mode)
 -h, --help                   Print this help message
 ```

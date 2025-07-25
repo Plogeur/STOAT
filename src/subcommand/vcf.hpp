@@ -29,6 +29,7 @@
 #include "../matrix.hpp"
 #include "../gaf_creator.hpp"
 #include "../post_processing.hpp"
+#include "../log.hpp"
 
 namespace stoat_command {
 

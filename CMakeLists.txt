@@ -115,28 +115,27 @@ install(TARGETS gbwtgraph
     ARCHIVE DESTINATION lib
     PUBLIC_HEADER DESTINATION include)
 
-
 add_library(${PROJECT_NAME}_objs OBJECT
-src/utils.cpp
-src/arg_parser.cpp
-src/post_processing.cpp
-src/gaf_creator.cpp
-src/snarl_data_t.cpp
-src/matrix.cpp
-src/binary_table.cpp
-src/quantitative_table.cpp
-src/stats_test.cpp
-src/writer.cpp
-src/snarl_analyzer.cpp
-src/graph_path_association_finder.cpp
-src/partitioner.cpp
-src/io/register_loader_saver_gbz.cpp
-src/io/register_loader_saver_gbzgraph.cpp
-src/io/register_loader_saver_hash_graph.cpp
-src/io/register_loader_saver_packed_graph.cpp
-src/io/register_io.cpp
-src/subcommand/vcf.cpp
-src/subcommand/graph.cpp
+    src/utils.cpp
+    src/arg_parser.cpp
+    src/post_processing.cpp
+    src/gaf_creator.cpp
+    src/snarl_data_t.cpp
+    src/matrix.cpp
+    src/binary_table.cpp
+    src/quantitative_table.cpp
+    src/stats_test.cpp
+    src/writer.cpp
+    src/snarl_analyzer.cpp
+    src/graph_path_association_finder.cpp
+    src/partitioner.cpp
+    src/io/register_loader_saver_gbz.cpp
+    src/io/register_loader_saver_gbzgraph.cpp
+    src/io/register_loader_saver_hash_graph.cpp
+    src/io/register_loader_saver_packed_graph.cpp
+    src/io/register_io.cpp
+    src/subcommand/vcf.cpp
+    src/subcommand/graph.cpp
 )
 
 # Include Directories
