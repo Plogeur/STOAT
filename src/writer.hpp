@@ -17,7 +17,6 @@ void write_quantitative_header(std::ostream& outstream);
 void write_eqtl_header(std::ostream& outstream);
 
 // Write lines
-
 void write_binary(std::ostream& outstream, const std::string& chr, const Snarl_data_t& snarl_data_s, const std::string& type_var_str,
                     const std::string& fastfisher_p_value, const std::string& chi2_p_value, const std::string& p_value_adjusted, const std::string& group_paths);
 

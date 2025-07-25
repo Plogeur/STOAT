@@ -4,6 +4,10 @@
 
 namespace stoat_vcf {
 
+void write_snarl_data(std::ostream& outstream) {
+    outstream << "CHR\tSTART_POS\tEND_POS\tSNARL_HANDLEGRAPH\tSNARL\tPATHS\tTYPE\tREF\tDEPTH" << std::endl;
+}
+
 // Node_traversal_t
 Node_traversal_t::Node_traversal_t(const size_t &id, const bool &rev)
         : node_id(id), is_reverse(rev) {}
@@ -147,52 +151,21 @@ Snarl_data_t::Snarl_data_t(bdsg::net_handle_t snarl_,
 Path::Path() {}
 
 // Add a node with known orientation
-void Path::addNode(const std::string& node, char orient) {
+void Path::addNode(const std::string& node, bool orient) {
     nodes.push_back(node);
     orients.push_back(orient);
 }
 
 // Add a node handle and extract information using the std::string representation
 bool Path::addNodeHandle(const handlegraph::net_handle_t& node_h, const bdsg::SnarlDistanceIndex& stree) {
-    std::string node_s = stree.net_handle_as_string(node_h);
 
-    // Handle trivial chain modifications
-    if (stree.is_trivial_chain(node_h)) {
-        size_t pos;
-        while ((pos = node_s.find(" pretending to be a chain")) != std::string::npos) {
-            node_s.replace(pos, 25, "");
-        }
-        while ((pos = node_s.find(" in a simple snarl")) != std::string::npos) {
-            node_s.replace(pos, 19, "");
-        }
-    }
-
-    // Parse node info
-    size_t pos = node_s.find("node ");
-    if (pos != std::string::npos) {
-        node_s.erase(pos, 5);
-    }
-
-    char node_o = '>';
-    if (node_s.find("rev") != std::string::npos) {
-        node_o = '<';
-    }
-
-    auto removeSubstrings = [](std::string& str, const std::vector<std::string>& substrings) {
-        for (const auto& sub : substrings) {
-            size_t pos_2;
-            while ((pos_2 = str.find(sub)) != std::string::npos) {
-                str.erase(pos_2, sub.length());
-            }
-        }
-    };
-
-    removeSubstrings(node_s, {"rev", "fd"});
+    // Found the orientation
+    bool node_o = stree.ends_at(node_h) == bdsg::SnarlDistanceIndex::END;
 
     // Add node to path
-    nodes.push_back(node_s);
+    nodes.push_back(std::to_string(stree.node_id(node_h)));
     orients.push_back(node_o);
-    return node_o == '>' ? true : false;
+    return node_o;
 }
 
 // Get the std::string representation of the path
@@ -201,14 +174,11 @@ Path_traversal_t Path::print() const {
     for (size_t i = 0; i < nodes.size(); ++i) {
         size_t node_size_t;
         if (nodes[i] == "*") {
-            node_size_t = 0; // Special case for "*""
+            node_size_t = 0; // Special case "*"
         } else {
             node_size_t = std::stoi(nodes[i]);
         }
-        Node_traversal_t node_traversal(
-            node_size_t,
-            orients[i] == '>' ? false : true // because is reverse is false for '>' and true for '<'
-        );
+        Node_traversal_t node_traversal(node_size_t, !orients[i]); // because is reverse is false for '>' and true for '<'
         out_path.add_node_traversal_t(node_traversal);
     }
     return out_path;
@@ -222,7 +192,7 @@ void Path::flip() {
         if (nodes[i] == "*") {
             continue;
         }
-        orients[i] = (orients[i] == '>') ? '<' : '>';
+        orients[i] = !orients[i];    
     }
 }
 
@@ -233,34 +203,34 @@ size_t Path::size() const {
 
 // Count the number of reversed nodes
 size_t Path::nreversed() const {
-    return std::count(orients.begin(), orients.end(), '<');
+    return std::count(orients.begin(), orients.end(), false);
 }
 
 // Function to calculate the type of variant
 // tuple<std::string, size_t, size_t, size_t>
 //minimum_distance, maximum_distance, the number of nodes in the path (including boundary nodes), sum_path
-std::vector<std::string> calcul_pos_type_variant(const std::vector<std::tuple<size_t, size_t, size_t, size_t, bool>>& list_length_paths) {
+std::vector<std::string> calcul_pos_type_variant(const std::vector<std::tuple<size_t, size_t, size_t>>& list_length_paths) {
     std::vector<std::string> list_type_variant;
 
     for (const auto& tuple_info : list_length_paths) {
+        size_t min_length = std::get<0>(tuple_info);
+        size_t max_length = std::get<1>(tuple_info);
         size_t path_length = std::get<2>(tuple_info); // The number of nodes in the path
-        size_t sum_path = std::get<3>(tuple_info);    // The length of the path, unless it is a complex variant
-        bool is_complex = std::get<4>(tuple_info);
 
         if (path_length >= 3) {
             // If there is at least one node representing this allele
-            if (is_complex) { // Case complex
+            if (min_length != max_length) { // Case nested
                 // If this is a complex variant (includes nested variants), then return a range of possible lengths
-                std::string complex = std::to_string(std::get<0>(tuple_info)) + "/" + std::to_string(std::get<1>(tuple_info));
-                list_type_variant.push_back(complex);
-            } else { // Case multiple nodes (ex : INS+SNP+...)
-                list_type_variant.push_back(std::to_string(sum_path));
+                std::string nested = std::to_string(min_length) + "/" + std::to_string(max_length);
+                list_type_variant.push_back(nested);
+            } else { // Case nodes chain (ex : INS+SNP+...)
+                list_type_variant.push_back(std::to_string(min_length));
             }
 
         } else if (path_length == 2) { // case Deletion
             list_type_variant.push_back("0");
         } else { // Case path_lengths is empty or == 1
-            // This should probably never happen
+            // This should probably never happen right ?
             std::cerr << "path_lengths is empty" << std::endl;
         }
     }
@@ -445,12 +415,10 @@ std::tuple<std::vector<stoat_vcf::Path_traversal_t>, std::vector<std::string>> f
 
     // seq_net, minimum_distance, maximun_distance, size_path, sum_path
     // Used to calculate the type of variant
-    std::vector<std::tuple<size_t, size_t, size_t, size_t, bool>> seq_net_paths;
+    std::vector<std::tuple<size_t, size_t, size_t>> seq_net_paths;
 
     for (const auto& path : finished_paths) {
         Path ppath;
-        bool is_complex = false;
-        size_t sum_path = 0;
         size_t minimum_distance=0;
         size_t maximun_distance=0;
         std::vector<size_t> size_node;
@@ -480,7 +448,7 @@ std::tuple<std::vector<stoat_vcf::Path_traversal_t>, std::vector<std::string>> f
                 size_node[i] = pg.get_length(net_trivial_chain);
             }
 
-            // Chain case aka complex
+            // Chain case (can be nested snarl or just chain nodes)
             else if (stree.is_chain(net)) {
                 handlegraph::net_handle_t nodl, nodr;
                 if (stree.starts_at_start(net)) {
@@ -493,8 +461,6 @@ std::tuple<std::vector<stoat_vcf::Path_traversal_t>, std::vector<std::string>> f
 
                 ppath.addNodeHandle(nodl, stree);
 
-                // TODO? test chain : handlegraph::net_handle_t is composed of 2 element && if both element is_node == true ?
-                // idk ask to jean
                 bool chain_2node = true;
                 int child_count = 0;
                 size_t sum_node = 0;
@@ -511,8 +477,7 @@ std::tuple<std::vector<stoat_vcf::Path_traversal_t>, std::vector<std::string>> f
                 });
                 
                 if (!(chain_2node && child_count == 2)) {
-                    ppath.addNode("*", '>');
-                    is_complex = true;
+                    ppath.addNode("*", true);
                 } else {
                     size_node[i] = sum_node;
                 }
@@ -524,27 +489,6 @@ std::tuple<std::vector<stoat_vcf::Path_traversal_t>, std::vector<std::string>> f
                 assert(stree.minimum_length(net) != static_cast<size_t>(INT_MAX) && "Overflow min distance");
                 #endif
 
-                /*
-                // Old code for getting the maximum length of the chain
-                // This version uses the maximum distance, which allows loops by finding paths that exit the chain and come back
-                // Get the size of the chain and return the distance (minimum and maximum)
-                size_t complex_start_id = stree.node_id(nodl);
-                handlegraph::handle_t handle_start = pg.get_handle(complex_start_id);
-                size_t size_start_node = pg.get_length(handle_start);
-                bool revl = stree.ends_at_start(nodl);
-
-                size_t complex_end_id = stree.node_id(nodr);
-                handlegraph::handle_t handle_end = pg.get_handle(complex_end_id);
-                size_t size_end_node = pg.get_length(handle_end);
-                bool revr = stree.ends_at_start(nodr);
-
-                size_t size_chain = size_start_node + size_end_node;
-
-                size_t max_dist = stree.maximum_distance(complex_start_id, revl, size_start_node, complex_end_id, revr, 0) + size_chain;
-                */
-
-
-
                 // Add the minimum/maximum lengths of the chain
                 minimum_distance += stree.minimum_length(net);
                 maximun_distance += stree.maximum_length(net);
@@ -555,21 +499,15 @@ std::tuple<std::vector<stoat_vcf::Path_traversal_t>, std::vector<std::string>> f
             ppath.flip();
         }
 
-        if (is_complex) { // Case of complex found
-            for (size_t i = 1; i < size_node.size()-1; ++i) {
-                maximun_distance += size_node[i];
-                minimum_distance += size_node[i];
-            }
-        } else {
-            for (size_t i = 1; i < size_node.size()-1; ++i) {
-                sum_path += size_node[i];
-            }
+        for (size_t i = 1; i < size_node.size()-1; ++i) {
+            maximun_distance += size_node[i];
+            minimum_distance += size_node[i];
         }
 
         pretty_paths.push_back(ppath.print());
         // The number of nodes (may be chains) in the path, including boundary nodes
         size_t size_path = ppath.size();
-        seq_net_paths.push_back(std::make_tuple(minimum_distance, maximun_distance, size_path, sum_path, is_complex));
+        seq_net_paths.push_back(std::make_tuple(minimum_distance, maximun_distance, size_path));
     }
 
     std::vector<std::string> type_variants = calcul_pos_type_variant(seq_net_paths);
@@ -590,7 +528,7 @@ std::unordered_map<std::string, std::vector<Snarl_data_t>> loop_over_snarls_writ
 
     ofstream out_snarl(output_file);
     if (bool_return) {
-        out_snarl << "CHR\tSTART_POS\tEND_POS\tSNARL\tPATHS\tTYPE\tREF\tDEPTH\n";
+        write_snarl_data(out_snarl);
     }
 
     ofstream out_fail(output_snarl_not_analyse);

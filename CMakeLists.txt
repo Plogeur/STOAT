@@ -35,7 +35,6 @@ find_package(Boost REQUIRED)
 #Get eigen3
 include_directories(${deps_DIR}/eigen)
 
-
 # Produces handlegraph_shared and handlegraph_static targets (as well as handlegraph_objs)
 if (USE_INSTALLED_LIBHANDLEGRAPH)
     find_package(libhandlegraph)
@@ -57,7 +56,6 @@ add_subdirectory(${deps_DIR}/libvgio)
 set(BUILD_PYTHON_BINDINGS OFF CACHE BOOL "Build Python bindings for libbdsg" FORCE)
 set(RUN_DOXYGEN OFF CACHE BOOL "Run libbdsg Doxygen" FORCE)
 add_subdirectory(${deps_DIR}/libbdsg)
-
 
 # Copied from https://github.com/vgteam/vg/wiki/Programming-with-the-vg-API
 # SDSL library ("sdsl" target) already exists from libbdsg
@@ -181,13 +179,10 @@ add_executable(unit_tests
 
 target_compile_options(unit_tests PRIVATE -w) # fix warning
 
-
 target_link_libraries(unit_tests PRIVATE 
     ${PROJECT_NAME}_objs)
 
-
 include_directories(${deps_DIR}/Catch2/single_include/catch2 )
-
 
 add_test(NAME UnitTests COMMAND unit_tests)
 

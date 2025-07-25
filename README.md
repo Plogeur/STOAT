@@ -87,7 +87,7 @@ Required files :
 - dist : Distance file generated with vg dist, format: .dist.
 - vcf pangenomique : Merged VCF file, created using `vg pipeline` and bcftools merge, formats: .vcf or .vcf.gz. (ex : `bcftools merge -m none -Oz -o test`)
 - phenotype : phenotype file organise in three-column with FID (family/sample name), IID (sample name), and PHENO (integer/float). Binary phenotype [1 or 2]. Quantitative [-double max; +double max] Format: .txt or .tsv (tab-separated).
-- chromosome : Txt file that containt the reference chromosome haplotype name in the pangenome graph. Format: .txt or .tsv. (use : `vg paths -x <pg.pg> -R` to identify all haplotype name then select haplotype that you want to use as reference (idealy the ones use in the pangenome graph creation))
+- chromosome : Txt file that containt the reference chromosome haplotype name in the pangenome graph. Format: .txt or .tsv. (use : `vg paths -x <pg.full.pg> -R` to identify all haplotype name then select haplotype that you want to use as reference (idealy the ones use in the pangenome graph creation))
 
 Optional file : 
 - paths : Snarl decoposition stoat output, Two-column file containing snarl names and the list of paths through the snarl's netgraph, separated by tabs. Format: .txt or .tsv.
@@ -147,16 +147,16 @@ Use `stoat tool` if you want to launch the full tool at once, starting from snar
 - Usage tool :
 ```bash
 # decompose pangenome
-./stoat -p <pg.pg> -d <dist.dist> -o <paths.txt>
+./stoat -p <pg.full.pg> -d <dist.dist> -o <paths.txt>
 
 # binary trait with already decompose pangenome
 stoat -s <paths.txt> -v <vcf_file.vcf.gz> -b <phenotype.txt> --chr <ref.tsv> -o output
 
 # decompose pangenome + binary trait
-stoat -p <pg.pg> -d <dist.dist> -v <vcf_file.vcf.gz> -b <phenotype.txt> --chr <ref.tsv> -o output
+stoat -p <pg.full.pg> -d <dist.dist> -v <vcf_file.vcf.gz> -b <phenotype.txt> --chr <ref.tsv> -o output
 
 # decompose pangenome + quantative trait
-stoat -p <pg.pg> -d <dist.dist> -v <vcf_file.vcf.gz> -q <phenotype.txt> --chr <ref.tsv> -o output
+stoat -p <pg.full.pg> -d <dist.dist> -v <vcf_file.vcf.gz> -q <phenotype.txt> --chr <ref.tsv> -o output
 ```
 
 Explanation of all options:

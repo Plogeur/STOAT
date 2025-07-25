@@ -28,7 +28,7 @@
 #include "subcommand/bh_correct.hpp"
 
 // Global variable
-const std::string VERSION = "v0.0.1";
+const std::string VERSION = "v0.0.2";
 
 void print_help() {
     std::cerr   << "stoat: gwas analysis tool, version " << VERSION << "\n"
@@ -81,17 +81,19 @@ int main(int argc, char* argv[]) {
     return EXIT_SUCCESS;
 }
 
+// -------------------------------------------------------------- VCF --------------------------------------------------------------
+
 // BINARY
-// ./stoat vcf -p ../data/binary/pg.pg -d ../data/binary/pg.dist -v ../data/binary/merged_output.vcf.gz -b ../data/binary/phenotype.tsv --output ../output
+// ./stoat vcf -p ../data/binary/pg.full.pg -d ../data/binary/pg.full.dist -v ../data/binary/merged_output.vcf.gz -b ../data/binary/phenotype.tsv --output ../output
 
 // BINARY + COVARIATE
-// ./stoat vcf -p ../data/binary/pg.pg -d ../data/binary/pg.dist -v ../data/binary/merged_output.vcf.gz -b ../data/binary/phenotype.tsv --covariate ../data/binary/covariate.tsv --covar-name CP1,SEX,CP3 --output ../output
+// ./stoat vcf -p ../data/binary/pg.full.pg -d ../data/binary/pg.full.dist -v ../data/binary/merged_output.vcf.gz -b ../data/binary/phenotype.tsv --covariate ../data/binary/covariate.tsv --covar-name CP1,SEX,CP3 --output ../output
 
 // QUANTITATIVE
-// ./stoat vcf -p ../data/quantitative/pg.pg -d ../data/quantitative/pg.dist -v ../data/quantitative/merged_output.vcf.gz -q ../data/quantitative/phenotype.tsv --output ../output
+// ./stoat vcf -p ../data/quantitative/pg.full.pg -d ../data/quantitative/pg.full.dist -v ../data/quantitative/merged_output.vcf.gz -q ../data/quantitative/phenotype.tsv --output ../output
 
 // QUANTITATIVE + COVARIATE
-// ./stoat vcf -p ../data/quantitative/pg.pg -d ../data/quantitative/pg.dist -v ../data/quantitative/merged_output.vcf.gz -q ../data/quantitative/phenotype.tsv  --covariate ../data/quantitative/covariate.tsv --covar-name CP1,SEX,CP3 --output ../output
+// ./stoat vcf -p ../data/quantitative/pg.full.pg -d ../data/quantitative/pg.full.dist -v ../data/quantitative/merged_output.vcf.gz -q ../data/quantitative/phenotype.tsv  --covariate ../data/quantitative/covariate.tsv --covar-name CP1,SEX,CP3 --output ../output
 
 // EQTL
 // ./stoat vcf -s ../test_data/quantitative/paths_snarl.tsv -v ../test_data/quantitative/variants.vcf -e ../test_data/quantitative/qtl.tsv --gene-position ../test_data/quantitative/gene_position.tsv --output ../output
@@ -100,16 +102,21 @@ int main(int argc, char* argv[]) {
 // ./stoat vcf -p ../tests/graph_test/3th_snp.pg -d ../tests/graph_test/3th_snp.dist --output ../output
 
 // BINARY-PLINK
-// ./stoat vcf -p ../data/binary/pg.pg -d ../data/binary/pg.dist -v ../data/binary/merged_output.vcf.gz --make-bed --output ../output
+// ./stoat vcf -p ../data/binary/pg.full.pg -d ../data/binary/pg.full.dist -v ../data/binary/merged_output.vcf.gz --make-bed --output ../output
 
 // QUANTITATIVE-PLINK
-// ./stoat vcf -p ../data/quantitative/pg.pg -d ../data/quantitative/pg.dist -v ../data/quantitative/merged_output.vcf.gz --make-bed --output ../output
+// ./stoat vcf -p ../data/quantitative/pg.full.pg -d ../data/quantitative/pg.full.dist -v ../data/quantitative/merged_output.vcf.gz --make-bed --output ../output
 
 // SIMULATION NEW
 // ./stoat vcf -v ../data/simu/variants.vcf -s ../data/simu/paths_snarl.tsv -b ../data/simu/phenotypes.txt --covariate ../data/simu/covar.tsv --covar-name AGE,SEX,PC1,PC2 --output ../output
 
 // ./stoat vcf -v ../data/simu/variants.vcf -s ../data/simu/paths_snarl.tsv -b ../data/simu/phenotypes.txt --make-bed --output ../output
 // plink --bfile ../output/output --pheno ../data/simu/phenotypes.txt --pheno-name PHENO --assoc --allow-no-sex --allow-extra-chr --out ../output/stoat_plink
+
+// -------------------------------------------------------------- GRAPH --------------------------------------------------------------
+
+// BINARY
+// ./stoat graph -g ../data/binary/pg.full.pg -d ../data/binary/pg.full.dist -T chi2 -r ref -S ../data/binary/samples.g0.tsv -o ../output
 
 // PLINK
 // plink --vcf ../data/simu/variants.vcf --make-bed --allow-extra-chr --out ../output/genotype
