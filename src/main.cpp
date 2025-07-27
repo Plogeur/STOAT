@@ -55,7 +55,7 @@ int main(int argc, char* argv[]) {
     omp_set_num_threads(1);
 
     if (subcommand == "vcf") {
-        stoat_command::main_stoat_vcf(argc, argv);
+        stoat_command::main_stoat(argc, argv);
 
     } else if (subcommand == "graph") {
         stoat_command::main_stoat_graph(argc, argv);

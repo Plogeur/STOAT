@@ -33,8 +33,8 @@ private:
     std::string levelToString(LogLevel level) const {
         switch (level) {
             case LogLevel::Error: return "ERROR";
-            case LogLevel::Warning: return "WARN";
-            case LogLevel::Info: return "INFO";
+            case LogLevel::Warning: return "WARNING";
+            case LogLevel::Info: return "";
             case LogLevel::Debug: return "DEBUG";
             case LogLevel::Trace: return "TRACE";
             default: return "UNKNOWN";

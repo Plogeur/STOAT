@@ -1,6 +1,6 @@
 #include "gaf_creator.hpp"
 
-namespace stoat_vcf {
+namespace stoat {
 
 std::pair<double, double> calcul_proportion_signi(size_t number_ind_group0, size_t number_ind_group1, double p_value) {
 
@@ -106,7 +106,7 @@ void write_gaf_lines(const std::string& sequence_name, const std::string& path, 
 
 // Parses the input file and processes data into two output files
 void gaf_creation(const std::string& input_file, 
-    std::unordered_map<std::string, std::vector<stoat_vcf::Snarl_data_t>>& snarl_chr,
+    std::unordered_map<std::string, std::vector<stoat::Snarl_data_t>>& snarl_chr,
     bdsg::PackedGraph& pg, 
     const std::string& output_file) {
 
@@ -140,7 +140,7 @@ void gaf_creation(const std::string& input_file,
         std::string group_paths = columns[11];
         auto it = snarl_chr.find(chr);
         auto& data = it->second;  
-        const std::vector<std::string>& list_path = stoat::stringToVector<std::string>(stoat_vcf::vectorPathToString(data[count_line].snarl_paths));
+        const std::vector<std::string>& list_path = stoat::stringToVector<std::string>(stoat::vectorPathToString(data[count_line].snarl_paths));
 
         // Split group paths by comma
         std::vector<std::string> decomposed_group_paths;
@@ -193,4 +193,4 @@ void gaf_creation(const std::string& input_file,
     }
 }
 
-} //end stoat_vcf namespace
+} //end stoat namespace

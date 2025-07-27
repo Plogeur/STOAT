@@ -3,7 +3,6 @@
 #include <bdsg/overlays/overlay_helper.hpp>
 #include "../../src/partitioner.hpp"
 
-
 namespace stoat_graph{
 
 class TestPathPartitioner : PathPartitioner {

@@ -35,7 +35,7 @@ void AssociationFinder::test_snarls() const {
     //TODO: Make this general
     // If the file output has a header, write it
     if (output_format == "tsv") {
-        stoat_vcf::write_binary_header(out_associated);
+        stoat::write_binary_header(out_associated);
     }
 
     std::vector<handlegraph::net_handle_t> chains;
@@ -141,7 +141,7 @@ void AssociationFinder::test_snarls() const {
                         // TODO: This function should probably be part of the output function
 
                         //Get a bunch of strings that get used for the output
-                        group_paths = stoat_vcf::format_group_paths(genotype_associated, genotype_unassociated);
+                        group_paths = stoat::format_group_paths(genotype_associated, genotype_unassociated);
  
                         // Run the statistical test
                         std::tie(chi2_p_value, fastfisher_p_value) = fisher_chi2_tester.fisher_khi2(genotype_associated, genotype_unassociated);
@@ -160,9 +160,9 @@ void AssociationFinder::test_snarls() const {
                         if (output_format == "tsv") {
 
                             string chr = "NA"; 
-                            //TODO: Maybe I sould keep the snarls as snarl_data_t's? 
+                            // TODO: Maybe I sould keep the snarls as snarl_data_t's? 
                             // TODO: get the type properly
-                            stoat_vcf::Snarl_data_t snarl_data_s(snarl, graph, distance_index);
+                            stoat::Snarl_data_t snarl_data_s(snarl, graph, distance_index);
 
                             // Get the offsets of the start and end nodes along the reference
                             std::vector<path_range_t> ranges = get_coordinates_of_snarl(graph, distance_index, snarl, true, reference_sample, false);
@@ -173,13 +173,13 @@ void AssociationFinder::test_snarls() const {
                             # pragma omp critical (out_associated) 
                             {
                                 // Leave adjusted p-value blank, to be filled in later
-                                stoat_vcf::write_binary(out_associated, chr, snarl_data_s, path_lengths, fastfisher_p_value, chi2_p_value, "",  group_paths);
+                                stoat::write_binary(out_associated, chr, snarl_data_s, path_lengths, fastfisher_p_value, chi2_p_value, "",  group_paths);
                             }
                         } else if (output_format == "fasta") {
 
                             # pragma omp critical (out_associated) 
                             {
-                                stoat_vcf::write_fasta(out_associated, out_unassociated, graph, distance_index, snarl, samples_to_write, reference_sample);
+                                stoat::write_fasta(out_associated, out_unassociated, graph, distance_index, snarl, samples_to_write, reference_sample);
                             }
                         }
                     }

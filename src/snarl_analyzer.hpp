@@ -27,7 +27,7 @@
 
 using namespace std;
 
-namespace stoat_vcf {
+namespace stoat {
 
 class SnarlAnalyzer {
 public:
@@ -38,6 +38,8 @@ public:
         const std::vector<std::vector<double>>& covariate,
         const double& maf_threshold,
         const double& table_threshold,
+        const size_t& min_individuals,
+        const size_t& min_haplotypes,
         const std::string& regression_dir);
 
     ~SnarlAnalyzer()=default;
@@ -83,6 +85,8 @@ protected:
     EdgeBySampleMatrix& edge_matrix;
     const double& maf_threshold; 
     const double& table_threshold;
+    const size_t& min_individuals;
+    const size_t& min_haplotypes;
     const std::string& regression_dir;
     std::ofstream* outf;
 };
@@ -97,6 +101,8 @@ public:
         const std::vector<std::string>& list_samples, 
         const double& maf_threshold,
         const double& table_threshold,
+        const size_t& min_individuals,
+        const size_t& min_haplotypes,
         const std::vector<bool>& binary_phenotype,
         const std::string& regression_dir);
 
@@ -121,7 +127,9 @@ public:
         const std::vector<std::string>& list_samples, 
         const std::vector<std::vector<double>>& covariate, 
         const double& maf_threshold, 
-        const double& table_threshold, 
+        const double& table_threshold,
+        const size_t& min_individuals,
+        const size_t& min_haplotypes,
         const std::vector<bool>& binary_phenotype,
         const std::string& regression_dir);
 
@@ -146,7 +154,9 @@ public:
         const std::vector<std::string>& list_samples, 
         const std::vector<std::vector<double>>& covariate, 
         const double& maf_threshold, 
-        const double& table_threshold, 
+        const double& table_threshold,
+        const size_t& min_individuals,
+        const size_t& min_haplotypes,
         const std::vector<double>& quantitative_phenotype,
         const std::string& regression_dir);
 
@@ -171,7 +181,9 @@ public:
         const std::vector<std::string>& list_samples, 
         const std::vector<std::vector<double>>& covariate, 
         const double& maf_threshold, 
-        const double& table_threshold, 
+        const double& table_threshold,
+        const size_t& min_individuals,
+        const size_t& min_haplotypes,
         const std::unordered_map<std::string, std::vector<Qtl_data>>& eqtl_map,
         const size_t& windows_gene_threshold,
         const std::string& regression_dir);
@@ -194,9 +206,6 @@ protected:
     LinearRegression lr;
 };
 
-/// Return true if any column exceeds the MAF threshold
-bool filtration_quantitative_table(const std::vector<std::vector<double>>& df, const double& maf);
-
 void remove_empty_columns_binary_table(
     std::vector<size_t>& g0, 
     std::vector<size_t>& g1);
@@ -207,9 +216,20 @@ void remove_empty_columns_quantitative_table(
 void remove_last_columns_quantitative_table(
     std::vector<std::vector<double>>& df);
 
+/// Return true if snarl must be filtered
+bool filtration_quantitative_table(
+    const std::vector<std::vector<double>>& df,
+    const size_t& min_individuals,
+    const size_t& min_haplotypes,
+    const double& maf);
+
 bool filtration_binary_table(
-    std::vector<size_t>& g0, std::vector<size_t>& g1,
-    const size_t& totalSum, const double& maf);
+    std::vector<size_t>& g0, 
+    std::vector<size_t>& g1,
+    const size_t& totalSum, 
+    const size_t& min_individuals,
+    const size_t& min_haplotypes,
+    const double& maf);
 
 std::vector<size_t> found_gene_snarl(
     const std::vector<Qtl_data>& gene_position, 
@@ -233,6 +253,6 @@ std::vector<size_t> identify_path(
     const EdgeBySampleMatrix& matrix,
     const size_t num_cols);
 
-} //end stoat_vcf namespace
+} //end stoat namespace
 
 #endif

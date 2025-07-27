@@ -22,14 +22,14 @@
 
 using namespace std;
 
-namespace stoat_vcf {
+namespace stoat {
 
 // Return a tuple of genotypes, index_used, allele_paths
 std::tuple<std::vector<std::vector<double>>, std::unordered_set<size_t>, std::vector<size_t>>
 process_table_quantitative(
     const size_t& number_samples,
-    const std::vector<stoat_vcf::Path_traversal_t>& column_headers,
-    const stoat_vcf::EdgeBySampleMatrix& matrix);
+    const std::vector<stoat::Path_traversal_t>& column_headers,
+    const stoat::EdgeBySampleMatrix& matrix);
 
 // Given the number of samples (length_sample), the paths through the snarl (column_headers), the binary or quantitative phenotype of each sample (phenotype)
 // and a matrix of edges in each sample
@@ -41,9 +41,9 @@ template <typename T>
 std::tuple<std::vector<std::vector<double>>, std::vector<T>, std::vector<size_t>>
 create_quantitative_table(
     const size_t& number_samples,
-    const std::vector<stoat_vcf::Path_traversal_t>& column_headers,
+    const std::vector<stoat::Path_traversal_t>& column_headers,
     const std::vector<T>& phenotype,
-    const stoat_vcf::EdgeBySampleMatrix& matrix);
+    const stoat::EdgeBySampleMatrix& matrix);
 
 // Given the number of samples (length_sample), the paths through the snarl (column_headers), and a matrix of edges in each sample,
 // Return a tuple of 
@@ -53,9 +53,9 @@ create_quantitative_table(
 std::tuple<std::vector<std::vector<double>>, std::unordered_set<size_t>, std::vector<size_t>>
 create_eqtl_table(
     const size_t& number_samples,
-    const std::vector<stoat_vcf::Path_traversal_t>& column_headers,
-    const stoat_vcf::EdgeBySampleMatrix& matrix);
+    const std::vector<stoat::Path_traversal_t>& column_headers,
+    const stoat::EdgeBySampleMatrix& matrix);
 
-} // namespace stoat_vcf
+} // namespace stoat
 
 #endif

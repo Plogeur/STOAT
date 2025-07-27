@@ -1,7 +1,7 @@
 #include "post_processing.hpp"
 #include "utils.hpp"
 
-namespace stoat_vcf {
+namespace stoat {
 
 // Adjust p-values using the Benjamini-Hochberg procedure
 void adjust_pvalues_with_BH(std::vector<std::tuple<double, double, size_t>>& data) {

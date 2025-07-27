@@ -1,6 +1,6 @@
 #include "matrix.hpp"
 
-namespace stoat_vcf {
+namespace stoat {
 
 // Constructor implementation
 EdgeBySampleMatrix::EdgeBySampleMatrix(const std::vector<std::string>& sampleNames, size_t rows, size_t cols) : cols_(cols), sampleNames(sampleNames) {
@@ -17,7 +17,7 @@ EdgeBySampleMatrix::EdgeBySampleMatrix(const std::vector<std::string>& sampleNam
 }
 
 // Getter the row index of the edge
-size_t EdgeBySampleMatrix::find_edge(const stoat_vcf::Edge_t& edge_s) const {
+size_t EdgeBySampleMatrix::find_edge(const stoat::Edge_t& edge_s) const {
     auto itr = row_header.find(edge_s);
     return itr == row_header.end() ? std::numeric_limits<size_t>::max()
                                  : itr->second;
@@ -108,4 +108,4 @@ void EdgeBySampleMatrix::reset(const std::vector<std::string>& newSampleNames, s
     matrix_1D.resize(length_matrix, 0); // Initialize with zeros{
 }
 
-} // end namespace stoat_vcf
+} // end namespace stoat

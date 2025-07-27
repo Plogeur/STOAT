@@ -35,6 +35,28 @@ find_package(Boost REQUIRED)
 #Get eigen3
 include_directories(${deps_DIR}/eigen)
 
+if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
+    # Detect Homebrew prefix
+    set(HOMEBREW_PREFIX "$ENV{HOMEBREW_PREFIX}")
+    if ("${HOMEBREW_PREFIX}" STREQUAL "")
+        execute_process(COMMAND brew --prefix OUTPUT_VARIABLE HOMEBREW_PREFIX OUTPUT_STRIP_TRAILING_WHITESPACE)
+    endif()
+    if ("${HOMEBREW_PREFIX}" STREQUAL "")
+        set(HOMEBREW_PREFIX "/opt/homebrew")  # fallback
+    endif()
+
+    # Set OpenMP manually (Apple Clang needs this)
+    set(OpenMP_INCLUDES "${HOMEBREW_PREFIX}/opt/libomp/include")
+    set(OpenMP_LIBRARIES "${HOMEBREW_PREFIX}/opt/libomp/lib/libomp.dylib")
+    set(OpenMP_CXX_FLAGS "-Xpreprocessor -fopenmp -I${OpenMP_INCLUDES}")
+    set(OpenMP_LINK_FLAGS "-L${HOMEBREW_PREFIX}/opt/libomp/lib -lomp")
+
+    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
+    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${OpenMP_LINK_FLAGS}")
+endif()
+
+find_package(OpenMP REQUIRED)
+
 # Produces handlegraph_shared and handlegraph_static targets (as well as handlegraph_objs)
 if (USE_INSTALLED_LIBHANDLEGRAPH)
     find_package(libhandlegraph)
@@ -60,28 +82,6 @@ add_subdirectory(${deps_DIR}/libbdsg)
 # Copied from https://github.com/vgteam/vg/wiki/Programming-with-the-vg-API
 # SDSL library ("sdsl" target) already exists from libbdsg
 # GBWT and GBWTgraph don't have CMake yet so we need to explain how to build it.
-
-if(${CMAKE_SYSTEM_NAME} MATCHES "Darwin")
-    # Detect Homebrew prefix
-    set(HOMEBREW_PREFIX "$ENV{HOMEBREW_PREFIX}")
-    if ("${HOMEBREW_PREFIX}" STREQUAL "")
-        execute_process(COMMAND brew --prefix OUTPUT_VARIABLE HOMEBREW_PREFIX OUTPUT_STRIP_TRAILING_WHITESPACE)
-    endif()
-    if ("${HOMEBREW_PREFIX}" STREQUAL "")
-        set(HOMEBREW_PREFIX "/opt/homebrew")  # fallback
-    endif()
-
-    # Set OpenMP manually (Apple Clang needs this)
-    set(OpenMP_INCLUDES "${HOMEBREW_PREFIX}/opt/libomp/include")
-    set(OpenMP_LIBRARIES "${HOMEBREW_PREFIX}/opt/libomp/lib/libomp.dylib")
-    set(OpenMP_CXX_FLAGS "-Xpreprocessor -fopenmp -I${OpenMP_INCLUDES}")
-    set(OpenMP_LINK_FLAGS "-L${HOMEBREW_PREFIX}/opt/libomp/lib -lomp")
-
-    set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} ${OpenMP_CXX_FLAGS}")
-    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} ${OpenMP_LINK_FLAGS}")
-endif()
-
-find_package(OpenMP REQUIRED)
 
 # GBWT
 foreach (gbwt_source IN ITEMS algorithms.cpp bwtmerge.cpp cached_gbwt.cpp dynamic_gbwt.cpp fast_locate.cpp files.cpp gbwt.cpp internal.cpp metadata.cpp support.cpp test.cpp utils.cpp variants.cpp)
@@ -122,6 +122,7 @@ add_library(${PROJECT_NAME}_objs OBJECT
     src/gaf_creator.cpp
     src/snarl_data_t.cpp
     src/matrix.cpp
+    src/log.cpp
     src/binary_table.cpp
     src/quantitative_table.cpp
     src/stats_test.cpp

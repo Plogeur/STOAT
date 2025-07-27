@@ -1,5 +1,5 @@
 // This file is part of STOAT 0.0.1, copyright (C) 2024-2025 
-// Authors : Matis Alias-Bagarre, Jean Monlong & Xian Hui Chang.
+// Authors : Matis Alias-Bagarre, Xian Hui Chang & Jean Monlong.
 //
 // This program is free software: you can redistribute it and/or modify
 // it under the terms of the GNU General Public License as published by
@@ -35,6 +35,6 @@ namespace stoat_command {
 
 void print_help_vcf();
 
-int main_stoat_vcf(int argc, char* argv[]);
+int main_stoat(int argc, char* argv[]);
 
-} // end stoat_vcf
+} // end stoat

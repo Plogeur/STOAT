@@ -28,7 +28,7 @@ void Logger::log(LogLevel level, const std::string& message) {
     if (level <= logLevel) {
         std::lock_guard<std::mutex> lock(mutex);
         std::ostream& out = (level == LogLevel::Error) ? std::cerr : std::cout;
-        out << "[" << levelToString(level) << "] " << message << std::endl;
+        out << levelToString(level) << " : " << message << std::endl;
     }
 }
 

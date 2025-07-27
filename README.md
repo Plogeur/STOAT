@@ -77,17 +77,17 @@ STOAT supports both binary and quantitative phenotypes:
 Required files :
 - pg : Pangenome graph file, formats accepted: .pg or .xg.
 - dist : Distance file generated with vg dist, format: .dist.
-- vcf pangenomique : Merged VCF file, created using `vg pipeline` and bcftools merge, formats: .vcf or .vcf.gz. (ex : `bcftools merge -m none -Oz -o test`)
+- VCF pangenomique* : Merged VCF file, created using `vg pipeline` and bcftools merge, formats: .vcf or .vcf.gz. (ex : `bcftools merge -m none -Oz -o test`)
 - phenotype : phenotype file organise in three-column with FID (family/sample name), IID (sample name), and PHENO (integer/float). Binary phenotype [1 or 2]. Quantitative [-double max; +double max] Format: .txt or .tsv (tab-separated).
 - chromosome : Txt file that containt the reference chromosome haplotype name in the pangenome graph. Format: .txt or .tsv. (use : `vg paths -x <pg.full.pg> -R` to identify all haplotype name then select haplotype that you want to use as reference (idealy the ones use in the pangenome graph creation))
+
+*The VCF pangenomique is a VCF merged from a pangenomique mapping+calling, we recommand to use the [vg snakemake pipeline](https://github.com/vgteam/vg_snakemake)
 
 Optional file : 
 - paths : Snarl decoposition stoat output, Two-column file containing snarl names and the list of paths through the snarl's netgraph, separated by tabs. Format: .txt or .tsv.
 - kinship : Kinship matrix file use in LMM analysis
 - covariate : Covariate file. Format: .txt or .tsv.
 - position gene : File containing the gene name, start and end gene position. Format: .txt or .tsv.
-
-The VCF pangenomique is a VCF merged from a pangenomique mapping+calling, we recommand to use the [vg pipeline](https://github.com/vgteam/vg_snakemake)
 
 VCF file :
 ```
@@ -134,25 +134,24 @@ gene_2	ref	200	10200
 
 ## Usage
 
-Use `stoat tool` if you want to launch the full tool at once, starting from snarl path identification (identifying the multiple paths that can be taken by a sample based on the pangenome graph) and ending with the results plots (Manhattan plot and QQ plot).
+- Use `stoat vcf` if you want to make a GWAS from a VCF file : 
 
-- Usage tool :
 ```bash
 # decompose pangenome
-./stoat -p <pg.full.pg> -d <dist.dist> -o <paths.txt>
+stoat vcf -p <pg.full.pg> -d <dist.dist> -o <paths.txt>
 
 # binary trait with already decompose pangenome
-stoat -s <paths.txt> -v <vcf_file.vcf.gz> -b <phenotype.txt> --chr <ref.tsv> -o output
+stoat vcf -s <paths.txt> -v <vcf_file.vcf.gz> -b <phenotype.txt> --chr <ref.tsv> -o output
 
 # decompose pangenome + binary trait
-stoat -p <pg.full.pg> -d <dist.dist> -v <vcf_file.vcf.gz> -b <phenotype.txt> --chr <ref.tsv> -o output
+stoat vcf -p <pg.full.pg> -d <dist.dist> -v <vcf_file.vcf.gz> -b <phenotype.txt> --chr <ref.tsv> -o output
 
 # decompose pangenome + quantative trait
-stoat -p <pg.full.pg> -d <dist.dist> -v <vcf_file.vcf.gz> -q <phenotype.txt> --chr <ref.tsv> -o output
+stoat vcf -p <pg.full.pg> -d <dist.dist> -v <vcf_file.vcf.gz> -q <phenotype.txt> --chr <ref.tsv> -o output
 ```
 
 Explanation of all options:
-```bash
+```text
 -p, --pg FILE                Path to the packed graph file (.pg)
 -d, --dist FILE              Path to the packed distance index file (.dist)
 -v, --vcf FILE               Path to the VCF file (.vcf or .vcf.gz)
@@ -177,6 +176,30 @@ Explanation of all options:
 -V, --verbose INT            Verbosity level (0=error, 1=warn, 2=info, 3=debug, 4=trace)\n"
 -o, --output DIR             Output directory name (VCF GWAS mode)
 -h, --help                   Print this help message
+```
+
+- Use `stoat graph` if you want to make a GWAS from a pangenome graph:
+
+```bash
+# Binary GWAS on pangenome
+stoat graph -g <pg.full.pg> -d <dist.full.dist> -T <model> -r <ref_path> -S <sample_file> -o <output_dir>
+```
+
+Explanation of all options:
+```text
+-g, --graph FILE                   use this graph (only hash graph works for now) (required)
+-d, --distance-index FILE          Use this distance index (required)
+-s, --sample-of-interest NAME      The name of the sample with the trait of interest (may repeat)
+-S, --samples-file NAME            A file with the names of the sample with the trait of interest, one per line (instead of -s)
+-o, --output DIR                   Output directory name [output]
+-O, --output-format NAME           The format of the output (tsv / fasta) [tsv]
+                                   Output will be written to DIR/binary_table_graph.tsv or DIR/associated.fasta and DIR/unassociated.fasta
+-t, --threads N                    Number of threads to use
+-T, --test NAME                    Which test will be used to determine association (exact / chi2) [exact]
+-m, --method NAME                  What method is used to find associations? (paths) [paths]
+-l, --allele-size-limit INT        Don't report variants smaller than this [0]
+-r, --reference-sample NAME        If there is no reference in the graph, use this sample as the reference
+-h, --help
 ```
 
 ## Output
