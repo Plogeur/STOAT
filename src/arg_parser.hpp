@@ -21,6 +21,7 @@
 #include <htslib/hts.h>
 
 #include "snarl_data_t.hpp"
+#include "log.hpp"
 
 using namespace std;
 

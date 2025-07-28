@@ -9,7 +9,7 @@ std::vector<std::set<std::string>> PathPartitioner::partition_samples_in_snarl(c
                                                                                const bdsg::SnarlDistanceIndex& distance_index,
                                                                                const handlegraph::net_handle_t& snarl) const {
     #ifdef DEBUG_PATH_PARTITIONER
-    cerr << "Get sample partitions of " << distance_index.net_handle_as_string(snarl) << " by its paths" << endl;
+        cerr << "Get sample partitions of " << distance_index.net_handle_as_string(snarl) << " by its paths" << endl;
     #endif
 
     //Get the partition of paths, depending on if the snarl is simple or not
@@ -18,17 +18,17 @@ std::vector<std::set<std::string>> PathPartitioner::partition_samples_in_snarl(c
                                                                 : get_walk_sets(graph, distance_index, snarl);
 
     #ifdef DEBUG_PATH_PARTITIONER
-    cerr << "Found sets of paths using " << ( distance_index.is_regular_snarl(snarl) ? "edges from the start node" : "walk sets") << endl;
-    for (const std::set<sample_hap_t>& sample_set : sample_sets) {
-        cerr << "SET "<< endl;
-        for (const sample_hap_t& sample : sample_set) {
-            cerr << "\t" << sample.sample << endl;
+        cerr << "Found sets of paths using " << ( distance_index.is_regular_snarl(snarl) ? "edges from the start node" : "walk sets") << endl;
+        for (const std::set<sample_hap_t>& sample_set : sample_sets) {
+            cerr << "SET "<< endl;
+            for (const sample_hap_t& sample : sample_set) {
+                cerr << "\t" << sample.sample << endl;
+            }
         }
-    }
-    cerr << "TRUTH" << endl;
-    for ( const std::string& x : samples_of_interest) {
-        cerr << "\t" << x << endl;
-    }
+        cerr << "TRUTH" << endl;
+        for ( const std::string& x : samples_of_interest) {
+            cerr << "\t" << x << endl;
+        }
     #endif
 
     std::vector<std::set<std::string>> sample_name_sets (sample_sets.size());

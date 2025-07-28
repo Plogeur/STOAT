@@ -24,6 +24,7 @@
 #include "binary_table.hpp"
 #include "quantitative_table.hpp"
 #include "utils.hpp"
+#include "log.hpp"
 
 using namespace std;
 

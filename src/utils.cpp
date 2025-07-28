@@ -48,9 +48,8 @@ bool isPValueSignificant(const double& pvalue_threshold, const std::string& pval
         } else {
             pvalue = std::stod(pvalue_str);
         }
-    } catch (const std::exception& e) {
-        std::cerr << "Error parsing pvalue std::string : " << pvalue_str << " " << e.what() << "\n";
-        return false;
+    } catch (...) {
+        throw std::runtime_error("Error parsing pvalue std::string : " + pvalue_str + " " + e.what());
     }
     return pvalue < pvalue_threshold;
 }

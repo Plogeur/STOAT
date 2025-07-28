@@ -49,7 +49,7 @@ std::vector<bool> parse_binary_pheno(
         int pheno = -1;
         try {
             pheno = std::stoi(phenoStr);
-        } catch (const std::invalid_argument& e) {
+        } catch (...) {
             throw std::runtime_error("Bad phenotype type : " + phenoStr);
         }
         if (pheno == 1) {
@@ -62,9 +62,12 @@ std::vector<bool> parse_binary_pheno(
             throw std::runtime_error("Error: Binary phenotype must be 1 or 2");
         }
     }
-    cout << "Binary phenotypes founds : " << count_controls+count_cases
-    << " (Control : " << count_controls
-    << ", Case : " << count_cases << ")" << std::endl;
+
+    LOG_INFO("Binary phenotypes founds : " 
+        + string(count_controls+count_cases)
+        + " (Control : " + count_controls
+        + ", Case : " + count_cases + ")");
+
     file.close();
 
     check_match_samples(binary_pheno, list_samples);
@@ -110,19 +113,16 @@ std::vector<double> parse_quantitative_pheno(
             continue;
         }
 
-        try
-        {
+        try {
             quantitative_pheno[iid] = std::stod(phenoStr);
-        }
-        catch(const std::exception& e)
-        {
-            std::cerr << e.what() << '\n';
+        } catch(...) {
             throw std::runtime_error("Error: Bad phenotype type : " + phenoStr);
         }
         count_pheno++;
     }
 
-    cout << "Quantitative phenotypes founds : " << count_pheno << std::endl;
+    LOG_INFO("Quantitative phenotypes founds : " + count_pheno);
+
     file.close();
 
     check_match_samples(quantitative_pheno, list_samples);
@@ -189,7 +189,7 @@ void check_match_samples(const std::unordered_map<std::string, T>& map, const st
         }
     }
     if (map.size() != keys.size()) {
-       std::cerr << "Warning: Number of samples found in VCF does not match the number of samples in the phenotype file" << std::endl;
+        LOG_WARNING("Number of samples found in VCF does not match the number of samples in the phenotype file");
     }
 }
 
@@ -213,14 +213,13 @@ std::unordered_map<std::string, std::vector<Qtl_data>> parse_qtl_gene_file(
             Qtl_data qtl_info(gene, expression_vector, start, end);
             qtl_map[chrom].emplace_back(qtl_info);
         } else {
-            std::cerr << "Error: Gene \"" << gene << "\" not found in gene positions." << std::endl;
-            exit(1);
+            throw std::runtime_error("Error: Gene " + gene + " not found in gene positions.");
         }
     }
   
     // Warn if gene_position has more genes than qtl
     if (gene_position.size() > qtl.size()) {
-        std::cerr << "Warning: More genes in the gene position file than in the QTL data." << std::endl;
+        LOG_WARNING("More genes present in the gene position file than in the QTL file.");
     }
 
     return qtl_map;
@@ -265,8 +264,7 @@ std::unordered_map<std::string, std::tuple<std::string, size_t, size_t>> parse_g
             int end = std::stoi(endStr);
             geneMap[gene] = std::make_tuple(chrom, start, end);
         } catch (...) {
-            std::cerr << "Error: In parsing gene position file, invalid line: " << line << std::endl;
-            exit(1);
+            throw std::runtime_error("Error: In parsing gene position file, invalid line " + line);
         }
     }
 
@@ -299,14 +297,13 @@ std::unordered_map<std::string, std::vector<double>> parse_qtl_file(
             // Check if all sample names are present in the list_samples
             for (const auto& sample : sampleNames) {
                 if (std::find(list_samples.begin(), list_samples.end(), sample) == list_samples.end()) {
-                    std::cerr << "Error: Sample " << sample << " not found in the list of samples." << std::endl;
-                    exit(1);
+                    throw std::runtime_error("Error: Sample " + sample + " not found in the list of samples.");
                 }
             }
 
             // warning if the number of samples in the file does not match the number of samples in the list
             if (sampleNames.size() != list_samples.size()) {
-                std::cerr << "Warning: Number of samples in the qtl file is > that the number of samples in the VCF." << std::endl;
+                LOG_WARNING("Number of samples in the qtl file is > that the number of samples in the VCF.");
             }
 
             isHeader = false;  // Skip header
@@ -321,8 +318,7 @@ std::unordered_map<std::string, std::vector<double>> parse_qtl_file(
             try {
                 expressions.push_back(std::stod(token));
             } catch (...) {
-                std::cerr << "Invalid expression value for gene " << geneName << ": " << token << std::endl;
-                exit(1);
+                throw std::runtime_error("Error: Invalid expression value for gene " + geneName + ": " + token);
             }
         }
         geneExpressions[geneName] = expressions;
@@ -356,7 +352,6 @@ std::vector<std::vector<double>> parse_covariates(
     auto it_iid = std::find(headers.begin(), headers.end(), "IID");
     if (it_iid == headers.end()) {
         throw std::runtime_error("Error: header must include 'IID' column.\n");
-        exit(1);
     }
     size_t iid_index = std::distance(headers.begin(), it_iid);
 
@@ -369,7 +364,6 @@ std::vector<std::vector<double>> parse_covariates(
     for (const auto& name : covar_names) {
         if (col_index.find(name) == col_index.end()) {
             throw std::runtime_error("Error: covariate column '" + name + "' not found in file.\n");
-            exit(1);
         }
     }
 
@@ -393,7 +387,6 @@ std::vector<std::vector<double>> parse_covariates(
             }
         } catch (...) {
             throw std::runtime_error("Error: Individual " + iid + " got an non-numeric value\n");
-            exit(1);
         }
         covariate_map[iid] = selected;
     }
@@ -406,8 +399,7 @@ std::vector<std::vector<double>> parse_covariates(
         if (it != covariate_map.end()) {
             covariate.push_back(it->second);
         } else {
-            std::cerr << "Error: Sample " << sample << " not found in the covariate file." << std::endl;
-            exit(1);
+            throw std::runtime_error("Error: Sample " + sample + " not found in the covariate file.");
         }
     }
     file.close();

@@ -13,6 +13,7 @@
 #include "../graph_path_association_finder.hpp"
 #include "../io/register_io.hpp"
 #include "../post_processing.hpp"
+#include "../log.hpp"
 
 
 #define USE_CALLGRIND
@@ -186,7 +187,6 @@ int main_stoat_graph(int argc, char *argv[]) {
         LOG_ERROR("error[stoat vgio]: Could not register libvg types with libvgio");
         return EXIT_FAILURE;
     }
-
 
     // Load the graph and make it a PathPositionHandleGraph
     unique_ptr<handlegraph::PathHandleGraph> path_graph = vg::io::VPKG::load_one<handlegraph::PathHandleGraph>(graph_name);

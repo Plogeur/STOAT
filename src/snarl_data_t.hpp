@@ -25,6 +25,7 @@
 #include <handlegraph/path_handle_graph.hpp>
 
 #include "utils.hpp"
+#include "log.hpp"
 
 using namespace std;
 using namespace stoat;

@@ -80,8 +80,8 @@ bool run_test(
 TEST_CASE("Binary association tests graph", "[binary]") {
     const std::string binary = "./stoat";
     const std::string output_dir = "../output_binary";
-    const std::string expected_dir = "../expected_output/graph/binary";
-    const std::string expected_dir_covar = "../expected_output/graph/binary_covar";
+    const std::string expected_dir = "../tests/expected_output/graph/binary";
+    const std::string expected_dir_covar = "../tests/expected_output/graph/binary_covar";
     const std::string data_path = "../data/binary";
     const std::string phenotype_command = " -T chi2 ";
 
@@ -97,8 +97,8 @@ TEST_CASE("Binary association tests graph", "[binary]") {
 // TEST_CASE("Quantitative trait tests graph", "[quantitative]") {
 //     const std::string binary = "./stoat";
 //     const std::string output_dir = "../output_quantitative";
-//     const std::string expected_dir = "../expected_output/graph/quantitative";
-//     const std::string expected_dir_covar = "../expected_output/graph/quantitative_covar";
+//     const std::string expected_dir = "../tests/expected_output/graph/quantitative";
+//     const std::string expected_dir_covar = "../tests/expected_output/graph/quantitative_covar";
 //     const std::string data_path = "../data/quantitative";
 //     const std::string phenotype_command = " -q ";
 

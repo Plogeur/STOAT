@@ -55,9 +55,9 @@ void AssociationFinder::test_snarls() const {
 
             //TODO: For now it's fine to check is_eligible here because it's only checking size and we don't want to look at small chains anyway
             if (distance_index.is_snarl(snarl) && snarl_is_eligible(snarl) ) {
-#ifdef DEBUG_ASSOCIATION_FINDER
-                cerr << "Test snarl " << distance_index.net_handle_as_string(snarl) << endl;
-#endif
+                #ifdef DEBUG_ASSOCIATION_FINDER
+                    cerr << "Test snarl " << distance_index.net_handle_as_string(snarl) << endl;
+                #endif
 
                 // Should we write this?
                 bool write_output = false;
@@ -77,7 +77,7 @@ void AssociationFinder::test_snarls() const {
                 // Do we test nested snarls? Don't test snarls that are already flagged as significant
                 bool test_nested_snarls = true;
 
-#ifdef DEBUG_ASSOCIATION_FINDER
+                #ifdef DEBUG_ASSOCIATION_FINDER
                     cerr << "\tTRUTH" << endl;
                     for (const std::string& sample : samples_of_interest) {
                         cerr << "\t\t" << sample << endl;
@@ -89,7 +89,7 @@ void AssociationFinder::test_snarls() const {
                             cerr << "\t\t" << sample << endl;
                         }
                     }
-#endif
+                #endif
 
                 if (sample_partitions.size() > 1) {
 
