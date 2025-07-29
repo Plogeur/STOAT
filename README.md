@@ -76,7 +76,7 @@ STOAT supports both binary and quantitative phenotypes:
 
 Required files :
 - pg : Pangenome graph file, formats accepted: .pg or .xg.
-- dist : Distance file generated with vg index, format: .dist.
+- dist : Distance file generated with `vg index -j`, format: .dist.
 - VCF pangenomique* : Merged VCF file, created using `vg pipeline` and bcftools merge, formats: .vcf or .vcf.gz. (ex : `bcftools merge -m none -Oz -o test`)
 - phenotype : phenotype file organise in three-column with FID (family/sample name), IID (sample name), and PHENO (integer/float). Binary phenotype [1 or 2]. Quantitative [-double max; +double max] Format: .txt or .tsv (tab-separated).
 - chromosome : Txt file that containt the reference chromosome haplotype name in the pangenome graph. Format: .txt or .tsv. (use : `vg paths -x <pg.full.pg> -R` to identify all haplotype name then select haplotype that you want to use as reference (idealy the ones use in the pangenome graph creation))
