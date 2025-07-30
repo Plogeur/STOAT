@@ -20,12 +20,12 @@
 #include <htslib/vcf.h>
 #include <htslib/hts.h>
 
-#include "snarl_data_t.hpp"
 #include "log.hpp"
+#include "snarl_data_t.hpp"
 
 using namespace std;
 
-namespace stoat {
+namespace stoat_vcf {
 
 struct KinshipMatrix {
     std::vector<std::string> ids;
@@ -68,7 +68,7 @@ std::unordered_map<std::string, std::vector<double>> parse_qtl_file(
 std::unordered_map<std::string, std::tuple<std::string, size_t, size_t>> parse_gene_positions(
     const std::string& filename);
 
-std::unordered_map<std::string, std::vector<stoat::Qtl_data>> parse_qtl_gene_file(
+std::unordered_map<std::string, std::vector<stoat_vcf::Qtl_data>> parse_qtl_gene_file(
     const std::string& eqtl_path, 
     const std::string& gene_position_path, 
     const std::vector<std::string>& list_samples);

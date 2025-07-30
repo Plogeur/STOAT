@@ -141,7 +141,7 @@ void AssociationFinder::test_snarls() const {
                         // TODO: This function should probably be part of the output function
 
                         //Get a bunch of strings that get used for the output
-                        group_paths = stoat::format_group_paths(genotype_associated, genotype_unassociated);
+                        group_paths = stoat_vcf::format_group_paths(genotype_associated, genotype_unassociated);
  
                         // Run the statistical test
                         std::tie(chi2_p_value, fastfisher_p_value) = fisher_chi2_tester.fisher_khi2(genotype_associated, genotype_unassociated);
@@ -165,7 +165,7 @@ void AssociationFinder::test_snarls() const {
                             stoat::Snarl_data_t snarl_data_s(snarl, graph, distance_index);
 
                             // Get the offsets of the start and end nodes along the reference
-                            std::vector<path_range_t> ranges = get_coordinates_of_snarl(graph, distance_index, snarl, true, reference_sample, false);
+                            std::vector<stoat::path_range_t> ranges = stoat::get_coordinates_of_snarl(graph, distance_index, snarl, true, reference_sample, false);
                             if (ranges.size() != 0) {
                                 std::tie(chr, snarl_data_s.start_positions, snarl_data_s.end_positions) = get_name_and_offsets_of_snarl_path_range(graph, distance_index, ranges.front());
                             }

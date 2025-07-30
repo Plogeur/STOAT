@@ -13,15 +13,15 @@ std::vector<std::set<std::string>> PathPartitioner::partition_samples_in_snarl(c
     #endif
 
     //Get the partition of paths, depending on if the snarl is simple or not
-    std::vector<std::set<sample_hap_t>> sample_sets = distance_index.is_regular_snarl(snarl) 
+    std::vector<std::set<stoat::sample_hap_t>> sample_sets = distance_index.is_regular_snarl(snarl) 
                                                                 ? get_start_edge_sets(graph, distance_index, snarl)
                                                                 : get_walk_sets(graph, distance_index, snarl);
 
     #ifdef DEBUG_PATH_PARTITIONER
         cerr << "Found sets of paths using " << ( distance_index.is_regular_snarl(snarl) ? "edges from the start node" : "walk sets") << endl;
-        for (const std::set<sample_hap_t>& sample_set : sample_sets) {
+        for (const std::set<stoat::sample_hap_t>& sample_set : sample_sets) {
             cerr << "SET "<< endl;
-            for (const sample_hap_t& sample : sample_set) {
+            for (const stoat::sample_hap_t& sample : sample_set) {
                 cerr << "\t" << sample.sample << endl;
             }
         }
@@ -33,7 +33,7 @@ std::vector<std::set<std::string>> PathPartitioner::partition_samples_in_snarl(c
 
     std::vector<std::set<std::string>> sample_name_sets (sample_sets.size());
     for (size_t i = 0 ; i < sample_sets.size() ; i++) {
-        for (const sample_hap_t& sample : sample_sets[i]) {
+        for (const stoat::sample_hap_t& sample : sample_sets[i]) {
             sample_name_sets[i].emplace(sample.sample);
         }
     }
@@ -44,7 +44,7 @@ std::vector<std::set<std::string>> PathPartitioner::partition_samples_in_snarl(c
 // Instead of explicitly enumerating the paths, it actually finds the sets of edges that each path takes.
 // But since paths may loop, it also takes into account the order and number of outgoing edges from each node.
 // I think this is equivalent to partitioning by the actual sets of unique walks.
-std::vector<std::set<sample_hap_t>> PathPartitioner::get_walk_sets(const handlegraph::PathPositionHandleGraph& graph, 
+std::vector<std::set<stoat::sample_hap_t>> PathPartitioner::get_walk_sets(const handlegraph::PathPositionHandleGraph& graph, 
                                                                    const bdsg::SnarlDistanceIndex& distance_index,
                                                                    const handlegraph::net_handle_t& snarl) const {
     #ifdef DEBUG_PATH_PARTITIONER
@@ -52,10 +52,10 @@ std::vector<std::set<sample_hap_t>> PathPartitioner::get_walk_sets(const handleg
     #endif
 
     // Make a vector of the paths 
-    std::vector<sample_hap_t> all_samples(all_sample_haplotypes.begin(), all_sample_haplotypes.end());
+    std::vector<stoat::sample_hap_t> all_samples(all_sample_haplotypes.begin(), all_sample_haplotypes.end());
 
     // Map each sample(plus haplotype) to its index in all_samples
-    std::map<sample_hap_t, std::size_t> sample_to_index;
+    std::map<stoat::sample_hap_t, std::size_t> sample_to_index;
     for (size_t i = 0 ; i < all_samples.size() ; i++) {
         sample_to_index[all_samples[i]] = i;
     }
@@ -242,7 +242,7 @@ std::vector<std::set<sample_hap_t>> PathPartitioner::get_walk_sets(const handleg
     // stored in old_sets.
     // Return actual sets of paths.
 
-    std::vector<std::set<sample_hap_t>> sample_sets (old_set_count);
+    std::vector<std::set<stoat::sample_hap_t>> sample_sets (old_set_count);
     for (size_t i = 0 ; i < all_samples.size() ; i++) {
         sample_sets[old_sets[i]].emplace(all_samples[i]);
     }
@@ -258,7 +258,7 @@ std::vector<std::set<sample_hap_t>> PathPartitioner::get_walk_sets(const handleg
     return sample_sets;
 }
 
-std::vector<std::set<sample_hap_t>> PathPartitioner::get_start_edge_sets(const handlegraph::PathPositionHandleGraph& graph, 
+std::vector<std::set<stoat::sample_hap_t>> PathPartitioner::get_start_edge_sets(const handlegraph::PathPositionHandleGraph& graph, 
                                                                          const bdsg::SnarlDistanceIndex& distance_index,
                                                                          const bdsg::net_handle_t& snarl) const {
 
@@ -267,7 +267,7 @@ std::vector<std::set<sample_hap_t>> PathPartitioner::get_start_edge_sets(const h
     #endif
 
     // Map an edge (as the handle reached from the start of the snarl) to a set of paths that took that edge
-    std::map<handlegraph::handle_t, std::set<sample_hap_t>> edge_to_sample_set;
+    std::map<handlegraph::handle_t, std::set<stoat::sample_hap_t>> edge_to_sample_set;
 
     // The start node going into the snarl
     handlegraph::handle_t start_node = distance_index.get_handle(distance_index.get_node_from_sentinel(distance_index.get_bound(snarl, false, true)), &graph);
@@ -289,7 +289,7 @@ std::vector<std::set<sample_hap_t>> PathPartitioner::get_start_edge_sets(const h
                 handlegraph::handle_t next_node = go_forward ? graph.get_handle_of_step(graph.get_next_step(step))
                                                              : graph.get_handle_of_step(graph.get_previous_step(step));
                 if (edge_to_sample_set.count(next_node) == 0) {
-                    edge_to_sample_set[next_node] = std::set<sample_hap_t>();
+                    edge_to_sample_set[next_node] = std::set<stoat::sample_hap_t>();
                 }
                 edge_to_sample_set[next_node].emplace(stoat::get_sample_and_haplotype(graph, path));
             }
@@ -297,7 +297,7 @@ std::vector<std::set<sample_hap_t>> PathPartitioner::get_start_edge_sets(const h
     }
 
 
-    std::vector<std::set<sample_hap_t>> edge_sets;
+    std::vector<std::set<stoat::sample_hap_t>> edge_sets;
     for (auto& edge_to_set : edge_to_sample_set) {
         //TODO: idk if this will mess up the map by moving things inside it
         edge_sets.emplace_back(std::move(edge_to_set.second)); 

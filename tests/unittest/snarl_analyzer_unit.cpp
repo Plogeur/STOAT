@@ -7,17 +7,17 @@
 
 using namespace stoat;
 
-TEST_CASE("Node_traversal_t Basic Functionality") {
-    Node_traversal_t node(42, true);
+TEST_CASE("stoat::Node_traversal_t Basic Functionality") {
+    stoat::Node_traversal_t node(42, true);
     REQUIRE(node.get_node_id() == 42);
     REQUIRE(node.get_is_reverse() == true);
     REQUIRE(node.to_string() == "<42");
 }
 
 TEST_CASE("Edge_t Functionality") {
-    Node_traversal_t a(1, false);
-    Node_traversal_t b(2, true);
-    Edge_t edge(a, b);
+    stoat::Node_traversal_t a(1, false);
+    stoat::Node_traversal_t b(2, true);
+   stoat::Edge_t edge(a, b);
 
     auto pair = edge.print_pair_edge();
     REQUIRE(pair.first == 1);
@@ -96,11 +96,11 @@ TEST_CASE("decompose_path_list_str supports multiple strings including ones with
 }
 
 TEST_CASE("identify_path with EdgeBySampleMatrix") {
-    Node_traversal_t a(1, false), b(2, false), c(3, false);
-    Edge_t edge1(a, b);
-    Edge_t edge2(b, c);
+    stoat::Node_traversal_t a(1, false), b(2, false), c(3, false);
+   stoat::Edge_t edge1(a, b);
+   stoat::Edge_t edge2(b, c);
 
-    std::vector<Edge_t> path = {edge1, edge2};
+    std::vector<stoat::Edge_t> path = {edge1, edge2};
 
     std::vector<std::string> samples = {"sample1", "sample2", "sample3"};
     EdgeBySampleMatrix matrix(samples, 2, 3);

@@ -61,9 +61,9 @@ int main(int argc, char* argv[]) {
         stoat_command::main_stoat_graph(argc, argv);
 
     } else if (subcommand == "version") {
-        LOG_INFO("stoat: GWAS analysis tool, version " + VERSION);
-        // LOG_INFO("Compiled with g++ (Ubuntu 11.4.0-1ubuntu1~22.04) 11.4.0 on Linux)";
-        // LOG_INFO("Linked against libstd++ 20230528)";
+        std::cout << "stoat: GWAS analysis tool, version " << VERSION;
+        // stoat::LOG_INFO("Compiled with g++ (Ubuntu 11.4.0-1ubuntu1~22.04) 11.4.0 on Linux)";
+        // stoat::LOG_INFO("Linked against libstd++ 20230528)";
 
     } else {
         print_help();

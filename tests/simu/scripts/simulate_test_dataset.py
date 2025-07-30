@@ -1,5 +1,8 @@
 import random
 import argparse
+from scipy.special import expit  # sigmoid function
+import numpy as np
+
 # -*- coding: utf-8 -*-
 
 # Written by Jean Monlong (jean.monlong@inserm.fr) modified by Matis Alias-Bagarre
@@ -78,47 +81,36 @@ class Graph:
             bool_gene_signi = gen_signi <= gen_prob
             for samp in range(0, nsamp):
                 if bool_gene_signi: # significant gene
-                   qtl_col.append(gene_expr + (gene_expr * self.phenotypes_value[samp]))
+                    qtl_col.append(gene_expr + (gene_expr * self.phenotypes_value[samp]))
                 else: # not significant gene
                     qtl_col.append(gene_expr + (gene_expr * random.uniform(-1.0, 1.0)))
             self.eqtl_phenotypes.append(qtl_col)
 
-    def covariate(self, nsamp, ncov):
-        """Simulate a covariate phenotype for a sample"""
-        covar_effect = [random.uniform(0.1, 0.5) for _ in range(0, ncov)]
+    def covariate(self, nsamp, ncov) -> list[float]:
+        """Simulate quantitative covariates associated with phenotype"""
+        covar_effect = [random.uniform(0.1, 0.5) for _ in range(ncov)]  # strength of association
         for idx_cov in range(ncov):
-            bias = random.uniform(-10, 10)
+            beta = covar_effect[idx_cov]
             cov = []
             for idx in range(nsamp):
-                disp = random.uniform(-1, 1)
-                cov_value = self.phenotypes_value[idx] * covar_effect[idx_cov] + bias + disp
+                pheno = self.phenotypes_value[idx]
+                noise = np.random.normal(0, 1)  # add noise to reduce perfect correlation
+                cov_value = beta * pheno + noise
                 cov.append(cov_value)
             self.covariates.append(cov)
-
-    def covariate_sex(self, nsamp, sex_eq):
-        """Simulate a covariate phenotype for a sample"""
+        print("covar_effect : ", covar_effect)
+    
+    def covariate_sex(self, nsamp, sex_bias=0.0):
+        """Simulate a sex covariate associated with phenotype"""
         cov = []
-        for _ in range(nsamp):
-            sexual_impact = random.uniform(0.0, 1.0) < sex_eq
-            if sexual_impact :
-                sexual_pheno = 'M'
-            else :
-                sexual_pheno = random.choice(['M','F'])
-            cov.append(sexual_pheno)
+        beta_sex = np.random.uniform(-2, 2)  # random strength of association
+        for idx in range(nsamp):
+            pheno = self.phenotypes_value[idx]
+            p = expit(beta_sex * pheno + sex_bias)  # logistic function
+            sex = np.random.binomial(1, p)
+            cov.append(sex)
         self.covariates.append(cov)
-
-    def covariate_eqtl(self, ncov=3):
-        """Simulate a covariate phenotype for a sample"""
-        covar_effect = [random.uniform(0.1, 0.5) for _ in range(0, ncov)]
-        for _ in range(ncov):
-            # bias for covariate
-            bias = random.uniform(-10, 10)
-            cov = []
-            for idx in range(nsamp):
-                disp = random.uniform(-1, 1)
-                cov_value = self.phenotypes_value[idx] * covar_effect + bias + disp
-                cov.append(cov_value)
-            self.covariates.append(cov)
+        print("beta_sex : ", beta_sex)
 
     def addNode(self, pred_nodes=[], min_size=50, max_size=300):
         # create a node and connect it to specified predecessors
@@ -343,6 +335,7 @@ if "__main__" == __name__ :
     parser.add_argument('-n', '--nsamp', type=int, default=200, help='Number of samples in total (default: 100)')
     parser.add_argument('--snp_prop', type=float, default=0.7, help='Proportion of top-level variants that are SNPs (default: 0.7)')
     parser.add_argument('--nested_prop', type=float, default=0.8, help='Proportion of indels that we want to try to add nested SNPs into (default: 0.8)')
+    parser.add_argument('--sv_prop', type=float, default=0.1, help='Proportion of SVs (default: 0.1)')
     parser.add_argument('--prop_markers', type=float, default=0.1, help='Proportion of markers (default: 0.1)')
     parser.add_argument('-c', '--ncov', type=int, default=3, help='Number of covariate (default: 3)')
     parser.add_argument('-s', '--sex_cov', action='store_true', default=True, help='Include sex as a covariate (default: False)')

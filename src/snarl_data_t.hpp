@@ -24,11 +24,10 @@
 #include <handlegraph/handle_graph.hpp>
 #include <handlegraph/path_handle_graph.hpp>
 
-#include "utils.hpp"
 #include "log.hpp"
+#include "utils.hpp"
 
 using namespace std;
-using namespace stoat;
 
 using handlegraph::step_handle_t;
 using handlegraph::handle_t;
@@ -148,7 +147,7 @@ public:
 };
 
 // Parses the snarl path file and returns a map with snarl as keys and paths as a list of strings.
-std::unordered_map<std::string, std::vector<stoat::Snarl_data_t>> parse_snarl_path(const std::string& path_file);
+std::unordered_map<std::string, std::vector<Snarl_data_t>> parse_snarl_path(const std::string& path_file);
 
 void write_snarl_data_output(std::ostream& outstream);
 void write_snarl_data_fail(std::ostream& outstream);
@@ -183,7 +182,7 @@ std::vector<std::tuple<handlegraph::net_handle_t, std::string, size_t, size_t, b
                             bdsg::PackedPositionOverlay& ppo);
 
 // Function to fill pretty paths
-tuple<std::vector<stoat::Path_traversal_t>, std::vector<std::string>> fill_pretty_paths(
+tuple<std::vector<Path_traversal_t>, std::vector<std::string>> fill_pretty_paths(
                             bdsg::SnarlDistanceIndex& stree, 
                             bdsg::PackedGraph& pg, 
                             std::vector<std::vector<handlegraph::net_handle_t>>& finished_paths);

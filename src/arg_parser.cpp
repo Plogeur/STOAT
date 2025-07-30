@@ -1,8 +1,9 @@
+#include "log.hpp"
 #include "arg_parser.hpp"
 
 namespace fs = std::filesystem;
 
-namespace stoat {
+namespace stoat_vcf {
 
 std::unordered_set<std::string> parse_chromosome_reference(const std::string& file_path) {
     std::unordered_set<std::string> reference;
@@ -63,10 +64,9 @@ std::vector<bool> parse_binary_pheno(
         }
     }
 
-    LOG_INFO("Binary phenotypes founds : " 
-        + string(count_controls+count_cases)
-        + " (Control : " + count_controls
-        + ", Case : " + count_cases + ")");
+    stoat::LOG_INFO("Binary phenotypes founds : " + std::to_string(count_controls+count_cases)
+        + " (Control : " + std::to_string(count_controls) 
+        + ", Case : " + std::to_string(count_cases) + ")");
 
     file.close();
 
@@ -121,7 +121,7 @@ std::vector<double> parse_quantitative_pheno(
         count_pheno++;
     }
 
-    LOG_INFO("Quantitative phenotypes founds : " + count_pheno);
+    stoat::LOG_INFO("Quantitative phenotypes founds : " + std::to_string(count_pheno));
 
     file.close();
 
@@ -189,7 +189,7 @@ void check_match_samples(const std::unordered_map<std::string, T>& map, const st
         }
     }
     if (map.size() != keys.size()) {
-        LOG_WARNING("Number of samples found in VCF does not match the number of samples in the phenotype file");
+        stoat::LOG_WARN("Number of samples found in VCF does not match the number of samples in the phenotype file");
     }
 }
 
@@ -219,7 +219,7 @@ std::unordered_map<std::string, std::vector<Qtl_data>> parse_qtl_gene_file(
   
     // Warn if gene_position has more genes than qtl
     if (gene_position.size() > qtl.size()) {
-        LOG_WARNING("More genes present in the gene position file than in the QTL file.");
+        stoat::LOG_WARN("More genes present in the gene position file than in the QTL file.");
     }
 
     return qtl_map;
@@ -303,7 +303,7 @@ std::unordered_map<std::string, std::vector<double>> parse_qtl_file(
 
             // warning if the number of samples in the file does not match the number of samples in the list
             if (sampleNames.size() != list_samples.size()) {
-                LOG_WARNING("Number of samples in the qtl file is > that the number of samples in the VCF.");
+                stoat::LOG_WARN("Number of samples in the qtl file is greater that the number of samples in the VCF.");
             }
 
             isHeader = false;  // Skip header

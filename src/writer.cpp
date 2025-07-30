@@ -106,7 +106,7 @@ void write_fasta(std::ostream& outstream_associated, std::ostream& outstream_una
     
     // Get a reference range for the snarl.
     // If the reference goes through the snarl multiple times, get the largest interval
-    std::vector<stoat::path_range_t> ref_ranges = stoat::get_coordinates_of_snarl(graph, distance_index, snarl, true, reference_name, false);
+    std::vector<stoat::path_range_t> ref_ranges = get_coordinates_of_snarl(graph, distance_index, snarl, true, reference_name, false);
     std::string ref_coordinates  = "NOREF:?:?";
     int start_offset = std::numeric_limits<int>::max();
     int end_offset = 0;
@@ -134,7 +134,7 @@ void write_fasta(std::ostream& outstream_associated, std::ostream& outstream_una
     }
     
     // Now go through each path that goes through the snarl and print the sequence
-    std::vector<stoat::path_range_t> path_ranges = stoat::get_coordinates_of_snarl(graph, distance_index, snarl, false, "", true);
+    std::vector<stoat::path_range_t> path_ranges = get_coordinates_of_snarl(graph, distance_index, snarl, false, "", true);
     for (const stoat::path_range_t& path_range : path_ranges) {
         handlegraph::path_handle_t path = graph.get_path_handle_of_step(path_range.start);
         string sample_name = stoat::get_sample_name_from_path(graph, path);

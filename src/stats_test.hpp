@@ -110,7 +110,7 @@ class LMM {
         // template <typename T> 
         // lmm(const std::vector<std::vector<double>>& df,
         //     const std::vector<T>& phenotype_table,
-        //     const stoat::KinshipMatrix& kinship,
+        //     const stoat_vcf::KinshipMatrix& kinship,
         //     const std::vector<std::vector<double>>& covariates);
 };
 

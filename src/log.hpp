@@ -1,8 +1,17 @@
-#pragma once
+#ifndef LOG_HPP
+#define LOG_HPP
 
 #include <iostream>
 #include <fstream>
 #include <mutex>
+
+namespace stoat {
+
+#define LOG_ERROR(msg)   Logger::instance().error(msg)
+#define LOG_WARN(msg)    Logger::instance().warn(msg)
+#define LOG_INFO(msg)    Logger::instance().info(msg)
+#define LOG_DEBUG(msg)   Logger::instance().debug(msg)
+#define TRACE(msg)       Logger::instance().log(LogLevel::Trace, msg)
 
 enum class LogLevel {
     Error = 0,
@@ -41,4 +50,7 @@ private:
         }
     }
 };
-    
+
+} //end stoat namespace
+
+#endif

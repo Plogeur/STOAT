@@ -333,7 +333,7 @@ std::vector<std::string> calcul_pos_type_variant(const std::vector<std::tuple<si
             list_type_variant.push_back("0");
         } else { // Case path_lengths is empty or == 1
             // This should probably never happen right ?
-            LOG_WARN("path_lengths is empty");
+            stoat::LOG_WARN("path_lengths is empty");
         }
     }
     return list_type_variant;
@@ -431,7 +431,7 @@ std::vector<std::tuple<handlegraph::net_handle_t,
                     std::get<2>(ret_pos) = pos+1 ; // default end position
                     return (false); // Stop iteration once a reference chr is found
                 }
-            } else (ref_chr.find(chr_path) != ref_chr.end()) {
+            } else if (ref_chr.find(chr_path) != ref_chr.end()) {
                 std::get<0>(ret_pos) = chr_path;
                 size_t pos = ppo.get_position_of_step(step_handle);
                 std::get<1>(ret_pos) = pos + stree.node_length(node); // position + length_node
@@ -513,7 +513,7 @@ std::vector<std::tuple<handlegraph::net_handle_t,
     };
 
     stree.for_each_child(root, save_snarl_tree_node);
-    LOG_INFO("Total number of snarls : " + snarls.size());
+    stoat::LOG_INFO("Total number of snarls : " + std::to_string(snarls.size()));
     return snarls;
 }
 
@@ -597,7 +597,7 @@ std::tuple<std::vector<stoat::Path_traversal_t>, std::vector<std::string>> fill_
 
                 // Fail case 
                 #ifdef DEBUG_SNARL_DATA_T
-                // LOG_DEBUG();
+                // stoat::LOG_DEBUG();
                 assert(stree.maximum_length(net) != static_cast<size_t>(INT_MAX) && "Overflow max distance");
                 assert(stree.minimum_length(net) != static_cast<size_t>(INT_MAX) && "Overflow min distance");
                 #endif
@@ -658,7 +658,7 @@ std::unordered_map<std::string, std::vector<Snarl_data_t>> loop_over_snarls_writ
 
     for (const auto& snarl_path_pos : snarls) {
         handlegraph::net_handle_t snarl = std::get<0>(snarl_path_pos);
-        std::pair<size_t, size_t> snarl_id = find_snarl_id(stree, snarl);
+        std::pair<size_t, size_t> snarl_id = stoat::find_snarl_id(stree, snarl);
         size_t itr = 0;
         std::string snarl_id_str = pairToString(snarl_id);
         bool not_break = true;
@@ -746,11 +746,11 @@ std::unordered_map<std::string, std::vector<Snarl_data_t>> loop_over_snarls_writ
     }
 
     // Print the size of snarl_paths
-    LOG_INFO("Total number of paths : " + paths_number_analysis);
+    stoat::LOG_INFO("Total number of paths : " + std::to_string(paths_number_analysis));
 
     // Print chr_snarl_matrix
     for (const auto& chr_snarl : chr_snarl_matrix) {
-        LOG_INFO("chr : " + chr_snarl.first + ", number of snarl : " + chr_snarl.second.size());
+        stoat::LOG_INFO("chr : " + chr_snarl.first + ", number of snarl : " + std::to_string(chr_snarl.second.size()));
     }
 
     return {chr_snarl_matrix};

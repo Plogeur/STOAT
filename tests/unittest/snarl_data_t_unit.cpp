@@ -4,7 +4,7 @@
 
 using namespace std;
 using namespace bdsg;
-using namespace stoat_vcf;
+
 using handlegraph::step_handle_t;
 using handlegraph::handle_t;
 using handlegraph::net_handle_t;
@@ -28,14 +28,14 @@ TEST_CASE("Test simulated case", "[Path]") {
         std::string pg_path = "../tests/graph_test/simple_snp.pg";
         std::string dist_path = "../tests/graph_test/simple_snp.dist";
 
-        std::tie(stree, pg, root, pp_overlay) = stoat_vcf::parse_graph_tree(pg_path, dist_path);
-        auto snarls = stoat_vcf::save_snarls(*stree, root, *pg, ref_chr, *pp_overlay);
-        auto snarls_chr = stoat_vcf::loop_over_snarls_write(*stree, snarls, *pg, output_file, output_snarl_not_analyse, children_threshold, path_length_threshold, 0, only_snarl_parsing);
+        std::tie(stree, pg, root, pp_overlay) = stoat::parse_graph_tree(pg_path, dist_path);
+        auto snarls = stoat::save_snarls(*stree, root, *pg, ref_chr, *pp_overlay);
+        auto snarls_chr = stoat::loop_over_snarls_write(*stree, snarls, *pg, output_file, output_snarl_not_analyse, children_threshold, path_length_threshold, 0, only_snarl_parsing);
         
         REQUIRE(snarls_chr.size() == 1);
         REQUIRE(snarls_chr["ref"].size() == 1);
-        REQUIRE(pairToString(find_snarl_id(*stree, snarls_chr["ref"][0].snarl)) == "5_2");
-        REQUIRE(stoat::stringToVector<std::string>(stoat_vcf::vectorPathToString(snarls_chr["ref"][0].snarl_paths)) == std::vector<std::string>{">2>3>5",">2>4>5"});
+        REQUIRE(stoat::pairToString(stoat::find_snarl_id(*stree, snarls_chr["ref"][0].snarl)) == "5_2");
+        REQUIRE(stoat::stringToVector<std::string>(stoat::vectorPathToString(snarls_chr["ref"][0].snarl_paths)) == std::vector<std::string>{">2>3>5",">2>4>5"});
         REQUIRE(snarls_chr["ref"][0].start_positions == 8);
         REQUIRE(snarls_chr["ref"][0].end_positions == 10);
         REQUIRE(snarls_chr["ref"][0].type_variants == std::vector<std::string>{"1", "1"});
@@ -45,14 +45,14 @@ TEST_CASE("Test simulated case", "[Path]") {
         std::string pg_path = "../tests/graph_test/3th_snp.pg";
         std::string dist_path = "../tests/graph_test/3th_snp.dist";
 
-        std::tie(stree, pg, root, pp_overlay) = stoat_vcf::parse_graph_tree(pg_path, dist_path);
-        auto snarls = stoat_vcf::save_snarls(*stree, root, *pg, ref_chr, *pp_overlay);
-        auto snarls_chr = stoat_vcf::loop_over_snarls_write(*stree, snarls, *pg, output_file, output_snarl_not_analyse, children_threshold, path_length_threshold, 0, only_snarl_parsing);
+        std::tie(stree, pg, root, pp_overlay) = stoat::parse_graph_tree(pg_path, dist_path);
+        auto snarls = stoat::save_snarls(*stree, root, *pg, ref_chr, *pp_overlay);
+        auto snarls_chr = stoat::loop_over_snarls_write(*stree, snarls, *pg, output_file, output_snarl_not_analyse, children_threshold, path_length_threshold, 0, only_snarl_parsing);
         
         REQUIRE(snarls_chr.size() == 1);
         REQUIRE(snarls_chr["ref"].size() == 1);
-        REQUIRE(pairToString(find_snarl_id(*stree, snarls_chr["ref"][0].snarl)) == "6_2");
-        REQUIRE(stoat::stringToVector<std::string>(stoat_vcf::vectorPathToString(snarls_chr["ref"][0].snarl_paths)) == std::vector<std::string>{">2>3>6",">2>4>6",">2>5>6"});
+        REQUIRE(stoat::pairToString(stoat::find_snarl_id(*stree, snarls_chr["ref"][0].snarl)) == "6_2");
+        REQUIRE(stoat::stringToVector<std::string>(stoat::vectorPathToString(snarls_chr["ref"][0].snarl_paths)) == std::vector<std::string>{">2>3>6",">2>4>6",">2>5>6"});
         REQUIRE(snarls_chr["ref"][0].start_positions == 8);
         REQUIRE(snarls_chr["ref"][0].end_positions == 10);
         REQUIRE(snarls_chr["ref"][0].type_variants == std::vector<std::string>{"1", "1", "1"});
@@ -62,14 +62,14 @@ TEST_CASE("Test simulated case", "[Path]") {
         std::string pg_path = "../tests/graph_test/4th.pg";
         std::string dist_path = "../tests/graph_test/4th.dist";
 
-        std::tie(stree, pg, root, pp_overlay) = stoat_vcf::parse_graph_tree(pg_path, dist_path);
-        auto snarls = stoat_vcf::save_snarls(*stree, root, *pg, ref_chr, *pp_overlay);
-        auto snarls_chr = stoat_vcf::loop_over_snarls_write(*stree, snarls, *pg, output_file, output_snarl_not_analyse, children_threshold, path_length_threshold, 0, only_snarl_parsing);
+        std::tie(stree, pg, root, pp_overlay) = stoat::parse_graph_tree(pg_path, dist_path);
+        auto snarls = stoat::save_snarls(*stree, root, *pg, ref_chr, *pp_overlay);
+        auto snarls_chr = stoat::loop_over_snarls_write(*stree, snarls, *pg, output_file, output_snarl_not_analyse, children_threshold, path_length_threshold, 0, only_snarl_parsing);
         
         REQUIRE(snarls_chr.size() == 1);
         REQUIRE(snarls_chr["ref"].size() == 1);
-        REQUIRE(pairToString(find_snarl_id(*stree, snarls_chr["ref"][0].snarl)) == "2_7");
-        REQUIRE(stoat::stringToVector<std::string>(stoat_vcf::vectorPathToString(snarls_chr["ref"][0].snarl_paths)) == std::vector<std::string>{">2>3>5>7", ">2>4>6>7" ,">2>3>6>7"});
+        REQUIRE(stoat::pairToString(stoat::find_snarl_id(*stree, snarls_chr["ref"][0].snarl)) == "2_7");
+        REQUIRE(stoat::stringToVector<std::string>(stoat::vectorPathToString(snarls_chr["ref"][0].snarl_paths)) == std::vector<std::string>{">2>3>5>7", ">2>4>6>7" ,">2>3>6>7"});
         REQUIRE(snarls_chr["ref"][0].start_positions == 8);
         REQUIRE(snarls_chr["ref"][0].end_positions == 13);
         REQUIRE(snarls_chr["ref"][0].type_variants == std::vector<std::string>{"4", "6", "5"});
@@ -79,14 +79,14 @@ TEST_CASE("Test simulated case", "[Path]") {
         std::string pg_path = "../tests/graph_test/deletion_snp.pg";
         std::string dist_path = "../tests/graph_test/deletion_snp.dist";
 
-        std::tie(stree, pg, root, pp_overlay) = stoat_vcf::parse_graph_tree(pg_path, dist_path);
-        auto snarls = stoat_vcf::save_snarls(*stree, root, *pg, ref_chr, *pp_overlay);
-        auto snarls_chr = stoat_vcf::loop_over_snarls_write(*stree, snarls, *pg, output_file, output_snarl_not_analyse, children_threshold, path_length_threshold, 0, only_snarl_parsing);
+        std::tie(stree, pg, root, pp_overlay) = stoat::parse_graph_tree(pg_path, dist_path);
+        auto snarls = stoat::save_snarls(*stree, root, *pg, ref_chr, *pp_overlay);
+        auto snarls_chr = stoat::loop_over_snarls_write(*stree, snarls, *pg, output_file, output_snarl_not_analyse, children_threshold, path_length_threshold, 0, only_snarl_parsing);
         
         REQUIRE(snarls_chr.size() == 1);
         REQUIRE(snarls_chr["ref"].size() == 1);
-        REQUIRE(pairToString(find_snarl_id(*stree, snarls_chr["ref"][0].snarl)) == "4_2");
-        REQUIRE(stoat::stringToVector<std::string>(stoat_vcf::vectorPathToString(snarls_chr["ref"][0].snarl_paths)) == std::vector<std::string>{">2>4", ">2>3>4"});
+        REQUIRE(stoat::pairToString(stoat::find_snarl_id(*stree, snarls_chr["ref"][0].snarl)) == "4_2");
+        REQUIRE(stoat::stringToVector<std::string>(stoat::vectorPathToString(snarls_chr["ref"][0].snarl_paths)) == std::vector<std::string>{">2>4", ">2>3>4"});
         REQUIRE(snarls_chr["ref"][0].start_positions == 8);
         REQUIRE(snarls_chr["ref"][0].end_positions == 10);
         REQUIRE(snarls_chr["ref"][0].type_variants == std::vector<std::string>{"0", "1"});
@@ -96,14 +96,14 @@ TEST_CASE("Test simulated case", "[Path]") {
         std::string pg_path = "../tests/graph_test/insert_deletion.pg";
         std::string dist_path = "../tests/graph_test/insert_deletion.dist";
 
-        std::tie(stree, pg, root, pp_overlay) = stoat_vcf::parse_graph_tree(pg_path, dist_path);
-        auto snarls = stoat_vcf::save_snarls(*stree, root, *pg, ref_chr, *pp_overlay);
-        auto snarls_chr = stoat_vcf::loop_over_snarls_write(*stree, snarls, *pg, output_file, output_snarl_not_analyse, children_threshold, path_length_threshold, 0, only_snarl_parsing);
+        std::tie(stree, pg, root, pp_overlay) = stoat::parse_graph_tree(pg_path, dist_path);
+        auto snarls = stoat::save_snarls(*stree, root, *pg, ref_chr, *pp_overlay);
+        auto snarls_chr = stoat::loop_over_snarls_write(*stree, snarls, *pg, output_file, output_snarl_not_analyse, children_threshold, path_length_threshold, 0, only_snarl_parsing);
         
         REQUIRE(snarls_chr.size() == 1);
         REQUIRE(snarls_chr["ref"].size() == 1);
-        REQUIRE(pairToString(find_snarl_id(*stree, snarls_chr["ref"][0].snarl)) == "4_2");
-        REQUIRE(stoat::stringToVector<std::string>(stoat_vcf::vectorPathToString(snarls_chr["ref"][0].snarl_paths)) == std::vector<std::string>{">2>4", ">2>3>4"});
+        REQUIRE(stoat::pairToString(stoat::find_snarl_id(*stree, snarls_chr["ref"][0].snarl)) == "4_2");
+        REQUIRE(stoat::stringToVector<std::string>(stoat::vectorPathToString(snarls_chr["ref"][0].snarl_paths)) == std::vector<std::string>{">2>4", ">2>3>4"});
         REQUIRE(snarls_chr["ref"][0].start_positions == 8);
         REQUIRE(snarls_chr["ref"][0].end_positions == 12);
         REQUIRE(snarls_chr["ref"][0].type_variants == std::vector<std::string>{"0", "3"});
@@ -113,14 +113,14 @@ TEST_CASE("Test simulated case", "[Path]") {
         std::string pg_path = "../tests/graph_test/insert_snp.pg";
         std::string dist_path = "../tests/graph_test/insert_snp.dist";
 
-        std::tie(stree, pg, root, pp_overlay) = stoat_vcf::parse_graph_tree(pg_path, dist_path);
-        auto snarls = stoat_vcf::save_snarls(*stree, root, *pg, ref_chr, *pp_overlay);
-        auto snarls_chr = stoat_vcf::loop_over_snarls_write(*stree, snarls, *pg, output_file, output_snarl_not_analyse, children_threshold, path_length_threshold, 0, only_snarl_parsing);
+        std::tie(stree, pg, root, pp_overlay) = stoat::parse_graph_tree(pg_path, dist_path);
+        auto snarls = stoat::save_snarls(*stree, root, *pg, ref_chr, *pp_overlay);
+        auto snarls_chr = stoat::loop_over_snarls_write(*stree, snarls, *pg, output_file, output_snarl_not_analyse, children_threshold, path_length_threshold, 0, only_snarl_parsing);
         
         REQUIRE(snarls_chr.size() == 1);
         REQUIRE(snarls_chr["ref"].size() == 1);
-        REQUIRE(pairToString(find_snarl_id(*stree, snarls_chr["ref"][0].snarl)) == "5_2");
-        REQUIRE(stoat::stringToVector<std::string>(stoat_vcf::vectorPathToString(snarls_chr["ref"][0].snarl_paths)) == std::vector<std::string>{">2>3>5", ">2>4>5"});
+        REQUIRE(stoat::pairToString(stoat::find_snarl_id(*stree, snarls_chr["ref"][0].snarl)) == "5_2");
+        REQUIRE(stoat::stringToVector<std::string>(stoat::vectorPathToString(snarls_chr["ref"][0].snarl_paths)) == std::vector<std::string>{">2>3>5", ">2>4>5"});
         REQUIRE(snarls_chr["ref"][0].start_positions == 8);
         REQUIRE(snarls_chr["ref"][0].end_positions == 10);
         REQUIRE(snarls_chr["ref"][0].type_variants == std::vector<std::string>{"1", "3"});
@@ -130,20 +130,20 @@ TEST_CASE("Test simulated case", "[Path]") {
         std::string pg_path = "../tests/graph_test/inversion.pg";
         std::string dist_path = "../tests/graph_test/inversion.dist";
 
-        std::tie(stree, pg, root, pp_overlay) = stoat_vcf::parse_graph_tree(pg_path, dist_path);
-        auto snarls = stoat_vcf::save_snarls(*stree, root, *pg, ref_chr, *pp_overlay);
-        auto snarls_chr = stoat_vcf::loop_over_snarls_write(*stree, snarls, *pg, output_file, output_snarl_not_analyse, children_threshold, path_length_threshold, 0, only_snarl_parsing);
+        std::tie(stree, pg, root, pp_overlay) = stoat::parse_graph_tree(pg_path, dist_path);
+        auto snarls = stoat::save_snarls(*stree, root, *pg, ref_chr, *pp_overlay);
+        auto snarls_chr = stoat::loop_over_snarls_write(*stree, snarls, *pg, output_file, output_snarl_not_analyse, children_threshold, path_length_threshold, 0, only_snarl_parsing);
         
         REQUIRE(snarls_chr.size() == 1);
         REQUIRE(snarls_chr["ref"].size() == 2);
-        REQUIRE(pairToString(find_snarl_id(*stree, snarls_chr["ref"][0].snarl)) == "2_6");
-        std::vector<std::string> paths = stoat::stringToVector<std::string>(stoat_vcf::vectorPathToString(snarls_chr["ref"][0].snarl_paths));
+        REQUIRE(stoat::pairToString(stoat::find_snarl_id(*stree, snarls_chr["ref"][0].snarl)) == "2_6");
+        std::vector<std::string> paths = stoat::stringToVector<std::string>(stoat::vectorPathToString(snarls_chr["ref"][0].snarl_paths));
         REQUIRE(paths == std::vector<std::string>{">2>6", ">2>3>0>5>6"});
         REQUIRE(snarls_chr["ref"][0].start_positions == 8);
         REQUIRE(snarls_chr["ref"][0].end_positions == 15);
         REQUIRE(snarls_chr["ref"][0].type_variants == std::vector<std::string>{"0", "6"});
         
-        REQUIRE(stoat::stringToVector<std::string>(stoat_vcf::vectorPathToString(snarls_chr["ref"][1].snarl_paths)) == std::vector<std::string>{">3>4>5", ">3<4>5"});
+        REQUIRE(stoat::stringToVector<std::string>(stoat::vectorPathToString(snarls_chr["ref"][1].snarl_paths)) == std::vector<std::string>{">3>4>5", ">3<4>5"});
         REQUIRE(snarls_chr["ref"][1].start_positions == 9);
         REQUIRE(snarls_chr["ref"][1].end_positions == 12);
         REQUIRE(snarls_chr["ref"][1].type_variants == std::vector<std::string>{"2", "2"});
@@ -153,26 +153,26 @@ TEST_CASE("Test simulated case", "[Path]") {
         std::string pg_path = "../tests/graph_test/large_del.pg";
         std::string dist_path = "../tests/graph_test/large_del.dist";
 
-        std::tie(stree, pg, root, pp_overlay) = stoat_vcf::parse_graph_tree(pg_path, dist_path);
-        auto snarls = stoat_vcf::save_snarls(*stree, root, *pg, ref_chr, *pp_overlay);
-        auto snarls_chr = stoat_vcf::loop_over_snarls_write(*stree, snarls, *pg, output_file, output_snarl_not_analyse, children_threshold, path_length_threshold, 0, only_snarl_parsing);
+        std::tie(stree, pg, root, pp_overlay) = stoat::parse_graph_tree(pg_path, dist_path);
+        auto snarls = stoat::save_snarls(*stree, root, *pg, ref_chr, *pp_overlay);
+        auto snarls_chr = stoat::loop_over_snarls_write(*stree, snarls, *pg, output_file, output_snarl_not_analyse, children_threshold, path_length_threshold, 0, only_snarl_parsing);
         
         REQUIRE(snarls_chr.size() == 1);
         REQUIRE(snarls_chr["ref"].size() == 3);
-        REQUIRE(pairToString(find_snarl_id(*stree, snarls_chr["ref"][0].snarl)) == "2_9");
-        REQUIRE(stoat::stringToVector<std::string>(stoat_vcf::vectorPathToString(snarls_chr["ref"][0].snarl_paths)) == std::vector<std::string>{">2>9",">2>3>0>8>9"});
+        REQUIRE(stoat::pairToString(stoat::find_snarl_id(*stree, snarls_chr["ref"][0].snarl)) == "2_9");
+        REQUIRE(stoat::stringToVector<std::string>(stoat::vectorPathToString(snarls_chr["ref"][0].snarl_paths)) == std::vector<std::string>{">2>9",">2>3>0>8>9"});
         REQUIRE(snarls_chr["ref"][0].start_positions == 8);
         REQUIRE(snarls_chr["ref"][0].end_positions == 9);
         REQUIRE(snarls_chr["ref"][0].type_variants == std::vector<std::string>{"0", "9/10"}); // correct CPX by boundary the first and end complexe chain node not the snarl boundary
 
-        REQUIRE(pairToString(find_snarl_id(*stree, snarls_chr["ref"][1].snarl)) == "6_8");
-        REQUIRE(stoat::stringToVector<std::string>(stoat_vcf::vectorPathToString(snarls_chr["ref"][1].snarl_paths)) == std::vector<std::string>{">6>8",">6>7>8"});
+        REQUIRE(stoat::pairToString(stoat::find_snarl_id(*stree, snarls_chr["ref"][1].snarl)) == "6_8");
+        REQUIRE(stoat::stringToVector<std::string>(stoat::vectorPathToString(snarls_chr["ref"][1].snarl_paths)) == std::vector<std::string>{">6>8",">6>7>8"});
         REQUIRE(snarls_chr["ref"][1].start_positions == 8);
         REQUIRE(snarls_chr["ref"][1].end_positions == 9);
         REQUIRE(snarls_chr["ref"][1].type_variants == std::vector<std::string>{"0", "1"});
 
-        REQUIRE(pairToString(find_snarl_id(*stree, snarls_chr["ref"][2].snarl)) == "3_6");
-        REQUIRE(stoat::stringToVector<std::string>(stoat_vcf::vectorPathToString(snarls_chr["ref"][2].snarl_paths)) == std::vector<std::string>{">3>5>6",">3>4>6"});
+        REQUIRE(stoat::pairToString(stoat::find_snarl_id(*stree, snarls_chr["ref"][2].snarl)) == "3_6");
+        REQUIRE(stoat::stringToVector<std::string>(stoat::vectorPathToString(snarls_chr["ref"][2].snarl_paths)) == std::vector<std::string>{">3>5>6",">3>4>6"});
         REQUIRE(snarls_chr["ref"][2].start_positions == 8);
         REQUIRE(snarls_chr["ref"][2].end_positions == 9);
         REQUIRE(snarls_chr["ref"][2].type_variants == std::vector<std::string>{"1", "1"});
@@ -182,9 +182,9 @@ TEST_CASE("Test simulated case", "[Path]") {
         std::string pg_path = "../tests/graph_test/linear.pg";
         std::string dist_path = "../tests/graph_test/linear.dist";
 
-        std::tie(stree, pg, root, pp_overlay) = stoat_vcf::parse_graph_tree(pg_path, dist_path);
-        auto snarls = stoat_vcf::save_snarls(*stree, root, *pg, ref_chr, *pp_overlay);
-        auto snarls_chr = stoat_vcf::loop_over_snarls_write(*stree, snarls, *pg, output_file, output_snarl_not_analyse, children_threshold, path_length_threshold, 0, only_snarl_parsing);
+        std::tie(stree, pg, root, pp_overlay) = stoat::parse_graph_tree(pg_path, dist_path);
+        auto snarls = stoat::save_snarls(*stree, root, *pg, ref_chr, *pp_overlay);
+        auto snarls_chr = stoat::loop_over_snarls_write(*stree, snarls, *pg, output_file, output_snarl_not_analyse, children_threshold, path_length_threshold, 0, only_snarl_parsing);
         REQUIRE(snarls_chr.size() == 0);
     }
 
@@ -192,14 +192,14 @@ TEST_CASE("Test simulated case", "[Path]") {
         std::string pg_path = "../tests/graph_test/loop_simple.pg";
         std::string dist_path = "../tests/graph_test/loop_simple.dist";
 
-        std::tie(stree, pg, root, pp_overlay) = stoat_vcf::parse_graph_tree(pg_path, dist_path);
-        auto snarls = stoat_vcf::save_snarls(*stree, root, *pg, ref_chr, *pp_overlay);
-        auto snarls_chr = stoat_vcf::loop_over_snarls_write(*stree, snarls, *pg, output_file, output_snarl_not_analyse, children_threshold, path_length_threshold, 1, only_snarl_parsing);
+        std::tie(stree, pg, root, pp_overlay) = stoat::parse_graph_tree(pg_path, dist_path);
+        auto snarls = stoat::save_snarls(*stree, root, *pg, ref_chr, *pp_overlay);
+        auto snarls_chr = stoat::loop_over_snarls_write(*stree, snarls, *pg, output_file, output_snarl_not_analyse, children_threshold, path_length_threshold, 1, only_snarl_parsing);
 
         REQUIRE(snarls_chr.size() == 1);
         REQUIRE(snarls_chr["ref"].size() == 1);
-        REQUIRE(pairToString(find_snarl_id(*stree, snarls_chr["ref"][0].snarl)) == "5_2");
-        REQUIRE(stoat::stringToVector<std::string>(stoat_vcf::vectorPathToString(snarls_chr["ref"][0].snarl_paths)) == std::vector<std::string>{">2>3>5", ">2>3>3>5", ">2>4>5"});
+        REQUIRE(stoat::pairToString(stoat::find_snarl_id(*stree, snarls_chr["ref"][0].snarl)) == "5_2");
+        REQUIRE(stoat::stringToVector<std::string>(stoat::vectorPathToString(snarls_chr["ref"][0].snarl_paths)) == std::vector<std::string>{">2>3>5", ">2>3>3>5", ">2>4>5"});
         REQUIRE(snarls_chr["ref"][0].start_positions == 8);
         REQUIRE(snarls_chr["ref"][0].end_positions == 10);
         REQUIRE(snarls_chr["ref"][0].type_variants == std::vector<std::string>{"1", "2", "2"});
@@ -209,14 +209,14 @@ TEST_CASE("Test simulated case", "[Path]") {
         std::string pg_path = "../tests/graph_test/loop.pg";
         std::string dist_path = "../tests/graph_test/loop.dist";
 
-        std::tie(stree, pg, root, pp_overlay) = stoat_vcf::parse_graph_tree(pg_path, dist_path);
-        auto snarls = stoat_vcf::save_snarls(*stree, root, *pg, ref_chr, *pp_overlay);
-        auto snarls_chr = stoat_vcf::loop_over_snarls_write(*stree, snarls, *pg, output_file, output_snarl_not_analyse, children_threshold, path_length_threshold, 2, only_snarl_parsing);
+        std::tie(stree, pg, root, pp_overlay) = stoat::parse_graph_tree(pg_path, dist_path);
+        auto snarls = stoat::save_snarls(*stree, root, *pg, ref_chr, *pp_overlay);
+        auto snarls_chr = stoat::loop_over_snarls_write(*stree, snarls, *pg, output_file, output_snarl_not_analyse, children_threshold, path_length_threshold, 2, only_snarl_parsing);
 
         REQUIRE(snarls_chr.size() == 1);
         REQUIRE(snarls_chr["ref"].size() == 1);
-        REQUIRE(pairToString(find_snarl_id(*stree, snarls_chr["ref"][0].snarl)) == "5_1");
-        REQUIRE(stoat::stringToVector<std::string>(stoat_vcf::vectorPathToString(snarls_chr["ref"][0].snarl_paths)) == std::vector<std::string>{">1>2>3>5", ">1>2>3>2>3>5", ">1>2>3>2>3>2>3>5", ">1>2>3>2>3>2>4>5", ">1>2>3>2>4>5", ">1>2>4>5"});
+        REQUIRE(stoat::pairToString(stoat::find_snarl_id(*stree, snarls_chr["ref"][0].snarl)) == "5_1");
+        REQUIRE(stoat::stringToVector<std::string>(stoat::vectorPathToString(snarls_chr["ref"][0].snarl_paths)) == std::vector<std::string>{">1>2>3>5", ">1>2>3>2>3>5", ">1>2>3>2>3>2>3>5", ">1>2>3>2>3>2>4>5", ">1>2>3>2>4>5", ">1>2>4>5"});
         REQUIRE(snarls_chr["ref"][0].start_positions == 4);
         REQUIRE(snarls_chr["ref"][0].end_positions == 10);
         REQUIRE(snarls_chr["ref"][0].type_variants == std::vector<std::string>{"5", "10", "15", "16", "11", "6"});
@@ -226,14 +226,14 @@ TEST_CASE("Test simulated case", "[Path]") {
         std::string pg_path = "../tests/graph_test/loop_double.pg";
         std::string dist_path = "../tests/graph_test/loop_double.dist";
 
-        std::tie(stree, pg, root, pp_overlay) = stoat_vcf::parse_graph_tree(pg_path, dist_path);
-        auto snarls = stoat_vcf::save_snarls(*stree, root, *pg, ref_chr, *pp_overlay);
-        auto snarls_chr = stoat_vcf::loop_over_snarls_write(*stree, snarls, *pg, output_file, output_snarl_not_analyse, children_threshold, path_length_threshold, 2, only_snarl_parsing);
+        std::tie(stree, pg, root, pp_overlay) = stoat::parse_graph_tree(pg_path, dist_path);
+        auto snarls = stoat::save_snarls(*stree, root, *pg, ref_chr, *pp_overlay);
+        auto snarls_chr = stoat::loop_over_snarls_write(*stree, snarls, *pg, output_file, output_snarl_not_analyse, children_threshold, path_length_threshold, 2, only_snarl_parsing);
 
         REQUIRE(snarls_chr.size() == 1);
         REQUIRE(snarls_chr["ref"].size() == 1);
-        REQUIRE(pairToString(find_snarl_id(*stree, snarls_chr["ref"][0].snarl)) == "7_2");
-        REQUIRE(stoat::stringToVector<std::string>(stoat_vcf::vectorPathToString(snarls_chr["ref"][0].snarl_paths)) == std::vector<std::string>{">2>3>4>5>7", ">2>3>4>5>3>4>5>7", ">2>3>4>5>3>4>5>3>4>5>7", ">2>3>4>5>3>4>3>4>5>7", ">2>3>4>3>4>5>7", ">2>3>4>3>4>5>3>4>5>7", ">2>3>4>3>4>3>4>5>7", ">2>6>7"});
+        REQUIRE(stoat::pairToString(stoat::find_snarl_id(*stree, snarls_chr["ref"][0].snarl)) == "7_2");
+        REQUIRE(stoat::stringToVector<std::string>(stoat::vectorPathToString(snarls_chr["ref"][0].snarl_paths)) == std::vector<std::string>{">2>3>4>5>7", ">2>3>4>5>3>4>5>7", ">2>3>4>5>3>4>5>3>4>5>7", ">2>3>4>5>3>4>3>4>5>7", ">2>3>4>3>4>5>7", ">2>3>4>3>4>5>3>4>5>7", ">2>3>4>3>4>3>4>5>7", ">2>6>7"});
         REQUIRE(snarls_chr["ref"][0].start_positions == 8);
         REQUIRE(snarls_chr["ref"][0].end_positions == 11);
         REQUIRE(snarls_chr["ref"][0].type_variants == std::vector<std::string>{"10", "20", "30", "28", "18", "28", "26", "2"});
@@ -243,20 +243,20 @@ TEST_CASE("Test simulated case", "[Path]") {
         std::string pg_path = "../tests/graph_test/loop_plus.pg";
         std::string dist_path = "../tests/graph_test/loop_plus.dist";
 
-        std::tie(stree, pg, root, pp_overlay) = stoat_vcf::parse_graph_tree(pg_path, dist_path);
-        auto snarls = stoat_vcf::save_snarls(*stree, root, *pg, ref_chr, *pp_overlay);
-        auto snarls_chr = stoat_vcf::loop_over_snarls_write(*stree, snarls, *pg, output_file, output_snarl_not_analyse, children_threshold, path_length_threshold, 1, only_snarl_parsing);
+        std::tie(stree, pg, root, pp_overlay) = stoat::parse_graph_tree(pg_path, dist_path);
+        auto snarls = stoat::save_snarls(*stree, root, *pg, ref_chr, *pp_overlay);
+        auto snarls_chr = stoat::loop_over_snarls_write(*stree, snarls, *pg, output_file, output_snarl_not_analyse, children_threshold, path_length_threshold, 1, only_snarl_parsing);
 
         REQUIRE(snarls_chr.size() == 1);
         REQUIRE(snarls_chr["ref"].size() == 2);
-        REQUIRE(pairToString(find_snarl_id(*stree, snarls_chr["ref"][0].snarl)) == "8_2");
-        REQUIRE(stoat::stringToVector<std::string>(stoat_vcf::vectorPathToString(snarls_chr["ref"][0].snarl_paths)) == std::vector<std::string>{">2>3>0>6>8",">2>3>0>6>3>0>6>8",">2>7>8"});
+        REQUIRE(stoat::pairToString(stoat::find_snarl_id(*stree, snarls_chr["ref"][0].snarl)) == "8_2");
+        REQUIRE(stoat::stringToVector<std::string>(stoat::vectorPathToString(snarls_chr["ref"][0].snarl_paths)) == std::vector<std::string>{">2>3>0>6>8",">2>3>0>6>3>0>6>8",">2>7>8"});
         REQUIRE(snarls_chr["ref"][0].start_positions == 8);
         REQUIRE(snarls_chr["ref"][0].end_positions == 10);
         REQUIRE(snarls_chr["ref"][0].type_variants == std::vector<std::string>{"3/4","6/8","1"});
 
-        REQUIRE(pairToString(find_snarl_id(*stree, snarls_chr["ref"][1].snarl)) == "3_6");
-        REQUIRE(stoat::stringToVector<std::string>(stoat_vcf::vectorPathToString(snarls_chr["ref"][1].snarl_paths)) == std::vector<std::string>{">3>5>6",">3>4>6"});
+        REQUIRE(stoat::pairToString(stoat::find_snarl_id(*stree, snarls_chr["ref"][1].snarl)) == "3_6");
+        REQUIRE(stoat::stringToVector<std::string>(stoat::vectorPathToString(snarls_chr["ref"][1].snarl_paths)) == std::vector<std::string>{">3>5>6",">3>4>6"});
         REQUIRE(snarls_chr["ref"][1].start_positions == 8);
         REQUIRE(snarls_chr["ref"][1].end_positions == 10);
         REQUIRE(snarls_chr["ref"][1].type_variants == std::vector<std::string>{"2","1"});
@@ -266,14 +266,14 @@ TEST_CASE("Test simulated case", "[Path]") {
         std::string pg_path = "../tests/graph_test/repetition.pg";
         std::string dist_path = "../tests/graph_test/repetition.dist";
 
-        std::tie(stree, pg, root, pp_overlay) = stoat_vcf::parse_graph_tree(pg_path, dist_path);
-        auto snarls = stoat_vcf::save_snarls(*stree, root, *pg, ref_chr, *pp_overlay);
-        auto snarls_chr = stoat_vcf::loop_over_snarls_write(*stree, snarls, *pg, output_file, output_snarl_not_analyse, children_threshold, path_length_threshold, 0, only_snarl_parsing);
+        std::tie(stree, pg, root, pp_overlay) = stoat::parse_graph_tree(pg_path, dist_path);
+        auto snarls = stoat::save_snarls(*stree, root, *pg, ref_chr, *pp_overlay);
+        auto snarls_chr = stoat::loop_over_snarls_write(*stree, snarls, *pg, output_file, output_snarl_not_analyse, children_threshold, path_length_threshold, 0, only_snarl_parsing);
 
         REQUIRE(snarls_chr.size() == 1);
         REQUIRE(snarls_chr["ref"].size() == 1);
-        REQUIRE(pairToString(find_snarl_id(*stree, snarls_chr["ref"][0].snarl)) == "6_2");
-        REQUIRE(stoat::stringToVector<std::string>(stoat_vcf::vectorPathToString(snarls_chr["ref"][0].snarl_paths)) == std::vector<std::string>{">2>6", ">2>3>6", ">2>3>4>6", ">2>3>4>5>6"});
+        REQUIRE(stoat::pairToString(stoat::find_snarl_id(*stree, snarls_chr["ref"][0].snarl)) == "6_2");
+        REQUIRE(stoat::stringToVector<std::string>(stoat::vectorPathToString(snarls_chr["ref"][0].snarl_paths)) == std::vector<std::string>{">2>6", ">2>3>6", ">2>3>4>6", ">2>3>4>5>6"});
         REQUIRE(snarls_chr["ref"][0].start_positions == 8);
         REQUIRE(snarls_chr["ref"][0].end_positions == 9);
         REQUIRE(snarls_chr["ref"][0].type_variants == std::vector<std::string>{"0", "3", "6", "9"});
@@ -283,14 +283,14 @@ TEST_CASE("Test simulated case", "[Path]") {
         std::string pg_path = "../tests/graph_test/complex_ins.pg";
         std::string dist_path = "../tests/graph_test/complex_ins.dist";
 
-        std::tie(stree, pg, root, pp_overlay) = stoat_vcf::parse_graph_tree(pg_path, dist_path);
-        auto snarls = stoat_vcf::save_snarls(*stree, root, *pg, ref_chr, *pp_overlay);
-        auto snarls_chr = stoat_vcf::loop_over_snarls_write(*stree, snarls, *pg, output_file, output_snarl_not_analyse, children_threshold, path_length_threshold, 0, only_snarl_parsing);
+        std::tie(stree, pg, root, pp_overlay) = stoat::parse_graph_tree(pg_path, dist_path);
+        auto snarls = stoat::save_snarls(*stree, root, *pg, ref_chr, *pp_overlay);
+        auto snarls_chr = stoat::loop_over_snarls_write(*stree, snarls, *pg, output_file, output_snarl_not_analyse, children_threshold, path_length_threshold, 0, only_snarl_parsing);
 
         REQUIRE(snarls_chr.size() == 1);
         REQUIRE(snarls_chr["ref"].size() == 1);
-        REQUIRE(pairToString(find_snarl_id(*stree, snarls_chr["ref"][0].snarl)) == "8_2");
-        REQUIRE(stoat::stringToVector<std::string>(stoat_vcf::vectorPathToString(snarls_chr["ref"][0].snarl_paths)) == std::vector<std::string>{">2>8", ">2>3>4>6>8",">2>3>5>6>8",">2>3>5>7>8",">2>7>8"});
+        REQUIRE(stoat::pairToString(stoat::find_snarl_id(*stree, snarls_chr["ref"][0].snarl)) == "8_2");
+        REQUIRE(stoat::stringToVector<std::string>(stoat::vectorPathToString(snarls_chr["ref"][0].snarl_paths)) == std::vector<std::string>{">2>8", ">2>3>4>6>8",">2>3>5>6>8",">2>3>5>7>8",">2>7>8"});
         REQUIRE(snarls_chr["ref"][0].start_positions == 8);
         REQUIRE(snarls_chr["ref"][0].end_positions == 10);
         REQUIRE(snarls_chr["ref"][0].type_variants == std::vector<std::string>{"0","3","3","3","1"});
@@ -300,20 +300,20 @@ TEST_CASE("Test simulated case", "[Path]") {
         std::string pg_path = "../tests/graph_test/snp_and_nested_snp.pg";
         std::string dist_path = "../tests/graph_test/snp_and_nested_snp.dist";
 
-        std::tie(stree, pg, root, pp_overlay) = stoat_vcf::parse_graph_tree(pg_path, dist_path);
-        auto snarls = stoat_vcf::save_snarls(*stree, root, *pg, ref_chr, *pp_overlay);
-        auto snarls_chr = stoat_vcf::loop_over_snarls_write(*stree, snarls, *pg, output_file, output_snarl_not_analyse, children_threshold, path_length_threshold, 0, only_snarl_parsing);
+        std::tie(stree, pg, root, pp_overlay) = stoat::parse_graph_tree(pg_path, dist_path);
+        auto snarls = stoat::save_snarls(*stree, root, *pg, ref_chr, *pp_overlay);
+        auto snarls_chr = stoat::loop_over_snarls_write(*stree, snarls, *pg, output_file, output_snarl_not_analyse, children_threshold, path_length_threshold, 0, only_snarl_parsing);
 
         REQUIRE(snarls_chr.size() == 1);
         REQUIRE(snarls_chr["ref"].size() == 2);
-        REQUIRE(pairToString(find_snarl_id(*stree, snarls_chr["ref"][0].snarl)) == "8_2");
-        REQUIRE(stoat::stringToVector<std::string>(stoat_vcf::vectorPathToString(snarls_chr["ref"][0].snarl_paths)) == std::vector<std::string>{">2>3>0>6>8",">2>7>8"});
+        REQUIRE(stoat::pairToString(stoat::find_snarl_id(*stree, snarls_chr["ref"][0].snarl)) == "8_2");
+        REQUIRE(stoat::stringToVector<std::string>(stoat::vectorPathToString(snarls_chr["ref"][0].snarl_paths)) == std::vector<std::string>{">2>3>0>6>8",">2>7>8"});
         REQUIRE(snarls_chr["ref"][0].start_positions == 8);
         REQUIRE(snarls_chr["ref"][0].end_positions == 10);
         REQUIRE(snarls_chr["ref"][0].type_variants == std::vector<std::string>{"3/4","1"});
 
-        REQUIRE(pairToString(find_snarl_id(*stree, snarls_chr["ref"][1].snarl)) == "6_3");
-        REQUIRE(stoat::stringToVector<std::string>(stoat_vcf::vectorPathToString(snarls_chr["ref"][1].snarl_paths)) == std::vector<std::string>{">3>4>6",">3>5>6"});
+        REQUIRE(stoat::pairToString(stoat::find_snarl_id(*stree, snarls_chr["ref"][1].snarl)) == "6_3");
+        REQUIRE(stoat::stringToVector<std::string>(stoat::vectorPathToString(snarls_chr["ref"][1].snarl_paths)) == std::vector<std::string>{">3>4>6",">3>5>6"});
         REQUIRE(snarls_chr["ref"][1].start_positions == 8);
         REQUIRE(snarls_chr["ref"][1].end_positions == 10);
         REQUIRE(snarls_chr["ref"][1].type_variants == std::vector<std::string>{"1","2"});
@@ -323,20 +323,20 @@ TEST_CASE("Test simulated case", "[Path]") {
         std::string pg_path = "../tests/graph_test/nested_plus.pg";
         std::string dist_path = "../tests/graph_test/nested_plus.dist";
 
-        std::tie(stree, pg, root, pp_overlay) = stoat_vcf::parse_graph_tree(pg_path, dist_path);
-        auto snarls = stoat_vcf::save_snarls(*stree, root, *pg, ref_chr, *pp_overlay);
-        auto snarls_chr = stoat_vcf::loop_over_snarls_write(*stree, snarls, *pg, output_file, output_snarl_not_analyse, children_threshold, path_length_threshold, 0, only_snarl_parsing);
+        std::tie(stree, pg, root, pp_overlay) = stoat::parse_graph_tree(pg_path, dist_path);
+        auto snarls = stoat::save_snarls(*stree, root, *pg, ref_chr, *pp_overlay);
+        auto snarls_chr = stoat::loop_over_snarls_write(*stree, snarls, *pg, output_file, output_snarl_not_analyse, children_threshold, path_length_threshold, 0, only_snarl_parsing);
 
         REQUIRE(snarls_chr.size() == 1);
         REQUIRE(snarls_chr["ref"].size() == 2);
-        REQUIRE(pairToString(find_snarl_id(*stree, snarls_chr["ref"][0].snarl)) == "2_8");
-        REQUIRE(stoat::stringToVector<std::string>(stoat_vcf::vectorPathToString(snarls_chr["ref"][0].snarl_paths)) == std::vector<std::string>{">2>8", ">2>3>0>6>7>8", ">2>3>0>6>8"});
+        REQUIRE(stoat::pairToString(stoat::find_snarl_id(*stree, snarls_chr["ref"][0].snarl)) == "2_8");
+        REQUIRE(stoat::stringToVector<std::string>(stoat::vectorPathToString(snarls_chr["ref"][0].snarl_paths)) == std::vector<std::string>{">2>8", ">2>3>0>6>7>8", ">2>3>0>6>8"});
         REQUIRE(snarls_chr["ref"][0].start_positions == 8);
         REQUIRE(snarls_chr["ref"][0].end_positions == 13);
         REQUIRE(snarls_chr["ref"][0].type_variants == std::vector<std::string>{"0", "5", "4"});
 
-        REQUIRE(pairToString(find_snarl_id(*stree, snarls_chr["ref"][1].snarl)) == "3_6");
-        REQUIRE(stoat::stringToVector<std::string>(stoat_vcf::vectorPathToString(snarls_chr["ref"][1].snarl_paths)) == std::vector<std::string>{">3>5>6", ">3>4>6"});
+        REQUIRE(stoat::pairToString(stoat::find_snarl_id(*stree, snarls_chr["ref"][1].snarl)) == "3_6");
+        REQUIRE(stoat::stringToVector<std::string>(stoat::vectorPathToString(snarls_chr["ref"][1].snarl_paths)) == std::vector<std::string>{">3>5>6", ">3>4>6"});
         REQUIRE(snarls_chr["ref"][1].start_positions == 9);
         REQUIRE(snarls_chr["ref"][1].end_positions == 12);
         REQUIRE(snarls_chr["ref"][1].type_variants == std::vector<std::string>{"2","2"});

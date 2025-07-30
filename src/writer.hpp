@@ -8,7 +8,7 @@
 #include "snarl_data_t.hpp"
 
 using namespace std;
-namespace stoat{
+namespace stoat {
 
 // Write headers
 void write_binary_header(std::ostream& outstream);

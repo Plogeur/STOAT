@@ -28,12 +28,12 @@
 
 using namespace std;
 
-namespace stoat {
+namespace stoat_vcf {
 
 class SnarlAnalyzer {
 public:
     SnarlAnalyzer(
-        const std::unordered_map<std::string, std::vector<Snarl_data_t>>& chr_to_snarl_data,
+        const std::unordered_map<std::string, std::vector<stoat::Snarl_data_t>>& chr_to_snarl_data,
         EdgeBySampleMatrix& edge_matrix,
         const std::vector<std::string>& list_samples, 
         const std::vector<std::vector<double>>& covariate,
@@ -63,7 +63,7 @@ public:
         size_t &num_paths_ch);
 
     /// For the given snarl, analyze the snarl and write it to outf
-    virtual void analyze_and_write_snarl(const Snarl_data_t& snarl_data, const std::string& chr, std::ofstream& outf) = 0;
+    virtual void analyze_and_write_snarl(const stoat::Snarl_data_t& snarl_data, const std::string& chr, std::ofstream& outf) = 0;
 
     /// Write the header of the output tsv file
     /// This should ideally call a write_header() function from writer.hpp to keep things consistent
@@ -73,7 +73,7 @@ public:
 protected:
     
     // Map chromosome name to a vector of snarl_data_t
-    const std::unordered_map<std::string, std::vector<Snarl_data_t>>& chr_to_snarl_data;
+    const std::unordered_map<std::string, std::vector<stoat::Snarl_data_t>>& chr_to_snarl_data;
 
     // A list of sample names
     const std::vector<std::string>& list_samples;
@@ -97,19 +97,19 @@ class BinarySnarlAnalyzer : public SnarlAnalyzer {
 public:
     
     BinarySnarlAnalyzer(
-        const std::unordered_map<std::string, std::vector<Snarl_data_t>>& chr_to_snarl_data,
+        const std::unordered_map<std::string, std::vector<stoat::Snarl_data_t>>& chr_to_snarl_data,
         EdgeBySampleMatrix& edge_matrix,
         const std::vector<std::string>& list_samples, 
         const double& maf_threshold,
         const double& table_threshold,
+        const std::vector<bool>& binary_phenotype,
         const size_t& min_individuals,
         const size_t& min_haplotypes,
-        const std::vector<bool>& binary_phenotype,
         const std::string& regression_dir);
 
-    void analyze_and_write_snarl(const Snarl_data_t& snarl_data, const std::string& chr, std::ofstream& outf);
+    void analyze_and_write_snarl(const stoat::Snarl_data_t& snarl_data, const std::string& chr, std::ofstream& outf);
 
-    void write_header(std::ofstream&outf);
+    void write_header(std::ofstream &outf);
 
 /////////////////// Private data members
 protected:
@@ -123,20 +123,20 @@ class BinaryCovarSnarlAnalyzer : public SnarlAnalyzer {
 public:
     
     BinaryCovarSnarlAnalyzer(
-        const std::unordered_map<std::string, std::vector<Snarl_data_t>>& chr_to_snarl_data,
+        const std::unordered_map<std::string, std::vector<stoat::Snarl_data_t>>& chr_to_snarl_data,
         EdgeBySampleMatrix& edge_matrix,
         const std::vector<std::string>& list_samples, 
         const std::vector<std::vector<double>>& covariate, 
         const double& maf_threshold, 
         const double& table_threshold,
+        const std::vector<bool>& binary_phenotype,
         const size_t& min_individuals,
         const size_t& min_haplotypes,
-        const std::vector<bool>& binary_phenotype,
         const std::string& regression_dir);
 
-    void analyze_and_write_snarl(const Snarl_data_t& snarl_data, const std::string& chr, std::ofstream& outf);
+    void analyze_and_write_snarl(const stoat::Snarl_data_t& snarl_data, const std::string& chr, std::ofstream& outf);
 
-    void write_header(std::ofstream&outf);
+    void write_header(std::ofstream &outf);
 
 /////////////////// Private data members
 protected:
@@ -150,20 +150,20 @@ class QuantitativeSnarlAnalyzer : public SnarlAnalyzer {
 public:
     
     QuantitativeSnarlAnalyzer(
-        const std::unordered_map<std::string, std::vector<Snarl_data_t>>& chr_to_snarl_data, 
+        const std::unordered_map<std::string, std::vector<stoat::Snarl_data_t>>& chr_to_snarl_data, 
         EdgeBySampleMatrix& edge_matrix,
         const std::vector<std::string>& list_samples, 
         const std::vector<std::vector<double>>& covariate, 
         const double& maf_threshold, 
         const double& table_threshold,
+        const std::vector<double>& quantitative_phenotype,
         const size_t& min_individuals,
         const size_t& min_haplotypes,
-        const std::vector<double>& quantitative_phenotype,
         const std::string& regression_dir);
 
-    void analyze_and_write_snarl(const Snarl_data_t& snarl_data, const std::string& chr, std::ofstream& outf) ;
+    void analyze_and_write_snarl(const stoat::Snarl_data_t& snarl_data, const std::string& chr, std::ofstream& outf) ;
 
-    void write_header(std::ofstream&outf);
+    void write_header(std::ofstream &outf);
 
 /////////////////// Private data members
 protected:
@@ -177,21 +177,21 @@ class EQTLSnarlAnalyzer : public SnarlAnalyzer {
 public:
     
     EQTLSnarlAnalyzer(
-        const std::unordered_map<std::string, std::vector<Snarl_data_t>>& chr_to_snarl_data, 
+        const std::unordered_map<std::string, std::vector<stoat::Snarl_data_t>>& chr_to_snarl_data, 
         EdgeBySampleMatrix& edge_matrix,
         const std::vector<std::string>& list_samples, 
         const std::vector<std::vector<double>>& covariate, 
         const double& maf_threshold, 
         const double& table_threshold,
-        const size_t& min_individuals,
-        const size_t& min_haplotypes,
         const std::unordered_map<std::string, std::vector<Qtl_data>>& eqtl_map,
         const size_t& windows_gene_threshold,
+        const size_t& min_individuals,
+        const size_t& min_haplotypes,
         const std::string& regression_dir);
 
-    void analyze_and_write_snarl(const Snarl_data_t& snarl_data, const std::string& chr, std::ofstream& outf);
+    void analyze_and_write_snarl(const stoat::Snarl_data_t& snarl_data, const std::string& chr, std::ofstream& outf);
 
-    void write_header(std::ofstream&outf);
+    void write_header(std::ofstream &outf);
 
 /////////////////// Private data members
 protected:
@@ -238,19 +238,19 @@ std::vector<size_t> found_gene_snarl(
     const size_t& end_pos,
     const size_t& windows_gene_threshold);
 
-// Decompose path Path_traversal_t to vector Edge_t
-std::vector<Edge_t> decompose_path_to_edges(const Path_traversal_t& s);
+// Decompose path stoat::Path_traversal_t to vectorstoat::Edge_t
+std::vector<stoat::Edge_t> decompose_path_to_edges(const stoat::Path_traversal_t& s);
 
-// Decompose a list of paths std::string into a vector of Edge_t
-const std::vector<std::vector<Edge_t>> decompose_path_list_str(const std::vector<std::string>& list_paths);
+// Decompose a list of paths std::string into a vector ofstoat::Edge_t
+const std::vector<std::vector<stoat::Edge_t>> decompose_path_list_str(const std::vector<std::string>& list_paths);
 
-// Decompose path std::string to vector Edge_t
-std::vector<Edge_t> decompose_path_str_to_edge(const std::string& s);
+// Decompose path std::string to vectorstoat::Edge_t
+std::vector<stoat::Edge_t> decompose_path_str_to_edge(const std::string& s);
 
 /// Given a path through the snarl, a matrix of edges for each sample/haplotype, and the number of columns (samples/haplotypes),
 /// return the columns for which all edges (rows) in the path are set, i.e. the haplotypes with the given path.
 std::vector<size_t> identify_path(
-    const std::vector<Edge_t>& list_edge_path,
+    const std::vector<stoat::Edge_t>& list_edge_path,
     const EdgeBySampleMatrix& matrix,
     const size_t num_cols);
 

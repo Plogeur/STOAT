@@ -25,7 +25,7 @@
 
 using namespace std;
 
-namespace stoat {
+namespace stoat_vcf {
 
 // ------------------------ Binary table ------------------------
 
@@ -40,7 +40,7 @@ size_t create_binary_table(
     const std::vector<stoat::Path_traversal_t>& list_path_snarl, 
     const size_t& number_paths,
     const size_t& number_samples,
-    const stoat::EdgeBySampleMatrix& matrix);
+    const stoat_vcf::EdgeBySampleMatrix& matrix);
 
 } // namespace stoat
 

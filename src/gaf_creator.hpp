@@ -26,7 +26,7 @@
 
 using namespace std;
 
-namespace stoat {
+namespace stoat_vcf {
 
 std::pair<double, double> calcul_proportion_signi(size_t number_ind_group0, size_t number_ind_group1, double p_value);
 std::string addSuffixToFilename(const std::string& filename, const std::string& suffix);

@@ -10,18 +10,16 @@
 #include <handlegraph/path_handle_graph.hpp>
 #include <vg/io/vpkg.hpp>
 
+#include "../log.hpp"
 #include "../graph_path_association_finder.hpp"
 #include "../io/register_io.hpp"
 #include "../post_processing.hpp"
-#include "../log.hpp"
-
 
 #define USE_CALLGRIND
 
-#ifdef USE_CALLGRIND
-#include <valgrind/callgrind.h>
-#endif
-
+// #ifdef USE_CALLGRIND
+//     #include <valgrind/callgrind.h>
+// #endif
 
 using namespace std;
 namespace stoat_command {
@@ -43,6 +41,7 @@ void print_help_graph() {
         << "  -T, --test NAME                    Which test will be used to determine association (exact / chi2) [exact]" << endl
         //<< "  -p, --p-value-threshold FLOAT      What is the threshold p-value to be considered significant? [0.05]" << endl
         //<< "                                     When used with multiple testing, discard any p-value above this threshold without doing multiple testing" << endl
+        << "  -V, --verbose INT                  Verbosity level (0=error, 1=warn, 2=info, 3=debug, 4=trace)" << endl
         << "  -m, --method NAME                  What method is used to find associations? (paths) [paths]" << endl
         << "  -l, --allele-size-limit INT        Don't report variants smaller than this [0]" << endl
         << "  -r, --reference-sample NAME        If there is no reference in the graph, use this sample as the reference" << endl
@@ -56,6 +55,7 @@ int main_stoat_graph(int argc, char *argv[]) {
         return EXIT_FAILURE;
     }
 
+    stoat::LogLevel verbosity = stoat::LogLevel::Info;  // default level info
     std::string graph_name;
     std::string distance_name;
     size_t allele_size_limit = 0;
@@ -85,12 +85,13 @@ int main_stoat_graph(int argc, char *argv[]) {
                 {"samples-file", required_argument, 0, 'S'},
                 {"output", required_argument, 0, 'o'},
                 {"output-format", required_argument, 0, 'O'},
+                {"verbose", required_argument, 0, 'V'},
                 {"help", no_argument, 0, 'h'},
                 {0, 0, 0, 0}
             };
 
         int option_index = 0;
-        c = getopt_long(argc, argv, "g:d:l:t:T:m:r:s:S:o:O:h",
+        c = getopt_long(argc, argv, "g:d:l:t:T:m:r:s:S:V:o:O:h",
                         long_options, &option_index); 
         if (c == -1) {
             break;
@@ -104,14 +105,14 @@ int main_stoat_graph(int argc, char *argv[]) {
                 break;
             case 'l':
                 if (std::stoi(optarg) < 0) {
-                    LOG_ERROR("Error: Number of allele size limit must be >= 0");
+                    stoat::LOG_ERROR("Error: Number of allele size limit must be >= 0");
                     return EXIT_FAILURE;
                 }
                 allele_size_limit = std::stoi(optarg);
                 break;
             case 't':
                 if (std::stoi(optarg) < 1) {
-                    LOG_ERROR("Error: Number of threads must be > 0");
+                    stoat::LOG_ERROR("Error: Number of threads must be > 0");
                     return EXIT_FAILURE;
                 }
                 omp_set_num_threads(std::stoi(optarg));
@@ -122,6 +123,17 @@ int main_stoat_graph(int argc, char *argv[]) {
             //case 'p':
             //    p_value = std::stof(optarg);
             //    break;
+            case 'V':
+                {
+                int level = std::stoi(optarg);
+                if (level < 0 || level > 4) {
+                    stoat::LOG_ERROR("Invalid verbosity level. Use 0=Error, 1=Warn, 2=Info, 3=Debug, 4=Trace");
+                    return EXIT_FAILURE;
+                }
+                stoat::LogLevel logLevel = static_cast<stoat::LogLevel>(level);
+                stoat::Logger::instance().setLevel(logLevel);                
+                break;
+                }
             case 'm':
                 method_name = optarg;
                 break;
@@ -144,7 +156,7 @@ int main_stoat_graph(int argc, char *argv[]) {
                 print_help_graph();
                 return EXIT_SUCCESS;
             default:
-                LOG_ERROR("Unknown argument");
+                stoat::LOG_ERROR("Unknown argument");
                 print_help_graph();
                 return EXIT_FAILURE;
         }
@@ -152,15 +164,15 @@ int main_stoat_graph(int argc, char *argv[]) {
 
     // Check that the inputs are ok
     if (graph_name.empty()) {
-        LOG_ERROR("error [stoat graph]: stoat graph requires a graph file");
+        stoat::LOG_ERROR("error [stoat graph]: stoat graph requires a graph file");
         return EXIT_FAILURE; 
     }
     if (distance_name.empty()) {
-        LOG_ERROR("error [stoat graph]: stoat graph requires a distance index file");
+        stoat::LOG_ERROR("error [stoat graph]: stoat graph requires a distance index file");
         return EXIT_FAILURE; 
     }
     if (output_format != "tsv" && output_format != "fasta") {
-        LOG_ERROR("error [stoat graph]: invalid output format " + output_format);
+        stoat::LOG_ERROR("error [stoat graph]: invalid output format " + output_format);
         return EXIT_FAILURE; 
     }
 
@@ -178,13 +190,13 @@ int main_stoat_graph(int argc, char *argv[]) {
         in_samples.close();
     }
     if (samples_of_interest.empty()) {
-        LOG_ERROR("error [stoat graph]: stoat graph requires samples of interest");
+        stoat::LOG_ERROR("error [stoat graph]: stoat graph requires samples of interest");
         return EXIT_FAILURE; 
     }
 
     // Tell the IO library about libvg types.
     if (!stoat::io::register_libvg_io()) {
-        LOG_ERROR("error[stoat vgio]: Could not register libvg types with libvgio");
+        stoat::LOG_ERROR("error[stoat vgio]: Could not register libvg types with libvgio");
         return EXIT_FAILURE;
     }
 
@@ -242,13 +254,13 @@ int main_stoat_graph(int argc, char *argv[]) {
     if (method_name == "paths") {
         partitioner.reset(new stoat_graph::PathPartitioner(all_sample_haplotypes));
     } else {
-        LOG_ERROR("error [stoat graph]: unknown method " + method_name);
+        stoat::LOG_ERROR("error [stoat graph]: unknown method " + method_name);
         return EXIT_FAILURE; 
     }
 
-#ifdef USE_CALLGRIND
-    CALLGRIND_START_INSTRUMENTATION;
-#endif
+// #ifdef USE_CALLGRIND
+//     CALLGRIND_START_INSTRUMENTATION;
+// #endif
 
     stoat_graph::AssociationFinder af (*graph, 
                                    distance_index,

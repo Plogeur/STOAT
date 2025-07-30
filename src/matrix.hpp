@@ -11,7 +11,7 @@
 
 using namespace std;
 
-namespace stoat {
+namespace stoat_vcf {
 
 // A class to store a 2d bit-matrix
 // Rows represent edges and the index of each edge can be found from the row_header
@@ -25,7 +25,7 @@ public:
     bool operator()(size_t row, size_t col) const;
 
     // Add this edge to the matrix
-    void push_matrix(const Edge_t& EdgePath, size_t indexColumn);
+    void push_matrix(const stoat::Edge_t& EdgePath, size_t indexColumn);
 
     // Set this value to true
     void set(size_t row, size_t col);
@@ -46,7 +46,7 @@ public:
     size_t find_edge(const stoat::Edge_t& edge) const;
 
     // Retrieve the index of `edge` if it exists. Otherwise, add it and return the new index.
-    size_t getOrAddIndex(const Edge_t& key, const size_t& size_edge_index_dict);
+    size_t getOrAddIndex(const stoat::Edge_t& key, const size_t& size_edge_index_dict);
 
 protected:
     size_t cols_;

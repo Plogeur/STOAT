@@ -1,6 +1,6 @@
 #include "matrix.hpp"
 
-namespace stoat {
+namespace stoat_vcf {
 
 // Constructor implementation
 EdgeBySampleMatrix::EdgeBySampleMatrix(const std::vector<std::string>& sampleNames, size_t rows, size_t cols) : cols_(cols), sampleNames(sampleNames) {
@@ -24,7 +24,7 @@ size_t EdgeBySampleMatrix::find_edge(const stoat::Edge_t& edge_s) const {
 }
 
 // Retrieve the index of `key` if it exists in the dict. Otherwise, add it and return the new index.
-size_t EdgeBySampleMatrix::getOrAddIndex(const Edge_t& key, const size_t& size_edge_index_dict) {
+size_t EdgeBySampleMatrix::getOrAddIndex(const stoat::Edge_t& key, const size_t& size_edge_index_dict) {
     auto it = row_header.find(key);
     if (it != row_header.end()) {
         return it->second;
@@ -37,7 +37,7 @@ size_t EdgeBySampleMatrix::getOrAddIndex(const Edge_t& key, const size_t& size_e
 
 
 // Add True to the matrix if edge is found
-void EdgeBySampleMatrix::push_matrix(const Edge_t& EdgePath, size_t indexColumn) {
+void EdgeBySampleMatrix::push_matrix(const stoat::Edge_t& EdgePath, size_t indexColumn) {
 
     size_t lengthOrderedMap = row_header.size();
     size_t idxSnarl = getOrAddIndex(EdgePath, lengthOrderedMap);
