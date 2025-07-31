@@ -83,7 +83,7 @@ void add_BH_adjusted_column(
             //pval = stoat::set_precision_float_50(columns[4], columns[5]);
             
             // use only chi2
-            pval =stoat::string_to_pvalue(columns[adjusted_col_index-1]); // use only chi2
+            pval = stoat::string_to_pvalue(columns[adjusted_col_index-1]); // use only chi2
         } else if (phenotype_type == stoat::QUANTITATIVE) {
             pval = stoat::string_to_pvalue(columns[adjusted_col_index-1]);
         }

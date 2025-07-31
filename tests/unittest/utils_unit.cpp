@@ -2,6 +2,8 @@
 #include "../../src/snarl_data_t.hpp"
 #include "../../src/utils.hpp"
 
+using namespace stoat; 
+
 using boost::multiprecision::cpp_dec_float_50;
 
 TEST_CASE("set_precision handles small and normal values") {
@@ -17,9 +19,9 @@ TEST_CASE("set_precision_float_50 handles small and large cpp_dec_float_50 value
 }
 
 TEST_CASE("string_to_pvalue converts valid p-values or returns 1.0 for NA") {
-    REQUIRE(string_to_pvalue("0.01") == 0.01);
-    REQUIRE(string_to_pvalue("NA") == 1.0);
-    REQUIRE(string_to_pvalue("") == 1.0);
+    REQUIRE(stoat::string_to_pvalue("0.01") == 0.01);
+    REQUIRE(stoat::string_to_pvalue("NA") == 1.0);
+    REQUIRE(stoat::string_to_pvalue("") == 1.0);
 }
 
 TEST_CASE("isPValueSignificant handles correct parsing and NA") {

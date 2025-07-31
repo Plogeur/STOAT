@@ -23,6 +23,8 @@
 #include <bdsg/overlays/packed_path_position_overlay.hpp>
 #include <handlegraph/handle_graph.hpp>
 #include <handlegraph/path_handle_graph.hpp>
+#include <bdsg/overlays/overlay_helper.hpp>
+#include <vg/io/vpkg.hpp>
 
 #include "log.hpp"
 #include "utils.hpp"
@@ -156,6 +158,7 @@ void write_snarl_data_fail(std::ostream& outstream);
 std::tuple<std::unique_ptr<bdsg::SnarlDistanceIndex>, 
            std::unique_ptr<bdsg::PackedGraph>, 
            handlegraph::net_handle_t, 
+           std::unique_ptr<handlegraph::PathHandleGraph>,
            std::unique_ptr<bdsg::PackedPositionOverlay>>
 parse_graph_tree(const std::string& pg_file, const std::string& dist_file);
 

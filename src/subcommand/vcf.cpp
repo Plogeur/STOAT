@@ -237,11 +237,7 @@ int main_stoat(int argc, char* argv[]) {
     auto start_1 = std::chrono::high_resolution_clock::now();
     std::filesystem::create_directory(output_dir);
     
-    if (chromosome_path.empty() && snarl_path.empty()) {
-        stoat::LOG_WARN("chromosome_path file not provided, 'ref' reference chromosome name will be used instead");
-    }
-
-    std::unordered_set<std::string> ref_chr = (!chromosome_path.empty()) ? stoat_vcf::parse_chromosome_reference(chromosome_path) : std::unordered_set<std::string>{"ref"};
+    std::unordered_set<std::string> ref_chr = (!chromosome_path.empty()) ? stoat_vcf::parse_chromosome_reference(chromosome_path) : std::unordered_set<std::string>{};
     std::string regression_dir = output_dir + "/regression";
 
     if (table_threshold != -1) {
@@ -324,6 +320,7 @@ int main_stoat(int argc, char* argv[]) {
     std::unique_ptr<bdsg::SnarlDistanceIndex> stree;
     std::unique_ptr<bdsg::PackedGraph> pg;
     handlegraph::net_handle_t root;
+    std::unique_ptr<handlegraph::PathHandleGraph> path_graph;
     std::unique_ptr<bdsg::PackedPositionOverlay> pp_overlay;
 
     if (!snarl_path.empty()){ // If we have already saved the paths in snarls, load them
@@ -334,15 +331,15 @@ int main_stoat(int argc, char* argv[]) {
         auto start_0 = std::chrono::high_resolution_clock::now();
 
         // Load the snarl tree and graph
-        std::tie(stree, pg, root, pp_overlay) = stoat::parse_graph_tree(pg_path, dist_path);
+        std::tie(stree, pg, root, path_graph, pp_overlay) = stoat::parse_graph_tree(pg_path, dist_path);
 
         // Check if chr present in chr file is present in the graph
-        // for (const auto& chr : ref_chr) {
-        //     if (!stree.has_path(chr)) {
-        //         stoat::LOG_ERROR("Reference chromosome : " + chr + " not present in graph");
-        //         return EXIT_FAILURE;
-        //     }
-        // }
+        for (const auto& chr : ref_chr) {
+            if (!path_graph->has_path(chr)) {
+                stoat::LOG_ERROR("Reference chromosome : " + chr + " not present in graph");
+                return EXIT_FAILURE;
+            }
+        }
 
         // std::vector<std::tuple<handlegraph::net_handle_t, std::string, size_t, size_t, bool>>
         // snarl_net_grah, chr_ref, start_pos, end_pos, is_on_ref

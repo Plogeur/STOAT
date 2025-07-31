@@ -189,6 +189,7 @@ int main_stoat_graph(int argc, char *argv[]) {
         }
         in_samples.close();
     }
+
     if (samples_of_interest.empty()) {
         stoat::LOG_ERROR("error [stoat graph]: stoat graph requires samples of interest");
         return EXIT_FAILURE; 
@@ -213,6 +214,7 @@ int main_stoat_graph(int argc, char *argv[]) {
     // Also count the samples for the tester
     size_t sample_count = 0;
     std::unordered_set<std::string> samples;
+
     /// A set of all samples+haplotypes in the graph
     std::set<stoat::sample_hap_t> all_sample_haplotypes;
     

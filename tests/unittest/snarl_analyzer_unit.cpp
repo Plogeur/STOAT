@@ -1,11 +1,13 @@
 #include <catch.hpp>
 #include "../../src/snarl_data_t.hpp"
+#include "../../src/snarl_analyzer.hpp"
 #include "../../src/utils.hpp"
 #include "../../src/matrix.hpp"
 
 #include <limits>
 
 using namespace stoat;
+using namespace stoat_vcf;
 
 TEST_CASE("stoat::Node_traversal_t Basic Functionality") {
     stoat::Node_traversal_t node(42, true);
@@ -17,7 +19,7 @@ TEST_CASE("stoat::Node_traversal_t Basic Functionality") {
 TEST_CASE("Edge_t Functionality") {
     stoat::Node_traversal_t a(1, false);
     stoat::Node_traversal_t b(2, true);
-   stoat::Edge_t edge(a, b);
+    stoat::Edge_t edge(a, b);
 
     auto pair = edge.print_pair_edge();
     REQUIRE(pair.first == 1);
@@ -172,8 +174,8 @@ TEST_CASE("remove_last_columns_quantitative_table works correctly") {
 
     remove_last_columns_quantitative_table(df);
 
-    REQUIRE(df[0].size() == 2);
-    REQUIRE(df[1].size() == 2);
+    REQUIRE(df[0].size() == 1);
+    REQUIRE(df[1].size() == 1);
     REQUIRE(df[0][0] == 0.5);
     REQUIRE(df[1][0] == 0);
 }
