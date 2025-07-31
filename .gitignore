@@ -5,3 +5,6 @@ build/*
 output/*
 bin/*
 plot_script/.Rdata
+deps/*
+deps/gbwtgraph
+deps/libbdsg
