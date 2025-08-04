@@ -29,6 +29,9 @@
 #include "log.hpp"
 #include "utils.hpp"
 
+#include <filesystem>
+#include "io/register_io.hpp"
+
 using namespace std;
 
 using handlegraph::step_handle_t;
@@ -122,7 +125,7 @@ std::vector<Path_traversal_t> stringToVectorPath(std::string& str);
 // A class representing a path as a vector of strings representing nodes
 class Path {
 private:
-    std::vector<std::string> nodes;
+    std::vector<size_t> nodes;
     std::vector<bool> orients;
 
 public:
@@ -130,7 +133,7 @@ public:
     Path();
 
     // Add a node with known orientation
-    void addNode(const std::string& node, bool orient);
+    void addNode(const size_t& node, bool orient);
 
     // Add a node handle and extract information using the std::string representation
     bool addNodeHandle(const handlegraph::net_handle_t& node_h, const bdsg::SnarlDistanceIndex& stree);

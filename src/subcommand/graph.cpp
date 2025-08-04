@@ -167,10 +167,12 @@ int main_stoat_graph(int argc, char *argv[]) {
         stoat::LOG_ERROR("error [stoat graph]: stoat graph requires a graph file");
         return EXIT_FAILURE; 
     }
+
     if (distance_name.empty()) {
         stoat::LOG_ERROR("error [stoat graph]: stoat graph requires a distance index file");
         return EXIT_FAILURE; 
     }
+
     if (output_format != "tsv" && output_format != "fasta") {
         stoat::LOG_ERROR("error [stoat graph]: invalid output format " + output_format);
         return EXIT_FAILURE; 
@@ -201,8 +203,12 @@ int main_stoat_graph(int argc, char *argv[]) {
         return EXIT_FAILURE;
     }
 
+    auto start_1 = std::chrono::high_resolution_clock::now();
+    stoat::LOG_INFO("Start Sample haplotype analysis...");
+
     // Load the graph and make it a PathPositionHandleGraph
     unique_ptr<handlegraph::PathHandleGraph> path_graph = vg::io::VPKG::load_one<handlegraph::PathHandleGraph>(graph_name);
+
     bdsg::PathPositionOverlayHelper overlay_helper;
     bdsg::PathPositionHandleGraph* graph = overlay_helper.apply(path_graph.get());
 
@@ -226,6 +232,11 @@ int main_stoat_graph(int argc, char *argv[]) {
         }   
         return true;
     }); 
+
+    auto end_1 = std::chrono::high_resolution_clock::now();
+    stoat::LOG_INFO("Sample haplotype time : " + std::to_string(std::chrono::duration<double>(end_1 - start_1).count()) + " s");
+    stoat::LOG_INFO("Start GWAS analysis...");
+    auto start_2 = std::chrono::high_resolution_clock::now();
 
     string filename;
     if (output_format == "tsv") {
@@ -290,6 +301,9 @@ int main_stoat_graph(int argc, char *argv[]) {
         stoat::add_BH_adjusted_column(associated_filename, output_dir, output_dir + "/top_variant_binary_graph.tsv", stoat::BINARY);
     }
 
-    return 0;
+    auto end_2 = std::chrono::high_resolution_clock::now();
+    stoat::LOG_INFO("GWAS time analysis : " + std::to_string(std::chrono::duration<double>(end_2 - start_2).count()) + " s");
+    stoat::LOG_INFO("Total time : " + std::to_string(std::chrono::duration<double>(end_2 - start_1).count()) + " s");
+    return EXIT_SUCCESS;
 }
 } //end namespace

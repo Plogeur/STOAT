@@ -22,13 +22,13 @@ void Logger::log(LogLevel level, const std::string& message) {
     if (level <= logLevel) {
         std::lock_guard<std::mutex> lock(mutex);
         std::ostream& out = (level == LogLevel::Error) ? std::cerr : std::cout;
-        out << levelToString(level) << " : " << message << std::endl;
+        out << levelToString(level) << message << std::endl;
     }
 }
 
 void Logger::debug(const std::string& msg) { log(LogLevel::Debug, msg); }
-void Logger::info(const std::string& msg) { log(LogLevel::Info, msg); }
-void Logger::warn(const std::string& msg) { log(LogLevel::Warning, msg); }
+void Logger::info(const std::string& msg)  { log(LogLevel::Info, msg); }
+void Logger::warn(const std::string& msg)  { log(LogLevel::Warning, msg); }
 void Logger::error(const std::string& msg) { log(LogLevel::Error, msg); }
 
 } // end namespace

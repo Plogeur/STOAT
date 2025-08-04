@@ -395,6 +395,7 @@ void BinaryCovarSnarlAnalyzer::analyze_and_write_snarl(
 
     auto [df, phenotype_filtered, allele_paths] = create_quantitative_table(list_samples.size(), snarl_data_s.snarl_paths, binary_phenotype, edge_matrix);
     remove_empty_columns_quantitative_table(df);
+    
     bool filtration = filtration_quantitative_table(df, min_individuals, min_haplotypes, maf_threshold);
     remove_last_columns_quantitative_table(df);
 
@@ -420,6 +421,7 @@ void QuantitativeSnarlAnalyzer::analyze_and_write_snarl(
 
     auto [df, phenotype_filtered, allele_paths] = create_quantitative_table(list_samples.size(), snarl_data_s.snarl_paths, quantitative_phenotype, edge_matrix);
     remove_empty_columns_quantitative_table(df);
+    
     bool filtration = filtration_quantitative_table(df, min_individuals, min_haplotypes, maf_threshold);
     remove_last_columns_quantitative_table(df);
 
@@ -478,6 +480,7 @@ void EQTLSnarlAnalyzer::analyze_and_write_snarl(
     std::vector<size_t> list_gene_index = found_gene_snarl(eqtl_map.at(chr), snarl_data_s.start_positions, snarl_data_s.end_positions, windows_gene_threshold);
     auto [df, index_filtered, allele_paths] = stoat_vcf::create_eqtl_table(list_samples.size(), snarl_data_s.snarl_paths, edge_matrix);
     remove_empty_columns_quantitative_table(df);
+    
     bool filtration = filtration_quantitative_table(df, min_individuals, min_haplotypes, maf_threshold);
     remove_last_columns_quantitative_table(df);
 

@@ -78,7 +78,7 @@ bool run_test(
 }
 
 TEST_CASE("Binary association tests graph", "[binary]") {
-    const std::string binary = "./stoat";
+    const std::string binary = "../bin/stoat";
     const std::string output_dir = "../output_binary";
     const std::string expected_dir = "../tests/expected_output/graph/binary";
     const std::string expected_dir_covar = "../tests/expected_output/graph/binary_covar";

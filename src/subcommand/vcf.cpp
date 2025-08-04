@@ -16,6 +16,7 @@
 #include "../matrix.hpp"
 #include "../gaf_creator.hpp"
 #include "../post_processing.hpp"
+#include "../io/register_io.hpp"
 
 namespace stoat_command {
 
@@ -234,9 +235,7 @@ int main_stoat(int argc, char* argv[]) {
         return EXIT_FAILURE;
     }
 
-    auto start_1 = std::chrono::high_resolution_clock::now();
     std::filesystem::create_directory(output_dir);
-    
     std::unordered_set<std::string> ref_chr = (!chromosome_path.empty()) ? stoat_vcf::parse_chromosome_reference(chromosome_path) : std::unordered_set<std::string>{};
     std::string regression_dir = output_dir + "/regression";
 
@@ -269,6 +268,8 @@ int main_stoat(int argc, char* argv[]) {
         print_help_vcf();
         return EXIT_FAILURE;
     }
+
+    auto start_1 = std::chrono::high_resolution_clock::now();
 
     std::vector<std::string> list_samples;
     htsFile* ptr_vcf;
@@ -370,7 +371,7 @@ int main_stoat(int argc, char* argv[]) {
     stoat_vcf::EdgeBySampleMatrix edge_matrix_empty(list_samples, 0, 0);
     stoat::phenotype_type_t phenotype_type;
 
-    stoat::LOG_INFO("Starting snarl analysis...");
+    stoat::LOG_INFO("Starting GWAS analysis...");
 
     // Decide which type of SnarlAnalyzer we want
     if (!binary_path.empty()) {
@@ -411,8 +412,8 @@ int main_stoat(int argc, char* argv[]) {
     }
 
     auto end_1 = std::chrono::high_resolution_clock::now();
-    stoat::LOG_INFO("Snarl time analysis : " + std::to_string(std::chrono::duration<double>(end_1 - start_2).count()) + " s");
-    stoat::LOG_INFO("Time Gwas analysis : " + std::to_string(std::chrono::duration<double>(end_1 - start_1).count()) + " s");
+    stoat::LOG_INFO("GWAS time analysis : " + std::to_string(std::chrono::duration<double>(end_1 - start_2).count()) + " s");
+    stoat::LOG_INFO("Total time : " + std::to_string(std::chrono::duration<double>(end_1 - start_1).count()) + " s");
     return EXIT_SUCCESS;
 }
 
