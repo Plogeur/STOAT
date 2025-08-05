@@ -231,7 +231,7 @@ int main_stoat_graph(int argc, char *argv[]) {
             samples.insert(stoat::get_sample_name_from_path(*graph, path));
         }   
         return true;
-    }); 
+    });
 
     auto end_1 = std::chrono::high_resolution_clock::now();
     stoat::LOG_INFO("Sample haplotype time : " + std::to_string(std::chrono::duration<double>(end_1 - start_1).count()) + " s");

@@ -43,6 +43,7 @@ TEST_CASE( "Path association finder one node",
     }
 
 }
+
 TEST_CASE( "Path association finder nested bubbles",
           "[path_finder][bug]" ) {
 
