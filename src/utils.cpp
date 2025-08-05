@@ -49,7 +49,7 @@ bool isPValueSignificant(const double& pvalue_threshold, const std::string& pval
             pvalue = std::stod(pvalue_str);
         }
     } catch (const std::exception& e) {
-        throw std::runtime_error("Error parsing pvalue std::string : " + pvalue_str + " " + e.what());
+        LOG_FATAL("Error parsing pvalue std::string : " + pvalue_str + " " + e.what());
     }
     return pvalue < pvalue_threshold;
 }
@@ -120,7 +120,7 @@ std::vector<T> stringToVector(const std::string& str) {
         T value;
         tokenStream >> value;
         if (tokenStream.fail()) {
-            throw std::runtime_error("Failed to parse token: " + token);
+            LOG_FATAL("Failed to parse token: " + token);
         }
         result.push_back(value);
     }

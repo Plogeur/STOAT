@@ -131,64 +131,55 @@ int main_stoat(int argc, char* argv[]) {
             case 'I':
                 min_individuals = std::stoi(optarg);
                 if (min_individuals < 2) {
-                    stoat::LOG_ERROR("min_individuals threshold must be > 1");
-                    return EXIT_FAILURE;
+                    stoat::LOG_FATAL("min_individuals threshold must be > 1");
                 }
                 break;
             case 'H':
                 min_haplotypes = std::stoi(optarg);                
                 if (min_haplotypes < 2) {
-                    stoat::LOG_ERROR("min_haplotypes threshold must be > 1");
-                    return EXIT_FAILURE;
+                    stoat::LOG_FATAL("min_haplotypes threshold must be > 1");
                 }
                 break;
             case 'i':
                 children_threshold = std::stoi(optarg);
                 if (children_threshold < 2) {
-                    stoat::LOG_ERROR("Children threshold must be > 1");
-                    return EXIT_FAILURE;
+                    stoat::LOG_FATAL("Children threshold must be > 1");
                 }
                 break;
             case 'y':
                 cycle_threshold = std::stoi(optarg);
                 if (cycle_threshold < 1) {
-                    stoat::LOG_ERROR("Cycle threshold must be > 0");
-                    return EXIT_FAILURE;
+                    stoat::LOG_FATAL("Cycle threshold must be > 0");
                 }
                 break;
             case 'l':
                 path_length_threshold = std::stoi(optarg);
                 if (path_length_threshold < 2) {
-                    stoat::LOG_ERROR("Path length threshold must be > 1");
-                    return EXIT_FAILURE;
+                    stoat::LOG_FATAL("Path length threshold must be > 1");
                 }
                 break;
             case 'G': gene_position_path = optarg; stoat_vcf::check_file(gene_position_path); break;
             case 'w':
                 windows_gene_threshold = std::stoi(optarg);
                 if (windows_gene_threshold < 1) {
-                    stoat::LOG_ERROR("Error: Windows gene threshold must be > 0");
-                    return EXIT_FAILURE;
+                    stoat::LOG_FATAL("Error: Windows gene threshold must be > 0");
                 }
                 break;
             case 'T':
                 table_threshold = std::stod(optarg);
                 if (table_threshold <= 0 || table_threshold > 1) {
-                    stoat::LOG_ERROR("Error: Table threshold must be in (0,1]");
-                    return EXIT_FAILURE;
+                    stoat::LOG_FATAL("Error: Table threshold must be in (0,1]");
                 }
                 break;
             case 'M':
                 maf_threshold = std::stod(optarg);
                 if (maf_threshold < 0 || maf_threshold > 1) {
-                    stoat::LOG_ERROR("Error: MAF must be in [0,1]");
-                    return EXIT_FAILURE;
+                    stoat::LOG_FATAL("Error: MAF must be in [0,1]");
                 }
                 break;
             case 't':
                 if (std::stoi(optarg) < 1) {
-                    stoat::LOG_ERROR("Error: Number of threads must be > 0");
-                    return EXIT_FAILURE;
+                    stoat::LOG_FATAL("Error: Number of threads must be > 0");
                 }
                 omp_set_num_threads(std::stoi(optarg));
                 break;
@@ -196,8 +187,7 @@ int main_stoat(int argc, char* argv[]) {
                 {
                 int level = std::stoi(optarg);
                 if (level < 0 || level > 4) {
-                    stoat::LOG_ERROR("Invalid verbosity level. Use 0=Error, 1=Warn, 2=Info, 3=Debug, 4=Trace");
-                    return EXIT_FAILURE;
+                    stoat::LOG_FATAL("Invalid verbosity level. Use 0=Error, 1=Warn, 2=Info, 3=Debug, 4=Trace");
                 }
                 stoat::LogLevel logLevel = static_cast<stoat::LogLevel>(level);
                 stoat::Logger::instance().setLevel(logLevel);                
@@ -240,25 +230,27 @@ int main_stoat(int argc, char* argv[]) {
     std::string regression_dir = output_dir + "/regression";
 
     if (table_threshold != -1) {
-        //stoat::TRACE("Create_directory(regression_dir)");
+        //stoat::LOG_TRACE("Create_directory(regression_dir)");
         std::filesystem::create_directory(regression_dir);
     }
 
     // Enforce valid argument combinations
     if ((!snarl_path.empty() || (!pg_path.empty() && !dist_path.empty())) && !vcf_path.empty() && phenotype == 1) {
-        //stoat::TRACE("Case Gwas");
+        //stoat::LOG_TRACE("Case Gwas");
         // Case 1: snarl_path + vcf_path + phenotype
         // Case 2: pg_path + dist_path + vcf_path + phenotype
     } else if (!pg_path.empty() && !dist_path.empty() && vcf_path.empty() && snarl_path.empty() && phenotype == 0) {
-        //stoat::TRACE("Case Snarl path decomposition");
+        //stoat::LOG_TRACE("Case Snarl path decomposition");
         // Case 3: Only pg_path + dist_path
         only_snarl_parsing = true;
     } else {
-        stoat::LOG_ERROR("Invalid argument combination provided.");
-        stoat::LOG_ERROR("There are only 3 ways to lauch stoat vcf :");
-        stoat::LOG_ERROR("Case 1 (GWAS only): snarl_path + vcf_path + phenotype (+ optional file)");
-        stoat::LOG_ERROR("Case 2 (GWAS + snarl path decomposition): pg_path + dist_path + vcf_path + phenotype (+ optional file)");
-        stoat::LOG_ERROR("Case 3 (snarl path decomposition): pg_path + dist_path");
+        stoat::LOG_ERROR(
+            std::string("Invalid argument combination provided.\n") +
+            "There are only 3 ways to launch stoat vcf:\n" +
+            "Case 1 (GWAS only): snarl_path + vcf_path + phenotype (+ optional file)\n" +
+            "Case 2 (GWAS + snarl path decomposition): pg_path + dist_path + vcf_path + phenotype (+ optional file)\n" +
+            "Case 3 (snarl path decomposition): pg_path + dist_path"
+        );
         print_help_vcf();
         return EXIT_FAILURE;
     }
@@ -277,7 +269,7 @@ int main_stoat(int argc, char* argv[]) {
     bcf1_t* rec;
 
     if (!only_snarl_parsing) {
-        //stoat::TRACE("Parsing header VCF file");
+        stoat::LOG_TRACE("Parsing header VCF file");
         std::tie(list_samples, ptr_vcf, hdr, rec) = stoat_vcf::parseHeader(vcf_path); 
     }
 
@@ -291,26 +283,26 @@ int main_stoat(int argc, char* argv[]) {
     std::vector<std::vector<double>> covariate;
 
     if (!covariate_path.empty()) {
-        //stoat::TRACE("Parsing covariate file");
+        stoat::LOG_TRACE("Parsing covariate file");
         covariate = stoat_vcf::parse_covariates(covariate_path, covar_names, list_samples);
     }
 
     if (!binary_path.empty()) {
-        //stoat::TRACE("Parsing binary phenotype file");
+        stoat::LOG_TRACE("Parsing binary phenotype file");
         binary_phenotype = stoat_vcf::parse_binary_pheno(binary_path, list_samples);
 
     } else if (!quantitative_path.empty()) {
-        //stoat::TRACE("Parsing quantitative phenotype file");
+        stoat::LOG_TRACE("Parsing quantitative phenotype file");
         quantitative_phenotype = stoat_vcf::parse_quantitative_pheno(quantitative_path, list_samples);
 
     } else if (!eqtl_path.empty() && !gene_position_path.empty()) {
-        //stoat::TRACE("Parsing eqtl phenotype file");
+        stoat::LOG_TRACE("Parsing eqtl phenotype file");
         eqtl_phenotype = stoat_vcf::parse_qtl_gene_file(eqtl_path, gene_position_path, list_samples);
     }
 
     stoat_vcf::KinshipMatrix kinship;
     if (!kinship_path.empty()) {
-        //stoat::TRACE("Parsing kinship matrix file");
+        stoat::LOG_TRACE("Parsing kinship matrix file");
         kinship.parseKinshipMatrix(kinship_path);
     }
 
@@ -325,8 +317,9 @@ int main_stoat(int argc, char* argv[]) {
     std::unique_ptr<bdsg::PackedPositionOverlay> pp_overlay;
 
     if (!snarl_path.empty()){ // If we have already saved the paths in snarls, load them
-        //stoat::TRACE("Parsing snarl path file");
+        stoat::LOG_TRACE("Parsing snarl path file");
         snarls_chr = stoat::parse_snarl_path(snarl_path);
+
     } else { // Otherwise, find them from the graph and snarl tree
         stoat::LOG_INFO("Starting snarl decomposition... ");
         auto start_0 = std::chrono::high_resolution_clock::now();
@@ -336,9 +329,9 @@ int main_stoat(int argc, char* argv[]) {
 
         // Check if chr present in chr file is present in the graph
         for (const auto& chr : ref_chr) {
+            stoat::LOG_TRACE("Chr found in .chr file : " + chr);
             if (!path_graph->has_path(chr)) {
-                stoat::LOG_ERROR("Reference chromosome : " + chr + " not present in graph");
-                return EXIT_FAILURE;
+                stoat::LOG_FATAL("Reference chromosome : " + chr + " not present in graph");
             }
         }
 
@@ -404,9 +397,11 @@ int main_stoat(int argc, char* argv[]) {
                                                     (phenotype_type == stoat::QUANTITATIVE ? "/top_variant_quantitative.tsv" 
                                                                                                 : "/top_variant_eqtl.tsv"));
 
+    stoat::LOG_TRACE("Add BH column");
     stoat::add_BH_adjusted_column(output_tsv, output_dir, output_significative, phenotype_type);
 
     if (phenotype_type == stoat::BINARY && gaf) {
+        stoat::LOG_TRACE("Create GAF");
         std::string output_gaf = output_dir + "/binary_table.gaf";
         stoat_vcf::gaf_creation(output_tsv, snarls_chr, *pg, output_gaf);
     }

@@ -7,11 +7,12 @@
 
 namespace stoat {
 
-#define LOG_ERROR(msg)   Logger::instance().error(msg)
-#define LOG_WARN(msg)    Logger::instance().warn(msg)
-#define LOG_INFO(msg)    Logger::instance().info(msg)
-#define LOG_DEBUG(msg)   Logger::instance().debug(msg)
-#define TRACE(msg)       Logger::instance().log(LogLevel::Trace, msg)
+#define LOG_FATAL(msg)   Logger::instance().fatal((msg))
+#define LOG_ERROR(msg)   Logger::instance().error((msg))
+#define LOG_WARN(msg)    Logger::instance().warn((msg))
+#define LOG_INFO(msg)    Logger::instance().info((msg))
+#define LOG_DEBUG(msg)   Logger::instance().debug((msg))
+#define LOG_TRACE(msg)   Logger::instance().trace((msg))
 
 enum class LogLevel {
     Error = 0,
@@ -32,6 +33,8 @@ public:
     void info(const std::string& msg);
     void warn(const std::string& msg);
     void error(const std::string& msg);
+    void fatal(const std::string& msg);  // logs error and exits
+    void trace(const std::string& msg);
 
 private:
     LogLevel logLevel = LogLevel::Info;

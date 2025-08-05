@@ -15,9 +15,9 @@ std::unordered_map<std::string, std::vector<Snarl_data_t>> parse_snarl_path(cons
 
     // Read and validate header
     if (!std::getline(file, line)) {
-        throw std::runtime_error("Empty file or failed to read header.");
+        stoat::LOG_FATAL("Empty file or failed to read header.");
     }
-    
+
     // Parse actual header fields
     std::vector<std::string> header_fields;
     istringstream header_stream(line);
@@ -43,7 +43,7 @@ std::unordered_map<std::string, std::vector<Snarl_data_t>> parse_snarl_path(cons
             oss << header_fields[i];
             if (i < header_fields.size() - 1) oss << "\\t";
         }
-        throw runtime_error(oss.str());
+        stoat::LOG_FATAL(oss.str());
     }
 
     // Process each line
@@ -178,7 +178,7 @@ std::string pairToString(const std::pair<size_t, size_t>& name) {
 std::pair<size_t, size_t> stringToPair(const std::string& str) {
     size_t underscorePos = str.find('_');
     if (underscorePos == std::string::npos) {
-        throw std::invalid_argument("Input std::string does not contain an underscore separator");
+        stoat::LOG_FATAL("Input std::string does not contain an underscore separator");
     }
 
     std::string firstPart = str.substr(0, underscorePos);
@@ -345,7 +345,7 @@ std::tuple<std::unique_ptr<bdsg::SnarlDistanceIndex>,
 
     // Tell the IO library about libvg types.
     if (!stoat::io::register_libvg_io()) {
-        throw std::runtime_error("error[stoat vgio]: Could not register libvg types with libvgio");
+        stoat::LOG_FATAL("error[stoat vgio]: Could not register libvg types with libvgio");
     }
 
     // Load graph
@@ -684,7 +684,7 @@ std::unordered_map<std::string, std::vector<Snarl_data_t>> loop_over_snarls_writ
         std::vector<std::vector<handlegraph::net_handle_t>> finished_paths;
 
         size_t itr = 0;
-        bool not_break = true;
+        bool break_snarl = false;
 
         while (!paths.empty()) {
             std::vector<handlegraph::net_handle_t> path = std::move(paths.back());
@@ -703,14 +703,14 @@ std::unordered_map<std::string, std::vector<Snarl_data_t>> loop_over_snarls_writ
             if (itr++ > path_length_threshold) {
                 #pragma omp critical(out_fail)
                 out_fail << snarl_id_str << "\titeration_calculation_out = " << children << " children\n";
-                not_break = false;
+                break_snarl = true;
                 break;
             }
 
             follow_edges(stree, finished_paths, path, paths, pg, cycle);
         }
 
-        if (!not_break) {continue;}
+        if (break_snarl) {continue;}
 
         auto [pretty_paths, type_variants] = fill_pretty_paths(stree, pg, finished_paths);
         if (pretty_paths.size() < 2) {continue;} // avoid special case single path
@@ -735,19 +735,21 @@ std::unordered_map<std::string, std::vector<Snarl_data_t>> loop_over_snarls_writ
                       << stoat::vectorToString(type_variants) << "\t"
                       << str_reference << "\t" 
                       << depth << "\n";
-
-            #pragma omp atomic
-            paths_number_analysis += pretty_paths.size();
-
         } else {
             Snarl_data_t snarl_path(snarl, snarl_id, pretty_paths, strat_pos, end_pos, type_variants, depth);
             
             #pragma omp critical(chr_snarl_matrix)
             chr_snarl_matrix[chr].emplace_back(std::move(snarl_path));
         }
+
+        paths_number_analysis += pretty_paths.size();
     }
 
     stoat::LOG_INFO("Total number of paths : " + std::to_string(paths_number_analysis));
+
+    if (paths_number_analysis == 0) {
+        stoat::LOG_ERROR("Total number of paths = 0. This may indicate that the graph does not contain a flagged reference path. Please use -r/--chr to specify the reference paths.");
+    }
 
     for (const auto& [chr, snarls] : chr_snarl_matrix) {
         stoat::LOG_INFO("chr : " + chr + ", number of snarl : " + std::to_string(snarls.size()));
