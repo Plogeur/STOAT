@@ -387,22 +387,22 @@ int main_stoat(int argc, char* argv[]) {
         phenotype_type = stoat::EQTL; 
     }
 
-    std::string output_tsv = output_dir + (phenotype_type == stoat::BINARY       ? "/binary_table.tsv" : 
-                                            (phenotype_type == stoat::QUANTITATIVE ? "/quantitative_table.tsv" 
-                                                                                        : "/eqtl_gwas.tsv"));
+    std::string output_tsv = output_dir + (phenotype_type == stoat::BINARY       ? "/binary_table_vcf.tsv" : 
+                                            (phenotype_type == stoat::QUANTITATIVE ? "/quantitative_table_vcf.tsv" 
+                                                                                        : "/eqtl_table_vcf.tsv"));
 
     snarl_analyzer->process_snarls_by_chromosome_chunk(ptr_vcf, hdr, rec, output_tsv);
 
-    std::string output_significative = output_dir + (phenotype_type == stoat::BINARY       ?  "/top_variant_binary.tsv" : 
-                                                    (phenotype_type == stoat::QUANTITATIVE ? "/top_variant_quantitative.tsv" 
-                                                                                                : "/top_variant_eqtl.tsv"));
+    std::string output_significative = output_dir + (phenotype_type == stoat::BINARY       ?  "/top_variant_binary_vcf.tsv" : 
+                                                    (phenotype_type == stoat::QUANTITATIVE ? "/top_variant_quantitative_vcf.tsv" 
+                                                                                                : "/top_variant_eqtl_vcf.tsv"));
 
     stoat::LOG_TRACE("Add BH column");
     stoat::add_BH_adjusted_column(output_tsv, output_dir, output_significative, phenotype_type);
 
     if (phenotype_type == stoat::BINARY && gaf) {
         stoat::LOG_TRACE("Create GAF");
-        std::string output_gaf = output_dir + "/binary_table.gaf";
+        std::string output_gaf = output_dir + "/binary_table_vcf.gaf";
         stoat_vcf::gaf_creation(output_tsv, snarls_chr, *pg, output_gaf);
     }
 

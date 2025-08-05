@@ -96,7 +96,10 @@ bool run_test_snarl(
     std::string snarl_output = output_dir + '/' + phenotype + "_table.tsv";
     std::string snarl_expected = expected_dir + '/' + phenotype + "_table.tsv";
 
-    return compare_output_files(snarl_output, snarl_expected);
+    bool result = compare_output_files(snarl_output, snarl_expected);
+    clean_output_dir(output_dir);
+
+    return result;
 }
 
 bool run_test_gwas(
@@ -140,7 +143,10 @@ bool run_test_gwas(
     std::string gwas_output = output_dir + '/' + phenotype + "_table.tsv";
     std::string gwas_expected = expected_dir + '/' + phenotype + "_table.tsv";
 
-    return compare_output_files(gwas_output, gwas_expected);
+    bool result = compare_output_files(gwas_output, gwas_expected);
+    clean_output_dir(output_dir);
+
+    return result;
 }
 
 TEST_CASE("Binary association tests vcf", "[binary]") {

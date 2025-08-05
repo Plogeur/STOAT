@@ -748,7 +748,7 @@ std::unordered_map<std::string, std::vector<Snarl_data_t>> loop_over_snarls_writ
     stoat::LOG_INFO("Total number of paths : " + std::to_string(paths_number_analysis));
 
     if (paths_number_analysis == 0) {
-        stoat::LOG_ERROR("Total number of paths = 0. This may indicate that the graph does not contain a flagged reference path. Please use -r/--chr to specify the reference paths.");
+        stoat::LOG_FATAL("Total number of paths = 0. This may indicate that the graph does not contain a flagged reference path. Please use -r/--chr to specify the reference paths.");
     }
 
     for (const auto& [chr, snarls] : chr_snarl_matrix) {

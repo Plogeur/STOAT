@@ -7,6 +7,15 @@
 #include <tuple>
 #include <vector>
 #include "../../src/arg_parser.hpp"  // adjust path as needed
+#include "../../src/log.hpp"  // adjust path as needed
+
+void report_fatal(const std::string& msg, bool fatal = true) {
+    if (fatal) {
+        stoat::LOG_FATAL(msg);
+    } else {
+        throw std::runtime_error(msg);
+    }
+}
 
 // Helper to write minimal VCF content to file
 void write_vcf_file(const std::string& path, const std::string& content) {
@@ -62,7 +71,7 @@ TEST_CASE("Binary phenotype parsing", "[stoat_vcf::parse_binary_pheno]") {
             "F1 I1 1\n";
         std::string file_path = create_test_pheno_file(file_content);
 
-        REQUIRE_THROWS_AS(stoat_vcf::parse_binary_pheno(file_path, list_samples), std::invalid_argument);
+        REQUIRE_THROWS_AS(stoat_vcf::parse_binary_pheno(file_path, list_samples), std::runtime_error);
     }
 
     SECTION("Non-binary phenotype value") {
@@ -131,7 +140,7 @@ TEST_CASE("Quantitative phenotype parsing", "[stoat_vcf::parse_quantitative_phen
             "F1 I1 1.5\n";
         std::string file_path = create_test_pheno_file(file_content);
 
-        REQUIRE_THROWS_AS(stoat_vcf::parse_quantitative_pheno(file_path, list_samples), std::invalid_argument);
+        REQUIRE_THROWS_AS(stoat_vcf::parse_quantitative_pheno(file_path, list_samples), std::runtime_error);
     }
 
     SECTION("Non-numeric phenotype value") {

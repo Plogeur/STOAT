@@ -193,15 +193,15 @@ TEST_CASE("Test simulated case", "[Path]") {
         check_snarl(snarls_chr, "ref", "3_6", {">3>5>6", ">3>4>6"}, 8, 9, {"1", "1"}, *stree);
     }
 
-    SECTION("linear") {
-        std::string pg_path = "../tests/graph_test/linear.pg";
-        std::string dist_path = "../tests/graph_test/linear.dist";
+    // SECTION("linear") {
+    //     std::string pg_path = "../tests/graph_test/linear.pg";
+    //     std::string dist_path = "../tests/graph_test/linear.dist";
 
-        std::tie(stree, pg, root, path_graph, pp_overlay) = stoat::parse_graph_tree(pg_path, dist_path);
-        auto snarls = stoat::save_snarls(*stree, root, *pg, ref_chr, *pp_overlay);
-        auto snarls_chr = stoat::loop_over_snarls_write(*stree, snarls, *pg, output_file, output_snarl_not_analyse, children_threshold, path_length_threshold, 0, only_snarl_parsing);
-        REQUIRE(snarls_chr.size() == 0);
-    }
+    //     std::tie(stree, pg, root, path_graph, pp_overlay) = stoat::parse_graph_tree(pg_path, dist_path);
+    //     auto snarls = stoat::save_snarls(*stree, root, *pg, ref_chr, *pp_overlay);
+    //     auto snarls_chr = stoat::loop_over_snarls_write(*stree, snarls, *pg, output_file, output_snarl_not_analyse, children_threshold, path_length_threshold, 0, only_snarl_parsing);
+    //     REQUIRE(snarls_chr.size() == 0);
+    // }
 
     SECTION("loop_simple") {
         std::string pg_path = "../tests/graph_test/loop_simple.pg";

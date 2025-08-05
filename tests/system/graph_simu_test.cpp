@@ -87,6 +87,7 @@ TEST_CASE("Binary association tests graph", "[binary]") {
 
     SECTION("Without covariate") {
         REQUIRE(run_test(binary, output_dir, expected_dir, data_path, phenotype_command, false));
+        clean_output_dir(output_dir);
     }
 
     // SECTION("With covariate") {

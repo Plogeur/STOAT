@@ -35,8 +35,9 @@ void Logger::trace(const std::string& msg) { log(LogLevel::Trace, msg); }
 
 void Logger::fatal(const std::string& msg) {
     log(LogLevel::Error, msg);
-    log(LogLevel::Error, "Fatal error. Exiting.");
-    std::exit(EXIT_FAILURE);
+    throw std::runtime_error("Fatal error. Exiting.");
+    // log(LogLevel::Error, "Fatal error. Exiting.");
+    // std::exit(EXIT_FAILURE);
 }
 
 } // end namespace
