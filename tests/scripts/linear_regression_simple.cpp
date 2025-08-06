@@ -133,3 +133,7 @@ int main() {
 }
 
 // g++ -std=c++17 -lboost_math_c99 -o simple_linear linear_regression_simple.cpp
+// ./simple_linear
+
+// beta[0] = 4, SE = 2, t = 2, p = 0.295167
+// beta[1] = 0, SE = 3.4641, t = 0, p = 1

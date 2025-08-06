@@ -5,10 +5,11 @@
 #include <numeric>
 #include <set>
 #include <vector>
+#include <iostream>
 
-#include "third/eigen/Eigen/Cholesky"
-#include "third/eigen/Eigen/Core"
-#include "third/gsl/include/gsl/gsl_cdf.h"
+#include "Eigen/Cholesky"
+#include "Eigen/Core"
+#include "gsl/gsl_cdf.h"
 
 #define DECLARE_EIGEN_VECTOR(v, v_e) Eigen::Map<Eigen::VectorXd> v_e((v).data.data(), (v).data.size())
 #define DECLARE_EIGEN_CONST_VECTOR(v, v_e) Eigen::Map<const Eigen::VectorXd> v_e((v).data.data(), (v).data.size())
@@ -17,15 +18,16 @@
 
 // ======================= Vector Class =========================
 class Vector {
- public:
+  public:
   std::vector<double> data;
 
   Vector() {}
-  Vector(int n) { Dimension(n); }
-  double& operator[](int i) { return data[i]; }
-  double operator[](int i) const { return data[i]; }
-  int Length() const { return data.size(); }
+  Vector(int n);
+  Vector(int n, double val);
 
+  double& operator[](int i);
+  double operator[](int i) const;
+  int Length() const;
   void Dimension(int n);
   void Dimension(int n, double val);
   void Fill(double val);
@@ -35,6 +37,8 @@ class Vector {
   double Max() const;
 };
 
+Vector::Vector(int n) { Dimension(n); }
+Vector::Vector(int n, double val) { Dimension(n, val); }
 void Vector::Dimension(int n) { data.resize(n); }
 void Vector::Dimension(int n, double val) {
   data.resize(n);
@@ -54,14 +58,19 @@ double Vector::Max() const {
   return *std::max_element(data.begin(), data.end());
 }
 
+int Vector::Length() const { return data.size(); }
+double& Vector::operator[](int i) { return data[i]; }
+double Vector::operator[](int i) const { return data[i]; }
+
 // ======================= Matrix Class =========================
 class Matrix {
- public:
+  public:
   int rows, cols;
   std::vector<double> data;
   std::vector<std::string> colLabel;
 
-  Matrix(int nr, int nc);
+  Matrix();
+  explicit Matrix(int nr, int nc);
   Matrix(const Matrix& m);
   Matrix& operator=(const Matrix& m);
 
@@ -75,6 +84,7 @@ class Matrix {
   void Fill(double val);
   double Min() const;
   double Max() const;
+  int Length() const;
 
   void Product(const Matrix& in1, const Matrix& in2);
   void Transpose(const Matrix& old);
@@ -82,6 +92,11 @@ class Matrix {
   int RemoveByRowIndex(const std::vector<int>& rowIndexToRemove);
   Matrix& StackRight(const Matrix& m);
 };
+
+Matrix::Matrix() {
+  rows = 0;
+  cols = 0;
+}
 
 Matrix::Matrix(int nr, int nc) : rows(nr), cols(nc), data(nr * nc) {}
 
@@ -107,6 +122,8 @@ void Matrix::Dimension(int nr, int nc) {
   std::swap(data, newData);
   colLabel.resize(nc);
 }
+
+int Matrix::Length() const { return data.size(); }
 
 void Matrix::Dimension(int nr, int nc, double val) {
   DimensionQuick(nr, nc);
@@ -146,7 +163,9 @@ void Matrix::Product(const Matrix& in1, const Matrix& in2) {
 }
 
 void Matrix::Transpose(const Matrix& old) {
-  DimensionQuick(old.cols, old.rows);
+  data.resize(old.data.size());
+  rows = old.cols;
+  cols = old.rows;
   DECLARE_EIGEN_CONST_MATRIX(old, eOld);
   DECLARE_EIGEN_MATRIX((*this), eNew);
   eNew = eOld.transpose();
@@ -158,18 +177,22 @@ Matrix& Matrix::Multiply(double s) {
 }
 
 int Matrix::RemoveByRowIndex(const std::vector<int>& rowIndexToRemove) {
-  std::set<int> idxSet(rowIndexToRemove.begin(), rowIndexToRemove.end());
   int idx = 0;
-  for (int j = 0; j < cols; ++j)
-    for (int i = 0; i < rows; ++i)
-      if (!idxSet.count(i)) data[idx++] = (*this)(i, j);
+  std::set<int> idxSet(rowIndexToRemove.begin(), rowIndexToRemove.end());
+  for (int j = 0; j < cols; ++j) {
+    for (int i = 0; i < rows; ++i) {
+      if (idxSet.count(i)) {
+        continue;
+      }
+      data[idx++] = (*this)(i, j);
+    }
+  }
   rows -= idxSet.size();
   data.resize(rows * cols);
   return idxSet.size();
 }
 
 Matrix& Matrix::StackRight(const Matrix& m) {
-  assert(rows == m.rows);
   data.insert(data.end(), m.data.begin(), m.data.end());
   cols += m.cols;
   colLabel.insert(colLabel.end(), m.colLabel.begin(), m.colLabel.end());
@@ -177,14 +200,20 @@ Matrix& Matrix::StackRight(const Matrix& m) {
 }
 
 // ==================== LinearRegression Class ===================
-class LinearRegression {
- public:
-  Matrix XtXinv, B, covB;
-  Vector predict, residuals, pValue;
+struct LinearRegression {
+
+  Matrix XtXinv, covB;
+  Vector predict, residuals, B, pValue;
   double sigma2;
 
+  LinearRegression() : sigma2(0.){};
   bool FitLinearModel(const Matrix& X, const Vector& y);
   Vector& GetAsyPvalue();
+  Vector& GetCovEst() { return this->B; };  // (X'X)^{-1} X'Y
+  Matrix& GetCovB() { return this->covB; };
+  Vector& GetPredicted() { return this->predict; };
+  Vector& GetResiduals() { return this->residuals; };
+  double GetSigma2() const { return this->sigma2; };
   bool calculateHatMatrix(Matrix& X, Matrix* out);
   bool calculateResidualMatrix(Matrix& X, Matrix* out);
 };
@@ -247,31 +276,51 @@ bool LinearRegression::calculateResidualMatrix(Matrix& X, Matrix* out) {
 
 // ======================= Test Main ===========================
 int main() {
-  // Simple test with 3 data points and 2 variables (X0 = 1 for intercept)
-  Matrix X(3, 2);
-  X(0, 0) = 1; X(0, 1) = 1;
-  X(1, 0) = 1; X(1, 1) = 2;
-  X(2, 0) = 1; X(2, 1) = 3;
+  // X : 3 échantillons, 2 variables (1 constante + 1 variable)
+  const int numSamples = 3;
+  const int numVariables = 2;  // intercept + 2 SNPs
 
-  Vector y(3, 1);
-  y(0, 0) = 1;
-  y(1, 0) = 2;
-  y(2, 0) = 3;
+  // X matrix: [intercept, SNP1, SNP2]
+  Matrix X(numSamples, numVariables);
+
+  // Row-wise manual assignment: intercept, df[0], df[1]
+  X(0, 0) = 1.0; X(0, 1) = 0;
+  X(1, 0) = 1.0; X(1, 1) = 1;
+  X(2, 0) = 1.0; X(2, 1) = 0.0;
+
+  // Phenotype vector
+  Vector y;
+  y.Dimension(numSamples);
+  y[0] = 2.0;
+  y[1] = 4.0;
+  y[2] = 6.0;
 
   LinearRegression lr;
   if (lr.FitLinearModel(X, y)) {
-    printf("Coefficients (B):\n");
-    for (int i = 0; i < lr.B.data.size(); ++i)
-      printf("  B[%d] = %.4f\n", i, lr.B.data[i]);
+    Vector& coef = lr.GetCovEst();
+    printf("Coefficients:\n");
+    for (int i = 0; i < coef.Length(); i++) {
+      printf("  B[%d] = %f\n", i, coef[i]);
+    }
 
-    Vector pvals = lr.GetAsyPvalue();
+    Vector& pval = lr.GetAsyPvalue();
     printf("P-values:\n");
-    for (int i = 0; i < pvals.Length(); ++i)
-      printf("  p[%d] = %.4f\n", i, pvals[i]);
-
+    for (int i = 0; i < pval.Length(); i++) {
+      printf("  p[%d] = %.5g\n", i, pval[i]);
+    }
   } else {
-    printf("Linear model fit failed.\n");
+    printf("Linear regression failed.\n");
   }
 
   return 0;
 }
+
+// g++ linear_regression_rvtest.cpp -std=c++17 -I/usr/local/include/eigen3 -I/usr/local/include -L/usr/local/lib -lgsl -lgslcblas -lm -o linear_regression_rvtest
+// ./linear_regression_rvtest
+
+// Coefficients:
+//   B[0] = 4.000000
+//   B[1] = -0.000000
+// P-values:
+//   p[0] = 0.00053201
+//   p[1] = 1
