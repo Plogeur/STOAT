@@ -1,3 +1,4 @@
+#include "log.hpp"
 #include "arg_parser.hpp"
 
 namespace fs = std::filesystem;
@@ -34,14 +35,14 @@ std::vector<bool> parse_binary_pheno(
         std::string fid, iid, phenoStr;
 
         if (!(iss >> fid >> iid >> phenoStr)) {
-            throw std::runtime_error("Malformed line: " + line);
+            stoat::LOG_FATAL("Malformed line: " + line);
         }
 
         if (firstLine) {
             firstLine = false;
             // Check that the header contains FID, IID, and PHENO
             if (fid != "FID" || iid != "IID" || phenoStr != "PHENO") {
-                throw std::invalid_argument("Invalid header: " + line);
+                stoat::LOG_FATAL("Invalid header: " + line);
             }
             continue;
         }
@@ -49,8 +50,8 @@ std::vector<bool> parse_binary_pheno(
         int pheno = -1;
         try {
             pheno = std::stoi(phenoStr);
-        } catch (const std::invalid_argument& e) {
-            throw std::runtime_error("Bad phenotype type : " + phenoStr);
+        } catch (...) {
+            stoat::LOG_FATAL("Bad phenotype type : " + phenoStr);
         }
         if (pheno == 1) {
             count_controls++;
@@ -59,12 +60,14 @@ std::vector<bool> parse_binary_pheno(
             count_cases++;
             binary_pheno[iid] = static_cast<bool>(true);
         } else {
-            throw std::runtime_error("Error: Binary phenotype must be 1 or 2");
+            stoat::LOG_FATAL("Binary phenotype must be 1 or 2");
         }
     }
-    cout << "Binary phenotypes founds : " << count_controls+count_cases
-    << " (Control : " << count_controls
-    << ", Case : " << count_cases << ")" << std::endl;
+
+    stoat::LOG_INFO("Binary phenotypes founds : " + std::to_string(count_controls+count_cases)
+        + " (Control : " + std::to_string(count_controls) 
+        + ", Case : " + std::to_string(count_cases) + ")");
+
     file.close();
 
     check_match_samples(binary_pheno, list_samples);
@@ -98,31 +101,28 @@ std::vector<double> parse_quantitative_pheno(
         std::string fid, iid, phenoStr;
 
         if (!(iss >> fid >> iid >> phenoStr)) {
-            throw std::runtime_error("Error: In parsing phenotype, malformed line: " + line);
+            stoat::LOG_FATAL("In parsing phenotype, malformed line: " + line);
         }
 
         if (firstLine) {
             firstLine = false;
             // Check that the header contains FID, IID, and PHENO
             if (fid != "FID" || iid != "IID" || phenoStr != "PHENO") {
-                throw std::invalid_argument("Error: In parsing phenotype, invalid header: " + line);
+                stoat::LOG_FATAL("In parsing phenotype, invalid header: " + line);
             }
             continue;
         }
 
-        try
-        {
+        try {
             quantitative_pheno[iid] = std::stod(phenoStr);
-        }
-        catch(const std::exception& e)
-        {
-            std::cerr << e.what() << '\n';
-            throw std::runtime_error("Error: Bad phenotype type : " + phenoStr);
+        } catch(...) {
+            stoat::LOG_FATAL("Bad phenotype type : " + phenoStr);
         }
         count_pheno++;
     }
 
-    cout << "Quantitative phenotypes founds : " << count_pheno << std::endl;
+    stoat::LOG_INFO("Quantitative phenotypes founds : " + std::to_string(count_pheno));
+
     file.close();
 
     check_match_samples(quantitative_pheno, list_samples);
@@ -148,7 +148,7 @@ std::tuple<htsFile*, bcf_hdr_t*, bcf1_t*> parse_vcf(const std::string& vcf_path)
     bcf_hdr_t *hdr = bcf_hdr_read(ptr_vcf);
     if (!hdr) {
         bcf_close(ptr_vcf);
-        throw std::runtime_error("Error: Could not read VCF header");
+        stoat::LOG_FATAL("Could not read VCF header");
     }
 
     // Initialize a record
@@ -156,7 +156,7 @@ std::tuple<htsFile*, bcf_hdr_t*, bcf1_t*> parse_vcf(const std::string& vcf_path)
     if (!rec) {
         bcf_hdr_destroy(hdr);
         bcf_close(ptr_vcf);
-        throw std::runtime_error("Error: Failed to allocate memory for VCF record");
+        stoat::LOG_FATAL("Failed to allocate memory for VCF record");
     }
 
     // Return the three initialized pointers
@@ -185,11 +185,11 @@ template <typename T>
 void check_match_samples(const std::unordered_map<std::string, T>& map, const std::vector<std::string>& keys) {
     for (const auto& key : keys) {
         if (map.find(key) == map.end()) {
-            throw std::runtime_error("Error: Key '" + key + "' not found in the phenotype file");
+            stoat::LOG_FATAL("Key '" + key + "' not found in the phenotype file");
         }
     }
     if (map.size() != keys.size()) {
-       std::cerr << "Warning: Number of samples found in VCF does not match the number of samples in the phenotype file" << std::endl;
+        stoat::LOG_WARN("Number of samples found in VCF does not match the number of samples in the phenotype file");
     }
 }
 
@@ -213,114 +213,16 @@ std::unordered_map<std::string, std::vector<Qtl_data>> parse_qtl_gene_file(
             Qtl_data qtl_info(gene, expression_vector, start, end);
             qtl_map[chrom].emplace_back(qtl_info);
         } else {
-            std::cerr << "Error: Gene \"" << gene << "\" not found in gene positions." << std::endl;
-            exit(1);
+            stoat::LOG_FATAL("Gene " + gene + " not found in gene positions.");
         }
     }
   
     // Warn if gene_position has more genes than qtl
     if (gene_position.size() > qtl.size()) {
-        std::cerr << "Warning: More genes in the gene position file than in the QTL data." << std::endl;
+        stoat::LOG_WARN("More genes present in the gene position file than in the QTL file.");
     }
 
     return qtl_map;
-}
-
-// Function to parse the snarl path file
-std::unordered_map<std::string, std::vector<Snarl_data_t>> parse_snarl_path(const std::string& file_path) {
-
-    std::string line, chr, snarl, snarl_id, start_pos_str, end_pos_str, path_list, type_var, ref, depth;
-    unordered_map<string, std::vector<Snarl_data_t>> chr_snarl_matrix;
-    std::vector<Snarl_data_t> snarl_paths;
-    std::ifstream file(file_path);
-    std::string save_chr = "";
-
-    // Read and validate header
-    if (!std::getline(file, line)) {
-        throw std::runtime_error("Empty file or failed to read header.");
-    }
-    
-    // Parse actual header fields
-    std::vector<std::string> header_fields;
-    istringstream header_stream(line);
-    std::string field;
-    while (getline(header_stream, field, '\t')) {
-        header_fields.push_back(field);
-    }
-
-    // Expected header
-    std::vector<std::string> expected_header = {"CHR", "START_POS", "END_POS", "SNARL", "PATHS", "TYPE", "REF", "DEPTH"};
-
-    if (header_fields != expected_header) {
-        // Build detailed error message
-        ostringstream oss;
-        oss << "Error: Invalid header format in file: " << file_path << "\n";
-        oss << "  ➤ Expected: ";
-        for (size_t i = 0; i < expected_header.size(); ++i) {
-            oss << expected_header[i];
-            if (i < expected_header.size() - 1) oss << "\\t";
-        }
-        oss << "\n  ➤ Got:      ";
-        for (size_t i = 0; i < header_fields.size(); ++i) {
-            oss << header_fields[i];
-            if (i < header_fields.size() - 1) oss << "\\t";
-        }
-        throw runtime_error(oss.str());
-    }
-
-    // Process each line
-    while (std::getline(file, line)) {
-        std::istringstream ss(line);
-
-        std::getline(ss, chr, '\t');   // chr column
-        std::getline(ss, start_pos_str, '\t');   // pos column
-        std::getline(ss, end_pos_str, '\t');   // pos column
-        std::getline(ss, snarl, '\t');   // snarl column
-        std::getline(ss, snarl_id, '\t');   // snarl_id column
-        std::getline(ss, path_list, '\t'); // paths column
-        std::getline(ss, type_var, '\t');   // type_var column
-        std::getline(ss, ref, '\t');   // ref column
-        std::getline(ss, depth, '\t');   // depth column
-
-        std::istringstream path_stream(path_list);
-        std::istringstream type_stream(type_var);
-        std::vector<std::string> type;
-        size_t start_pos = std::stoi(start_pos_str);
-        size_t end_pos = std::stoi(end_pos_str);
-        int size_paths = 0;
-        std::string paths_str;
-        bool first = true;
-
-        while (std::getline(path_stream, path_list, ',')) {
-            size_paths++;
-            if (!first) {
-                paths_str += ",";
-            }
-            paths_str += path_list;
-            first = false;
-        }
-
-        // create a vector of types
-        while (std::getline(type_stream, type_var, ',')) {
-            type.push_back(type_var);
-        }
-
-        if (chr != save_chr && !save_chr.empty()) {
-            chr_snarl_matrix[save_chr] = std::move(snarl_paths);
-            snarl_paths.clear();
-        }
-        save_chr = chr;
-
-        std::pair<size_t, size_t> snarl_ids = stringToPair(snarl_id);
-        std::vector<stoat_vcf::Path_traversal_t> paths = stringToVectorPath(paths_str);
-        Snarl_data_t snarl_path(handlegraph::as_net_handle(std::stoi(snarl)), snarl_ids, paths, start_pos, end_pos, type, std::stoi(depth));
-        snarl_paths.push_back(snarl_path);
-    }
-    // last chr adding
-    chr_snarl_matrix[save_chr] = std::move(snarl_paths);
-
-    file.close();
-    return chr_snarl_matrix;
 }
 
 // Function to parse the gene positions file
@@ -331,11 +233,6 @@ std::unordered_map<std::string, std::tuple<std::string, size_t, size_t>> parse_g
     std::unordered_map<std::string, std::tuple<std::string, size_t, size_t>> geneMap;
     std::ifstream file(filename);
     std::string line;
-    
-    // Read and validate header
-    if (!std::getline(file, line)) {
-        throw std::runtime_error("Error: Empty file or failed to read header.");
-    }
 
     std::istringstream header_stream(line);
     std::string col1, col2, col3, col4;
@@ -344,7 +241,7 @@ std::unordered_map<std::string, std::tuple<std::string, size_t, size_t>> parse_g
           std::getline(header_stream, col3, '\t') &&
           std::getline(header_stream, col4, '\t')) ||
         col1 != "gene_name" || col2 != "chr" || col3 != "start" || col4 != "end") {
-        throw std::runtime_error("Error: In parsing gene position file, invalid header format. Expected: gene_name\tchr\tstart\tend");
+        stoat::LOG_FATAL("In parsing gene position file, invalid header format. Expected: gene_name\tchr\tstart\tend");
     }
 
     // Check for required columns
@@ -362,8 +259,7 @@ std::unordered_map<std::string, std::tuple<std::string, size_t, size_t>> parse_g
             int end = std::stoi(endStr);
             geneMap[gene] = std::make_tuple(chrom, start, end);
         } catch (...) {
-            std::cerr << "Error: In parsing gene position file, invalid line: " << line << std::endl;
-            exit(1);
+            stoat::LOG_FATAL("In parsing gene position file, invalid line " + line);
         }
     }
 
@@ -396,14 +292,13 @@ std::unordered_map<std::string, std::vector<double>> parse_qtl_file(
             // Check if all sample names are present in the list_samples
             for (const auto& sample : sampleNames) {
                 if (std::find(list_samples.begin(), list_samples.end(), sample) == list_samples.end()) {
-                    std::cerr << "Error: Sample " << sample << " not found in the list of samples." << std::endl;
-                    exit(1);
+                    stoat::LOG_FATAL("Sample " + sample + " not found in the list of samples.");
                 }
             }
 
             // warning if the number of samples in the file does not match the number of samples in the list
             if (sampleNames.size() != list_samples.size()) {
-                std::cerr << "Warning: Number of samples in the qtl file is > that the number of samples in the VCF." << std::endl;
+                stoat::LOG_WARN("Number of samples in the qtl file is greater that the number of samples in the VCF.");
             }
 
             isHeader = false;  // Skip header
@@ -418,8 +313,7 @@ std::unordered_map<std::string, std::vector<double>> parse_qtl_file(
             try {
                 expressions.push_back(std::stod(token));
             } catch (...) {
-                std::cerr << "Invalid expression value for gene " << geneName << ": " << token << std::endl;
-                exit(1);
+                stoat::LOG_FATAL("Invalid expression value for gene " + geneName + ": " + token);
             }
         }
         geneExpressions[geneName] = expressions;
@@ -452,8 +346,7 @@ std::vector<std::vector<double>> parse_covariates(
     // Check for required columns
     auto it_iid = std::find(headers.begin(), headers.end(), "IID");
     if (it_iid == headers.end()) {
-        throw std::runtime_error("Error: header must include 'IID' column.\n");
-        exit(1);
+        stoat::LOG_FATAL("header must include 'IID' column.\n");
     }
     size_t iid_index = std::distance(headers.begin(), it_iid);
 
@@ -465,8 +358,7 @@ std::vector<std::vector<double>> parse_covariates(
     // Check header for covariate names
     for (const auto& name : covar_names) {
         if (col_index.find(name) == col_index.end()) {
-            throw std::runtime_error("Error: covariate column '" + name + "' not found in file.\n");
-            exit(1);
+            stoat::LOG_FATAL("covariate column '" + name + "' not found in file.\n");
         }
     }
 
@@ -489,8 +381,7 @@ std::vector<std::vector<double>> parse_covariates(
                 selected.push_back(val);
             }
         } catch (...) {
-            throw std::runtime_error("Error: Individual " + iid + " got an non-numeric value\n");
-            exit(1);
+            stoat::LOG_FATAL("Individual " + iid + " got an non-numeric value\n");
         }
         covariate_map[iid] = selected;
     }
@@ -503,8 +394,7 @@ std::vector<std::vector<double>> parse_covariates(
         if (it != covariate_map.end()) {
             covariate.push_back(it->second);
         } else {
-            std::cerr << "Error: Sample " << sample << " not found in the covariate file." << std::endl;
-            exit(1);
+            stoat::LOG_FATAL("Sample " + sample + " not found in the covariate file.");
         }
     }
     file.close();
@@ -514,13 +404,21 @@ std::vector<std::vector<double>> parse_covariates(
 
 void check_file(const std::string& file_path) {
     
+    std::string line;
+    // Check if file is a file
     if (!fs::is_regular_file(file_path)) {
-        throw std::invalid_argument("The file " + file_path + " does not exist.");
+        stoat::LOG_FATAL("File " + file_path + " does not exist.");
     }
 
+    // Check if file can be open
     std::ifstream file(file_path);
     if (!file.is_open()) {
-        throw std::invalid_argument("Unable to open the file " + file_path);
+        stoat::LOG_FATAL("Unable to open the file " + file_path);
+    }
+
+    // Check if file can be read and not empty file
+    if (!std::getline(file, line)) {
+        stoat::LOG_FATAL("File " + file_path + "is empty or failed to read header.");
     }
 
     file.close();
@@ -559,4 +457,4 @@ void KinshipMatrix::parseKinshipMatrix(const std::string& filename) {
     }
 }
 
-} //end stoat_vcf namespace
+} //end stoat namespace

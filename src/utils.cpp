@@ -2,7 +2,6 @@
 
 namespace stoat {
 
-
 std::string set_precision(const double& value) {
     std::ostringstream oss;
     oss << std::setprecision(4);
@@ -50,8 +49,7 @@ bool isPValueSignificant(const double& pvalue_threshold, const std::string& pval
             pvalue = std::stod(pvalue_str);
         }
     } catch (const std::exception& e) {
-        std::cerr << "Error parsing pvalue std::string : " << pvalue_str << " " << e.what() << "\n";
-        return false;
+        LOG_FATAL("Error parsing pvalue std::string : " + pvalue_str + " " + e.what());
     }
     return pvalue < pvalue_threshold;
 }
@@ -122,7 +120,7 @@ std::vector<T> stringToVector(const std::string& str) {
         T value;
         tokenStream >> value;
         if (tokenStream.fail()) {
-            throw std::runtime_error("Failed to parse token: " + token);
+            LOG_FATAL("Failed to parse token: " + token);
         }
         result.push_back(value);
     }
@@ -176,13 +174,11 @@ std::vector<path_range_t> get_coordinates_of_snarl(const handlegraph::PathPositi
     }
     if (get_all_paths) {
         //If we just want all paths, return that
-
         ranges = get_coordinates_of_snarl_helper(graph, distance_index, snarl, false, "", true);
         return ranges;
 
     } else {
         //Try with any path
-
         handlegraph::net_handle_t start_net = distance_index.get_node_from_sentinel(distance_index.get_bound(snarl, false, true));
         handlegraph::net_handle_t end_net = distance_index.get_node_from_sentinel(distance_index.get_bound(snarl, true, true));
 
@@ -216,19 +212,19 @@ std::vector<path_range_t> get_coordinates_of_snarl(const handlegraph::PathPositi
 std::vector<path_range_t> get_coordinates_of_snarl_helper(const handlegraph::PathPositionHandleGraph& graph, const bdsg::SnarlDistanceIndex& distance_index,
                                                           const handlegraph::net_handle_t& snarl, bool get_reference, std::string sample_name, bool get_all_paths) {
     #ifdef DEBUG
-    cerr << "Get coordinates of " << distance_index.net_handle_as_string(snarl) << endl;
-    if (get_reference) {
-        assert(sample_name.empty());
-        assert(!get_all_paths);
-    }
-    if (!sample_name.empty()) {
-        assert(!get_reference);
-        assert(!get_all_paths);
-    }
-    if (get_all_paths) {
-        assert(!get_reference);
-        assert(sample_name.empty());
-    }
+        cerr << "Get coordinates of " << distance_index.net_handle_as_string(snarl) << endl;
+        if (get_reference) {
+            assert(sample_name.empty());
+            assert(!get_all_paths);
+        }
+        if (!sample_name.empty()) {
+            assert(!get_reference);
+            assert(!get_all_paths);
+        }
+        if (get_all_paths) {
+            assert(!get_reference);
+            assert(sample_name.empty());
+        }
     #endif
     // Bound nodes going into of the snarl
     handlegraph::net_handle_t start_net = distance_index.get_node_from_sentinel(distance_index.get_bound(snarl, false, true));
@@ -259,10 +255,10 @@ std::vector<path_range_t> get_coordinates_of_snarl_helper(const handlegraph::Pat
         return true;
     });
     #ifdef DEBUG
-    cerr << "After start node, found" << endl;
-    for (const auto& x : path_to_steps) {
-        cerr << graph.get_path_name(x.first) << ": " << x.second.size() << endl;
-    }
+        cerr << "After start node, found" << endl;
+        for (const auto& x : path_to_steps) {
+            cerr << graph.get_path_name(x.first) << ": " << x.second.size() << endl;
+        }
     #endif
     graph.for_each_step_on_handle(distance_index.get_handle(end_net, &graph), [&] (const handlegraph::step_handle_t& step) {
         handlegraph::path_handle_t path = graph.get_path_handle_of_step(step);
@@ -282,10 +278,10 @@ std::vector<path_range_t> get_coordinates_of_snarl_helper(const handlegraph::Pat
     });
 
     #ifdef DEBUG
-    cerr << "After end node, found" << endl;
-    for (const auto& x : path_to_steps) {
-        cerr << graph.get_path_name(x.first) << ": " << x.second.size() << endl;
-    }
+        cerr << "After end node, found" << endl;
+        for (const auto& x : path_to_steps) {
+            cerr << graph.get_path_name(x.first) << ": " << x.second.size() << endl;
+        }
     #endif
 
     vector<path_range_t> ranges;
@@ -305,17 +301,17 @@ std::vector<path_range_t> get_coordinates_of_snarl_helper(const handlegraph::Pat
             });
 
             #ifdef DEBUG
-            for (size_t step_i = 0 ; step_i < steps.size() ; step_i++) {
-                if (step_i % 2 == 0) {
-                    // If this is an even number, then the path should go into the snarl
-                    assert(graph.get_handle_of_step(steps[step_i]) == distance_index.get_handle(start_net, &graph) ||
-                        graph.get_handle_of_step(steps[step_i]) == distance_index.get_handle(end_net, &graph));
-                } else {
-                    //If this is an odd number, it should go out of the snarl
-                    assert(graph.get_handle_of_step(steps[step_i]) == graph.flip(distance_index.get_handle(start_net, &graph)) ||
-                        graph.get_handle_of_step(steps[step_i]) == graph.flip(distance_index.get_handle(end_net, &graph)));
+                for (size_t step_i = 0 ; step_i < steps.size() ; step_i++) {
+                    if (step_i % 2 == 0) {
+                        // If this is an even number, then the path should go into the snarl
+                        assert(graph.get_handle_of_step(steps[step_i]) == distance_index.get_handle(start_net, &graph) ||
+                            graph.get_handle_of_step(steps[step_i]) == distance_index.get_handle(end_net, &graph));
+                    } else {
+                        //If this is an odd number, it should go out of the snarl
+                        assert(graph.get_handle_of_step(steps[step_i]) == graph.flip(distance_index.get_handle(start_net, &graph)) ||
+                            graph.get_handle_of_step(steps[step_i]) == graph.flip(distance_index.get_handle(end_net, &graph)));
+                    }
                 }
-            }
             #endif
             for (size_t i = 0 ; i < steps.size() ; i += 2) {
                 ranges.push_back({steps[i], steps[i+1]});
@@ -362,7 +358,5 @@ std::pair<size_t, size_t> find_snarl_id(const bdsg::SnarlDistanceIndex& stree, c
 
     return snarl_id;  // Return the generated snarl ID as a std::string
 }
-
-
 
 } // end namespace stoat

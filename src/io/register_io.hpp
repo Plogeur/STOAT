@@ -11,8 +11,6 @@ namespace stoat {
 
 namespace io {
 
-using namespace std;
-
 /**
  * Register libvg types with libvgio.
  * Must be called by library users before doing IO.

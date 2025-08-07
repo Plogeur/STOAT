@@ -37,10 +37,10 @@ void print_help() {
                 << "  -- vcf           gwas analysis base on vcf pangenome calling\n"
                 << "  -- graph         gwas analysis base on pangenome graph\n"
                 << "  -- version       version information\n"
-                << endl
-                << "post-processing:" << endl
-                << "  -- BHcorrect    apply the Benjamini-Hochberg procedure for multiple testing to a tsv file" << endl
-                << "                   (this already done by `stoat vcf` and `stoat graph` by default)" << endl;     
+                << "\n"
+                << "post-processing:\n"
+                << "  -- BHcorrect    apply the Benjamini-Hochberg procedure for multiple testing to a tsv file\n"
+                << "                   (this already done by `stoat vcf` and `stoat graph` by default)\n";     
 }
 
 int main(int argc, char* argv[]) {
@@ -60,7 +60,7 @@ int main(int argc, char* argv[]) {
     omp_set_num_threads(1);
 
     if (subcommand == "vcf") {
-        stoat_command::main_stoat_vcf(argc, argv);
+        stoat_command::main_stoat(argc, argv);
 
     } else if (subcommand == "graph") {
         stoat_command::main_stoat_graph(argc, argv);
@@ -69,9 +69,9 @@ int main(int argc, char* argv[]) {
         stoat_command::main_stoat_bh_correct(argc, argv);
 
     } else if (subcommand == "version") {
-        std::cout << "stoat: gwas analysis tool, version " << VERSION << "\n";
-        // std::cout << "Compiled with g++ (Ubuntu 11.4.0-1ubuntu1~22.04) 11.4.0 on Linux\n";
-        // std::cout << "Linked against libstd++ 20230528\n";
+        std::cout << "stoat: GWAS analysis tool, version " << VERSION;
+        // stoat::LOG_INFO("Compiled with g++ (Ubuntu 11.4.0-1ubuntu1~22.04) 11.4.0 on Linux)";
+        // stoat::LOG_INFO("Linked against libstd++ 20230528)";
 
     } else {
         print_help();
@@ -84,16 +84,16 @@ int main(int argc, char* argv[]) {
 // -------------------------------------------------------------- VCF --------------------------------------------------------------
 
 // BINARY
-// ./stoat vcf -p ../data/binary/pg.full.pg -d ../data/binary/pg.full.dist -v ../data/binary/merged_output.vcf.gz -b ../data/binary/phenotype.tsv --output ../output
+// ./stoat vcf -p ../data/binary/pg.full.pg -d ../data/binary/pg.full.dist -r ../data/binary/pg.chromosome -v ../data/binary/merged_output.vcf.gz -b ../data/binary/phenotype.tsv --output ../output
 
 // BINARY + COVARIATE
-// ./stoat vcf -p ../data/binary/pg.full.pg -d ../data/binary/pg.full.dist -v ../data/binary/merged_output.vcf.gz -b ../data/binary/phenotype.tsv --covariate ../data/binary/covariate.tsv --covar-name CP1,SEX,CP3 --output ../output
+// ./stoat vcf -p ../data/binary/pg.full.pg -d ../data/binary/pg.full.dist -r ../data/binary/pg.chromosome -v ../data/binary/merged_output.vcf.gz -b ../data/binary/phenotype.tsv --covariate ../data/binary/covariate.tsv --covar-name CP1,SEX,CP3 --output ../output
 
 // QUANTITATIVE
-// ./stoat vcf -p ../data/quantitative/pg.full.pg -d ../data/quantitative/pg.full.dist -v ../data/quantitative/merged_output.vcf.gz -q ../data/quantitative/phenotype.tsv --output ../output
+// ./stoat vcf -p ../data/quantitative/pg.full.pg -d ../data/quantitative/pg.full.dist -r ../data/quantitative/pg.chromosome -v ../data/quantitative/merged_output.vcf.gz -q ../data/quantitative/phenotype.tsv --output ../output
 
 // QUANTITATIVE + COVARIATE
-// ./stoat vcf -p ../data/quantitative/pg.full.pg -d ../data/quantitative/pg.full.dist -v ../data/quantitative/merged_output.vcf.gz -q ../data/quantitative/phenotype.tsv  --covariate ../data/quantitative/covariate.tsv --covar-name CP1,SEX,CP3 --output ../output
+// ./stoat vcf -p ../data/quantitative/pg.full.pg -d ../data/quantitative/pg.full.dist -r ../data/quantitative/pg.chromosome -v ../data/quantitative/merged_output.vcf.gz -q ../data/quantitative/phenotype.tsv  --covariate ../data/quantitative/covariate.tsv --covar-name CP1,SEX,CP3 --output ../output
 
 // EQTL
 // ./stoat vcf -s ../test_data/quantitative/paths_snarl.tsv -v ../test_data/quantitative/variants.vcf -e ../test_data/quantitative/qtl.tsv --gene-position ../test_data/quantitative/gene_position.tsv --output ../output
@@ -117,6 +117,8 @@ int main(int argc, char* argv[]) {
 
 // BINARY
 // ./stoat graph -g ../data/binary/pg.full.pg -d ../data/binary/pg.full.dist -T chi2 -r ref -S ../data/binary/samples.g0.tsv -o ../output
+
+// -------------------------------------------------------------- OTHER --------------------------------------------------------------
 
 // PLINK
 // plink --vcf ../data/simu/variants.vcf --make-bed --allow-extra-chr --out ../output/genotype

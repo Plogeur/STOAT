@@ -14,7 +14,7 @@
 
 using namespace std;
 
-namespace stoat_vcf{
+namespace stoat{
 
 // Given a vector of <p-value, 1.0, line index from the input file>, fill in the vector with the adjusted p-value
 // and sort the vector by adjusted p-value

@@ -16,8 +16,6 @@
 using namespace std;
 using namespace Eigen;
 
-// Linear regression function OLS with intercept
-
 // Linear regression function OLS with intercept + covariate
 void linear_regression(
     const std::vector<std::vector<double>>& df,

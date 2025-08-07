@@ -35,7 +35,7 @@ void AssociationFinder::test_snarls() const {
     //TODO: Make this general
     // If the file output has a header, write it
     if (output_format == "tsv") {
-        stoat_vcf::write_binary_header(out_associated);
+        stoat::write_binary_header(out_associated);
     }
 
     std::vector<handlegraph::net_handle_t> chains;
@@ -55,9 +55,9 @@ void AssociationFinder::test_snarls() const {
 
             //TODO: For now it's fine to check is_eligible here because it's only checking size and we don't want to look at small chains anyway
             if (distance_index.is_snarl(snarl) && snarl_is_eligible(snarl) ) {
-#ifdef DEBUG_ASSOCIATION_FINDER
-                cerr << "Test snarl " << distance_index.net_handle_as_string(snarl) << endl;
-#endif
+                #ifdef DEBUG_ASSOCIATION_FINDER
+                    cerr << "Test snarl " << distance_index.net_handle_as_string(snarl) << endl;
+                #endif
 
                 // Should we write this?
                 bool write_output = false;
@@ -77,7 +77,7 @@ void AssociationFinder::test_snarls() const {
                 // Do we test nested snarls? Don't test snarls that are already flagged as significant
                 bool test_nested_snarls = true;
 
-#ifdef DEBUG_ASSOCIATION_FINDER
+                #ifdef DEBUG_ASSOCIATION_FINDER
                     cerr << "\tTRUTH" << endl;
                     for (const std::string& sample : samples_of_interest) {
                         cerr << "\t\t" << sample << endl;
@@ -89,7 +89,7 @@ void AssociationFinder::test_snarls() const {
                             cerr << "\t\t" << sample << endl;
                         }
                     }
-#endif
+                #endif
 
                 if (sample_partitions.size() > 1) {
 
@@ -160,12 +160,12 @@ void AssociationFinder::test_snarls() const {
                         if (output_format == "tsv") {
 
                             string chr = "NA"; 
-                            //TODO: Maybe I sould keep the snarls as snarl_data_t's? 
+                            // TODO: Maybe I sould keep the snarls as snarl_data_t's? 
                             // TODO: get the type properly
-                            stoat_vcf::Snarl_data_t snarl_data_s(snarl, graph, distance_index);
+                            stoat::Snarl_data_t snarl_data_s(snarl, graph, distance_index);
 
                             // Get the offsets of the start and end nodes along the reference
-                            std::vector<path_range_t> ranges = get_coordinates_of_snarl(graph, distance_index, snarl, true, reference_sample, false);
+                            std::vector<stoat::path_range_t> ranges = stoat::get_coordinates_of_snarl(graph, distance_index, snarl, true, reference_sample, false);
                             if (ranges.size() != 0) {
                                 std::tie(chr, snarl_data_s.start_positions, snarl_data_s.end_positions) = get_name_and_offsets_of_snarl_path_range(graph, distance_index, ranges.front());
                             }
@@ -173,13 +173,13 @@ void AssociationFinder::test_snarls() const {
                             # pragma omp critical (out_associated) 
                             {
                                 // Leave adjusted p-value blank, to be filled in later
-                                stoat_vcf::write_binary(out_associated, chr, snarl_data_s, path_lengths, fastfisher_p_value, chi2_p_value, "",  group_paths);
+                                stoat::write_binary(out_associated, chr, snarl_data_s, path_lengths, fastfisher_p_value, chi2_p_value, "",  group_paths);
                             }
                         } else if (output_format == "fasta") {
 
                             # pragma omp critical (out_associated) 
                             {
-                                stoat_vcf::write_fasta(out_associated, out_unassociated, graph, distance_index, snarl, samples_to_write, reference_sample);
+                                stoat::write_fasta(out_associated, out_unassociated, graph, distance_index, snarl, samples_to_write, reference_sample);
                             }
                         }
                     }

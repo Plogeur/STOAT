@@ -3,12 +3,11 @@
 #include <bdsg/overlays/overlay_helper.hpp>
 #include "../../src/partitioner.hpp"
 
-
 namespace stoat_graph{
 
 class TestPathPartitioner : PathPartitioner {
     public: 
-    TestPathPartitioner(std::set<sample_hap_t> all_sample_haplotypes) :
+    TestPathPartitioner(std::set<stoat::sample_hap_t> all_sample_haplotypes) :
         PathPartitioner(all_sample_haplotypes) {} 
     using PathPartitioner::partition_samples_in_snarl;
     using PathPartitioner::get_walk_sets;
@@ -36,7 +35,7 @@ TEST_CASE( "Path association finder one node",
     bdsg::PathPositionOverlayHelper overlay_helper;
     auto path_graph = overlay_helper.apply(&graph);
 
-    std::set<sample_hap_t> all_samples ({stoat::get_sample_and_haplotype(*path_graph,graph.get_path_handle("path"))});
+    std::set<stoat::sample_hap_t> all_samples ({stoat::get_sample_and_haplotype(*path_graph,graph.get_path_handle("path"))});
 
     SECTION("Make association finder") {
         // There isn't much to do with one node so just make sure we can run the constructor without crashing
@@ -44,6 +43,7 @@ TEST_CASE( "Path association finder one node",
     }
 
 }
+
 TEST_CASE( "Path association finder nested bubbles",
           "[path_finder][bug]" ) {
 
@@ -120,7 +120,7 @@ TEST_CASE( "Path association finder nested bubbles",
 
     // snarl3 should be associated
     std::set<std::string> samples ({"path1", "path3"});
-    std::set<sample_hap_t> all_samples ({stoat::get_sample_and_haplotype(*path_graph, paths[0]),
+    std::set<stoat::sample_hap_t> all_samples ({stoat::get_sample_and_haplotype(*path_graph, paths[0]),
                                          stoat::get_sample_and_haplotype(*path_graph, paths[1]),
                                          stoat::get_sample_and_haplotype(*path_graph, paths[2]),
                                          stoat::get_sample_and_haplotype(*path_graph, paths[3])});
@@ -258,7 +258,7 @@ TEST_CASE( "Path association finder looping snarl",
     // This file is meant to test the base association finder but since it is technically an interface with some implementations,
     // build the path version and only test the base functions
     std::set<std::string> samples ({"path1", "path2"});
-    std::set<sample_hap_t> all_samples ({stoat::get_sample_and_haplotype(*path_graph, paths[0]),
+    std::set<stoat::sample_hap_t> all_samples ({stoat::get_sample_and_haplotype(*path_graph, paths[0]),
                                          stoat::get_sample_and_haplotype(*path_graph, paths[1]),
                                          stoat::get_sample_and_haplotype(*path_graph, paths[2])});
     TestPathPartitioner af(all_samples);
@@ -360,7 +360,7 @@ TEST_CASE( "Path association finder bubble with three nodes",
     // This file is meant to test the base association finder but since it is technically an interface with some implementations,
     // build the path version and only test the base functions
     std::set<std::string> samples ({"path2"});
-    std::set<sample_hap_t> all_samples ({stoat::get_sample_and_haplotype(*path_graph, paths[0]),
+    std::set<stoat::sample_hap_t> all_samples ({stoat::get_sample_and_haplotype(*path_graph, paths[0]),
                                          stoat::get_sample_and_haplotype(*path_graph, paths[1]),
                                          stoat::get_sample_and_haplotype(*path_graph, paths[2]),
                                          stoat::get_sample_and_haplotype(*path_graph, paths[3])});

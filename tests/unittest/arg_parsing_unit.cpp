@@ -7,9 +7,34 @@
 #include <tuple>
 #include <vector>
 #include "../../src/arg_parser.hpp"  // adjust path as needed
+#include "../../src/log.hpp"  // adjust path as needed
+
+void report_fatal(const std::string& msg, bool fatal = true) {
+    if (fatal) {
+        stoat::LOG_FATAL(msg);
+    } else {
+        throw std::runtime_error(msg);
+    }
+}
+
+// Helper to write minimal VCF content to file
+void write_vcf_file(const std::string& path, const std::string& content) {
+    std::filesystem::create_directories("test_data");
+    std::ofstream file(path);
+    file << content;
+    file.close();
+}
 
 // Helper to create a temporary test file
-std::string stoat_vcf::create_test_pheno_file(const std::string& content, const std::string& filename = "test_pheno.txt") {
+std::string create_test_pheno_file(const std::string& content, const std::string& filename = "test_pheno.txt") {
+    std::ofstream out(filename);
+    out << content;
+    out.close();
+    return filename;
+}
+
+// Helper function to create a test file
+std::string create_test_covar_file(const std::string& content, const std::string& filename = "test_covariate.txt") {
     std::ofstream out(filename);
     out << content;
     out.close();
@@ -28,7 +53,7 @@ TEST_CASE("Binary phenotype parsing", "[stoat_vcf::parse_binary_pheno]") {
             "F3 I3 1\n"
             "F4 I4 2\n";
 
-        std::string file_path = stoat_vcf::create_test_pheno_file(file_content);
+        std::string file_path = create_test_pheno_file(file_content);
         std::vector<bool> result = stoat_vcf::parse_binary_pheno(file_path, list_samples);
 
         REQUIRE(result.size() == 4);
@@ -44,9 +69,9 @@ TEST_CASE("Binary phenotype parsing", "[stoat_vcf::parse_binary_pheno]") {
         std::string file_content =
             "FID ID PHENO\n"
             "F1 I1 1\n";
-        std::string file_path = stoat_vcf::create_test_pheno_file(file_content);
+        std::string file_path = create_test_pheno_file(file_content);
 
-        REQUIRE_THROWS_AS(stoat_vcf::parse_binary_pheno(file_path, list_samples), std::invalid_argument);
+        REQUIRE_THROWS_AS(stoat_vcf::parse_binary_pheno(file_path, list_samples), std::runtime_error);
     }
 
     SECTION("Non-binary phenotype value") {
@@ -55,7 +80,7 @@ TEST_CASE("Binary phenotype parsing", "[stoat_vcf::parse_binary_pheno]") {
         std::string file_content =
             "FID IID PHENO\n"
             "F1 I1 3\n";
-        std::string file_path = stoat_vcf::create_test_pheno_file(file_content);
+        std::string file_path = create_test_pheno_file(file_content);
 
         REQUIRE_THROWS_AS(stoat_vcf::parse_binary_pheno(file_path, list_samples), std::runtime_error);
     }
@@ -66,7 +91,7 @@ TEST_CASE("Binary phenotype parsing", "[stoat_vcf::parse_binary_pheno]") {
         std::string file_content =
             "FID IID PHENO\n"
             "F1 I1\n";
-        std::string file_path = stoat_vcf::create_test_pheno_file(file_content);
+        std::string file_path = create_test_pheno_file(file_content);
 
         REQUIRE_THROWS_AS(stoat_vcf::parse_binary_pheno(file_path, list_samples), std::runtime_error);
     }
@@ -77,7 +102,7 @@ TEST_CASE("Binary phenotype parsing", "[stoat_vcf::parse_binary_pheno]") {
         std::string file_content =
             "FID IID PHENO\n"
             "F1 I1 X\n";
-        std::string file_path = stoat_vcf::create_test_pheno_file(file_content);
+        std::string file_path = create_test_pheno_file(file_content);
 
         REQUIRE_THROWS_AS(stoat_vcf::parse_binary_pheno(file_path, list_samples), std::runtime_error);
     }
@@ -95,7 +120,8 @@ TEST_CASE("Quantitative phenotype parsing", "[stoat_vcf::parse_quantitative_phen
             "F2 I2 2.0\n"
             "F3 I3 -3.25\n"
             "F4 I4 0.0\n";
-        std::string file_path = stoat_vcf::create_test_pheno_file(file_content);
+
+        std::string file_path = create_test_pheno_file(file_content);
 
         auto result = stoat_vcf::parse_quantitative_pheno(file_path, list_samples);
 
@@ -112,9 +138,9 @@ TEST_CASE("Quantitative phenotype parsing", "[stoat_vcf::parse_quantitative_phen
         std::string file_content =
             "FID ID PHENO\n"
             "F1 I1 1.5\n";
-        std::string file_path = stoat_vcf::create_test_pheno_file(file_content);
+        std::string file_path = create_test_pheno_file(file_content);
 
-        REQUIRE_THROWS_AS(stoat_vcf::parse_quantitative_pheno(file_path, list_samples), std::invalid_argument);
+        REQUIRE_THROWS_AS(stoat_vcf::parse_quantitative_pheno(file_path, list_samples), std::runtime_error);
     }
 
     SECTION("Non-numeric phenotype value") {
@@ -123,7 +149,7 @@ TEST_CASE("Quantitative phenotype parsing", "[stoat_vcf::parse_quantitative_phen
         std::string file_content =
             "FID IID PHENO\n"
             "F1 I1 abc\n";
-        std::string file_path = stoat_vcf::create_test_pheno_file(file_content);
+        std::string file_path = create_test_pheno_file(file_content);
 
         REQUIRE_THROWS_AS(stoat_vcf::parse_quantitative_pheno(file_path, list_samples), std::runtime_error);
     }
@@ -134,18 +160,10 @@ TEST_CASE("Quantitative phenotype parsing", "[stoat_vcf::parse_quantitative_phen
         std::string file_content =
             "FID IID PHENO\n"
             "F1 I1\n";
-        std::string file_path = stoat_vcf::create_test_pheno_file(file_content);
+        std::string file_path = create_test_pheno_file(file_content);
 
         REQUIRE_THROWS_AS(stoat_vcf::parse_quantitative_pheno(file_path, list_samples), std::runtime_error);
     }
-}
-
-// Helper to write minimal VCF content to file
-void stoat_vcf::write_vcf_file(const std::string& path, const std::string& content) {
-    std::filesystem::create_directories("test_data");
-    std::ofstream file(path);
-    file << content;
-    file.close();
 }
 
 TEST_CASE("VCF Parsing", "[parse_vcf][stoat_vcf::parseHeader]") {
@@ -157,7 +175,7 @@ TEST_CASE("VCF Parsing", "[parse_vcf][stoat_vcf::parseHeader]") {
             "1\t12345\trsTest\tA\tT\t.\tPASS\t.\tGT\t0/0\t0/1\t1/1\n";
 
         std::string vcf_path = "test_data/test_valid.vcf";
-        stoat_vcf::write_vcf_file(vcf_path, vcf_content);
+        write_vcf_file(vcf_path, vcf_content);
 
         auto [samples, ptr, hdr, rec] = stoat_vcf::parseHeader(vcf_path);
 
@@ -177,14 +195,14 @@ TEST_CASE("VCF Parsing", "[parse_vcf][stoat_vcf::parseHeader]") {
             "Just some junk lines\n";
 
         std::string vcf_path = "test_data/test_invalid.vcf";
-        stoat_vcf::write_vcf_file(vcf_path, vcf_content);
+        write_vcf_file(vcf_path, vcf_content);
 
         REQUIRE_THROWS_AS(stoat_vcf::parseHeader(vcf_path), std::runtime_error);
     }
 
     SECTION("Empty VCF should throw error on header read") {
         std::string vcf_path = "test_data/test_empty.vcf";
-        stoat_vcf::write_vcf_file(vcf_path, "");  // Empty file
+        write_vcf_file(vcf_path, "");  // Empty file
 
         REQUIRE_THROWS_AS(stoat_vcf::parseHeader(vcf_path), std::runtime_error);
     }
@@ -199,7 +217,7 @@ TEST_CASE("Check sample matching", "[check_match_samples]") {
         };
         std::vector<std::string> vcf_samples = {"sample1", "sample2", "sample3"};
 
-        REQUIRE_NOTHROW(check_match_samples<bool>(pheno, vcf_samples));
+        REQUIRE_NOTHROW(stoat_vcf::check_match_samples<bool>(pheno, vcf_samples));
     }
 
     SECTION("All keys found, size mismatch (double)") {
@@ -212,7 +230,7 @@ TEST_CASE("Check sample matching", "[check_match_samples]") {
         std::vector<std::string> vcf_samples = {"sample1", "sample2", "sample3"};
 
         // Should not throw, just a warning (which we can't easily assert here)
-        REQUIRE_NOTHROW(check_match_samples<double>(pheno, vcf_samples));
+        REQUIRE_NOTHROW(stoat_vcf::check_match_samples<double>(pheno, vcf_samples));
     }
 
     SECTION("Missing key throws runtime_error") {
@@ -222,16 +240,8 @@ TEST_CASE("Check sample matching", "[check_match_samples]") {
         };
         std::vector<std::string> vcf_samples = {"sample1", "sample2", "sample3"};
 
-        REQUIRE_THROWS_AS(check_match_samples<bool>(pheno, vcf_samples), std::runtime_error);
+        REQUIRE_THROWS_AS(stoat_vcf::check_match_samples<bool>(pheno, vcf_samples), std::runtime_error);
     }
-}
-
-// Helper function to create a test file
-std::string stoat_vcf::create_test_covar_file(const std::string& content, const std::string& filename = "test_covariate.txt") {
-    std::ofstream out(filename);
-    out << content;
-    out.close();
-    return filename;
 }
 
 TEST_CASE("Parse covariates from file", "[stoat_vcf::parse_covariates]") {
@@ -242,7 +252,7 @@ TEST_CASE("Parse covariates from file", "[stoat_vcf::parse_covariates]") {
             "samp1 30 0\n"
             "samp2 45 1\n";
 
-        std::string path = stoat_vcf::create_test_covar_file(content);
+        std::string path = create_test_covar_file(content);
         std::vector<std::string> covars = {"age", "sex"};
         std::vector<std::string> list_samples = {"samp0", "samp1", "samp2"};
 
@@ -261,7 +271,7 @@ TEST_CASE("Parse covariates from file", "[stoat_vcf::parse_covariates]") {
         std::string content =
             "ID age sex\n"
             "samp0 25 1\n";
-        std::string path = stoat_vcf::create_test_covar_file(content);
+        std::string path = create_test_covar_file(content);
         std::vector<std::string> column_covars = {"age", "sex"};
         std::vector<std::string> list_samples = {"samp0", "samp1", "samp2"};
 
@@ -272,7 +282,7 @@ TEST_CASE("Parse covariates from file", "[stoat_vcf::parse_covariates]") {
         std::string content =
             "IID age sex\n"
             "A 25 1\n";
-        std::string path = stoat_vcf::create_test_covar_file(content);
+        std::string path = create_test_covar_file(content);
         std::vector<std::string> column_covars = {"height"}; // not present
         std::vector<std::string> list_samples = {"samp0", "samp1", "samp2"};
 
@@ -283,7 +293,7 @@ TEST_CASE("Parse covariates from file", "[stoat_vcf::parse_covariates]") {
         std::string content =
             "IID age sex\n"
             "samp0 XX 1\n"; // XX is not numeric
-        std::string path = stoat_vcf::create_test_covar_file(content);
+        std::string path = create_test_covar_file(content);
         std::vector<std::string> column_covars = {"age", "sex"};
         std::vector<std::string> list_samples = {"samp0"};
 
