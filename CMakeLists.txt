@@ -140,13 +140,16 @@ add_library(${PROJECT_NAME}_objs OBJECT
     src/snarl_analyzer.cpp
     src/graph_path_association_finder.cpp
     src/partitioner.cpp
+    
     src/io/register_loader_saver_gbz.cpp
     src/io/register_loader_saver_gbzgraph.cpp
     src/io/register_loader_saver_hash_graph.cpp
     src/io/register_loader_saver_packed_graph.cpp
     src/io/register_io.cpp
+
     src/subcommand/vcf.cpp
     src/subcommand/graph.cpp
+    src/subcommand/bh_correct.cpp
 )
 
 # Include Directories

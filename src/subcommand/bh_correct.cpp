@@ -100,7 +100,7 @@ int main_stoat_bh_correct(int argc, char *argv[]) {
     }
     // Add the BH adjusted column
     // Indices are 1-indexed by the subcommand, 0-indexed by the actual function
-    stoat_vcf::add_BH_adjusted_column(tsv_name, output_dir, top_variant, p_index-1, adjusted_p_index-1);
+    stoat::add_BH_adjusted_column(tsv_name, output_dir, top_variant, p_index-1, adjusted_p_index-1);
 
     return 0;
 }

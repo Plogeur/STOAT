@@ -37,10 +37,10 @@ void print_help() {
                 << "  -- vcf           gwas analysis base on vcf pangenome calling\n"
                 << "  -- graph         gwas analysis base on pangenome graph\n"
                 << "  -- version       version information\n"
-                << endl
-                << "post-processing:" << endl
-                << "  -- BHcorrect    apply the Benjamini-Hochberg procedure for multiple testing to a tsv file" << endl
-                << "                   (this already done by `stoat vcf` and `stoat graph` by default)" << endl;     
+                << "\n"
+                << "post-processing:\n"
+                << "  -- BHcorrect    apply the Benjamini-Hochberg procedure for multiple testing to a tsv file\n"
+                << "                   (this already done by `stoat vcf` and `stoat graph` by default)\n";     
 }
 
 int main(int argc, char* argv[]) {

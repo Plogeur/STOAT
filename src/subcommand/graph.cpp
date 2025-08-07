@@ -94,8 +94,7 @@ int main_stoat_graph(int argc, char *argv[]) {
             };
 
         int option_index = 0;
-        c = getopt_long(argc, argv, "g:d:l:t:T:m:r:s:S:V:o:O:h",
-        c = getopt_long(argc, argv, "g:d:l:t:T:m:r:s:S:o:O:bh",
+        c = getopt_long(argc, argv, "g:d:l:t:T:m:r:s:S:V:o:O:b:h",
                         long_options, &option_index); 
         if (c == -1) {
             break;
