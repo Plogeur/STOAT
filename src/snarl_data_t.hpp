@@ -204,8 +204,7 @@ std::unordered_map<std::string, std::vector<Snarl_data_t>> loop_over_snarls_writ
                             const std::string& output_snarl_not_analyse, 
                             const size_t& children_treshold,
                             const size_t& path_length_threshold,
-                            const size_t& cycle_threshold,
-                            bool bool_return);
+                            const size_t& cycle_threshold);
 
 } // end namespace stoat
 

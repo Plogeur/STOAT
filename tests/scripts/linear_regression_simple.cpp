@@ -118,22 +118,29 @@ void linear_regression(
 
 int main() {
 
-    std::vector<std::vector<double>> X_raw = {
-        {0},
-        {1},
-        {0}
+    std::vector<std::vector<double>> df = {
+        {1, 0},
+        {1, 0},
+        {1, 0},
+        {1, 0},
+        {1, 0},
+        {1, 0},
+        {1, 0},
+        {0, 1},
+        {0, 0},
     };
 
-    std::vector<double> y = {2.0, 4.0, 6.0};
+    std::vector<double> quantitative_phenotype = {4.5, 7.0, 9.2, 10.9, 13.0, 14.0, 11.0, 15.0, 16.0};
 
     std::vector<std::vector<double>> covariates = {};
 
-    linear_regression(X_raw, y, covariates);
+    linear_regression(df, quantitative_phenotype, covariates);
     return 0;
 }
 
 // g++ -std=c++17 -lboost_math_c99 -o simple_linear linear_regression_simple.cpp
 // ./simple_linear
 
-// beta[0] = 4, SE = 2, t = 2, p = 0.295167
-// beta[1] = 0, SE = 3.4641, t = 0, p = 1
+// beta[0] = 16, SE = 8.16561, t = 1.95944, p = 0.300417
+// beta[1] = -6.05714, SE = 8.7294, t = -0.693878, p = 0.613823
+// beta[2] = -1, SE = 11.5479, t = -0.0865957, p = 0.945009

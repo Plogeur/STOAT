@@ -93,12 +93,18 @@ void linear_regression(
 int main() {
 
     std::vector<std::vector<double>> df = {
-        {0},
-        {1},
-        {0}
+        {1, 0},
+        {1, 0},
+        {1, 0},
+        {1, 0},
+        {1, 0},
+        {1, 0},
+        {1, 0},
+        {0, 1},
+        {0, 0},
     };
 
-    std::vector<double> quantitative_phenotype = {2.0, 4.0, 6.0};
+    std::vector<double> quantitative_phenotype = {4.5, 7.0, 9.2, 10.9, 13.0, 14.0, 11.0, 15.0, 16.0};
 
     std::vector<std::vector<double>> covariates = {
     };
@@ -114,15 +120,3 @@ int main() {
 // g++ -std=c++17  -I/usr/local/include/eigen3 -lboost_math_c99 -o lr_stoat linear_regression_stoat.cpp
 
 // ./lr_stoat
-
-// p_values[0] : 0.105573
-// p_values[1] : 1
-// Coefficients (beta):
-// beta[0] = 4.0000
-// beta[1] = 0.0000
-// Standard Errors (se):
-// se[0] = 1.4142
-// se[1] = 2.4495
-// R²: 0.0000
-// Residual Degrees of Freedom: 2
-// Mean Squared Error (MSE): 4.0000

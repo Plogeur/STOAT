@@ -640,16 +640,12 @@ std::unordered_map<std::string, std::vector<Snarl_data_t>> loop_over_snarls_writ
     const std::string& output_snarl_not_analyse,
     const size_t& children_threshold,
     const size_t& path_length_threshold,
-    const size_t& cycle_threshold,
-    bool bool_return = true) {
+    const size_t& cycle_threshold) {
 
     std::ofstream out_snarl(output_file);
     std::ofstream out_fail(output_snarl_not_analyse);
 
-    if (bool_return) {
-        write_snarl_data_output(out_snarl);
-    }
-
+    write_snarl_data_output(out_snarl);
     write_snarl_data_fail(out_fail);
 
     std::unordered_map<std::string, std::vector<Snarl_data_t>> chr_snarl_matrix;
@@ -724,23 +720,20 @@ std::unordered_map<std::string, std::vector<Snarl_data_t>> loop_over_snarls_writ
         std::string str_reference = std::get<4>(snarl_path_pos) ? "1" : "0";
 
         // Output result
-        if (bool_return) {
-            #pragma omp critical(out_snarl)
-            out_snarl << chr << "\t" 
-                      << strat_pos << "\t" 
-                      << end_pos << "\t" 
-                      << handlegraph::as_integer(snarl) << "\t" 
-                      << snarl_id_str << "\t"
-                      << vectorPathToString(pretty_paths) << "\t"
-                      << stoat::vectorToString(type_variants) << "\t"
-                      << str_reference << "\t" 
-                      << depth << "\n";
-        } else {
-            Snarl_data_t snarl_path(snarl, snarl_id, pretty_paths, strat_pos, end_pos, type_variants, depth);
-            
-            #pragma omp critical(chr_snarl_matrix)
-            chr_snarl_matrix[chr].emplace_back(std::move(snarl_path));
-        }
+        #pragma omp critical(out_snarl)
+        out_snarl << chr << "\t" 
+                    << strat_pos << "\t" 
+                    << end_pos << "\t" 
+                    << handlegraph::as_integer(snarl) << "\t" 
+                    << snarl_id_str << "\t"
+                    << vectorPathToString(pretty_paths) << "\t"
+                    << stoat::vectorToString(type_variants) << "\t"
+                    << str_reference << "\t" 
+                    << depth << "\n";
+        Snarl_data_t snarl_path(snarl, snarl_id, pretty_paths, strat_pos, end_pos, type_variants, depth);
+        
+        #pragma omp critical(chr_snarl_matrix)
+        chr_snarl_matrix[chr].emplace_back(std::move(snarl_path));
 
         paths_number_analysis += pretty_paths.size();
     }

@@ -105,64 +105,105 @@ def check_valid_snarl(start_node_1, next_node_1, start_node_2, next_node_2, snar
     # Return true only if both pairs are satisfied
     return contains_first_pair and contains_second_pair
 
-def match_snarl(freq_path_list, true_labels, list_diff, p_value_file, paths_file, save_sv_snarl):
+def match_snarl(freq_path_list, true_labels, list_diff, p_value_file, paths_file, save_sv_snarl, type_):
 
+    # Load input files
     p_value_df = pd.read_csv(p_value_file, sep='\t')
-    paths_df = pd.read_csv(paths_file, sep='\t')['PATHS']
+    paths_df = pd.read_csv(paths_file, sep='\t')
+    paths_df_path = paths_df['PATHS']
+
+    # Extract SNARL columns
+    snarl_gwas = p_value_df['SNARL'].reset_index(drop=True)
+    snarl_path = paths_df['SNARL'].reset_index(drop=True)
+
+    # Parse SNARL positions for filtering
     split = p_value_df['SNARL'].str.split('_')
 
-    # To store predicted labels
+    # Prepare result containers
     predicted_labels_10_2 = []
     predicted_labels_10_5 = []
     predicted_labels_10_8 = []
     cleaned_true_labels = []
     clean_list_diff = []
-    pvalue = []
+    pvalue_list = []
     num_sample = []
     snarl_name = []
 
-    for idx in range(0, len(freq_path_list) - 1, 2):  # Step by 2 to process pairs
+    index_plus = 0
 
+    for idx in range(0, len(freq_path_list) - 1, 2):
         start_node_1, next_node_1 = map(int, freq_path_list[idx].split('_'))
-        start_node_2, next_node_2 = map(int, freq_path_list[idx+1].split('_'))
+        start_node_2, next_node_2 = map(int, freq_path_list[idx + 1].split('_'))
 
-        # We want to know if the snarl is in the range/containt of the snarl in the p_value file
-        matched_row = p_value_df[(split.str[1].astype(int) <= start_node_1) & (split.str[0].astype(int) >= next_node_1) |
-                                 (split.str[0].astype(int) <= start_node_1) & (split.str[1].astype(int) >= next_node_1)]
+        # Filter p_value_df for potential matching snarls
+        matched_row = p_value_df[
+            ((split.str[1].astype(int) <= start_node_1) & (split.str[0].astype(int) >= next_node_1)) |
+            ((split.str[0].astype(int) <= start_node_1) & (split.str[1].astype(int) >= next_node_1))
+        ]
 
-        # Case where the snarl is found 
         if not matched_row.empty:
-            indices = matched_row.index
-            if save_sv_snarl != None :
-                split_paths = [paths_df[idx] for idx in indices if idx+1 in save_sv_snarl]
-            else :
-                split_paths = [paths_df[idx] for idx in indices]
+            indices = matched_row.index.to_list()
+            itr = 0
+            # Try to align indices between snarl_gwas and snarl_path
+            while True or itr > 100:
+                try:
+                    itr += 1
+                    mismatch = False
+                    for i in indices:
+                        if (i + index_plus >= len(snarl_path)) or (snarl_gwas.iloc[i] != snarl_path.iloc[i + index_plus]):
+                            mismatch = True
+                            break
+                    if not mismatch:
+                        break
+                    index_plus += 1
+                except IndexError:
+                    raise RuntimeError("Failed to realign snarl_gwas and snarl_path. Reached end of snarl_path.")
 
-            # Check if at least one path in the snarl contains the start node followed by the next node
+            aligned_indices = [i + index_plus for i in indices]
+
+            # Get path strings for each aligned snarl
+            if save_sv_snarl is not None:
+                split_paths = [paths_df_path[i] for i in aligned_indices if i + 1 in save_sv_snarl]
+            else:
+                split_paths = [paths_df_path[i] for i in aligned_indices]
+
+            # Loop through each path to validate and extract info
             for idx_paths, list_path in enumerate(split_paths):
-                if check_valid_snarl(start_node_1, next_node_1, start_node_2, next_node_2, list_path.split(',')) : 
-                    matched = matched_row.loc[indices[idx_paths]]
-                    if type_ == 'binary':  
-                        p_value = matched['P_FISHER']
+                if check_valid_snarl(start_node_1, next_node_1, start_node_2, next_node_2, list_path.split(',')):
+                    matched = p_value_df.iloc[indices[idx_paths]]
+
+                    if type_ == 'binary':
+                        p_val = matched['P_FISHER']
                     elif type_ == 'quantitative':
-                        p_value = matched['P']
-                    else :
-                        raise ValueError("type_ must be binary or quantitative")
+                        p_val = matched['P']
+                    else:
+                        raise ValueError("type_ must be 'binary' or 'quantitative'")
 
                     snarl_name.append(matched['SNARL'])
-                    predicted_labels_10_2.append(0 if p_value < 0.01 else 1)
-                    predicted_labels_10_5.append(0 if p_value < 0.00001 else 1)
-                    predicted_labels_10_8.append(0 if p_value < 0.00000001 else 1)
+                    predicted_labels_10_2.append(0 if p_val < 0.01 else 1)
+                    predicted_labels_10_5.append(0 if p_val < 0.00001 else 1)
+                    predicted_labels_10_8.append(0 if p_val < 0.00000001 else 1)
                     cleaned_true_labels.append(true_labels[idx])
                     clean_list_diff.append(list_diff[idx])
-                    pvalue.append(p_value)
-                    try :
-                        allele_num = matched_row.loc[indices[idx_paths]]['ALLELE_NUM']
-                    except :
+                    pvalue_list.append(p_val)
+
+                    try:
+                        group_paths = matched['GROUP_PATHS']
+                        allele_num = sum(len(g.split(':')) for g in group_paths.split(','))
+                    except Exception:
                         allele_num = 200
                     num_sample.append(allele_num)
 
-    return predicted_labels_10_2, predicted_labels_10_5, predicted_labels_10_8, cleaned_true_labels, clean_list_diff, pvalue, num_sample, snarl_name
+    return (
+        predicted_labels_10_2,
+        predicted_labels_10_5,
+        predicted_labels_10_8,
+        cleaned_true_labels,
+        clean_list_diff,
+        pvalue_list,
+        num_sample,
+        snarl_name,
+    )
 
 def conf_mat_maker(p_val, predicted_labels, true_labels, output):
         
@@ -381,7 +422,7 @@ if __name__ == "__main__":
     
     save_sv_snarl = parse_sv_rows(args.p_value) if args.sv else None
     freq_test_path_list, test_true_labels, test_list_diff = process_file(args.freq, THRESHOLD_FREQ)
-    test_predicted_labels_10_2, test_predicted_labels_10_5, test_predicted_labels_10_8, cleaned_true_labels, clean_list_diff, pvalue, num_sample, snarl_name = match_snarl(freq_test_path_list, test_true_labels, test_list_diff, args.p_value, args.paths, save_sv_snarl)
+    test_predicted_labels_10_2, test_predicted_labels_10_5, test_predicted_labels_10_8, cleaned_true_labels, clean_list_diff, pvalue, num_sample, snarl_name = match_snarl(freq_test_path_list, test_true_labels, test_list_diff, args.p_value, args.paths, save_sv_snarl, type_)
     print_confusion_matrix(test_predicted_labels_10_2, test_predicted_labels_10_5, test_predicted_labels_10_8, cleaned_true_labels, f"{output}/confusion_matrix_{THRESHOLD_FREQ}")
     assert len(cleaned_true_labels) == len(clean_list_diff)
 
@@ -391,9 +432,9 @@ if __name__ == "__main__":
     p_value_distribution(test_predicted_labels_10_2, cleaned_true_labels, clean_list_diff, pvalue, num_sample, snarl_name, output_diff)
 
     """
-    python3 tests/verify_truth.py --freq data/quantitative/pg.snarls.freq.tsv \
+    python3 tests/scripts/verify_truth.py --freq data/quantitative/pg.snarls.freq.tsv \
     --p_value output/quantitative_table_vcf.tsv --paths data/quantitative/snarl_analyse.tsv -q
 
-    python3 tests/verify_truth.py --freq data/binary/pg.snarls.freq.tsv \
-    --p_value output/binary_table_vcf.tsv --paths data/binary/snarl_analyse.tsv -b
+    python3 tests/scripts/verify_truth.py --freq data/binary/pg.snarls.freq.tsv \
+    --p_value output/binary_table_vcf.tsv --paths output/snarl_analyse.tsv -b
     """

@@ -13,15 +13,25 @@ set(deps_DIR "${CMAKE_CURRENT_SOURCE_DIR}/deps")
 # Put the executables in a bin directory
 set(EXECUTABLE_OUTPUT_PATH ${CMAKE_CURRENT_SOURCE_DIR}/bin)
 
+# To change OPTIMIZE use : cmake -DOPTIMIZE=OFF ..
 option(OPTIMIZE "Build with optimization [default: on]" ON)
+message(STATUS "OPTIMIZE is set to: ${OPTIMIZE}")
+
 # This is the same flag used by libbdsg and libvgio to specify which version of libhandlegraph should be used
 OPTION(USE_INSTALLED_LIBHANDLEGRAPH "Use the version of libhandlegraph installed on the system, if it exists, instead of the bundled version [default: off]" OFF)
 
 if (OPTIMIZE)
-# Use all standard-compliant optimizations
-set (CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O3")
-set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3")
-endif ()
+  message(STATUS "Optimization compilation mode activated")
+  # Use all standard-compliant optimizations
+  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -O3")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -O3")
+else()
+  # Debug build: no optimization, include debug symbols
+  set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -g -O0")
+  set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -g -O0")
+  set(CMAKE_BUILD_TYPE Debug)
+  message(STATUS "Debug compilation mode activated: -g -O0 flags enabled")
+endif()
 
 find_package(PkgConfig REQUIRED)
 pkg_check_modules(HTSLIB REQUIRED htslib)

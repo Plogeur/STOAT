@@ -276,24 +276,34 @@ bool LinearRegression::calculateResidualMatrix(Matrix& X, Matrix* out) {
 
 // ======================= Test Main ===========================
 int main() {
-  // X : 3 échantillons, 2 variables (1 constante + 1 variable)
-  const int numSamples = 3;
-  const int numVariables = 2;  // intercept + 2 SNPs
-
-  // X matrix: [intercept, SNP1, SNP2]
+  const int numSamples = 9;
+  const int numVariables = 3;  // Intercept + 2 SNP variables
+  
   Matrix X(numSamples, numVariables);
-
-  // Row-wise manual assignment: intercept, df[0], df[1]
-  X(0, 0) = 1.0; X(0, 1) = 0;
-  X(1, 0) = 1.0; X(1, 1) = 1;
-  X(2, 0) = 1.0; X(2, 1) = 0.0;
-
+  
+  // Row-wise assignment: [intercept, df[i][0], df[i][1]]
+  X(0, 0) = 1.0; X(0, 1) = 1.0; X(0, 2) = 0.0;
+  X(1, 0) = 1.0; X(1, 1) = 1.0; X(1, 2) = 0.0;
+  X(2, 0) = 1.0; X(2, 1) = 1.0; X(2, 2) = 0.0;
+  X(3, 0) = 1.0; X(3, 1) = 1.0; X(3, 2) = 0.0;
+  X(4, 0) = 1.0; X(4, 1) = 1.0; X(4, 2) = 0.0;
+  X(5, 0) = 1.0; X(5, 1) = 1.0; X(5, 2) = 0.0;
+  X(6, 0) = 1.0; X(6, 1) = 1.0; X(6, 2) = 0.0;
+  X(7, 0) = 1.0; X(7, 1) = 0.0; X(7, 2) = 1.0;
+  X(8, 0) = 1.0; X(8, 1) = 0.0; X(8, 2) = 0.0;
+  
   // Phenotype vector
   Vector y;
   y.Dimension(numSamples);
-  y[0] = 2.0;
-  y[1] = 4.0;
-  y[2] = 6.0;
+  y[0] = 4.5;
+  y[1] = 7.0;
+  y[2] = 9.2;
+  y[3] = 10.9;
+  y[4] = 13.0;
+  y[5] = 14.0;
+  y[6] = 11.0;
+  y[7] = 15.0;
+  y[8] = 16.0;  
 
   LinearRegression lr;
   if (lr.FitLinearModel(X, y)) {
@@ -319,8 +329,10 @@ int main() {
 // ./linear_regression_rvtest
 
 // Coefficients:
-//   B[0] = 4.000000
-//   B[1] = -0.000000
+//   B[0] = 16.000000
+//   B[1] = -6.057143
+//   B[2] = -1.000000
 // P-values:
-//   p[0] = 0.00053201
-//   p[1] = 1
+//   p[0] = 4.1447e-09
+//   p[1] = 0.037376
+//   p[2] = 0.79503

@@ -524,7 +524,7 @@ bool filtration_quantitative_table(
     const double& maf_threshold) {
     
     // number of path < 2 OR not enougth individuals
-    if (df[0].size() < 2 || df.size() < min_individuals) {
+    if (df.empty() || df[0].size() < 2 || df.size() < min_individuals) {
         return true; // Not enough data → filter out
     }
 
