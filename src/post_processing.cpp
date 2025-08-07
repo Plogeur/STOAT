@@ -44,13 +44,6 @@ void add_BH_adjusted_column(
     const std::string& output_file_significant,
     const stoat::phenotype_type_t& phenotype_type) {
 
-    std::ifstream infile(input_file);
-    std::string col;
-
-    // First pass: Collect p-values
-    std::vector<std::tuple<double, double, size_t>> pvalues;
-    std::string line;
-    size_t line_index = 0;
     size_t adjusted_col_index;
 
     if (phenotype_type == stoat::BINARY || phenotype_type == stoat::EQTL) {
@@ -58,6 +51,24 @@ void add_BH_adjusted_column(
     } else if (phenotype_type == stoat::QUANTITATIVE) {
         adjusted_col_index = 6;
     }
+
+    add_BH_adjusted_column(input_file, output_dir, output_file_significant, adjusted_col_index-1, adjusted_col_index);
+}
+
+// Main Function
+void add_BH_adjusted_column(
+    const std::string& input_file,
+    const std::string& output_dir,
+    const std::string& output_file_significant,
+    size_t p_col_index, size_t adjusted_col_index) {
+
+    std::ifstream infile(input_file);
+    std::string col;
+
+    // First pass: Collect p-values
+    std::vector<std::tuple<double, double, size_t>> pvalues;
+    std::string line;
+    size_t line_index = 0;
 
     // Read the header line
     std::string header_line;
@@ -77,17 +88,12 @@ void add_BH_adjusted_column(
             columns.push_back(token);
         }
 
-        double pval = 1.0;
-        if (phenotype_type == stoat::BINARY) {
-            // combine both p-value
-            //pval = stoat::set_precision_float_50(columns[4], columns[5]);
-            
-            // use only chi2
-            pval = stoat::string_to_pvalue(columns[adjusted_col_index-1]); // use only chi2
-        } else if (phenotype_type == stoat::QUANTITATIVE) {
-            pval = stoat::string_to_pvalue(columns[adjusted_col_index-1]);
-        }
 
+        double pval =stoat::string_to_pvalue(columns[p_col_index]);
+        //if (phenotype_type ==stoat::BINARY) {
+        //    // combine both p-value
+        //    //pval = stoat::set_precision_float_50(columns[4], columns[5]);
+        //}
         pvalues.emplace_back(pval, 1.0, line_index++);
     }
     infile.close();

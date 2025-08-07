@@ -45,6 +45,7 @@ void print_help_graph() {
         << "  -m, --method NAME                  What method is used to find associations? (paths) [paths]" << endl
         << "  -l, --allele-size-limit INT        Don't report variants smaller than this [0]" << endl
         << "  -r, --reference-sample NAME        If there is no reference in the graph, use this sample as the reference" << endl
+        << "  -b, --skip-bh-correction           Don't do BH correction" << endl
         << "  -h, --help                         Print this help message" << endl;
 }
 
@@ -67,6 +68,7 @@ int main_stoat_graph(int argc, char *argv[]) {
     std::set<std::string> samples_of_interest;
     std::string output_format= "tsv";
     std::string output_dir="output";
+    bool skip_bh = false;
 
     int c = 0;
     optind = 1;
@@ -86,12 +88,14 @@ int main_stoat_graph(int argc, char *argv[]) {
                 {"output", required_argument, 0, 'o'},
                 {"output-format", required_argument, 0, 'O'},
                 {"verbose", required_argument, 0, 'V'},
+                {"skip-bh-correction", no_argument, 0, 'b'},
                 {"help", no_argument, 0, 'h'},
                 {0, 0, 0, 0}
             };
 
         int option_index = 0;
         c = getopt_long(argc, argv, "g:d:l:t:T:m:r:s:S:V:o:O:h",
+        c = getopt_long(argc, argv, "g:d:l:t:T:m:r:s:S:o:O:bh",
                         long_options, &option_index); 
         if (c == -1) {
             break;
@@ -151,6 +155,9 @@ int main_stoat_graph(int argc, char *argv[]) {
                 break;
             case 'O':
                 output_format = optarg;
+                break;
+            case 'b':
+                skip_bh = true; 
                 break;
             case 'h':
                 print_help_graph();
@@ -296,7 +303,7 @@ int main_stoat_graph(int argc, char *argv[]) {
         out_unassociated.close();
     }
 
-    if (output_format == "tsv") {
+    if (output_format == "tsv" && !skip_bh) {
         // Add the BH adjusted column
         stoat::add_BH_adjusted_column(associated_filename, output_dir, output_dir + "/top_variant_binary_graph.tsv", stoat::BINARY);
     }

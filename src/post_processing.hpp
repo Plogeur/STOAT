@@ -28,6 +28,13 @@ void add_BH_adjusted_column(
     const std::string& output_file_significant,
     const stoat::phenotype_type_t& phenotype_type);
 
-} // namespace stoat
+// The same, but specify the column number (0-indexed) of the p-value and the adjusted p-value
+void add_BH_adjusted_column(
+    const std::string& input_file,
+    const std::string& output_dir,
+    const std::string& output_file_significant,
+    size_t p_col, size_t adjusted_col_index);
+
+} // namespace stoat_vcf
 
 #endif // ADJUSTED_PVALUE_HPP
