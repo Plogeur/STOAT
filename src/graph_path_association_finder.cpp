@@ -38,19 +38,11 @@ void AssociationFinder::test_snarls() const {
         stoat::write_binary_header(out_associated);
     }
 
-    std::vector<handlegraph::net_handle_t> chains;
-    chains.reserve(graph.get_node_count()/100);
     handlegraph::net_handle_t root = distance_index.get_root();
+
     distance_index.for_each_child(root, [&] (handlegraph::net_handle_t chain) {
-        chains.emplace_back(chain);
-        return true;
-    });
-
-    FisherKhi2 fisher_chi2_tester;
-    while (!chains.empty()) {
-        handlegraph::net_handle_t chain = chains.back();
-        chains.pop_back();
-
+        
+        FisherKhi2 fisher_chi2_tester;
         distance_index.for_each_child(chain, [&] (handlegraph::net_handle_t snarl) {
 
             //TODO: For now it's fine to check is_eligible here because it's only checking size and we don't want to look at small chains anyway
@@ -97,8 +89,6 @@ void AssociationFinder::test_snarls() const {
                     std::unordered_map<std::string, bool> samples_to_write;
 
                     if (test_method == "exact") {
-
-
 
                         for (const std::set<std::string>& partition : sample_partitions) {
                             if (partition == samples_of_interest) {
@@ -153,7 +143,6 @@ void AssociationFinder::test_snarls() const {
                                 samples_to_write[*partition.begin()] = true;
                             }
                         }
-
                     }
                 
                     if (write_output) {
@@ -189,14 +178,15 @@ void AssociationFinder::test_snarls() const {
                     // Add the child chains to the stack
                     distance_index.for_each_child(snarl, [&] (handlegraph::net_handle_t child) {
 
-                        chains.emplace_back(child);
+                        chain.emplace_back(child);
                         return true;
                     });
                 }
             }
             return true;
         });
-    }
+        return true;
+    });
 }
 
 bool AssociationFinder::snarl_is_eligible(const handlegraph::net_handle_t& snarl) const {
