@@ -189,7 +189,7 @@ void check_match_samples(const std::unordered_map<std::string, T>& map, const st
         }
     }
     if (map.size() != keys.size()) {
-        stoat::LOG_WARN("Number of samples found in VCF does not match the number of samples in the phenotype file");
+        stoat::LOG_WARN("Number of samples found in VCF (" + keys.size() + ") does not match the number of samples in the phenotype file (" + map.size() + ").");
     }
 }
 

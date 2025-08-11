@@ -122,9 +122,10 @@ void SnarlAnalyzer::process_snarls_by_chromosome_chunk(
     while (bcf_read(ptr_vcf, hdr, rec) >= 0) {
 
         std::string chr = bcf_hdr_id2name(hdr, rec->rid);
+
         // Skip chromosomes not in chr_to_snarl_data
         while (chr_to_snarl_data.find(chr) == chr_to_snarl_data.end()) {
-            stoat::LOG_ERROR("Warning: Chromosome " + chr + " not found in snarl paths file. Skipping.");
+            stoat::LOG_WARN("Chromosome " + chr + " not found in snarl paths file. Skipping.");
 
             bool found_new_chr = false;
             while (bcf_read(ptr_vcf, hdr, rec) >= 0) {
