@@ -17,14 +17,14 @@ EdgeBySampleMatrix::EdgeBySampleMatrix(const std::vector<std::string>& sampleNam
 }
 
 // Getter the row index of the edge
-size_t EdgeBySampleMatrix::find_edge(const stoat_vcf::Edge_t& edge_s) const {
+size_t EdgeBySampleMatrix::find_edge(const stoat::Edge_t& edge_s) const {
     auto itr = row_header.find(edge_s);
     return itr == row_header.end() ? std::numeric_limits<size_t>::max()
                                  : itr->second;
 }
 
 // Retrieve the index of `key` if it exists in the dict. Otherwise, add it and return the new index.
-size_t EdgeBySampleMatrix::getOrAddIndex(const Edge_t& key, const size_t& size_edge_index_dict) {
+size_t EdgeBySampleMatrix::getOrAddIndex(const stoat::Edge_t& key, const size_t& size_edge_index_dict) {
     auto it = row_header.find(key);
     if (it != row_header.end()) {
         return it->second;
@@ -37,7 +37,7 @@ size_t EdgeBySampleMatrix::getOrAddIndex(const Edge_t& key, const size_t& size_e
 
 
 // Add True to the matrix if edge is found
-void EdgeBySampleMatrix::push_matrix(const Edge_t& EdgePath, size_t indexColumn) {
+void EdgeBySampleMatrix::push_matrix(const stoat::Edge_t& EdgePath, size_t indexColumn) {
 
     size_t lengthOrderedMap = row_header.size();
     size_t idxSnarl = getOrAddIndex(EdgePath, lengthOrderedMap);
@@ -108,4 +108,4 @@ void EdgeBySampleMatrix::reset(const std::vector<std::string>& newSampleNames, s
     matrix_1D.resize(length_matrix, 0); // Initialize with zeros{
 }
 
-} // end namespace stoat_vcf
+} // end namespace stoat

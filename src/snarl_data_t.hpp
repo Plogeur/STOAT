@@ -23,17 +23,22 @@
 #include <bdsg/overlays/packed_path_position_overlay.hpp>
 #include <handlegraph/handle_graph.hpp>
 #include <handlegraph/path_handle_graph.hpp>
+#include <bdsg/overlays/overlay_helper.hpp>
+#include <vg/io/vpkg.hpp>
 
+#include "log.hpp"
 #include "utils.hpp"
 
+#include <filesystem>
+#include "io/register_io.hpp"
+
 using namespace std;
-using namespace stoat;
 
 using handlegraph::step_handle_t;
 using handlegraph::handle_t;
 using handlegraph::net_handle_t;
 
-namespace stoat_vcf {
+namespace stoat {
 
 // Define a Node_traversal_t structure to represent a node with orientation
 struct Node_traversal_t { // 64 bits per node 
@@ -120,7 +125,7 @@ std::vector<Path_traversal_t> stringToVectorPath(std::string& str);
 // A class representing a path as a vector of strings representing nodes
 class Path {
 private:
-    std::vector<std::string> nodes;
+    std::vector<size_t> nodes;
     std::vector<bool> orients;
 
 public:
@@ -128,7 +133,7 @@ public:
     Path();
 
     // Add a node with known orientation
-    void addNode(const std::string& node, bool orient);
+    void addNode(const size_t& node, bool orient);
 
     // Add a node handle and extract information using the std::string representation
     bool addNodeHandle(const handlegraph::net_handle_t& node_h, const bdsg::SnarlDistanceIndex& stree);
@@ -146,12 +151,17 @@ public:
     size_t nreversed() const;
 };
 
-void write_snarl_data(std::ostream& outstream);
+// Parses the snarl path file and returns a map with snarl as keys and paths as a list of strings.
+std::unordered_map<std::string, std::vector<Snarl_data_t>> parse_snarl_path(const std::string& path_file);
+
+void write_snarl_data_output(std::ostream& outstream);
+void write_snarl_data_fail(std::ostream& outstream);
 
 // Load the distance index and graph and return unique_ptrs to them
 std::tuple<std::unique_ptr<bdsg::SnarlDistanceIndex>, 
            std::unique_ptr<bdsg::PackedGraph>, 
            handlegraph::net_handle_t, 
+           std::unique_ptr<handlegraph::PathHandleGraph>,
            std::unique_ptr<bdsg::PackedPositionOverlay>>
 parse_graph_tree(const std::string& pg_file, const std::string& dist_file);
 
@@ -178,7 +188,7 @@ std::vector<std::tuple<handlegraph::net_handle_t, std::string, size_t, size_t, b
                             bdsg::PackedPositionOverlay& ppo);
 
 // Function to fill pretty paths
-tuple<std::vector<stoat_vcf::Path_traversal_t>, std::vector<std::string>> fill_pretty_paths(
+tuple<std::vector<Path_traversal_t>, std::vector<std::string>> fill_pretty_paths(
                             bdsg::SnarlDistanceIndex& stree, 
                             bdsg::PackedGraph& pg, 
                             std::vector<std::vector<handlegraph::net_handle_t>>& finished_paths);
@@ -194,16 +204,15 @@ std::unordered_map<std::string, std::vector<Snarl_data_t>> loop_over_snarls_writ
                             const std::string& output_snarl_not_analyse, 
                             const size_t& children_treshold,
                             const size_t& path_length_threshold,
-                            const size_t& cycle_threshold,
-                            bool bool_return);
+                            const size_t& cycle_threshold);
 
-} // end namespace stoat_vcf
+} // end namespace stoat
 
 // Hash functions for Node_traversal_t
 namespace std {
     template <>
-    struct hash<stoat_vcf::Node_traversal_t> {
-        size_t operator()(const stoat_vcf::Node_traversal_t& node) const {
+    struct hash<stoat::Node_traversal_t> {
+        size_t operator()(const stoat::Node_traversal_t& node) const {
             // Simple way: Shift node_id and pack is_reverse into the lower bit
             return (node.get_node_id() << 1) | static_cast<size_t>(node.get_is_reverse());
         }
@@ -211,11 +220,11 @@ namespace std {
 
     // Hash function for Edge_t
     template <>
-    struct hash<stoat_vcf::Edge_t> {
-        size_t operator()(const stoat_vcf::Edge_t& edge) const {
+    struct hash<stoat::Edge_t> {
+        size_t operator()(const stoat::Edge_t& edge) const {
             const auto& pair = edge.get_edge();
-            size_t h1 = hash<stoat_vcf::Node_traversal_t>()(pair.first);
-            size_t h2 = hash<stoat_vcf::Node_traversal_t>()(pair.second);
+            size_t h1 = hash<stoat::Node_traversal_t>()(pair.first);
+            size_t h2 = hash<stoat::Node_traversal_t>()(pair.second);
 
             // Combines two hash values (h1 and h2) into a single hash using bitwise operations.
             // 0x9e3779b9 is a large prime constant (from the golden ratio) used to improve distribution.

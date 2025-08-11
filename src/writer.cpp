@@ -2,7 +2,7 @@
 
 //#define DEBUG_WRITER
 
-namespace stoat_vcf {
+namespace stoat {
 
 void write_binary_header(std::ostream& outstream) {
     outstream << "#CHR\tSTART_POS\tEND_POS\tSNARL\tPATH_LENGTHS\tP_FISHER\tP_CHI2\tP_ADJUSTED\tGROUP_PATHS\tDEPTH" << std::endl;
@@ -26,7 +26,7 @@ void write_binary(std::ostream& outstream, const std::string& chr, const Snarl_d
     outstream << chr << "\t" 
               << snarl_data_s.start_positions << "\t" 
               << snarl_data_s.end_positions << "\t" 
-              << stoat_vcf::pairToString(snarl_data_s.snarl_ids) << "\t" 
+              << stoat::pairToString(snarl_data_s.snarl_ids) << "\t" 
               << type_var_str << "\t" 
               << fastfisher_p_value << "\t" 
               << chi2_p_value << "\t" 
@@ -41,7 +41,7 @@ void write_binary_covar(std::ostream& outstream, const std::string& chr, const S
     outstream << chr << "\t" 
               << snarl_data_s.start_positions << "\t" 
               << snarl_data_s.end_positions << "\t" 
-              << stoat_vcf::pairToString(snarl_data_s.snarl_ids) << "\t" 
+              << stoat::pairToString(snarl_data_s.snarl_ids) << "\t" 
               << type_var_str << "\t" 
               << p_value << "\t" 
               << p_value_adjusted << "\t" 
@@ -59,7 +59,7 @@ void write_quantitative(std::ostream& outstream, const std::string& chr, const S
     outstream << chr << "\t" 
               << snarl_data_s.start_positions << "\t" 
               << snarl_data_s.end_positions << "\t" 
-              << stoat_vcf::pairToString(snarl_data_s.snarl_ids) << "\t" 
+              << stoat::pairToString(snarl_data_s.snarl_ids) << "\t" 
               << type_var_str << "\t" 
               << p_value  << "\t" 
               << p_value_adjusted << "\t" 
@@ -77,7 +77,7 @@ void write_eqtl(std::ostream& outstream, const std::string& chr, const Snarl_dat
     outstream << chr << "\t" 
               << snarl_data_s.start_positions << "\t" 
               << snarl_data_s.end_positions << "\t" 
-              << stoat_vcf::pairToString(snarl_data_s.snarl_ids) << "\t" 
+              << stoat::pairToString(snarl_data_s.snarl_ids) << "\t" 
               << type_var_str << "\t" 
               << gene_name << "\t" 
               << p_value  << "\t" 
@@ -106,8 +106,7 @@ void write_fasta(std::ostream& outstream_associated, std::ostream& outstream_una
     
     // Get a reference range for the snarl.
     // If the reference goes through the snarl multiple times, get the largest interval
-    
-    std::vector<stoat::path_range_t> ref_ranges = stoat::get_coordinates_of_snarl(graph, distance_index, snarl, true, reference_name, false);
+    std::vector<stoat::path_range_t> ref_ranges = get_coordinates_of_snarl(graph, distance_index, snarl, true, reference_name, false);
     std::string ref_coordinates  = "NOREF:?:?";
     int start_offset = std::numeric_limits<int>::max();
     int end_offset = 0;
@@ -135,7 +134,7 @@ void write_fasta(std::ostream& outstream_associated, std::ostream& outstream_una
     }
     
     // Now go through each path that goes through the snarl and print the sequence
-    std::vector<stoat::path_range_t> path_ranges = stoat::get_coordinates_of_snarl(graph, distance_index, snarl, false, "", true);
+    std::vector<stoat::path_range_t> path_ranges = get_coordinates_of_snarl(graph, distance_index, snarl, false, "", true);
     for (const stoat::path_range_t& path_range : path_ranges) {
         handlegraph::path_handle_t path = graph.get_path_handle_of_step(path_range.start);
         string sample_name = stoat::get_sample_name_from_path(graph, path);

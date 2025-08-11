@@ -11,8 +11,6 @@ namespace stoat {
 
 namespace io {
 
-using namespace std;
-
 void register_loader_saver_gbzgraph();
 
 }

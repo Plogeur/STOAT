@@ -26,6 +26,8 @@
 #include <boost/math/distributions/chi_squared.hpp>
 #include <boost/multiprecision/cpp_dec_float.hpp>
 
+#include "log.hpp"
+
 using namespace std;
 
 namespace stoat {

@@ -58,7 +58,7 @@ std::string addSuffixToFilename(const std::string& filename, const std::string& 
 void writeGafLines(const std::string& sequenceName, const std::string& path, 
                     int length, int proportion, std::ofstream& outFile) {
     if (!outFile.is_open()) {
-        throw std::runtime_error("Error: Output file stream is not open.");
+        stoat::LOG_FATAL("Error: Output file stream is not open.");
     }
     
     outFile << sequenceName << "\t" << length << "\t0\t" << length << "\t+\t"
@@ -106,7 +106,7 @@ void write_gaf_lines(const std::string& sequence_name, const std::string& path, 
 
 // Parses the input file and processes data into two output files
 void gaf_creation(const std::string& input_file, 
-    std::unordered_map<std::string, std::vector<stoat_vcf::Snarl_data_t>>& snarl_chr,
+    std::unordered_map<std::string, std::vector<stoat::Snarl_data_t>>& snarl_chr,
     bdsg::PackedGraph& pg, 
     const std::string& output_file) {
 
@@ -116,7 +116,7 @@ void gaf_creation(const std::string& input_file,
     ifstream infile(input_file);
     ofstream outfile1(output_file_1), outfile2(output_file_2);
     if (!infile || !outfile1 || !outfile2) {
-        throw runtime_error("Error opening files");
+        stoat::LOG_FATAL("Error opening files");
     }
 
     std::string line;
@@ -140,7 +140,7 @@ void gaf_creation(const std::string& input_file,
         std::string group_paths = columns[11];
         auto it = snarl_chr.find(chr);
         auto& data = it->second;  
-        const std::vector<std::string>& list_path = stoat::stringToVector<std::string>(stoat_vcf::vectorPathToString(data[count_line].snarl_paths));
+        const std::vector<std::string>& list_path = stoat::stringToVector<std::string>(stoat::vectorPathToString(data[count_line].snarl_paths));
 
         // Split group paths by comma
         std::vector<std::string> decomposed_group_paths;
@@ -193,4 +193,4 @@ void gaf_creation(const std::string& input_file,
     }
 }
 
-} //end stoat_vcf namespace
+} //end stoat namespace

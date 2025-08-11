@@ -15,7 +15,6 @@ namespace stoat {
 
 namespace io {
 
-using namespace std;
 using namespace vg::io;
 using namespace handlegraph;
 

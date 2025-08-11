@@ -20,6 +20,7 @@
 #include <htslib/vcf.h>
 #include <htslib/hts.h>
 
+#include "log.hpp"
 #include "snarl_data_t.hpp"
 
 using namespace std;
@@ -96,11 +97,8 @@ std::unordered_set<std::string> parse_chromosome_reference(const std::string& fi
 template <typename T>
 void check_match_samples(const std::unordered_map<std::string, T>& map, const std::vector<std::string>& keys);
 
-// Parses the snarl path file and returns a map with snarl as keys and paths as a list of strings.
-std::unordered_map<std::string, std::vector<stoat_vcf::Snarl_data_t>> parse_snarl_path(const std::string& path_file);
-
 void check_file(const std::string& file_path);
 
-} //end stoat_vcf namespace
+} //end stoat namespace
 
 #endif

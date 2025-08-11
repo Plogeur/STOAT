@@ -10,53 +10,53 @@
 #include <handlegraph/path_handle_graph.hpp>
 #include <vg/io/vpkg.hpp>
 
+#include "../log.hpp"
 #include "../graph_path_association_finder.hpp"
 #include "../io/register_io.hpp"
 #include "../post_processing.hpp"
 
-
 #define USE_CALLGRIND
 
-#ifdef USE_CALLGRIND
-#include <valgrind/callgrind.h>
-#endif
-
+// #ifdef USE_CALLGRIND
+//     #include <valgrind/callgrind.h>
+// #endif
 
 using namespace std;
 namespace stoat_command {
 
 void print_help_graph() {
     std::cerr << "usage: stoat graph [options]" << endl
-         << endl
-         << "input:" << endl
-         << "  -g, --graph FILE                   use this graph (only hash graph works for now) (required)" << endl
-         << "  -d, --distance-index FILE          Use this distance index (required)" << endl
-         << "  -s, --sample-of-interest NAME      The name of the sample with the trait of interest (may repeat)" << endl
-         << "  -S, --samples-file NAME            A file with the names of the sample with the trait of interest, one per line (instead of -s)" << endl
-         << "output:" << endl
-         << "  -o, --output DIR                   Output directory name [output]" << endl
-         << "  -O, --output-format NAME           The format of the output (tsv / fasta) [tsv]" << endl
-         << "                                     Output will be written to DIR/binary_table_graph.tsv or DIR/associated.fasta and DIR/unassociated.fasta" << endl
-         << "options:" << endl
-         << "  -t, --threads N                    Number of threads to use" << endl
-         << "  -T, --test NAME                    Which test will be used to determine association (exact / chi2) [exact]" << endl
-         //<< "  -p, --p-value-threshold FLOAT      What is the threshold p-value to be considered significant? [0.05]" << endl
-         //<< "                                     When used with multiple testing, discard any p-value above this threshold without doing multiple testing" << endl
-         << "  -m, --method NAME                  What method is used to find associations? (paths) [paths]" << endl
-         << "  -l, --allele-size-limit INT        Don't report variants smaller than this [0]" << endl
-         << "  -r, --reference-sample NAME        If there is no reference in the graph, use this sample as the reference" << endl
-         << "  -b, --skip-bh-correction               Don't do BH correction" << endl
-         << "  -h, --help                         Print this help message" << endl;
-
+        << endl
+        << "input:" << endl
+        << "  -g, --graph FILE                   use this graph (only hash graph works for now) (required)" << endl
+        << "  -d, --distance-index FILE          Use this distance index (required)" << endl
+        << "  -s, --sample-of-interest NAME      The name of the sample with the trait of interest (may repeat)" << endl
+        << "  -S, --samples-file NAME            A file with the names of the sample with the trait of interest, one per line (instead of -s)" << endl
+        << "output:" << endl
+        << "  -o, --output DIR                   Output directory name [output]" << endl
+        << "  -O, --output-format NAME           The format of the output (tsv / fasta) [tsv]" << endl
+        << "                                     Output will be written to DIR/binary_table_graph.tsv or DIR/associated.fasta and DIR/unassociated.fasta" << endl
+        << "options:" << endl
+        << "  -t, --threads N                    Number of threads to use" << endl
+        << "  -T, --test NAME                    Which test will be used to determine association (exact / chi2) [exact]" << endl
+        //<< "  -p, --p-value-threshold FLOAT      What is the threshold p-value to be considered significant? [0.05]" << endl
+        //<< "                                     When used with multiple testing, discard any p-value above this threshold without doing multiple testing" << endl
+        << "  -V, --verbose INT                  Verbosity level (0=error, 1=warn, 2=info, 3=debug, 4=trace)" << endl
+        << "  -m, --method NAME                  What method is used to find associations? (paths) [paths]" << endl
+        << "  -l, --allele-size-limit INT        Don't report variants smaller than this [0]" << endl
+        << "  -r, --reference-sample NAME        If there is no reference in the graph, use this sample as the reference" << endl
+        << "  -b, --skip-bh-correction           Don't do BH correction" << endl
+        << "  -h, --help                         Print this help message" << endl;
 }
 
 int main_stoat_graph(int argc, char *argv[]) {
 
     if (argc <= 1) {
         print_help_graph();
-        return 1;
+        return EXIT_FAILURE;
     }
 
+    stoat::LogLevel verbosity = stoat::LogLevel::Info;  // default level info
     std::string graph_name;
     std::string distance_name;
     size_t allele_size_limit = 0;
@@ -87,13 +87,14 @@ int main_stoat_graph(int argc, char *argv[]) {
                 {"samples-file", required_argument, 0, 'S'},
                 {"output", required_argument, 0, 'o'},
                 {"output-format", required_argument, 0, 'O'},
+                {"verbose", required_argument, 0, 'V'},
                 {"skip-bh-correction", no_argument, 0, 'b'},
                 {"help", no_argument, 0, 'h'},
                 {0, 0, 0, 0}
             };
 
         int option_index = 0;
-        c = getopt_long(argc, argv, "g:d:l:t:T:m:r:s:S:o:O:bh",
+        c = getopt_long(argc, argv, "g:d:l:t:T:m:r:s:S:V:o:O:b:h",
                         long_options, &option_index); 
         if (c == -1) {
             break;
@@ -106,9 +107,17 @@ int main_stoat_graph(int argc, char *argv[]) {
                 distance_name = optarg;
                 break;
             case 'l':
+                if (std::stoi(optarg) < 0) {
+                    stoat::LOG_ERROR("Error: Number of allele size limit must be >= 0");
+                    return EXIT_FAILURE;
+                }
                 allele_size_limit = std::stoi(optarg);
                 break;
             case 't':
+                if (std::stoi(optarg) < 1) {
+                    stoat::LOG_ERROR("Error: Number of threads must be > 0");
+                    return EXIT_FAILURE;
+                }
                 omp_set_num_threads(std::stoi(optarg));
                 break;
             case 'T':
@@ -117,6 +126,17 @@ int main_stoat_graph(int argc, char *argv[]) {
             //case 'p':
             //    p_value = std::stof(optarg);
             //    break;
+            case 'V':
+                {
+                int level = std::stoi(optarg);
+                if (level < 0 || level > 4) {
+                    stoat::LOG_ERROR("Invalid verbosity level. Use 0=Error, 1=Warn, 2=Info, 3=Debug, 4=Trace");
+                    return EXIT_FAILURE;
+                }
+                stoat::LogLevel logLevel = static_cast<stoat::LogLevel>(level);
+                stoat::Logger::instance().setLevel(logLevel);                
+                break;
+                }
             case 'm':
                 method_name = optarg;
                 break;
@@ -140,25 +160,28 @@ int main_stoat_graph(int argc, char *argv[]) {
                 break;
             case 'h':
                 print_help_graph();
-                exit(1);
-                break;
+                return EXIT_SUCCESS;
             default:
-                abort();
+                stoat::LOG_ERROR("Unknown argument");
+                print_help_graph();
+                return EXIT_FAILURE;
         }
     }
 
     // Check that the inputs are ok
     if (graph_name.empty()) {
-        std::cerr << "error [stoat graph]: stoat graph requires a graph file" << endl;
-        return 1; 
+        stoat::LOG_ERROR("error [stoat graph]: stoat graph requires a graph file");
+        return EXIT_FAILURE; 
     }
+
     if (distance_name.empty()) {
-        std::cerr << "error [stoat graph]: stoat graph requires a distance index file" << endl;
-        return 1; 
+        stoat::LOG_ERROR("error [stoat graph]: stoat graph requires a distance index file");
+        return EXIT_FAILURE; 
     }
+
     if (output_format != "tsv" && output_format != "fasta") {
-        cerr << "error [stoat graph]: invalid output format " << output_format << endl;
-        return 1; 
+        stoat::LOG_ERROR("error [stoat graph]: invalid output format " + output_format);
+        return EXIT_FAILURE; 
     }
 
     // Make the output directory
@@ -174,20 +197,24 @@ int main_stoat_graph(int argc, char *argv[]) {
         }
         in_samples.close();
     }
+
     if (samples_of_interest.empty()) {
-        std::cerr << "error [stoat graph]: stoat graph requires samples of interest" << endl;
-        return 1; 
+        stoat::LOG_ERROR("error [stoat graph]: stoat graph requires samples of interest");
+        return EXIT_FAILURE; 
     }
 
     // Tell the IO library about libvg types.
     if (!stoat::io::register_libvg_io()) {
-        cerr << "error[stoat vgio]: Could not register libvg types with libvgio" << endl;
-        return 1;
+        stoat::LOG_ERROR("error[stoat vgio]: Could not register libvg types with libvgio");
+        return EXIT_FAILURE;
     }
 
+    auto start_1 = std::chrono::high_resolution_clock::now();
+    stoat::LOG_INFO("Start Sample haplotype analysis...");
 
     // Load the graph and make it a PathPositionHandleGraph
     unique_ptr<handlegraph::PathHandleGraph> path_graph = vg::io::VPKG::load_one<handlegraph::PathHandleGraph>(graph_name);
+
     bdsg::PathPositionOverlayHelper overlay_helper;
     bdsg::PathPositionHandleGraph* graph = overlay_helper.apply(path_graph.get());
 
@@ -195,11 +222,11 @@ int main_stoat_graph(int argc, char *argv[]) {
     bdsg::SnarlDistanceIndex distance_index;
     distance_index.deserialize(distance_name);
 
-
     //Go through all the paths in the graph and remember what samples there are
     // Also count the samples for the tester
     size_t sample_count = 0;
     std::unordered_set<std::string> samples;
+
     /// A set of all samples+haplotypes in the graph
     std::set<stoat::sample_hap_t> all_sample_haplotypes;
     
@@ -210,7 +237,12 @@ int main_stoat_graph(int argc, char *argv[]) {
             samples.insert(stoat::get_sample_name_from_path(*graph, path));
         }   
         return true;
-    }); 
+    });
+
+    auto end_1 = std::chrono::high_resolution_clock::now();
+    stoat::LOG_INFO("Sample haplotype time : " + std::to_string(std::chrono::duration<double>(end_1 - start_1).count()) + " s");
+    stoat::LOG_INFO("Start GWAS analysis...");
+    auto start_2 = std::chrono::high_resolution_clock::now();
 
     string filename;
     if (output_format == "tsv") {
@@ -218,37 +250,36 @@ int main_stoat_graph(int argc, char *argv[]) {
     } else if (output_format == "fasta") {
         filename += "associated.fasta";
     }
+
     string associated_filename = output_dir + "/" + filename;
     string unassociated_filename;
     if (output_format == "fasta") {
         unassociated_filename= output_dir + "/unassociated.fasta";
     }
 
-
     // Get the out streams
     std::ofstream out_associated;
     if (!associated_filename.empty()) {
         out_associated.open(associated_filename);
-    } 
+    }
+
     std::ofstream out_unassociated;
     if (!unassociated_filename.empty()) {
         out_unassociated.open(unassociated_filename);
-     }
-
+    }
 
     // Make the partitioner
     std::shared_ptr<stoat_graph::Partitioner> partitioner;
     if (method_name == "paths") {
         partitioner.reset(new stoat_graph::PathPartitioner(all_sample_haplotypes));
     } else {
-        std::cerr << "error [stoat graph]: unknown method " << method_name << endl;
-        return 1; 
+        stoat::LOG_ERROR("error [stoat graph]: unknown method " + method_name);
+        return EXIT_FAILURE; 
     }
 
-#ifdef USE_CALLGRIND
-    CALLGRIND_START_INSTRUMENTATION;
-#endif
-
+// #ifdef USE_CALLGRIND
+//     CALLGRIND_START_INSTRUMENTATION;
+// #endif
 
     stoat_graph::AssociationFinder af (*graph, 
                                    distance_index,
@@ -266,16 +297,19 @@ int main_stoat_graph(int argc, char *argv[]) {
     if (!associated_filename.empty()) {
         out_associated.close();
     }
+
     if (!unassociated_filename.empty()) {
         out_unassociated.close();
     }
 
     if (output_format == "tsv" && !skip_bh) {
         // Add the BH adjusted column
-        stoat_vcf::add_BH_adjusted_column(associated_filename, output_dir, output_dir + "/top_variant_binary_graph.tsv", stoat::BINARY);
+        stoat::add_BH_adjusted_column(associated_filename, output_dir, output_dir + "/top_variant_binary_graph.tsv", stoat::BINARY);
     }
 
-
-    return 0;
+    auto end_2 = std::chrono::high_resolution_clock::now();
+    stoat::LOG_INFO("GWAS time analysis : " + std::to_string(std::chrono::duration<double>(end_2 - start_2).count()) + " s");
+    stoat::LOG_INFO("Total time : " + std::to_string(std::chrono::duration<double>(end_2 - start_1).count()) + " s");
+    return EXIT_SUCCESS;
 }
 } //end namespace

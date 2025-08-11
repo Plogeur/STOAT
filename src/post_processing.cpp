@@ -1,7 +1,7 @@
 #include "post_processing.hpp"
 #include "utils.hpp"
 
-namespace stoat_vcf {
+namespace stoat {
 
 // Adjust p-values using the Benjamini-Hochberg procedure
 void adjust_pvalues_with_BH(std::vector<std::tuple<double, double, size_t>>& data) {
@@ -46,9 +46,9 @@ void add_BH_adjusted_column(
 
     size_t adjusted_col_index;
 
-    if (phenotype_type ==stoat::BINARY || phenotype_type ==stoat::EQTL) {
+    if (phenotype_type == stoat::BINARY || phenotype_type == stoat::EQTL) {
         adjusted_col_index = 7;
-    } else if (phenotype_type ==stoat::QUANTITATIVE) {
+    } else if (phenotype_type == stoat::QUANTITATIVE) {
         adjusted_col_index = 6;
     }
 
@@ -88,12 +88,12 @@ void add_BH_adjusted_column(
             columns.push_back(token);
         }
 
+
         double pval =stoat::string_to_pvalue(columns[p_col_index]);
         //if (phenotype_type ==stoat::BINARY) {
         //    // combine both p-value
         //    //pval = stoat::set_precision_float_50(columns[4], columns[5]);
         //}
-
         pvalues.emplace_back(pval, 1.0, line_index++);
     }
     infile.close();

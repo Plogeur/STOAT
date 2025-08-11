@@ -4,6 +4,8 @@
 #include "../../src/stats_test.hpp"
 #include "../../src/arg_parser.hpp"  // Qtl_data
 
+using namespace stoat_vcf;
+
 TEST_CASE("Quantitative table creation") {
     SECTION("Creation 1") {
 
@@ -49,11 +51,11 @@ TEST_CASE("Quantitative table filtration") {
         };
 
         double maf_threshold = 0.01;
-        bool filtration = stoat_vcf::filtration_quantitative_table(df, maf_threshold);
+        bool filtration = stoat_vcf::filtration_quantitative_table(df, 3, 5, maf_threshold);
         REQUIRE(filtration == false);
 
         double maf_threshold2 = 0.2;
-        bool filtration2 = stoat_vcf::filtration_quantitative_table(df, maf_threshold2);
+        bool filtration2 = stoat_vcf::filtration_quantitative_table(df, 3, 5, maf_threshold2);
         REQUIRE(filtration2 == true);
     }
 

@@ -18,8 +18,6 @@ namespace stoat {
 
 namespace io {
 
-using namespace std;
-
 bool register_libvg_io() {
     register_loader_saver_gbz();
     register_loader_saver_gbzgraph();
@@ -28,6 +26,6 @@ bool register_libvg_io() {
     return true;
 }
     
-}
+} // end io
 
-}
+} // end stoat

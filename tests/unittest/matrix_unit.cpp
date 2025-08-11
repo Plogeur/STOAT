@@ -1,8 +1,7 @@
 #include <catch.hpp>
 #include "../../src/matrix.hpp"
 
-
-using namespace stoat_vcf;
+using namespace stoat;
 
 class TestEdgeBySampleMatrix : stoat_vcf::EdgeBySampleMatrix {
     public:
